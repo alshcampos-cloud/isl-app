@@ -86,13 +86,27 @@ export default function QuestionAssistant({ onQuestionGenerated, existingQuestio
     }
   };
 
-  const handleUseQuestion = () => {
+  const handleUseQuestion = async () => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase.from('questions').insert([{
+        user_id: user.id,
+        question: generatedQuestion,
+        category: 'Generated',
+        priority: 'Technical',
+        bullets: []
+      }]);
+    }
     if (onQuestionGenerated) {
       onQuestionGenerated(generatedQuestion);
     }
     setCustomPrompt('');
     setGeneratedQuestion('');
-  };
+  } catch (error) {
+    console.error('Save error:', error);
+  }
+};
 
   return (
     <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-6 border-2 border-purple-200 mb-6">

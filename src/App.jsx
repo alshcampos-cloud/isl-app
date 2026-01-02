@@ -1321,7 +1321,7 @@ onClick={async () => {
       
     } else {
       // CONVERSATION ENDED - Show final feedback
-      await savePracticeSession(currentQuestion, answer, feedbackJson);
+      await savePracticeSession(currentQuestion, conversationHistory, feedbackJson);
 
       setFeedback(feedbackJson);
       setPracticeHistory([
