@@ -91,10 +91,10 @@ import {
 import SupabaseTest from './SupabaseTest';
 import ProtectedRoute from './ProtectedRoute';
 import { supabase } from './lib/supabase';
-import FirstTimeConsent from './components/FirstTimeConsent';
-   import Tutorial from './components/Tutorial';
-   import QuestionAssistant from './components/QuestionAssistant';
-   import AnswerAssistant from './components/AnswerAssistant';
+import FirstTimeConsent from "./Components/FirstTimeConsent";
+   import Tutorial from './Components/Tutorial';
+   import QuestionAssistant from './Components/QuestionAssistant';
+   import AnswerAssistant from './Components/AnswerAssistant';
 import TemplateLibrary from './TemplateLibrary';
 
 // ==========================================
