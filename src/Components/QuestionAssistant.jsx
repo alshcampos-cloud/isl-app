@@ -65,7 +65,9 @@ export default function QuestionAssistant({ onQuestionGenerated, existingQuestio
             interviewType,
             customPrompt,
             jobDescription,
-            existingQuestions: existingQuestions.slice(0, 10)
+            existingQuestions: existingQuestions.slice(0, 10),
+            keepSimple: true,
+            maxWords: 20
           })
         }
       );
@@ -87,26 +89,38 @@ export default function QuestionAssistant({ onQuestionGenerated, existingQuestio
   };
 
   const handleUseQuestion = async () => {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      await supabase.from('questions').insert([{
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        alert('Please sign in to save questions');
+        return;
+      }
+      
+      const { error } = await supabase.from('questions').insert([{
         user_id: user.id,
         question: generatedQuestion,
         category: 'Generated',
         priority: 'Technical',
-        bullets: []
+        bullets: [],
+        narrative: '',
+        keywords: []
       }]);
+      
+      if (error) throw error;
+      
+      // Call parent callback to reload questions
+      if (onQuestionGenerated) {
+        onQuestionGenerated(generatedQuestion);
+      }
+      
+      alert('✅ Question added to bank!');
+      setCustomPrompt('');
+      setGeneratedQuestion('');
+    } catch (error) {
+      console.error('Save error:', error);
+      alert('Failed to save: ' + error.message);
     }
-    if (onQuestionGenerated) {
-      onQuestionGenerated(generatedQuestion);
-    }
-    setCustomPrompt('');
-    setGeneratedQuestion('');
-  } catch (error) {
-    console.error('Save error:', error);
-  }
-};
+  };
 
   return (
     <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-6 border-2 border-purple-200 mb-6">
@@ -234,6 +248,16 @@ Example: What to paste:
             <p className="text-sm text-red-700">{error}</p>
           </div>
         )}
+
+        {/* Simplicity Reminder */}
+        <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-3">
+          <p className="text-sm font-bold text-blue-900 mb-1">💡 Interview Questions Should Be Clear & Direct:</p>
+          <ul className="text-xs text-blue-800 space-y-1">
+            <li>✓ Good: "How do you prioritize during an emergency?"</li>
+            <li>✗ Bad: "Walk me through how you would prioritize during an emergency when you have limited resources and conflicting stakeholder demands..."</li>
+            <li>🎯 Aim for under 20 words per question</li>
+          </ul>
+        </div>
 
         <button
           onClick={handleGenerate}

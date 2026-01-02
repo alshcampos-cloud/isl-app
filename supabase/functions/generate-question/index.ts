@@ -11,20 +11,17 @@ serve(async (req) => {
   }
 
   try {
-    const { targetRole, targetCompany, background, interviewType, customPrompt, existingQuestions, jobDescription } = await req.json()
+    const { targetRole, targetCompany, background, interviewType, customPrompt, existingQuestions, jobDescription, keepSimple, maxWords } = await req.json()
 
-    // Build context from existing questions - analyze RECENT 10 to avoid repetition
+    // Build context from existing questions
     const recentQuestions = existingQuestions?.slice(-10) || []
     const exampleQuestions = recentQuestions
       ?.map((q: any, i: number) => `${i + 1}. "${q.question}"`)
       ?.join('\n') || 'No existing questions yet'
 
-    // Extract themes from existing questions to AVOID them
-    const existingThemes = recentQuestions
-      .map((q: any) => q.question.toLowerCase())
-      .join(' ')
+    const wordLimit = maxWords || 15;
 
-    const contextPrompt = `You are an expert interview coach creating UNIQUE, VARIED questions for emergency management interviews.
+    const contextPrompt = `You are an expert interview coach creating CLEAR, CONCISE interview questions for ${targetRole}.
 
 CANDIDATE PROFILE:
 - Role: ${targetRole}
@@ -34,56 +31,45 @@ ${background ? `- Background: ${background}` : ''}
 ${jobDescription ? `- Job Requirements: ${jobDescription}` : ''}
 ${customPrompt ? `- Focus Area: ${customPrompt}` : ''}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-⚠️ CRITICAL: AVOID THESE RECENTLY USED QUESTIONS ⚠️
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+RECENTLY ASKED (create something DIFFERENT):
 ${exampleQuestions}
 
-🚫 BANNED OVERUSED SCENARIOS (DO NOT USE):
-${existingThemes.includes('communication') ? '❌ Communication system failures\n' : ''}${existingThemes.includes('multiple') && existingThemes.includes('agenc') ? '❌ Coordinating multiple agencies\n' : ''}${existingThemes.includes('resource') ? '❌ Limited resources scenarios\n' : ''}${existingThemes.includes('conflict') && existingThemes.includes('stakeholder') ? '❌ Conflicting stakeholder priorities\n' : ''}${existingThemes.includes('budget') ? '❌ Budget constraint situations\n' : ''}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚨 CRITICAL RULES - MUST FOLLOW:
+1. ✅ MAXIMUM ${wordLimit} WORDS TOTAL
+2. ✅ ONE simple, clear scenario only
+3. ✅ NO compound clauses (avoid "when", "and", "while" that add complexity)
+4. ✅ Direct, conversational phrasing
+5. ✅ Focus on ONE skill or situation
 
-✅ FRESH SCENARIO IDEAS (Pick ONE that's NOT above):
-- Cascade failures: Multiple systems fail simultaneously (power + water + transit)
-- Cultural barriers: Language/cultural challenges in diverse communities during crisis
-- Technology failures: GPS/mapping systems down during evacuations
-- Psychological support: Coordinating mental health services post-incident
-- Ethical dilemmas: Choosing who gets limited medical supplies
-- Media crisis: Managing press during active emergency operations
-- Staff burnout: Team exhaustion during prolonged multi-day incident
-- Supply chain: Critical equipment delayed/unavailable
-- Legal conflicts: Jurisdictional disputes between agencies
-- Data overload: Information management when systems overwhelmed
-- Community resistance: Public non-compliance with evacuation orders
-- Volunteer management: Untrained helpers creating safety risks
-- Environmental hazards: Secondary disasters (flood after earthquake)
-- VIP/political pressure: Elected officials demanding special treatment
-- Accessibility: Supporting disabled/elderly populations in emergencies
+❌ BAD EXAMPLES (TOO COMPLEX - DO NOT COPY THIS STYLE):
+- "Walk me through how you would establish coordination between agencies during an earthquake when communication systems are down and you're receiving conflicting information about hospital capacity."
+- "Describe a time when you had to manage multiple stakeholders with competing priorities while dealing with limited resources and tight deadlines."
 
-🎯 VARY THE QUESTION TYPE (rotate these):
-1. "Tell me about a time when..." (past experience)
-2. "How would you handle..." (hypothetical scenario)
-3. "What's your approach to..." (process explanation)
-4. "Describe a situation where..." (specific story)
-5. "Walk me through..." (step-by-step breakdown)
-6. "If you had to choose between... and..." (trade-off decision)
-7. "What would you do if..." (contingency planning)
+✅ GOOD EXAMPLES (CLEAR & CONCISE - USE THIS STYLE):
+- "How do you prioritize during an emergency?"
+- "Describe a time you managed conflicting stakeholder demands."
+- "What's your approach to resource allocation under pressure?"
+- "Tell me about leading a team through organizational change."
+- "How would you handle a budget cut mid-project?"
+- "Describe managing media during a crisis."
+- "What's your process for coordinating evacuations?"
+- "Tell me about resolving an interagency conflict."
 
-📐 SPECIFICITY REQUIREMENT:
-❌ BAD (too vague): "Tell me about managing a crisis"
-✅ GOOD (specific): "Describe how you'd coordinate a hospital evacuation during a wildfire when half your ambulances are unavailable and roads are blocked"
+QUESTION TYPE (vary these):
+- "Tell me about a time when..." (past experience)
+- "How would you handle..." (hypothetical)
+- "What's your approach to..." (process)
+- "Describe a situation where..." (story)
 
-🎲 RANDOMIZATION: Pick a DIFFERENT scenario each time, not just rewording!
+Generate ONE interview question that is:
+- Completely different from recent questions above
+- Under ${wordLimit} words
+- One clear, focused scenario
+- Relevant to ${targetRole}
+- No run-on complexity
+- Simple, direct phrasing
 
-Generate ONE interview question that:
-- Is COMPLETELY DIFFERENT from questions above (different scenario, not just rewording)
-- Uses a fresh scenario from the suggestions (or create your own unique one)
-- Asks in a DIFFERENT question format than recent ones
-- Is 1-2 sentences maximum
-- Is concrete and specific to emergency management
-- Encourages STAR method storytelling
-
-Return ONLY the question - no preamble, no explanation, no quotes.`;
+Return ONLY the question text - no quotes, no preamble, no explanation.`;
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -94,14 +80,17 @@ Return ONLY the question - no preamble, no explanation, no quotes.`;
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 500,
-        temperature: 1.0,
+        max_tokens: 200,
+        temperature: 0.9,
         messages: [{ role: 'user', content: contextPrompt }]
       })
     })
 
     const data = await response.json()
-    const question = data.content[0].text.trim()
+    let question = data.content[0].text.trim()
+    
+    // Remove quotes if present
+    question = question.replace(/^["']|["']$/g, '');
     
     return new Response(
       JSON.stringify({ question }),
