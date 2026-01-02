@@ -100,6 +100,8 @@ if (typeof document !== 'undefined' && !document.getElementById('isl-style-injec
   document.head.appendChild(styleSheet);
 }
 
+
+
 // ==========================================
 // ISL COMPLETE - FILE 1 of 2
 // Core Functions + Home + Prompter + Questions
