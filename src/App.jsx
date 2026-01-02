@@ -260,24 +260,30 @@ const getUserContext = () => {
     }
   };
 
-  // INIT
-  useEffect(() => {
-    const savedKey = localStorage.getItem('isl_api_key');
-    if (savedKey) {
-      setApiKey(savedKey);
-      setShowApiSetup(false);
-    }
-    
-    // Load questions from Supabase
-    loadQuestions();
-    
-    const savedType = localStorage.getItem('isl_interview_type');
-    if (savedType) setInterviewType(savedType);
-    const savedHistory = localStorage.getItem('isl_history');
-    if (savedHistory) setPracticeHistory(JSON.parse(savedHistory));
-    if ('speechSynthesis' in window) synthRef.current = window.speechSynthesis;
-    initSpeechRecognition();
-  }, []);
+// INIT
+useEffect(() => {
+  const savedKey = localStorage.getItem('isl_api_key');
+  if (savedKey) {
+    setApiKey(savedKey);
+    setShowApiSetup(false);
+  }
+
+  // Load questions from Supabase
+  loadQuestions();
+
+  const savedType = localStorage.getItem('isl_interview_type');
+  if (savedType) setInterviewType(savedType);
+
+  const savedHistory = localStorage.getItem('isl_history');
+  if (savedHistory) setPracticeHistory(JSON.parse(savedHistory));
+
+  if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+    synthRef.current = window.speechSynthesis;
+  }
+
+  initSpeechRecognition();
+}, []);
+
 
   useEffect(() => { if (questions.length > 0) localStorage.setItem('isl_questions', JSON.stringify(questions)); }, [questions]);
   useEffect(() => { if (practiceHistory.length > 0) localStorage.setItem('isl_history', JSON.stringify(practiceHistory)); }, [practiceHistory]);
