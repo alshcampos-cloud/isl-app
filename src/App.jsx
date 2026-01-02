@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+ import React, { useState, useEffect, useRef } from 'react';
 
-import { 
-  Brain, Database, Play, Plus, Edit2, Trash2, TrendingUp, Download, Upload, 
+import {
+  Brain, Database, Play, Plus, Edit2, Trash2, TrendingUp, Download, Upload,
   Mic, MicOff, Volume2, Eye, EyeOff, Settings, Sparkles, ChevronRight, X,
   Zap, CheckCircle, Target, Bot, BookOpen, SkipForward, Pause, Award, Filter,
   Crown, Lightbulb
@@ -16,105 +16,57 @@ import QuestionAssistant from './Components/QuestionAssistant';
 import AnswerAssistant from './Components/AnswerAssistant';
 import TemplateLibrary from './TemplateLibrary';
 
-// ADD THIS CSS BLOCK HERE (after imports)
+// CSS string is OK at top-level
 const styles = `
   @keyframes ripple {
-    0% {
-      transform: scale(1);
-      opacity: 1;
-    }
-    100% {
-      transform: scale(2);
-      opacity: 0;
-    }
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(2); opacity: 0; }
   }
-  
+
   .ripple-ring {
     position: absolute;
     border: 3px solid currentColor;
     border-radius: 50%;
     animation: ripple 1.5s ease-out infinite;
   }
-  
-  .ripple-ring:nth-child(2) {
-    animation-delay: 0.5s;
-  }
-  
-  .ripple-ring:nth-child(3) {
-    animation-delay: 1s;
-  }
-  
+
+  .ripple-ring:nth-child(2) { animation-delay: 0.5s; }
+  .ripple-ring:nth-child(3) { animation-delay: 1s; }
+
   @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  .fade-in-up {
-    animation: fadeInUp 0.6s ease-out forwards;
-  }
-  
-  .feedback-section {
-    opacity: 0;
-  }
-  
-  .feedback-section.visible {
-    animation: fadeInUp 0.6s ease-out forwards;
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
+  .fade-in-up { animation: fadeInUp 0.6s ease-out forwards; }
+
+  .feedback-section { opacity: 0; }
+  .feedback-section.visible { animation: fadeInUp 0.6s ease-out forwards; }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
   @keyframes slideUp {
-    from {
-      opacity: 0;
-      transform: translateY(30px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
-  .animate-fadeIn {
-    animation: fadeIn 0.3s ease-out;
-  }
-
-  .animate-slideUp {
-    animation: slideUp 0.4s ease-out;
-  }
+  .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
+  .animate-slideUp { animation: slideUp 0.4s ease-out; }
 `;
-
-// Inject styles into document (safe: runs once per page load)
-if (typeof document !== 'undefined' && !document.getElementById('isl-style-inject')) {
-  const styleSheet = document.createElement('style');
-  styleSheet.id = 'isl-style-inject';
-  styleSheet.textContent = styles;
-  document.head.appendChild(styleSheet);
-}
-
-
 
 // ==========================================
 // ISL COMPLETE - FILE 1 of 2
 // Core Functions + Home + Prompter + Questions
 // ==========================================
 
-
 const ISL = () => {
   // TEMPORARY: Test Supabase connection
   const TESTING_SUPABASE = false;
-  
+
   if (TESTING_SUPABASE) {
     return <SupabaseTest />;
   }
+
   const [currentView, setCurrentView] = useState('home');
   const [showIdealAnswer, setShowIdealAnswer] = useState(false);
   const [currentMode, setCurrentMode] = useState(null);
@@ -124,19 +76,22 @@ const ISL = () => {
   const [interviewType, setInterviewType] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [showApiSetup, setShowApiSetup] = useState(true);
+
   const recognitionRef = useRef(null);
+  const synthRef = useRef(null);
+  const accumulatedTranscript = useRef('');
+
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
-  const accumulatedTranscript = useRef('');
   const [micPermission, setMicPermission] = useState(false);
   const [matchedQuestion, setMatchedQuestion] = useState(null);
   const [userAnswer, setUserAnswer] = useState('');
   const [spokenAnswer, setSpokenAnswer] = useState('');
   const [feedback, setFeedback] = useState(null);
   const [conversationHistory, setConversationHistory] = useState([]);
-const [conversationMode, setConversationMode] = useState(false);
-const [followUpQuestion, setFollowUpQuestion] = useState(null);
-const [exchangeCount, setExchangeCount] = useState(0);
+  const [conversationMode, setConversationMode] = useState(false);
+  const [followUpQuestion, setFollowUpQuestion] = useState(null);
+  const [exchangeCount, setExchangeCount] = useState(0);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [practiceHistory, setPracticeHistory] = useState([]);
   const [editingQuestion, setEditingQuestion] = useState(null);
@@ -148,10 +103,9 @@ const [exchangeCount, setExchangeCount] = useState(0);
   const [filterPriority, setFilterPriority] = useState('All');
   const [aiSpeaking, setAiSpeaking] = useState(false);
   const [aiSubtitle, setAiSubtitle] = useState('');
-  const synthRef = useRef(null);
   const [questionHistory, setQuestionHistory] = useState([]);
-const [showResumeToast, setShowResumeToast] = useState(false);
-const [resumedQuestion, setResumedQuestion] = useState(null);
+  const [showResumeToast, setShowResumeToast] = useState(false);
+  const [resumedQuestion, setResumedQuestion] = useState(null);
   const [flashcardSide, setFlashcardSide] = useState('question');
   const [completedQuestions, setCompletedQuestions] = useState(new Set());
   const [usageStats, setUsageStats] = useState(null);
@@ -159,85 +113,85 @@ const [resumedQuestion, setResumedQuestion] = useState(null);
   const [showGaps, setShowGaps] = useState(true);
   const [animatedScore, setAnimatedScore] = useState(0);
   const [revealStage, setRevealStage] = useState(0);
-const [showAllFeedback, setShowAllFeedback] = useState(false);
-const [commandCenterTab, setCommandCenterTab] = useState('analytics');
-const [showProfileDropdown, setShowProfileDropdown] = useState(false);
-const [interviewDate, setInterviewDate] = useState(localStorage.getItem('isl_interview_date') || '');
-const [dailyGoal, setDailyGoal] = useState(parseInt(localStorage.getItem('isl_daily_goal')) || 3);
-const [selectedSession, setSelectedSession] = useState(null);
-const [showTutorial, setShowTutorial] = useState(false);
-   const [currentUser, setCurrentUser] = useState(null);
-const [comparisonMode, setComparisonMode] = useState(false);
-const [showAnswerAssistant, setShowAnswerAssistant] = useState(false);
-const [answerAssistantQuestion, setAnswerAssistantQuestion] = useState(null);
-  
+  const [showAllFeedback, setShowAllFeedback] = useState(false);
+  const [commandCenterTab, setCommandCenterTab] = useState('analytics');
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [interviewDate, setInterviewDate] = useState(localStorage.getItem('isl_interview_date') || '');
+  const [dailyGoal, setDailyGoal] = useState(parseInt(localStorage.getItem('isl_daily_goal') || '3', 10));
+  const [selectedSession, setSelectedSession] = useState(null);
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [comparisonMode, setComparisonMode] = useState(false);
+  const [showAnswerAssistant, setShowAnswerAssistant] = useState(false);
+  const [answerAssistantQuestion, setAnswerAssistantQuestion] = useState(null);
 
+  // ✅ Inject styles ONCE, safely, inside the component (hooks allowed here)
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    if (document.getElementById('isl-style-inject')) return;
 
-// Animate score when feedback appears + Progressive Reveal
-useEffect(() => {
-  if (feedback?.overall || feedback?.match_percentage) {
-    const targetScore = feedback.overall || feedback.match_percentage / 10 || 0;
-    
-    // Reset everything
-    setAnimatedScore(0);
-    setRevealStage(0);
-    setShowAllFeedback(false);
-    
-    // Start score animation immediately
-    const duration = 2000; // 2 seconds
-    const steps = 60;
-    const stepValue = targetScore / steps;
-    const stepDuration = duration / steps;
-    
-    let currentStep = 0;
-    
-    const scoreTimer = setInterval(() => {
-      currentStep++;
-      if (currentStep >= steps) {
-        setAnimatedScore(targetScore);
+    const styleSheet = document.createElement('style');
+    styleSheet.id = 'isl-style-inject';
+    styleSheet.textContent = styles;
+    document.head.appendChild(styleSheet);
+  }, []);
+
+  // Animate score when feedback appears + Progressive Reveal
+  useEffect(() => {
+    if (feedback?.overall || feedback?.match_percentage) {
+      const targetScore = feedback.overall || feedback.match_percentage / 10 || 0;
+
+      setAnimatedScore(0);
+      setRevealStage(0);
+      setShowAllFeedback(false);
+
+      const duration = 2000;
+      const steps = 60;
+      const stepValue = targetScore / steps;
+      const stepDuration = duration / steps;
+
+      let currentStep = 0;
+
+      const scoreTimer = setInterval(() => {
+        currentStep++;
+        if (currentStep >= steps) {
+          setAnimatedScore(targetScore);
+          clearInterval(scoreTimer);
+        } else {
+          setAnimatedScore(currentStep * stepValue);
+        }
+      }, stepDuration);
+
+      const revealTimers = [
+        setTimeout(() => setRevealStage(1), 800),
+        setTimeout(() => setRevealStage(2), 1400),
+        setTimeout(() => setRevealStage(3), 2000),
+        setTimeout(() => setRevealStage(4), 2600),
+        setTimeout(() => setRevealStage(5), 3200),
+        setTimeout(() => setRevealStage(6), 3800),
+        setTimeout(() => setRevealStage(7), 4400),
+      ];
+
+      return () => {
         clearInterval(scoreTimer);
-      } else {
-        setAnimatedScore(currentStep * stepValue);
-      }
-    }, stepDuration);
-    
-    // Progressive reveal stages
-    const revealTimers = [
-      setTimeout(() => setRevealStage(1), 800),   // Ideal Answer
-      setTimeout(() => setRevealStage(2), 1400),  // Strengths
-      setTimeout(() => setRevealStage(3), 2000),  // Growth Areas
-      setTimeout(() => setRevealStage(4), 2600),  // Action Steps
-      setTimeout(() => setRevealStage(5), 3200),  // STAR Framework
-      setTimeout(() => setRevealStage(6), 3800),  // Points Coverage
-      setTimeout(() => setRevealStage(7), 4400),  // Buttons
-    ];
-    
-    return () => {
-      clearInterval(scoreTimer);
-      revealTimers.forEach(timer => clearTimeout(timer));
-    };
-  }
-}, [feedback]);
-
-// Get user context for personalized feedback
-const getUserContext = () => {
-  try {
-    const saved = localStorage.getItem('isl_question_context');
-    if (saved) {
-      const { role, comp, bg } = JSON.parse(saved);
-      return {
-        targetRole: role || '',
-        targetCompany: comp || '',
-        background: bg || ''
+        revealTimers.forEach(t => clearTimeout(t));
       };
     }
-  } catch (err) {
-    console.error('Error loading user context:', err);
-  }
-  return { targetRole: '', targetCompany: '', background: '' };
-};
+  }, [feedback]);
 
-// Load questions from Supabase
+  const getUserContext = () => {
+    try {
+      const saved = localStorage.getItem('isl_question_context');
+      if (saved) {
+        const { role, comp, bg } = JSON.parse(saved);
+        return { targetRole: role || '', targetCompany: comp || '', background: bg || '' };
+      }
+    } catch (err) {
+      console.error('Error loading user context:', err);
+    }
+    return { targetRole: '', targetCompany: '', background: '' };
+  };
+
   const loadQuestions = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -250,7 +204,7 @@ const getUserContext = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      
+
       if (data && data.length > 0) {
         setQuestions(data);
         console.log(`✅ Loaded ${data.length} questions from Supabase`);
@@ -260,43 +214,54 @@ const getUserContext = () => {
     }
   };
 
-// INIT
-useEffect(() => {
-  const savedKey = localStorage.getItem('isl_api_key');
-  if (savedKey) {
-    setApiKey(savedKey);
-    setShowApiSetup(false);
-  }
+  // INIT
+  useEffect(() => {
+    const savedKey = localStorage.getItem('isl_api_key');
+    if (savedKey) {
+      setApiKey(savedKey);
+      setShowApiSetup(false);
+    }
 
-  // Load questions from Supabase
-  loadQuestions();
+    loadQuestions();
 
-  const savedType = localStorage.getItem('isl_interview_type');
-  if (savedType) setInterviewType(savedType);
+    const savedType = localStorage.getItem('isl_interview_type');
+    if (savedType) setInterviewType(savedType);
 
-  const savedHistory = localStorage.getItem('isl_history');
-  if (savedHistory) setPracticeHistory(JSON.parse(savedHistory));
+    const savedHistory = localStorage.getItem('isl_history');
+    if (savedHistory) setPracticeHistory(JSON.parse(savedHistory));
 
-  if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-    synthRef.current = window.speechSynthesis;
-  }
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      synthRef.current = window.speechSynthesis;
+    }
 
-  initSpeechRecognition();
-}, []);
-
-
-  useEffect(() => { if (questions.length > 0) localStorage.setItem('isl_questions', JSON.stringify(questions)); }, [questions]);
-  useEffect(() => { if (practiceHistory.length > 0) localStorage.setItem('isl_history', JSON.stringify(practiceHistory)); }, [practiceHistory]);
-  useEffect(() => { if (interviewType) localStorage.setItem('isl_interview_type', interviewType); }, [interviewType]);
+    initSpeechRecognition();
+  }, []);
 
   useEffect(() => {
-     supabase.auth.getSession().then(({ data: { session } }) => {
-       setCurrentUser(session?.user ?? null);
-     });
+    if (questions.length > 0) localStorage.setItem('isl_questions', JSON.stringify(questions));
+  }, [questions]);
 
-     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-       setCurrentUser(session?.user ?? null);
-     });
+  useEffect(() => {
+    if (practiceHistory.length > 0) localStorage.setItem('isl_history', JSON.stringify(practiceHistory));
+  }, [practiceHistory]);
+
+  useEffect(() => {
+    if (interviewType) localStorage.setItem('isl_interview_type', interviewType);
+  }, [interviewType]);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setCurrentUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCurrentUser(session?.user ?? null);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
      return () => subscription.unsubscribe();
    }, []);
