@@ -1,6 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-// ADD THIS CSS BLOCK HERE (before other imports)
+import { 
+  Brain, Database, Play, Plus, Edit2, Trash2, TrendingUp, Download, Upload, 
+  Mic, MicOff, Volume2, Eye, EyeOff, Settings, Sparkles, ChevronRight, X,
+  Zap, CheckCircle, Target, Bot, BookOpen, SkipForward, Pause, Award, Filter,
+  Crown, Lightbulb
+} from 'lucide-react';
+
+import SupabaseTest from './SupabaseTest';
+import ProtectedRoute from './ProtectedRoute';
+import { supabase } from './lib/supabase';
+import FirstTimeConsent from "./Components/FirstTimeConsent";
+import Tutorial from './Components/Tutorial';
+import QuestionAssistant from './Components/QuestionAssistant';
+import AnswerAssistant from './Components/AnswerAssistant';
+import TemplateLibrary from './TemplateLibrary';
+
+// ADD THIS CSS BLOCK HERE (after imports)
 const styles = `
   @keyframes ripple {
     0% {
@@ -76,31 +92,19 @@ const styles = `
   }
 `;
 
-// Inject styles into document
-if (typeof document !== 'undefined') {
+// Inject styles into document (safe: runs once per page load)
+if (typeof document !== 'undefined' && !document.getElementById('isl-style-inject')) {
   const styleSheet = document.createElement('style');
+  styleSheet.id = 'isl-style-inject';
   styleSheet.textContent = styles;
   document.head.appendChild(styleSheet);
 }
-import { 
-  Brain, Database, Play, Plus, Edit2, Trash2, TrendingUp, Download, Upload, 
-  Mic, MicOff, Volume2, Eye, EyeOff, Settings, Sparkles, ChevronRight, X,
-  Zap, CheckCircle, Target, Bot, BookOpen, SkipForward, Pause, Award, Filter,
-  Crown, Lightbulb
-} from 'lucide-react';
-import SupabaseTest from './SupabaseTest';
-import ProtectedRoute from './ProtectedRoute';
-import { supabase } from './lib/supabase';
-import FirstTimeConsent from "./Components/FirstTimeConsent";
-   import Tutorial from './Components/Tutorial';
-   import QuestionAssistant from './Components/QuestionAssistant';
-   import AnswerAssistant from './Components/AnswerAssistant';
-import TemplateLibrary from './TemplateLibrary';
 
 // ==========================================
 // ISL COMPLETE - FILE 1 of 2
 // Core Functions + Home + Prompter + Questions
 // ==========================================
+
 
 const ISL = () => {
   // TEMPORARY: Test Supabase connection
@@ -753,6 +757,7 @@ useEffect(() => {
     if (!usageCheck.allowed) {
       const limit = usageCheck.tier === 'free' ? '25' : '100';
       alert(`⚠️ Monthly Limit Reached\n\nYou've used all ${limit} sessions this month.\n\nUpgrade to Pro for 100 sessions/month!`);
+
       return;
     }
 
@@ -776,6 +781,7 @@ const startPracticeMode = async () => {
     if (!usageCheck.allowed) {
       const limit = usageCheck.tier === 'free' ? '25' : '100';
       alert(`⚠️ Monthly Limit Reached\n\nYou've used all ${limit} sessions this month.\n\nUpgrade to Pro for 100 sessions/month!`);
+
       return;
     }
 
@@ -2765,6 +2771,7 @@ onClick={async () => {
                               if (!usageCheck.allowed) {
                                 const limit = usageCheck.tier === 'free' ? '25' : '100';
                                 alert(`⚠️ Monthly Limit Reached\n\nYou've used all ${limit} sessions this month.\n\nUpgrade to Pro for 100 sessions/month!`);
+
                                 return;
                               }
                               accumulatedTranscript.current = '';
@@ -2807,6 +2814,7 @@ onClick={async () => {
                               if (!usageCheck.allowed) {
                                 const limit = usageCheck.tier === 'free' ? '25' : '100';
                                 alert(`⚠️ Monthly Limit Reached\n\nYou've used all ${limit} sessions this month.\n\nUpgrade to Pro for 100 sessions/month!`);
+
                                 return;
                               }
                               accumulatedTranscript.current = '';
@@ -2887,7 +2895,7 @@ onClick={async () => {
                     <div 
                       className="bg-gradient-to-r from-indigo-500 to-purple-500 h-3 rounded-full transition-all"
                       style={{ 
-                        width: `${Math.min(100, (practiceHistory.filter(s => new Date(s.date).toDateString() === new Date().toDateString()).length / dailyGoal) * 100)}%` 
+                        width: `${Math.min(100, (practiceHistory.filter(s => new Date(s.date).toDateString() === new Date().toDateString()).length / dailyGoal) * 100)}%`
                       }}
                     ></div>
                   </div>
