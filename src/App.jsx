@@ -11,7 +11,6 @@ import SupabaseTest from './SupabaseTest';
 import ProtectedRoute from './ProtectedRoute';
 import { supabase } from './lib/supabase';
 import FirstTimeConsent from "./Components/FirstTimeConsent";
-import Tutorial from './Components/Tutorial';
 import QuestionAssistant from './Components/QuestionAssistant';
 import AnswerAssistant from './Components/AnswerAssistant';
 import TemplateLibrary from './TemplateLibrary';
@@ -119,7 +118,6 @@ const ISL = () => {
   const [interviewDate, setInterviewDate] = useState(localStorage.getItem('isl_interview_date') || '');
   const [dailyGoal, setDailyGoal] = useState(parseInt(localStorage.getItem('isl_daily_goal') || '3', 10));
   const [selectedSession, setSelectedSession] = useState(null);
-  const [showTutorial, setShowTutorial] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [comparisonMode, setComparisonMode] = useState(false);
   const [showAnswerAssistant, setShowAnswerAssistant] = useState(false);
@@ -845,8 +843,6 @@ const startPracticeMode = async () => {
     const priorities = ['All', ...new Set(questions.map(q => q.priority))];
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
-        <FirstTimeConsent user={currentUser} onAccepted={() => setShowTutorial(true)} />
-        <Tutorial user={currentUser} isActive={showTutorial} onClose={() => setShowTutorial(false)} />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center mb-12">
             <h1 className="text-6xl font-bold text-white mb-4">ISL</h1>
@@ -874,16 +870,6 @@ const startPracticeMode = async () => {
 </p>
 <p className="text-sm opacity-70">{currentUser?.email}</p>
                   </div>
-<button
-  onClick={() => {
-    setShowProfileDropdown(false);
-    setShowTutorial(true);
-  }}
-  className="w-full px-4 py-3 text-left hover:bg-gray-50 transition flex items-center gap-3 text-gray-700"
->
-  <span className="text-xl">📚</span>
-  <span className="font-semibold">Start Tutorial</span>
-</button>
 <button
   onClick={async (e) => {
     e.stopPropagation();
@@ -984,6 +970,31 @@ if (error) {
                   ></div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Getting Started Guide */}
+          {questions.length === 0 && (
+            <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-6 text-white mb-8 shadow-xl">
+              <h3 className="text-2xl font-bold mb-4">🚀 Getting Started with ISL</h3>
+              <div className="grid md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="font-bold mb-2">1️⃣ Add Questions</p>
+                  <p className="opacity-90">Click Command Center → Question Bank → Import templates or add your own</p>
+                </div>
+                <div>
+                  <p className="font-bold mb-2">2️⃣ Practice</p>
+                  <p className="opacity-90">Choose a mode below and start practicing. AI gives feedback!</p>
+                </div>
+                <div>
+                  <p className="font-bold mb-2">3️⃣ Track Progress</p>
+                  <p className="opacity-90">Visit Command Center to see your scores and improvement</p>
+                </div>
+                <div>
+                  <p className="font-bold mb-2">4️⃣ Prep for Interview</p>
+                  <p className="opacity-90">Set your interview date in Command Center → Interview Prep</p>
+                </div>
+              </div>
             </div>
           )}
 
@@ -2649,6 +2660,30 @@ onClick={async () => {
             </button>
             <h1 className="text-2xl font-bold text-gray-900">🎯 Command Center</h1>
             <div className="w-24"></div>
+          </div>
+          
+          {/* Quick Help Guide */}
+          <div className="container mx-auto px-4 pb-4">
+            <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
+              <p className="text-sm font-bold text-blue-900 mb-2">💡 Quick Guide:</p>
+              <div className="grid md:grid-cols-5 gap-3 text-xs text-blue-800">
+                <div>
+                  <span className="font-bold">📊 Analytics:</span> View stats, practice history, top questions
+                </div>
+                <div>
+                  <span className="font-bold">🎯 Queue:</span> See which questions need practice
+                </div>
+                <div>
+                  <span className="font-bold">🗓️ Prep:</span> Set interview date & daily goals
+                </div>
+                <div>
+                  <span className="font-bold">📚 Bank:</span> Add, edit, import questions
+                </div>
+                <div>
+                  <span className="font-bold">📈 Progress:</span> Track improvement over time
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
