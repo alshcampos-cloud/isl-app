@@ -325,7 +325,21 @@ recognition.onerror = (event) => {
     setIsListening(false);
   }
 };
-    recognition.onend = () => { console.log('Speech ended'); setIsListening(false); };
+    recognition.onend = () => { 
+  console.log('Speech ended'); 
+  if (isListening) {
+    // If we're still supposed to be listening, restart
+    console.log('Restarting recognition...');
+    try {
+      recognitionRef.current.start();
+    } catch (err) {
+      console.error('Restart failed:', err);
+      setIsListening(false);
+    }
+  } else {
+    setIsListening(false);
+  }
+};
     recognitionRef.current = recognition;
   };
   // Save practice session to database
