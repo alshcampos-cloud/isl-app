@@ -206,8 +206,35 @@ const ISL = () => {
       if (error) throw error;
 
       if (data && data.length > 0) {
-        setQuestions(data);
-        console.log(`✅ Loaded ${data.length} questions from Supabase`);
+        // Get practice counts for all questions
+        const { data: sessions } = await supabase
+          .from('practice_sessions')
+          .select('question_id, ai_feedback')
+          .eq('user_id', user.id);
+
+        // Calculate practiceCount and averageScore for each question
+        const questionsWithStats = data.map(q => {
+          const questionSessions = sessions?.filter(s => s.question_id === q.id) || [];
+          const practiceCount = questionSessions.length;
+          const scores = questionSessions
+            .map(s => s.ai_feedback?.overall)
+            .filter(score => score != null);
+          const averageScore = scores.length > 0 
+            ? scores.reduce((sum, score) => sum + score, 0) / scores.length 
+            : 0;
+          
+          return {
+            ...q,
+            practiceCount,
+            averageScore,
+            lastPracticed: questionSessions.length > 0 
+              ? questionSessions[questionSessions.length - 1].created_at 
+              : null
+          };
+        });
+
+        setQuestions(questionsWithStats);
+        console.log(`✅ Loaded ${questionsWithStats.length} questions from Supabase`);
       }
     } catch (error) {
       console.error('❌ Error loading questions:', error);
@@ -658,16 +685,15 @@ useEffect(() => {
         priority: question.priority,
         bullets: question.bullets || [],
         narrative: question.narrative || '',
-        keywords: question.keywords || [],
-        practice_count: 0
+        keywords: question.keywords || []
       }])
       .select()
       .single();
 
     if (error) throw error;
 
-    // Add to local state
-    setQuestions([...questions, data]);
+    // Reload questions to get practice stats
+    await loadQuestions();
     console.log('✅ Question saved to Supabase');
   } catch (error) {
     console.error('❌ Error adding question:', error);
@@ -690,7 +716,8 @@ useEffect(() => {
 
     if (error) throw error;
 
-    setQuestions(questions.map(q => q.id === id ? { ...q, ...updatedQ } : q));
+    // Reload questions to get updated stats
+    await loadQuestions();
     console.log('✅ Question updated in Supabase');
   } catch (error) {
     console.error('❌ Error updating question:', error);
@@ -716,7 +743,47 @@ useEffect(() => {
   }
 };
   const exportQuestions = () => { const dataStr = JSON.stringify(questions, null, 2); const blob = new Blob([dataStr], { type: 'application/json' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = `isl-questions-${Date.now()}.json`; link.click(); };
-  const importQuestions = (jsonData) => { try { const imported = JSON.parse(jsonData); if (Array.isArray(imported)) { const newQs = imported.map(q => ({ ...q, id: Date.now() + Math.random(), practiceCount: 0, lastPracticed: null, averageScore: 0 })); setQuestions([...questions, ...newQs]); alert(`Imported ${newQs.length}!`); } } catch (error) { alert('Invalid JSON'); } };
+  const importQuestions = async (jsonData) => { 
+    try { 
+      const imported = JSON.parse(jsonData); 
+      if (!Array.isArray(imported)) {
+        alert('Invalid format: Expected an array of questions');
+        return;
+      }
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        alert('Please sign in to import questions');
+        return;
+      }
+      
+      // Import to Supabase
+      const questionsToImport = imported.map(q => ({
+        user_id: user.id,
+        question: q.question,
+        category: q.category || 'Imported',
+        priority: q.priority || 'Standard',
+        bullets: q.bullets || [],
+        narrative: q.narrative || '',
+        keywords: q.keywords || []
+      }));
+      
+      const { data, error } = await supabase
+        .from('questions')
+        .insert(questionsToImport)
+        .select();
+      
+      if (error) throw error;
+      
+      // Reload questions to get the imported ones with IDs
+      await loadQuestions();
+      
+      alert(`✅ Imported ${data.length} questions!`); 
+    } catch (error) { 
+      console.error('Import error:', error);
+      alert('Failed to import: ' + error.message); 
+    } 
+  };
 
   // MODE STARTERS
   const startPrompterMode = () => { accumulatedTranscript.current = ''; if (questions.length === 0) { alert('Add questions first!'); return; } setCurrentMode('prompter'); setCurrentView('prompter'); setMatchedQuestion(null); setTranscript(''); };
@@ -1403,7 +1470,27 @@ onClick={async () => {
       
     } else {
       // CONVERSATION ENDED - Show final feedback
-      await savePracticeSession(currentQuestion, conversationHistory, feedbackJson);
+      // Build complete conversation summary
+      const fullConversation = [
+        ...conversationHistory,
+        {
+          question: followUpQuestion || currentQuestion.question,
+          answer: answer
+        }
+      ];
+      
+      // Create a text summary of the entire conversation
+      const conversationSummary = fullConversation
+        .map((exchange, idx) => `Q${idx + 1}: ${exchange.question}\nA${idx + 1}: ${exchange.answer}`)
+        .join('\n\n');
+      
+      // Save with conversation history in feedback
+      const feedbackWithConversation = {
+        ...feedbackJson,
+        conversation_history: fullConversation
+      };
+      
+      await savePracticeSession(currentQuestion, conversationSummary, feedbackWithConversation);
 
       setFeedback(feedbackJson);
       setPracticeHistory([
@@ -3393,11 +3480,36 @@ onClick={async () => {
                 {showTemplateLibrary && (
                   <TemplateLibrary
                     onClose={() => setShowTemplateLibrary(false)}
-                    onImport={(importedQuestions) => {
+                    onImport={async (importedQuestions) => {
                       console.log('Importing questions:', importedQuestions);
                       try {
-                        setQuestions([...questions, ...importedQuestions]);
+                        const { data: { user } } = await supabase.auth.getUser();
+                        if (!user) {
+                          alert('Please sign in to import templates');
+                          return;
+                        }
+                        
+                        // Save to Supabase
+                        const questionsToImport = importedQuestions.map(q => ({
+                          user_id: user.id,
+                          question: q.question,
+                          category: q.category || 'Template',
+                          priority: q.priority || 'Standard',
+                          bullets: q.bullets || [],
+                          narrative: q.narrative || '',
+                          keywords: q.keywords || []
+                        }));
+                        
+                        const { error } = await supabase
+                          .from('questions')
+                          .insert(questionsToImport);
+                        
+                        if (error) throw error;
+                        
+                        // Reload questions
+                        await loadQuestions();
                         setShowTemplateLibrary(false);
+                        alert(`✅ Imported ${importedQuestions.length} template questions!`);
                       } catch (error) {
                         console.error('Error importing:', error);
                         alert('Import failed: ' + error.message);
