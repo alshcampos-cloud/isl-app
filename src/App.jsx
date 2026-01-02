@@ -3234,16 +3234,34 @@ onClick={async () => {
               {/* AI Question Generator - Pro/Premium Only */}
 {(usageStats?.tier === 'pro' || usageStats?.tier === 'premium' || usageStats?.tier === 'beta') ? (
   <QuestionAssistant
-    onQuestionGenerated={(generatedQuestion) => {
-      setNewQuestion(generatedQuestion);
-      setTimeout(() => {
-        const input = document.querySelector('input[placeholder*="Enter your interview question"]');
-        if (input) {
-          input.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          input.focus();
-        }
-      }, 100);
-    }}
+    onQuestionGenerated={async (generatedQuestion) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data, error } = await supabase
+        .from('questions')
+        .insert([{
+          user_id: user.id,
+          question: generatedQuestion,
+          category: 'Generated',
+          priority: 'Technical',
+          bullets: [],
+          narrative: ''
+        }])
+        .select()
+        .single();
+      
+      if (!error && data) {
+        // Add to local state
+        setQuestions([...questions, data]);
+        alert('✅ Question added to bank!');
+      }
+    }
+  } catch (error) {
+    console.error('Save error:', error);
+    alert('Failed to save question');
+  }
+}}
     existingQuestions={questions}
   />
 ) : (
