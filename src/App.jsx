@@ -263,8 +263,6 @@ const ISL = () => {
     };
   }, []);
 
-     return () => subscription.unsubscribe();
-   }, []);
   useEffect(() => {
     if (currentView === 'home') {
       getCurrentUsage().then(stats => {
