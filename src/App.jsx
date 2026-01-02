@@ -231,54 +231,40 @@ const getUserContext = () => {
   return { targetRole: '', targetCompany: '', background: '' };
 };
 
-  // INIT
-// INIT
-useEffect(() => {
-  const savedKey = localStorage.getItem('isl_api_key');
-  if (savedKey) {
-    setApiKey(savedKey);
-    setShowApiSetup(false);
-  }
-  
-  // Load questions from Supabase instead of localStorage
-  loadQuestions();
-  
-  const savedType = localStorage.getItem('isl_interview_type');
-  if (savedType) setInterviewType(savedType);
-  const savedHistory = localStorage.getItem('isl_history');
-  if (savedHistory) setPracticeHistory(JSON.parse(savedHistory));
-  if ('speechSynthesis' in window) synthRef.current = window.speechSynthesis;
-  initSpeechRecognition();
-}, []);
-
 // Load questions from Supabase
-const loadQuestions = async () => {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+  const loadQuestions = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    const { data, error } = await supabase
-      .from('questions')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
+      const { data, error } = await supabase
+        .from('questions')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
-    if (error) throw error;
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        setQuestions(data);
+        console.log(`✅ Loaded ${data.length} questions from Supabase`);
+      }
+    } catch (error) {
+      console.error('❌ Error loading questions:', error);
+    }
+  };
+
+  // INIT
+  useEffect(() => {
+    const savedKey = localStorage.getItem('isl_api_key');
+    if (savedKey) {
+      setApiKey(savedKey);
+      setShowApiSetup(false);
+    }
     
-    if (data && data.length > 0) {
-      setQuestions(data);
-      console.log(`✅ Loaded ${data.length} questions from Supabase`);
-    }
-  } catch (error) {
-    console.error('❌ Error loading questions:', error);
-  }
-};
-const savedQuestions = localStorage.getItem('isl_questions');
-    if (savedQuestions) {
-      setQuestions(JSON.parse(savedQuestions));
-    } else {
-      setQuestions([]);
-    }
+    // Load questions from Supabase
+    loadQuestions();
+    
     const savedType = localStorage.getItem('isl_interview_type');
     if (savedType) setInterviewType(savedType);
     const savedHistory = localStorage.getItem('isl_history');
