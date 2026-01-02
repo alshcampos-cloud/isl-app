@@ -232,13 +232,47 @@ const getUserContext = () => {
 };
 
   // INIT
-  // INIT
-  useEffect(() => {
-    const savedKey = localStorage.getItem('isl_api_key');
-    if (savedKey) {
-      setApiKey(savedKey);
-      setShowApiSetup(false);
+// INIT
+useEffect(() => {
+  const savedKey = localStorage.getItem('isl_api_key');
+  if (savedKey) {
+    setApiKey(savedKey);
+    setShowApiSetup(false);
+  }
+  
+  // Load questions from Supabase instead of localStorage
+  loadQuestions();
+  
+  const savedType = localStorage.getItem('isl_interview_type');
+  if (savedType) setInterviewType(savedType);
+  const savedHistory = localStorage.getItem('isl_history');
+  if (savedHistory) setPracticeHistory(JSON.parse(savedHistory));
+  if ('speechSynthesis' in window) synthRef.current = window.speechSynthesis;
+  initSpeechRecognition();
+}, []);
+
+// Load questions from Supabase
+const loadQuestions = async () => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('questions')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    
+    if (data && data.length > 0) {
+      setQuestions(data);
+      console.log(`✅ Loaded ${data.length} questions from Supabase`);
     }
+  } catch (error) {
+    console.error('❌ Error loading questions:', error);
+  }
+};
 const savedQuestions = localStorage.getItem('isl_questions');
     if (savedQuestions) {
       setQuestions(JSON.parse(savedQuestions));
@@ -646,9 +680,80 @@ useEffect(() => {
   };
 
   // QUESTION MANAGEMENT
-  const addQuestion = (question) => { const newQ = { id: Date.now(), ...question, practiceCount: 0, lastPracticed: null, averageScore: 0 }; setQuestions([...questions, newQ]); };
-  const updateQuestion = (id, updatedQ) => { setQuestions(questions.map(q => q.id === id ? { ...q, ...updatedQ } : q)); };
-  const deleteQuestion = (id) => { if (confirm('Delete?')) setQuestions(questions.filter(q => q.id !== id)); };
+  const addQuestion = async (question) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      alert('Please sign in to add questions');
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from('questions')
+      .insert([{
+        user_id: user.id,
+        question: question.question,
+        category: question.category,
+        priority: question.priority,
+        bullets: question.bullets || [],
+        narrative: question.narrative || '',
+        keywords: question.keywords || [],
+        practice_count: 0
+      }])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Add to local state
+    setQuestions([...questions, data]);
+    console.log('✅ Question saved to Supabase');
+  } catch (error) {
+    console.error('❌ Error adding question:', error);
+    alert('Failed to save question: ' + error.message);
+  }
+};
+  const updateQuestion = async (id, updatedQ) => {
+  try {
+    const { error } = await supabase
+      .from('questions')
+      .update({
+        question: updatedQ.question,
+        category: updatedQ.category,
+        priority: updatedQ.priority,
+        bullets: updatedQ.bullets || [],
+        narrative: updatedQ.narrative || '',
+        keywords: updatedQ.keywords || []
+      })
+      .eq('id', id);
+
+    if (error) throw error;
+
+    setQuestions(questions.map(q => q.id === id ? { ...q, ...updatedQ } : q));
+    console.log('✅ Question updated in Supabase');
+  } catch (error) {
+    console.error('❌ Error updating question:', error);
+    alert('Failed to update question: ' + error.message);
+  }
+};
+  const deleteQuestion = async (id) => {
+  if (!confirm('Delete?')) return;
+  
+  try {
+    const { error } = await supabase
+      .from('questions')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+
+    setQuestions(questions.filter(q => q.id !== id));
+    console.log('✅ Question deleted from Supabase');
+  } catch (error) {
+    console.error('❌ Error deleting question:', error);
+    alert('Failed to delete question: ' + error.message);
+  }
+};
   const exportQuestions = () => { const dataStr = JSON.stringify(questions, null, 2); const blob = new Blob([dataStr], { type: 'application/json' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = `isl-questions-${Date.now()}.json`; link.click(); };
   const importQuestions = (jsonData) => { try { const imported = JSON.parse(jsonData); if (Array.isArray(imported)) { const newQs = imported.map(q => ({ ...q, id: Date.now() + Math.random(), practiceCount: 0, lastPracticed: null, averageScore: 0 })); setQuestions([...questions, ...newQs]); alert(`Imported ${newQs.length}!`); } } catch (error) { alert('Invalid JSON'); } };
 
