@@ -924,52 +924,50 @@ const startPracticeMode = async () => {
             <div className="bg-white/10 backdrop-blur-lg rounded-xl p-4 text-white hover:bg-white/15 transition-all duration-200">
               <div className="flex items-center gap-3">
                 <Database className="w-8 h-8 text-indigo-300 flex-shrink-0" />
-                <div>
-                  <p className="text-2xl font-bold">{questions.length}</p>
-                  <p className="text-xs text-gray-300">Questions</p>
+                <div className="min-w-0">
+                  <p className="text-2xl font-bold leading-tight">{questions.length}</p>
+                  <p className="text-sm text-white/90 leading-tight font-medium">Questions</p>
                 </div>
               </div>
             </div>
             <div className="bg-white/10 backdrop-blur-lg rounded-xl p-4 text-white hover:bg-white/15 transition-all duration-200">
               <div className="flex items-center gap-3">
                 <TrendingUp className="w-8 h-8 text-green-300 flex-shrink-0" />
-                <div>
-                  <p className="text-2xl font-bold">{practiceHistory.length}</p>
-                  <p className="text-xs text-gray-300">Sessions</p>
+                <div className="min-w-0">
+                  <p className="text-2xl font-bold leading-tight">{practiceHistory.length}</p>
+                  <p className="text-sm text-white/90 leading-tight font-medium">Sessions</p>
                 </div>
               </div>
             </div>
             <div className="bg-white/10 backdrop-blur-lg rounded-xl p-4 text-white hover:bg-white/15 transition-all duration-200">
               <div className="flex items-center gap-3">
                 <Sparkles className="w-8 h-8 text-pink-300 flex-shrink-0" />
-                <div>
-                  <p className="text-2xl font-bold">{apiKey ? '✓' : '✗'}</p>
-                  <p className="text-xs text-gray-300">AI Ready</p>
+                <div className="min-w-0">
+                  <p className="text-2xl font-bold leading-tight">{apiKey ? '✓' : '✗'}</p>
+                  <p className="text-sm text-white/90 leading-tight whitespace-nowrap font-medium">AI Ready</p>
                 </div>
               </div>
             </div>
-            {usageStats && (
-              <div className="bg-white/10 backdrop-blur-lg rounded-xl p-4 text-white hover:bg-white/15 transition-all duration-200">
-                <div className="flex items-center gap-3">
-                  <Zap className="w-8 h-8 text-yellow-300 flex-shrink-0" />
-                  <div>
-                    <p className="text-2xl font-bold">
-                      {usageStats.session_count}/{usageStats.tier === 'free' ? '25' : usageStats.tier === 'pro' ? '100' : '∞'}
-                    </p>
-                    <p className="text-xs text-gray-300">
-                      {usageStats.tier === 'free' ? 'Free' : usageStats.tier === 'pro' ? 'Pro' : 'Beta'}
-                    </p>
-                  </div>
+            <div className="bg-white/10 backdrop-blur-lg rounded-xl p-4 text-white hover:bg-white/15 transition-all duration-200">
+              <div className="flex items-center gap-3">
+                <Zap className="w-8 h-8 text-yellow-300 flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-2xl font-bold leading-tight">
+                    {usageStats ? `${usageStats.session_count}/${usageStats.tier === 'free' ? '25' : usageStats.tier === 'pro' ? '100' : '∞'}` : '0/∞'}
+                  </p>
+                  <p className="text-sm text-white/90 leading-tight whitespace-nowrap font-medium">
+                    {usageStats ? (usageStats.tier === 'free' ? 'Free Tier' : usageStats.tier === 'pro' ? 'Pro Tier' : 'Beta Tester') : 'Beta Tester'}
+                  </p>
                 </div>
               </div>
-            )}
+            </div>
           </div>
 
           {/* Quick Start Tip - Compact */}
           {questions.length === 0 && (
             <div className="bg-blue-500/20 backdrop-blur-lg border-2 border-blue-400/30 rounded-xl p-4 text-white mb-6">
-              <p className="text-sm font-semibold mb-1">👋 Quick Start:</p>
-              <p className="text-xs text-blue-100">Click Command Center → Question Bank → Import templates to get started!</p>
+              <p className="text-base font-bold mb-1.5">👋 Ready to start your interview journey?</p>
+              <p className="text-sm text-white/90 font-medium">Head to Command Center → Question Bank → Import templates to load your first questions!</p>
             </div>
           )}
 
@@ -978,57 +976,65 @@ const startPracticeMode = async () => {
             <h2 className="text-2xl font-bold text-white mb-4">🎯 Practice Modes</h2>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Live Prompter */}
-              <div className="bg-white rounded-xl shadow-lg p-5 transition-all duration-200 hover:shadow-2xl hover:-translate-y-1 cursor-pointer group">
-                <div className="text-center">
-                  <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-200">
-                    <Mic className="w-7 h-7 text-white" />
+              <div className="bg-white rounded-xl shadow-lg p-5 transition-all duration-200 hover:shadow-2xl hover:-translate-y-1 cursor-pointer group min-h-[200px] flex flex-col">
+                <div className="text-center flex-1 flex flex-col justify-between">
+                  <div>
+                    <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-200">
+                      <Mic className="w-7 h-7 text-white" />
+                    </div>
+                    <h3 className="text-lg font-bold mb-2 leading-tight text-gray-900">Live Prompter</h3>
+                    <p className="text-gray-700 text-sm mb-3 leading-snug font-medium">Real-time bullet prompts</p>
                   </div>
-                  <h3 className="text-lg font-bold mb-1">Live Prompter</h3>
-                  <p className="text-gray-600 text-xs mb-3">Hold SPACEBAR → Show bullets</p>
-                  <button onClick={startPrompterMode} className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-2.5 rounded-lg transition-all duration-200 text-sm">
-                    Start
+                  <button onClick={startPrompterMode} className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 rounded-lg transition-all duration-200 text-sm">
+                    Start Practice
                   </button>
                 </div>
               </div>
 
               {/* AI Interviewer */}
-              <div className="bg-white rounded-xl shadow-lg p-5 transition-all duration-200 hover:shadow-2xl hover:-translate-y-1 cursor-pointer group">
-                <div className="text-center">
-                  <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-200">
-                    <Bot className="w-7 h-7 text-white" />
+              <div className="bg-white rounded-xl shadow-lg p-5 transition-all duration-200 hover:shadow-2xl hover:-translate-y-1 cursor-pointer group min-h-[200px] flex flex-col">
+                <div className="text-center flex-1 flex flex-col justify-between">
+                  <div>
+                    <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-200">
+                      <Bot className="w-7 h-7 text-white" />
+                    </div>
+                    <h3 className="text-lg font-bold mb-2 leading-tight text-gray-900">AI Interviewer</h3>
+                    <p className="text-gray-700 text-sm mb-3 leading-snug font-medium">Realistic interview practice</p>
                   </div>
-                  <h3 className="text-lg font-bold mb-1">AI Interviewer</h3>
-                  <p className="text-gray-600 text-xs mb-3">AI asks, you answer</p>
-                  <button onClick={startAIInterviewer} className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold py-2.5 rounded-lg transition-all duration-200 text-sm">
-                    Start
+                  <button onClick={startAIInterviewer} className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold py-3 rounded-lg transition-all duration-200 text-sm">
+                    Start Interview
                   </button>
                 </div>
               </div>
 
               {/* Practice Mode */}
-              <div className="bg-white rounded-xl shadow-lg p-5 transition-all duration-200 hover:shadow-2xl hover:-translate-y-1 cursor-pointer group">
-                <div className="text-center">
-                  <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-200">
-                    <Target className="w-7 h-7 text-white" />
+              <div className="bg-white rounded-xl shadow-lg p-5 transition-all duration-200 hover:shadow-2xl hover:-translate-y-1 cursor-pointer group min-h-[200px] flex flex-col">
+                <div className="text-center flex-1 flex flex-col justify-between">
+                  <div>
+                    <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-200">
+                      <Target className="w-7 h-7 text-white" />
+                    </div>
+                    <h3 className="text-lg font-bold mb-2 leading-tight text-gray-900">Practice</h3>
+                    <p className="text-gray-700 text-sm mb-3 leading-snug font-medium">AI-powered feedback</p>
                   </div>
-                  <h3 className="text-lg font-bold mb-1">Practice</h3>
-                  <p className="text-gray-600 text-xs mb-3">Get AI feedback</p>
-                  <button onClick={startPracticeMode} className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-2.5 rounded-lg transition-all duration-200 text-sm">
-                    Start
+                  <button onClick={startPracticeMode} className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-3 rounded-lg transition-all duration-200 text-sm">
+                    Start Session
                   </button>
                 </div>
               </div>
 
               {/* Flashcard */}
-              <div className="bg-white rounded-xl shadow-lg p-5 transition-all duration-200 hover:shadow-2xl hover:-translate-y-1 cursor-pointer group">
-                <div className="text-center">
-                  <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-200">
-                    <BookOpen className="w-7 h-7 text-white" />
+              <div className="bg-white rounded-xl shadow-lg p-5 transition-all duration-200 hover:shadow-2xl hover:-translate-y-1 cursor-pointer group min-h-[200px] flex flex-col">
+                <div className="text-center flex-1 flex flex-col justify-between">
+                  <div>
+                    <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-200">
+                      <BookOpen className="w-7 h-7 text-white" />
+                    </div>
+                    <h3 className="text-lg font-bold mb-2 leading-tight text-gray-900">Flashcard</h3>
+                    <p className="text-gray-700 text-sm mb-3 leading-snug font-medium">Quick memory drill</p>
                   </div>
-                  <h3 className="text-lg font-bold mb-1">Flashcard</h3>
-                  <p className="text-gray-600 text-xs mb-3">Quick recall</p>
-                  <button onClick={startFlashcardMode} className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-bold py-2.5 rounded-lg transition-all duration-200 text-sm">
-                    Start
+                  <button onClick={startFlashcardMode} className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-bold py-3 rounded-lg transition-all duration-200 text-sm">
+                    Start Review
                   </button>
                 </div>
               </div>
@@ -1036,18 +1042,18 @@ const startPracticeMode = async () => {
           </div>
 
           {/* Command Center - Professional Button */}
-          <div data-tutorial="command-center" className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl shadow-xl p-6 hover:shadow-2xl transition-all duration-200 hover:-translate-y-0.5 cursor-pointer border-2 border-white/20" onClick={() => setCurrentView('command-center')}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="text-5xl">🎯</div>
-                <div className="text-white">
-                  <h3 className="text-xl font-bold mb-1">Command Center</h3>
-                  <p className="text-sm text-indigo-100">Analytics • Queue • Interview Prep • Question Bank</p>
+          <div data-tutorial="command-center" className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl shadow-xl p-5 hover:shadow-2xl transition-all duration-200 hover:-translate-y-0.5 cursor-pointer border-2 border-white/20" onClick={() => setCurrentView('command-center')}>
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4 min-w-0 flex-1">
+                <div className="text-4xl flex-shrink-0 leading-none">🎯</div>
+                <div className="text-white min-w-0 flex-1">
+                  <h3 className="text-xl font-bold mb-1 leading-tight">Command Center</h3>
+                  <p className="text-base text-white/90 leading-snug font-medium truncate">Track progress, manage questions, prep interviews</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-white font-semibold">
-                <span className="hidden md:inline">Open Dashboard</span>
-                <span className="text-2xl">→</span>
+              <div className="flex items-center gap-2 text-white font-bold flex-shrink-0">
+                <span className="hidden md:inline text-base">Open</span>
+                <span className="text-2xl leading-none">→</span>
               </div>
             </div>
           </div>
