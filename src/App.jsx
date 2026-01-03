@@ -844,81 +844,77 @@ const startPracticeMode = async () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
         <div className="container mx-auto px-4 py-8">
-          <div className="text-center mb-12">
-            <h1 className="text-6xl font-bold text-white mb-4">ISL</h1>
-            {/* Header with Profile */}
-          <div className="flex items-center justify-between mb-8">
-            <div></div>
+          
+          {/* Profile Menu - Top Right Corner */}
+          <div className="flex justify-end mb-6">
             <div className="relative">
               <button
-              data-tutorial="menu"
+                data-tutorial="menu"
                 onClick={() => setShowProfileDropdown(!showProfileDropdown)}
-                className="flex items-center gap-3 bg-white/10 hover:bg-white/20 backdrop-blur-lg rounded-full px-6 py-3 text-white transition-all border border-white/20"
+                className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-lg rounded-full px-4 py-2 text-white transition-all border border-white/20"
               >
-                <div className="w-8 h-8 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center font-bold">
-  {currentUser?.email?.charAt(0).toUpperCase() || 'U'}
-</div>
-<span className={`transition-transform ${showProfileDropdown ? 'rotate-180' : ''}`}>▼</span>
+                <div className="w-8 h-8 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center font-bold text-sm">
+                  {currentUser?.email?.charAt(0).toUpperCase() || 'U'}
+                </div>
+                <span className={`transition-transform text-sm ${showProfileDropdown ? 'rotate-180' : ''}`}>▼</span>
               </button>
 
               {/* Dropdown */}
               {showProfileDropdown && (
                 <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-xl shadow-2xl overflow-hidden z-50">
                   <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 text-white">
-<p className="font-bold text-lg">
-  {currentUser?.user_metadata?.full_name || currentUser?.email?.split('@')[0] || 'User'}
-</p>
-<p className="text-sm opacity-70">{currentUser?.email}</p>
+                    <p className="font-bold text-lg">
+                      {currentUser?.user_metadata?.full_name || currentUser?.email?.split('@')[0] || 'User'}
+                    </p>
+                    <p className="text-sm opacity-70">{currentUser?.email}</p>
                   </div>
-<button
-  onClick={async (e) => {
-    e.stopPropagation();
-    // DON'T close dropdown yet
-    if (confirm('Are you sure you want to sign out?')) {
-      setShowProfileDropdown(false);  // ← MOVE THIS HERE
-      try {
-  console.log('Starting sign out...');
-  
-  const { error } = await supabase.auth.signOut({ scope: 'global' });
+                  <button
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      if (confirm('Are you sure you want to sign out?')) {
+                        setShowProfileDropdown(false);
+                        try {
+                          console.log('Starting sign out...');
+                          
+                          const { error } = await supabase.auth.signOut({ scope: 'global' });
 
-if (error) {
-  console.error('Sign out error:', error);
-  alert('Failed to sign out: ' + error.message);
-} else {
-  console.log('✅ Signed out successfully');
-  
-  // Clear only auth-related items, keep API key
-  const keysToRemove = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    // Keep API key, remove everything else
-    if (key !== 'isl_api_key') {
-      keysToRemove.push(key);
-    }
-  }
-  keysToRemove.forEach(key => localStorage.removeItem(key));
-  
-  // Clear session storage
-  sessionStorage.clear();
-  
-  // Reload to login screen
-  window.location.href = '/';
-}
-      } catch (err) {
-        console.error('Sign out exception:', err);
-        alert('Error signing out');
-      }
-    }
-  }}
-  className="w-full px-4 py-3 text-left hover:bg-gray-50 transition flex items-center gap-3 text-gray-700"
->
-  <X className="w-5 h-5 text-red-600" />
-  <span className="font-semibold">Sign Out</span>
-</button>
+                          if (error) {
+                            console.error('Sign out error:', error);
+                            alert('Failed to sign out: ' + error.message);
+                          } else {
+                            console.log('✅ Signed out successfully');
+                            
+                            // Clear only auth-related items, keep API key
+                            const keysToRemove = [];
+                            for (let i = 0; i < localStorage.length; i++) {
+                              const key = localStorage.key(i);
+                              if (key !== 'isl_api_key') {
+                                keysToRemove.push(key);
+                              }
+                            }
+                            keysToRemove.forEach(key => localStorage.removeItem(key));
+                            sessionStorage.clear();
+                            window.location.href = '/';
+                          }
+                        } catch (err) {
+                          console.error('Sign out exception:', err);
+                          alert('Error signing out');
+                        }
+                      }
+                    }}
+                    className="w-full px-4 py-3 text-left hover:bg-gray-50 transition flex items-center gap-3 text-gray-700"
+                  >
+                    <X className="w-5 h-5 text-red-600" />
+                    <span className="font-semibold">Sign Out</span>
+                  </button>
                 </div>
               )}
             </div>
           </div>
+
+          {/* Clean Centered Title */}
+          <div className="text-center mb-10">
+            <h1 className="text-6xl font-bold text-white mb-3">ISL</h1>
             <p className="text-3xl text-indigo-200 mb-2">Interview as a Second Language</p>
             <p className="text-gray-300">Master interviews with AI-powered practice</p>
           </div>
