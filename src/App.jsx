@@ -51,6 +51,15 @@ const styles = `
 
   .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
   .animate-slideUp { animation: slideUp 0.4s ease-out; }
+
+  /* Hide scrollbar for swipeable tabs */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 `;
 
 // ==========================================
@@ -2631,91 +2640,67 @@ onClick={async () => {
   if (currentView === 'command-center') {
     return (
       <div className="min-h-screen bg-gray-50">
-        {/* Header */}
-        <div className="bg-white shadow-sm border-b">
+        {/* Header - Compact */}
+        <div className="bg-white shadow-sm">
           <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <button onClick={() => setCurrentView('home')} className="text-gray-600 hover:text-gray-900">
-              ← Back to Home
+            <button onClick={() => setCurrentView('home')} className="text-gray-700 hover:text-gray-900 font-medium text-sm">
+              ← Back
             </button>
             <h1 className="text-2xl font-bold text-gray-900">🎯 Command Center</h1>
-            <div className="w-24"></div>
-          </div>
-          
-          {/* Quick Help Guide */}
-          <div className="container mx-auto px-4 pb-4">
-            <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
-              <p className="text-sm font-bold text-blue-900 mb-2">💡 Quick Guide:</p>
-              <div className="grid md:grid-cols-5 gap-3 text-xs text-blue-800">
-                <div>
-                  <span className="font-bold">📊 Analytics:</span> View stats, practice history, top questions
-                </div>
-                <div>
-                  <span className="font-bold">🎯 Queue:</span> See which questions need practice
-                </div>
-                <div>
-                  <span className="font-bold">🗓️ Prep:</span> Set interview date & daily goals
-                </div>
-                <div>
-                  <span className="font-bold">📚 Bank:</span> Add, edit, import questions
-                </div>
-                <div>
-                  <span className="font-bold">📈 Progress:</span> Track improvement over time
-                </div>
-              </div>
-            </div>
+            <div className="w-16"></div>
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="bg-white border-b">
-          <div className="container mx-auto px-4">
-            <div className="flex gap-8">
+        {/* Swipeable Tabs - Sticky */}
+        <div className="sticky top-0 bg-white border-b shadow-sm z-40">
+          <div className="overflow-x-auto scrollbar-hide">
+            <div className="flex gap-2 px-4 py-3 min-w-max">
               <button
                 onClick={() => setCommandCenterTab('analytics')}
-                className={`py-4 px-2 font-semibold border-b-2 transition ${
+                className={`px-4 py-2.5 rounded-lg font-bold text-sm transition-all whitespace-nowrap ${
                   commandCenterTab === 'analytics'
-                    ? 'border-indigo-600 text-indigo-600'
-                    : 'border-transparent text-gray-600 hover:text-gray-900'
+                    ? 'bg-indigo-600 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
                 📊 Analytics
               </button>
               <button
                 onClick={() => setCommandCenterTab('queue')}
-                className={`py-4 px-2 font-semibold border-b-2 transition ${
+                className={`px-4 py-2.5 rounded-lg font-bold text-sm transition-all whitespace-nowrap ${
                   commandCenterTab === 'queue'
-                    ? 'border-indigo-600 text-indigo-600'
-                    : 'border-transparent text-gray-600 hover:text-gray-900'
+                    ? 'bg-indigo-600 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                🎯 Practice Queue
+                🎯 Queue
               </button>
               <button
                 onClick={() => setCommandCenterTab('prep')}
-                className={`py-4 px-2 font-semibold border-b-2 transition ${
+                className={`px-4 py-2.5 rounded-lg font-bold text-sm transition-all whitespace-nowrap ${
                   commandCenterTab === 'prep'
-                    ? 'border-indigo-600 text-indigo-600'
-                    : 'border-transparent text-gray-600 hover:text-gray-900'
+                    ? 'bg-indigo-600 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                🗓️ Interview Prep
+                🗓️ Prep
               </button>
               <button
                 onClick={() => setCommandCenterTab('bank')}
-                className={`py-4 px-2 font-semibold border-b-2 transition ${
+                className={`px-4 py-2.5 rounded-lg font-bold text-sm transition-all whitespace-nowrap ${
                   commandCenterTab === 'bank'
-                    ? 'border-indigo-600 text-indigo-600'
-                    : 'border-transparent text-gray-600 hover:text-gray-900'
+                    ? 'bg-indigo-600 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                📚 Question Bank
+                📚 Bank
               </button>
               <button
                 onClick={() => setCommandCenterTab('progress')}
-                className={`py-4 px-2 font-semibold border-b-2 transition ${
+                className={`px-4 py-2.5 rounded-lg font-bold text-sm transition-all whitespace-nowrap ${
                   commandCenterTab === 'progress'
-                    ? 'border-indigo-600 text-indigo-600'
-                    : 'border-transparent text-gray-600 hover:text-gray-900'
+                    ? 'bg-indigo-600 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
                 📈 Progress
@@ -2725,39 +2710,46 @@ onClick={async () => {
         </div>
 
         {/* Content Area */}
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 py-6">
           {/* ==================== ANALYTICS TAB ==================== */}
           {commandCenterTab === 'analytics' && (
             <div>
               {/* Stats Overview */}
-              <div className="grid md:grid-cols-4 gap-6 mb-8">
-                <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-6 text-white">
-                  <p className="text-sm opacity-90 mb-2">Total Sessions</p>
-                  <p className="text-5xl font-black">{practiceHistory.length}</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl p-5 text-white">
+                  <p className="text-sm text-white/90 font-medium mb-1">Total Sessions</p>
+                  <p className="text-4xl font-black">{practiceHistory.length}</p>
+                  <p className="text-xs text-white/75 mt-1">🎯 Keep it up!</p>
                 </div>
-                <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-6 text-white">
-                  <p className="text-sm opacity-90 mb-2">Average Score</p>
-                  <p className="text-5xl font-black">
+                <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-5 text-white">
+                  <p className="text-sm text-white/90 font-medium mb-1">Average Score</p>
+                  <p className="text-4xl font-black">
                     {practiceHistory.length > 0 
                       ? (practiceHistory.reduce((sum, s) => sum + (s.feedback?.overall || 0), 0) / practiceHistory.length).toFixed(1)
                       : '0.0'}
                   </p>
+                  <p className="text-xs text-white/75 mt-1">📈 Improving</p>
                 </div>
-                <div className="bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl p-6 text-white">
-                  <p className="text-sm opacity-90 mb-2">Questions Practiced</p>
-                  <p className="text-5xl font-black">{questions.filter(q => q.practiceCount > 0).length}</p>
+                <div className="bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl p-5 text-white">
+                  <p className="text-sm text-white/90 font-medium mb-1">Practiced</p>
+                  <p className="text-4xl font-black">{questions.filter(q => q.practiceCount > 0).length}</p>
+                  <p className="text-xs text-white/75 mt-1">of {questions.length} total</p>
                 </div>
-                <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl p-6 text-white">
-                  <p className="text-sm opacity-90 mb-2">This Month</p>
-                  <p className="text-5xl font-black">{usageStats?.session_count || 0}</p>
+                <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-xl p-5 text-white">
+                  <p className="text-sm text-white/90 font-medium mb-1">This Month</p>
+                  <p className="text-4xl font-black">{usageStats?.session_count || 0}</p>
+                  <p className="text-xs text-white/75 mt-1">🔥 On fire!</p>
                 </div>
               </div>
 
               {/* Most Practiced Questions */}
-              <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
-                <h3 className="text-2xl font-bold mb-4">🔥 Most Practiced Questions</h3>
+              <div className="bg-white rounded-xl shadow-md p-5 mb-6">
+                <h3 className="text-xl font-bold mb-4 text-gray-900">🔥 You're Crushing These!</h3>
                 {questions.filter(q => q.practiceCount > 0).length === 0 ? (
-                  <p className="text-gray-600">No practice sessions yet!</p>
+                  <div className="text-center py-8">
+                    <p className="text-gray-600 text-base mb-2">No practice sessions yet</p>
+                    <p className="text-sm text-gray-500">Start practicing to see your progress here!</p>
+                  </div>
                 ) : (
                   <div className="space-y-3">
                     {questions
@@ -2765,11 +2757,11 @@ onClick={async () => {
                       .sort((a, b) => b.practiceCount - a.practiceCount)
                       .slice(0, 5)
                       .map((q, idx) => (
-                        <div key={q.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-                          <div className="text-3xl font-black text-gray-300">#{idx + 1}</div>
-                          <div className="flex-1">
-                            <p className="font-semibold text-gray-900">{q.question}</p>
-                            <p className="text-sm text-gray-600">Practiced {q.practiceCount}x • Avg: {q.averageScore.toFixed(1)}/10</p>
+                        <div key={q.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                          <div className="text-2xl font-black text-indigo-600">#{idx + 1}</div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-bold text-gray-900 text-base truncate">{q.question}</p>
+                            <p className="text-sm text-gray-600 font-medium">Practiced {q.practiceCount}x • Avg: {q.averageScore.toFixed(1)}/10</p>
                           </div>
                         </div>
                       ))}
@@ -2778,26 +2770,29 @@ onClick={async () => {
               </div>
 
               {/* Practice History */}
-              <div className="bg-white rounded-2xl shadow-lg p-6">
-                <h3 className="text-2xl font-bold mb-4">📜 Recent Practice Sessions</h3>
+              <div className="bg-white rounded-xl shadow-md p-5">
+                <h3 className="text-xl font-bold mb-4 text-gray-900">📜 Recent Practice Sessions</h3>
                 {practiceHistory.length === 0 ? (
-                  <p className="text-gray-600 text-center py-8">No practice sessions yet. Start practicing!</p>
+                  <div className="text-center py-8">
+                    <p className="text-gray-600 text-base mb-2">No practice sessions yet</p>
+                    <p className="text-sm text-gray-500">Your practice history will appear here!</p>
+                  </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {practiceHistory.slice().reverse().map((session, idx) => (
                       <div key={idx} className="border-l-4 border-indigo-500 bg-gray-50 rounded-r-lg p-4 hover:shadow-md transition">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h4 className="font-bold text-gray-900 mb-2">{session.question}</h4>
-                            <p className="text-sm text-gray-600 mb-3 line-clamp-2">{session.answer}</p>
-                            <div className="flex items-center gap-4 text-xs text-gray-500">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-gray-900 mb-2 text-base">{session.question}</h4>
+                            <p className="text-sm text-gray-700 mb-3 line-clamp-2 font-medium">{session.answer}</p>
+                            <div className="flex items-center gap-4 text-xs text-gray-600 font-medium">
                               <span>📅 {new Date(session.date).toLocaleDateString()}</span>
                               <span>🕐 {new Date(session.date).toLocaleTimeString()}</span>
                             </div>
                           </div>
-                          <div className="ml-4 text-center bg-white rounded-lg p-3 shadow-sm">
+                          <div className="flex-shrink-0 text-center bg-white rounded-lg p-3 shadow-sm">
                             <div className="text-3xl font-black text-indigo-600">{session.feedback?.overall?.toFixed(1) || 'N/A'}</div>
-                            <div className="text-xs text-gray-500">score</div>
+                            <div className="text-xs text-gray-600 font-bold">score</div>
                           </div>
                         </div>
                       </div>
@@ -2812,10 +2807,14 @@ onClick={async () => {
           {commandCenterTab === 'queue' && (
             <div>
               {/* Never Practiced */}
-              <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
-                <h3 className="text-2xl font-bold mb-4 text-red-600">🎯 Need Practice</h3>
+              <div className="bg-white rounded-xl shadow-md p-5 mb-6">
+                <h3 className="text-xl font-bold mb-4 text-red-600">🎯 Let's Strengthen These {questions.filter(q => q.practiceCount === 0).length} Questions!</h3>
                 {questions.filter(q => q.practiceCount === 0).length === 0 ? (
-                  <p className="text-gray-600">Great job! You've practiced all questions at least once.</p>
+                  <div className="text-center py-8">
+                    <p className="text-2xl mb-2">🎉</p>
+                    <p className="text-gray-800 text-base font-bold mb-1">Amazing work!</p>
+                    <p className="text-sm text-gray-600">You've practiced all questions at least once.</p>
+                  </div>
                 ) : (
                   <div className="space-y-3">
                     {questions
@@ -2825,17 +2824,17 @@ onClick={async () => {
                         return priorityOrder[a.priority] - priorityOrder[b.priority];
                       })
                       .map(q => (
-                        <div key={q.id} className="flex items-center justify-between p-4 bg-red-50 border border-red-200 rounded-lg">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                                q.priority === 'Must-Know' ? 'bg-red-100 text-red-800' : 
-                                q.priority === 'Technical' ? 'bg-yellow-100 text-yellow-800' : 
-                                'bg-gray-100 text-gray-800'
+                        <div key={q.id} className="flex items-center justify-between p-4 bg-red-50 border-2 border-red-200 rounded-lg hover:border-red-300 transition">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className={`px-3 py-1 rounded-lg text-xs font-bold ${
+                                q.priority === 'Must-Know' ? 'bg-red-600 text-white' : 
+                                q.priority === 'Technical' ? 'bg-yellow-500 text-white' : 
+                                'bg-gray-500 text-white'
                               }`}>{q.priority}</span>
-                              <span className="text-xs text-gray-500">{q.category}</span>
+                              <span className="text-sm text-gray-700 font-medium">{q.category}</span>
                             </div>
-                            <p className="font-semibold text-gray-900">{q.question}</p>
+                            <p className="font-bold text-gray-900 text-base">{q.question}</p>
                           </div>
                           <button 
                             onClick={async () => {
@@ -2843,7 +2842,6 @@ onClick={async () => {
                               if (!usageCheck.allowed) {
                                 const limit = usageCheck.tier === 'free' ? '25' : '100';
                                 alert(`⚠️ Monthly Limit Reached\n\nYou've used all ${limit} sessions this month.\n\nUpgrade to Pro for 100 sessions/month!`);
-
                                 return;
                               }
                               accumulatedTranscript.current = '';
@@ -2854,7 +2852,7 @@ onClick={async () => {
                               setSpokenAnswer('');
                               setFeedback(null);
                             }}
-                            className="ml-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition"
+                            className="ml-4 px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition text-sm flex-shrink-0"
                           >
                             Practice Now
                           </button>
@@ -2865,20 +2863,24 @@ onClick={async () => {
               </div>
 
               {/* Needs Improvement */}
-              <div className="bg-white rounded-2xl shadow-lg p-6">
-                <h3 className="text-2xl font-bold mb-4 text-yellow-600">📈 Needs Improvement</h3>
+              <div className="bg-white rounded-xl shadow-md p-5">
+                <h3 className="text-xl font-bold mb-4 text-amber-600">📈 Almost There - Keep Going!</h3>
                 {questions.filter(q => q.practiceCount > 0 && q.averageScore < 7).length === 0 ? (
-                  <p className="text-gray-600">All practiced questions scored 7+ average!</p>
+                  <div className="text-center py-8">
+                    <p className="text-2xl mb-2">⭐</p>
+                    <p className="text-gray-800 text-base font-bold mb-1">You're crushing it!</p>
+                    <p className="text-sm text-gray-600">All practiced questions scored 7+ average!</p>
+                  </div>
                 ) : (
                   <div className="space-y-3">
                     {questions
                       .filter(q => q.practiceCount > 0 && q.averageScore < 7)
                       .sort((a, b) => a.averageScore - b.averageScore)
                       .map(q => (
-                        <div key={q.id} className="flex items-center justify-between p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                          <div className="flex-1">
-                            <p className="font-semibold text-gray-900 mb-1">{q.question}</p>
-                            <p className="text-sm text-gray-600">Practiced {q.practiceCount}x • Avg: {q.averageScore.toFixed(1)}/10</p>
+                        <div key={q.id} className="flex items-center justify-between p-4 bg-amber-50 border-2 border-amber-200 rounded-lg hover:border-amber-300 transition">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-bold text-gray-900 mb-2 text-base">{q.question}</p>
+                            <p className="text-sm text-gray-700 font-medium">Practiced {q.practiceCount}x • Avg: {q.averageScore.toFixed(1)}/10 • You've got this!</p>
                           </div>
                           <button 
                             onClick={async () => {
@@ -2886,7 +2888,6 @@ onClick={async () => {
                               if (!usageCheck.allowed) {
                                 const limit = usageCheck.tier === 'free' ? '25' : '100';
                                 alert(`⚠️ Monthly Limit Reached\n\nYou've used all ${limit} sessions this month.\n\nUpgrade to Pro for 100 sessions/month!`);
-
                                 return;
                               }
                               accumulatedTranscript.current = '';
@@ -2897,7 +2898,7 @@ onClick={async () => {
                               setSpokenAnswer('');
                               setFeedback(null);
                             }}
-                            className="ml-4 px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white font-semibold rounded-lg transition"
+                            className="ml-4 px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg transition text-sm flex-shrink-0"
                           >
                             Practice Again
                           </button>
@@ -2913,11 +2914,11 @@ onClick={async () => {
           {commandCenterTab === 'prep' && (
             <div>
               {/* Interview Countdown */}
-              <div className="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl p-8 text-white mb-8">
-                <h3 className="text-3xl font-bold mb-6">🗓️ Interview Countdown</h3>
-                <div className="flex items-center gap-6 mb-6">
-                  <div className="flex-1">
-                    <label className="block text-sm opacity-90 mb-2">Interview Date:</label>
+              <div className="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl p-6 text-white mb-6">
+                <h3 className="text-2xl font-bold mb-4">🗓️ {interviewDate ? `${Math.max(0, Math.ceil((new Date(interviewDate) - new Date()) / (1000 * 60 * 60 * 24)))} Days to Shine!` : 'Set Your Interview Date'}</h3>
+                <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-4">
+                  <div className="flex-1 w-full">
+                    <label className="block text-sm text-white/90 font-medium mb-2">Interview Date:</label>
                     <input 
                       type="date"
                       value={interviewDate}
@@ -2925,25 +2926,26 @@ onClick={async () => {
                         setInterviewDate(e.target.value);
                         localStorage.setItem('isl_interview_date', e.target.value);
                       }}
-                      className="w-full px-4 py-3 rounded-lg text-gray-900 font-semibold"
+                      className="w-full px-4 py-3 rounded-lg text-gray-900 font-bold text-base"
                     />
                   </div>
                   {interviewDate && (
-                    <div className="text-center bg-white/20 backdrop-blur rounded-lg p-6">
-                      <div className="text-6xl font-black mb-2">
+                    <div className="text-center bg-white/20 backdrop-blur rounded-xl p-5 min-w-[140px]">
+                      <div className="text-5xl font-black mb-1">
                         {Math.max(0, Math.ceil((new Date(interviewDate) - new Date()) / (1000 * 60 * 60 * 24)))}
                       </div>
-                      <div className="text-sm opacity-90">days remaining</div>
+                      <div className="text-sm text-white/90 font-bold">days left!</div>
+                      <div className="text-xs text-white/75 mt-1">⭐ You've got this!</div>
                     </div>
                   )}
                 </div>
               </div>
 
               {/* Daily Goal */}
-              <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
-                <h3 className="text-2xl font-bold mb-4">🎯 Daily Practice Goal</h3>
-                <div className="flex items-center gap-4 mb-6">
-                  <label className="text-gray-700 font-semibold">Sessions per day:</label>
+              <div className="bg-white rounded-xl shadow-md p-5 mb-6">
+                <h3 className="text-xl font-bold mb-4 text-gray-900">🎯 Daily Practice Goal</h3>
+                <div className="flex items-center gap-4 mb-4">
+                  <label className="text-gray-800 font-bold text-base">Sessions per day:</label>
                   <input 
                     type="number"
                     min="1"
@@ -2953,30 +2955,34 @@ onClick={async () => {
                       setDailyGoal(parseInt(e.target.value));
                       localStorage.setItem('isl_daily_goal', e.target.value);
                     }}
-                    className="w-20 px-4 py-2 border rounded-lg text-center font-bold"
+                    className="w-20 px-4 py-2 border-2 rounded-lg text-center font-bold text-base"
                   />
                 </div>
-                <div className="bg-gray-100 rounded-lg p-4">
+                <div className="bg-gray-50 rounded-lg p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-semibold text-gray-700">Today's Progress:</span>
-                    <span className="text-lg font-bold text-indigo-600">
+                    <span className="text-sm font-bold text-gray-800">Today's Progress:</span>
+                    <span className="text-xl font-black text-indigo-600">
                       {practiceHistory.filter(s => new Date(s.date).toDateString() === new Date().toDateString()).length} / {dailyGoal}
                     </span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-3">
+                  <div className="w-full bg-gray-200 rounded-full h-4">
                     <div 
-                      className="bg-gradient-to-r from-indigo-500 to-purple-500 h-3 rounded-full transition-all"
+                      className="bg-gradient-to-r from-indigo-500 to-purple-500 h-4 rounded-full transition-all flex items-center justify-end pr-2"
                       style={{ 
                         width: `${Math.min(100, (practiceHistory.filter(s => new Date(s.date).toDateString() === new Date().toDateString()).length / dailyGoal) * 100)}%`
                       }}
-                    ></div>
+                    >
+                      {practiceHistory.filter(s => new Date(s.date).toDateString() === new Date().toDateString()).length >= dailyGoal && (
+                        <span className="text-white text-xs font-bold">🎉 Goal reached!</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Category Coverage */}
-              <div className="bg-white rounded-2xl shadow-lg p-6">
-                <h3 className="text-2xl font-bold mb-4">📚 Category Coverage</h3>
+              <div className="bg-white rounded-xl shadow-md p-5">
+                <h3 className="text-xl font-bold mb-4 text-gray-900">📚 Category Mastery</h3>
                 <div className="space-y-4">
                   {['Core Narrative', 'System-Level', 'Behavioral', 'Technical'].map(category => {
                     const categoryQuestions = questions.filter(q => q.category === category);
@@ -2987,15 +2993,22 @@ onClick={async () => {
                     return (
                       <div key={category} className="p-4 bg-gray-50 rounded-lg">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="font-semibold text-gray-900">{category}</span>
-                          <span className="text-sm text-gray-600">{practiced} / {total} practiced</span>
+                          <span className="font-bold text-gray-900 text-base">{category}</span>
+                          <span className="text-sm text-gray-700 font-bold">{practiced} / {total} practiced</span>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="w-full bg-gray-200 rounded-full h-3">
                           <div 
-                            className="bg-gradient-to-r from-green-500 to-emerald-500 h-2 rounded-full transition-all"
+                            className={`h-3 rounded-full transition-all ${
+                              percentage === 100 ? 'bg-gradient-to-r from-green-500 to-emerald-500' :
+                              percentage >= 50 ? 'bg-gradient-to-r from-blue-500 to-indigo-500' :
+                              'bg-gradient-to-r from-yellow-500 to-orange-500'
+                            }`}
                             style={{ width: `${percentage}%` }}
                           ></div>
                         </div>
+                        {percentage === 100 && (
+                          <p className="text-xs text-green-600 font-bold mt-1">✓ Mastered!</p>
+                        )}
                       </div>
                     );
                   })}
