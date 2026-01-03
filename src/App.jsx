@@ -923,161 +923,138 @@ if (error) {
             <p className="text-gray-300">Master interviews with AI-powered practice</p>
           </div>
 
-          {/* Stats Cards - 3 columns */}
-          <div className="grid md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 text-white text-center">
-              <Database className="w-12 h-12 mb-4 text-indigo-300 mx-auto" />
-              <p className="text-4xl font-bold mb-2">{questions.length}</p>
-              <p className="text-sm text-gray-300">Questions</p>
+          {/* Compact Stats Row - Professional */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+            <div className="bg-white/10 backdrop-blur-lg rounded-xl p-4 text-white hover:bg-white/15 transition-all duration-200">
+              <div className="flex items-center gap-3">
+                <Database className="w-8 h-8 text-indigo-300 flex-shrink-0" />
+                <div>
+                  <p className="text-2xl font-bold">{questions.length}</p>
+                  <p className="text-xs text-gray-300">Questions</p>
+                </div>
+              </div>
             </div>
-            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 text-white text-center">
-              <TrendingUp className="w-12 h-12 mb-4 text-green-300 mx-auto" />
-              <p className="text-4xl font-bold mb-2">{practiceHistory.length}</p>
-              <p className="text-sm text-gray-300">Sessions</p>
+            <div className="bg-white/10 backdrop-blur-lg rounded-xl p-4 text-white hover:bg-white/15 transition-all duration-200">
+              <div className="flex items-center gap-3">
+                <TrendingUp className="w-8 h-8 text-green-300 flex-shrink-0" />
+                <div>
+                  <p className="text-2xl font-bold">{practiceHistory.length}</p>
+                  <p className="text-xs text-gray-300">Sessions</p>
+                </div>
+              </div>
             </div>
-            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 text-white text-center">
-              <Sparkles className="w-12 h-12 mb-4 text-pink-300 mx-auto" />
-              <p className="text-4xl font-bold mb-2">{apiKey ? '✓' : '✗'}</p>
-              <p className="text-sm text-gray-300">AI</p>
+            <div className="bg-white/10 backdrop-blur-lg rounded-xl p-4 text-white hover:bg-white/15 transition-all duration-200">
+              <div className="flex items-center gap-3">
+                <Sparkles className="w-8 h-8 text-pink-300 flex-shrink-0" />
+                <div>
+                  <p className="text-2xl font-bold">{apiKey ? '✓' : '✗'}</p>
+                  <p className="text-xs text-gray-300">AI Ready</p>
+                </div>
+              </div>
             </div>
+            {usageStats && (
+              <div className="bg-white/10 backdrop-blur-lg rounded-xl p-4 text-white hover:bg-white/15 transition-all duration-200">
+                <div className="flex items-center gap-3">
+                  <Zap className="w-8 h-8 text-yellow-300 flex-shrink-0" />
+                  <div>
+                    <p className="text-2xl font-bold">
+                      {usageStats.session_count}/{usageStats.tier === 'free' ? '25' : usageStats.tier === 'pro' ? '100' : '∞'}
+                    </p>
+                    <p className="text-xs text-gray-300">
+                      {usageStats.tier === 'free' ? 'Free' : usageStats.tier === 'pro' ? 'Pro' : 'Beta'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Usage Stats Badge - Full width */}
-          {usageStats && (
-            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-6 text-white text-center mb-8 shadow-xl">
-              <p className="text-sm opacity-90 mb-2">Sessions This Month</p>
-              <p className="text-6xl font-black my-4 tracking-tight">
-                {usageStats.session_count} / {usageStats.tier === 'free' ? '25' : usageStats.tier === 'pro' ? '100' : '∞'}
-              </p>
-              <div className="flex items-center justify-center gap-2 mb-4">
-                <span className="text-sm opacity-75">
-                  {usageStats.tier === 'free' ? '🆓 Free Tier' : usageStats.tier === 'pro' ? '⭐ Pro Tier' : '🚀 Beta Tester'}
-                </span>
-              </div>
-              {usageStats.tier === 'free' && usageStats.session_count >= 20 && (
-                <div className="mt-4 bg-white/20 backdrop-blur rounded-lg p-4">
-                  <p className="text-sm mb-3">You're running low on sessions!</p>
-                  <button className="bg-white text-indigo-600 px-6 py-2 rounded-lg font-bold hover:bg-gray-100 transition">
-                    Upgrade to Pro - 100 sessions/month
+          {/* Quick Start Tip - Compact */}
+          {questions.length === 0 && (
+            <div className="bg-blue-500/20 backdrop-blur-lg border-2 border-blue-400/30 rounded-xl p-4 text-white mb-6">
+              <p className="text-sm font-semibold mb-1">👋 Quick Start:</p>
+              <p className="text-xs text-blue-100">Click Command Center → Question Bank → Import templates to get started!</p>
+            </div>
+          )}
+
+          {/* Practice Modes - Professional Grid */}
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-white mb-4">🎯 Practice Modes</h2>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Live Prompter */}
+              <div className="bg-white rounded-xl shadow-lg p-5 transition-all duration-200 hover:shadow-2xl hover:-translate-y-1 cursor-pointer group">
+                <div className="text-center">
+                  <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-200">
+                    <Mic className="w-7 h-7 text-white" />
+                  </div>
+                  <h3 className="text-lg font-bold mb-1">Live Prompter</h3>
+                  <p className="text-gray-600 text-xs mb-3">Hold SPACEBAR → Show bullets</p>
+                  <button onClick={startPrompterMode} className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-2.5 rounded-lg transition-all duration-200 text-sm">
+                    Start
                   </button>
                 </div>
-              )}
-              {usageStats.tier === 'free' && usageStats.session_count < 20 && (
-                <div className="w-full bg-white/20 rounded-full h-2 mt-4">
-                  <div 
-                    className="bg-white h-2 rounded-full transition-all duration-500" 
-                    style={{ width: `${(usageStats.session_count / 25) * 100}%` }}
-                  ></div>
-                </div>
-              )}
-            </div>
-          )}
+              </div>
 
-          {/* Getting Started Guide */}
-          {questions.length === 0 && (
-            <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-6 text-white mb-8 shadow-xl">
-              <h3 className="text-2xl font-bold mb-4">🚀 Getting Started with ISL</h3>
-              <div className="grid md:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="font-bold mb-2">1️⃣ Add Questions</p>
-                  <p className="opacity-90">Click Command Center → Question Bank → Import templates or add your own</p>
-                </div>
-                <div>
-                  <p className="font-bold mb-2">2️⃣ Practice</p>
-                  <p className="opacity-90">Choose a mode below and start practicing. AI gives feedback!</p>
-                </div>
-                <div>
-                  <p className="font-bold mb-2">3️⃣ Track Progress</p>
-                  <p className="opacity-90">Visit Command Center to see your scores and improvement</p>
-                </div>
-                <div>
-                  <p className="font-bold mb-2">4️⃣ Prep for Interview</p>
-                  <p className="opacity-90">Set your interview date in Command Center → Interview Prep</p>
+              {/* AI Interviewer */}
+              <div className="bg-white rounded-xl shadow-lg p-5 transition-all duration-200 hover:shadow-2xl hover:-translate-y-1 cursor-pointer group">
+                <div className="text-center">
+                  <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-200">
+                    <Bot className="w-7 h-7 text-white" />
+                  </div>
+                  <h3 className="text-lg font-bold mb-1">AI Interviewer</h3>
+                  <p className="text-gray-600 text-xs mb-3">AI asks, you answer</p>
+                  <button onClick={startAIInterviewer} className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold py-2.5 rounded-lg transition-all duration-200 text-sm">
+                    Start
+                  </button>
                 </div>
               </div>
-            </div>
-          )}
 
-          {/* Mode Cards - 4 columns with hover effects */}
-          <div data-tutorial="practice-modes" className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white rounded-2xl shadow-2xl p-6 transition-all duration-300 hover:scale-105 hover:shadow-3xl">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Mic className="w-8 h-8 text-white" />
+              {/* Practice Mode */}
+              <div className="bg-white rounded-xl shadow-lg p-5 transition-all duration-200 hover:shadow-2xl hover:-translate-y-1 cursor-pointer group">
+                <div className="text-center">
+                  <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-200">
+                    <Target className="w-7 h-7 text-white" />
+                  </div>
+                  <h3 className="text-lg font-bold mb-1">Practice</h3>
+                  <p className="text-gray-600 text-xs mb-3">Get AI feedback</p>
+                  <button onClick={startPracticeMode} className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-2.5 rounded-lg transition-all duration-200 text-sm">
+                    Start
+                  </button>
                 </div>
-                <h3 className="text-xl font-bold mb-2">Live Prompter</h3>
-                <p className="text-gray-600 text-sm mb-4">Hold SPACEBAR → Shows bullets</p>
-                <button onClick={startPrompterMode} className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 rounded-lg">Start</button>
               </div>
-            </div>
-            <div className="bg-white rounded-2xl shadow-2xl p-6 transition-all duration-300 hover:scale-105 hover:shadow-3xl">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Bot className="w-8 h-8 text-white" />
+
+              {/* Flashcard */}
+              <div className="bg-white rounded-xl shadow-lg p-5 transition-all duration-200 hover:shadow-2xl hover:-translate-y-1 cursor-pointer group">
+                <div className="text-center">
+                  <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-200">
+                    <BookOpen className="w-7 h-7 text-white" />
+                  </div>
+                  <h3 className="text-lg font-bold mb-1">Flashcard</h3>
+                  <p className="text-gray-600 text-xs mb-3">Quick recall</p>
+                  <button onClick={startFlashcardMode} className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-bold py-2.5 rounded-lg transition-all duration-200 text-sm">
+                    Start
+                  </button>
                 </div>
-                <h3 className="text-xl font-bold mb-2">AI Interviewer</h3>
-                <p className="text-gray-600 text-sm mb-4">AI asks, you answer</p>
-                <button 
-  onClick={startAIInterviewer} 
-  className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold py-3 rounded-lg"
->
-  Start
-</button>
               </div>
-            </div>
-            <div className="bg-white rounded-2xl shadow-2xl p-6 transition-all duration-300 hover:scale-105 hover:shadow-3xl">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Target className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-xl font-bold mb-2">Practice</h3>
-                <p className="text-gray-600 text-sm mb-4">Get AI feedback</p>
-                <button onClick={startPracticeMode} className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-3 rounded-lg">Start</button>
-              </div>
-            </div>
-            <div className="bg-white rounded-2xl shadow-2xl p-6 transition-all duration-300 hover:scale-105 hover:shadow-3xl">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <BookOpen className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-xl font-bold mb-2">Flashcard</h3>
-                <p className="text-gray-600 text-sm mb-4">Quick recall</p>
-                <button onClick={startFlashcardMode} className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-bold py-3 rounded-lg">Start</button>
-              </div>
-              </div>
-            {/* Command Center */}
-<div data-tutorial="command-center"className="bg-white rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-all hover:scale-105 cursor-pointer border-2 border-indigo-200 hover:border-indigo-400" onClick={() => setCurrentView('command-center')}>
-  <div className="flex items-center justify-between mb-4">
-    <div className="text-4xl">🎯</div>
-    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">FREE</span>
-  </div>
- <h3 className="text-xl font-bold text-gray-900 mb-2">Command Center</h3>
-  <p className="text-gray-600 text-sm mb-4">Analytics, practice queue, interview prep, and question bank all in one place.</p>
-  <div className="flex items-center gap-2 text-indigo-600 font-semibold">
-    <span>Open Dashboard</span>
-    <span>→</span>
-  </div>
-</div>
             </div>
           </div>
 
-
-          {/* Filter Section */}
-          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 text-white mb-8">
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Category:</label>
-                <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="w-full px-4 py-2 bg-white/20 border border-white/30 rounded-lg text-white">
-                  {categories.map(cat => <option key={cat} value={cat} className="text-gray-900">{cat}</option>)}
-                </select>
+          {/* Command Center - Professional Button */}
+          <div data-tutorial="command-center" className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl shadow-xl p-6 hover:shadow-2xl transition-all duration-200 hover:-translate-y-0.5 cursor-pointer border-2 border-white/20" onClick={() => setCurrentView('command-center')}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="text-5xl">🎯</div>
+                <div className="text-white">
+                  <h3 className="text-xl font-bold mb-1">Command Center</h3>
+                  <p className="text-sm text-indigo-100">Analytics • Queue • Interview Prep • Question Bank</p>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Priority:</label>
-                <select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value)} className="w-full px-4 py-2 bg-white/20 border border-white/30 rounded-lg text-white">
-                  {priorities.map(pri => <option key={pri} value={pri} className="text-gray-900">{pri}</option>)}
-                </select>
-</div>
-        </div>
+              <div className="flex items-center gap-2 text-white font-semibold">
+                <span className="hidden md:inline">Open Dashboard</span>
+                <span className="text-2xl">→</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
