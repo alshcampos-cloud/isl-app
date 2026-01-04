@@ -4,7 +4,7 @@ import {
   Brain, Database, Play, Plus, Edit2, Trash2, TrendingUp, Download, Upload,
   Mic, MicOff, Volume2, Eye, EyeOff, Settings, Sparkles, ChevronRight, X,
   Zap, CheckCircle, Target, Bot, BookOpen, SkipForward, Pause, Award, Filter,
-  Crown, Lightbulb
+  Crown, Lightbulb, Square
 } from 'lucide-react';
 
 import SupabaseTest from './SupabaseTest';
@@ -128,6 +128,11 @@ const ISL = () => {
   const [revealStage, setRevealStage] = useState(0);
   const [showAllFeedback, setShowAllFeedback] = useState(false);
   const [commandCenterTab, setCommandCenterTab] = useState('analytics');
+  
+  // SESSION-BASED MICROPHONE STATES
+  const [interviewSessionActive, setInterviewSessionActive] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
+  const [sessionReady, setSessionReady] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [interviewDate, setInterviewDate] = useState(localStorage.getItem('isl_interview_date') || '');
   const [dailyGoal, setDailyGoal] = useState(parseInt(localStorage.getItem('isl_daily_goal') || '3', 10));
@@ -426,18 +431,27 @@ recognition.onresult = (event) => {
         else interim += part;
       }
       
-// ACCUMULATE text instead of replacing
-      if (final) {
-        accumulatedTranscript.current = (accumulatedTranscript.current + ' ' + final).trim();
-        setTranscript(accumulatedTranscript.current);
-        console.log('Speech (final):', accumulatedTranscript.current);
-        if (currentMode === 'ai-interviewer' || currentMode === 'practice') {
-          setSpokenAnswer(accumulatedTranscript.current);
+      // SESSION MODE: Only accumulate when capturing
+      // NON-SESSION MODE: Always accumulate
+      const shouldAccumulate = interviewSessionActive ? isCapturing : true;
+      
+      if (shouldAccumulate) {
+        // ACCUMULATE text instead of replacing
+        if (final) {
+          accumulatedTranscript.current = (accumulatedTranscript.current + ' ' + final).trim();
+          setTranscript(accumulatedTranscript.current);
+          console.log('Speech (final):', accumulatedTranscript.current);
+          if (currentMode === 'ai-interviewer' || currentMode === 'practice') {
+            setSpokenAnswer(accumulatedTranscript.current);
+          }
+        } else if (interim) {
+          // Show interim results without saving
+          const tempTranscript = (accumulatedTranscript.current + ' ' + interim).trim();
+          setTranscript(tempTranscript);
         }
-      } else if (interim) {
-        // Show interim results without saving
-        const tempTranscript = (accumulatedTranscript.current + ' ' + interim).trim();
-        setTranscript(tempTranscript);
+      } else if (interviewSessionActive && !isCapturing) {
+        // Session active but not capturing - show status
+        setTranscript('🟢 Session active - Hold SPACEBAR to capture next question');
       }
     };
 recognition.onerror = (event) => {
@@ -455,8 +469,20 @@ recognition.onerror = (event) => {
 };
     recognition.onend = () => { 
   console.log('Speech ended'); 
-  if (isListening) {
-    // If we're still supposed to be listening, restart
+  
+  // SESSION MODE: Always restart (continuous listening)
+  if (interviewSessionActive) {
+    console.log('Session mode - auto-restarting...');
+    try {
+      recognitionRef.current.start();
+    } catch (err) {
+      console.error('Session restart failed:', err);
+      setInterviewSessionActive(false);
+      setIsListening(false);
+    }
+  } 
+  // NON-SESSION MODE: Restart if still supposed to be listening
+  else if (isListening) {
     console.log('Restarting recognition...');
     try {
       recognitionRef.current.start();
@@ -609,6 +635,99 @@ question_id: (questionData.id && questionData.id !== "0" && typeof questionData.
     }
   };
 
+// SESSION-BASED MICROPHONE CONTROL
+const startInterviewSession = () => {
+  console.log('🎬 Starting interview session');
+  if (!micPermission) { 
+    requestMicPermission(); 
+    return; 
+  }
+  
+  if (interviewSessionActive) {
+    console.log('Session already active');
+    return;
+  }
+  
+  // Clear everything for fresh session
+  accumulatedTranscript.current = '';
+  setTranscript('');
+  setSpokenAnswer('');
+  setMatchedQuestion(null);
+  
+  // Start mic ONCE - it will stay active throughout session
+  if (recognitionRef.current) {
+    try {
+      recognitionRef.current.start();
+      setInterviewSessionActive(true);
+      setSessionReady(true);
+      setIsListening(true);
+      console.log('✅ Session started - mic will stay active');
+    } catch (err) {
+      console.error('Session start failed:', err);
+    }
+  }
+};
+
+const endInterviewSession = () => {
+  console.log('🛑 Ending interview session');
+  
+  if (!interviewSessionActive) return;
+  
+  // Stop mic ONCE
+  if (recognitionRef.current) {
+    try {
+      recognitionRef.current.stop();
+      setInterviewSessionActive(false);
+      setSessionReady(false);
+      setIsListening(false);
+      setIsCapturing(false);
+      setMatchedQuestion(null);
+      setTranscript('');
+      accumulatedTranscript.current = '';
+      console.log('✅ Session ended');
+    } catch (err) {
+      console.error('Session end failed:', err);
+    }
+  }
+};
+
+// SPACEBAR CONTROLS CAPTURING (NOT MIC START/STOP)
+const handleSpacebarDown = () => {
+  if (!interviewSessionActive) {
+    console.log('No active session - start session first');
+    return;
+  }
+  
+  if (isCapturing) return; // Already capturing
+  
+  console.log('🎤 Started capturing');
+  setIsCapturing(true);
+  
+  // Clear for fresh capture
+  accumulatedTranscript.current = '';
+  setTranscript('');
+};
+
+const handleSpacebarUp = () => {
+  if (!interviewSessionActive || !isCapturing) return;
+  
+  console.log('⏸️ Stopped capturing, processing...');
+  setIsCapturing(false);
+  
+  // Process the captured text
+  const capturedText = accumulatedTranscript.current.trim();
+  
+  if (capturedText) {
+    console.log('Processing:', capturedText);
+    matchQuestion(capturedText);
+  }
+  
+  // Clear for next capture
+  accumulatedTranscript.current = '';
+  setTranscript('');
+};
+
+// LEGACY FUNCTIONS - Keep for non-session modes
 const startListening = () => {
   console.log('Start listening, mode:', currentMode);
   if (!micPermission) { requestMicPermission(); return; }
@@ -658,49 +777,94 @@ const startListening = () => {
 
   const matchQuestion = (text) => {
     console.log('Matching:', text);
-    const lower = text.toLowerCase();
+    
+    // Fuzzy matching improvements
+    const lower = text.toLowerCase()
+      .replace(/kaiser permanente/gi, 'kaiser')
+      .replace(/tell me about yourself/gi, 'about yourself')
+      .trim();
+    
     let bestMatch = null, highestScore = 0;
     questions.forEach(q => {
       let score = 0;
-      if (q.keywords) q.keywords.forEach(kw => { if (lower.includes(kw.toLowerCase())) { score += kw.split(' ').length * 3; console.log(`✓ "${kw}" +${score}`); } });
-      q.question.toLowerCase().split(' ').filter(w => w.length > 3).forEach(word => { if (lower.includes(word)) score += 1; });
+      
+      // Keyword matching (high weight)
+      if (q.keywords) q.keywords.forEach(kw => { 
+        if (lower.includes(kw.toLowerCase())) { 
+          score += kw.split(' ').length * 3; 
+          console.log(`✓ "${kw}" +${score}`); 
+        } 
+      });
+      
+      // Question word matching (lower weight)
+      q.question.toLowerCase().split(' ').filter(w => w.length > 3).forEach(word => { 
+        if (lower.includes(word)) score += 1; 
+      });
+      
       if (score > 0) console.log(`"${q.question}" = ${score}`);
       if (score > highestScore) { highestScore = score; bestMatch = q; }
     });
+    
     console.log('Best:', bestMatch?.question, highestScore);
-if (bestMatch && highestScore > 2) { 
-  setMatchedQuestion(bestMatch); 
-  setShowNarrative(false); 
-  setQuestionHistory(prev => {
-    const newHistory = [bestMatch, ...prev.filter(q => q !== bestMatch)];
-    return newHistory.slice(0, 3);
-  });
-  console.log('✅ Matched!'); 
-}
-else { console.log('❌ No match - score too low:', highestScore); }
+    
+    // LOWERED THRESHOLD: 1 instead of 2
+    if (bestMatch && highestScore >= 1) { 
+      setMatchedQuestion(bestMatch); 
+      setShowNarrative(false); 
+      setQuestionHistory(prev => {
+        const newHistory = [bestMatch, ...prev.filter(q => q !== bestMatch)];
+        return newHistory.slice(0, 3);
+      });
+      console.log('✅ Matched!'); 
+    }
+    else { 
+      console.log('❌ No match - score too low:', highestScore); 
+      // Show helpful message
+      if (currentMode === 'prompter') {
+        setTranscript(`No match found for: "${text}". Try rephrasing or check your keywords.`);
+      }
+    }
   };
 
 useEffect(() => {
     const handleKeyDown = (e) => { 
       const isTyping = e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT'; 
       const isButton = e.target.tagName === 'BUTTON';
+      
       if (e.code === 'Space' && (currentMode === 'prompter' || currentMode === 'ai-interviewer' || currentMode === 'practice') && !spacebarHeld && !isTyping && !isButton) { 
         e.preventDefault(); 
         setSpacebarHeld(true); 
-        startListening(); 
+        
+        // SESSION MODE: Spacebar controls capturing, not mic
+        if (interviewSessionActive) {
+          handleSpacebarDown();
+        } else {
+          // NON-SESSION MODE: Old behavior
+          startListening();
+        }
       } 
     };
+    
     const handleKeyUp = (e) => { 
       const isTyping = e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT'; 
       const isButton = e.target.tagName === 'BUTTON';
+      
       if (e.code === 'Space' && spacebarHeld && !isTyping && !isButton) { 
         e.preventDefault(); 
         setSpacebarHeld(false); 
-        stopListening(); 
+        
+        // SESSION MODE: Spacebar controls capturing, not mic
+        if (interviewSessionActive) {
+          handleSpacebarUp();
+        } else {
+          // NON-SESSION MODE: Old behavior
+          stopListening();
+        }
       } 
     };
+    
     if (currentMode) { window.addEventListener('keydown', handleKeyDown); window.addEventListener('keyup', handleKeyUp); return () => { window.removeEventListener('keydown', handleKeyDown); window.removeEventListener('keyup', handleKeyUp); }; }
-  }, [currentMode, spacebarHeld, isListening]);
+  }, [currentMode, spacebarHeld, isListening, interviewSessionActive, isCapturing]);
   // TTS
   const speakText = (text) => {
     if (!synthRef.current) { console.warn('TTS not available'); return; }
@@ -1197,13 +1361,42 @@ const startPracticeMode = async () => {
       <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between mb-6">
-            <button onClick={() => { stopListening(); setCurrentView('home'); setMatchedQuestion(null); }} className="text-gray-300 hover:text-white">← Exit</button>
-            <div className="flex items-center gap-3">
-              <div className={`w-4 h-4 rounded-full ${isListening ? 'bg-red-500 animate-pulse' : 'bg-gray-600'}`}></div>
-              <span className="font-bold">
-  {isListening ? 'LISTENING...' : showResumeToast ? '↻ Resumed' : 'Ready'}
-</span>
+            <button onClick={() => { 
+              if (interviewSessionActive) endInterviewSession();
+              stopListening(); 
+              setCurrentView('home'); 
+              setMatchedQuestion(null); 
+            }} className="text-gray-300 hover:text-white">← Exit</button>
+            
+            {/* SESSION CONTROLS */}
+            <div className="flex items-center gap-4">
+              {!interviewSessionActive ? (
+                <button
+                  onClick={startInterviewSession}
+                  className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 px-6 py-3 rounded-lg font-bold flex items-center gap-2 transition-all shadow-lg"
+                >
+                  <Mic className="w-5 h-5" />
+                  Start Interview
+                </button>
+              ) : (
+                <>
+                  <div className="flex items-center gap-3 bg-green-500/20 px-4 py-2 rounded-lg border-2 border-green-500">
+                    <div className={`w-3 h-3 rounded-full ${isCapturing ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`}></div>
+                    <span className="font-bold text-sm">
+                      {isCapturing ? '🔴 CAPTURING...' : '🟢 Session Active'}
+                    </span>
+                  </div>
+                  <button
+                    onClick={endInterviewSession}
+                    className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 px-6 py-3 rounded-lg font-bold flex items-center gap-2 transition-all shadow-lg"
+                  >
+                    <Square className="w-5 h-5" />
+                    End Interview
+                  </button>
+                </>
+              )}
             </div>
+            
             {matchedQuestion && <button onClick={() => { setMatchedQuestion(null); setTranscript(''); }} className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg">Clear</button>}
           </div>
           {!matchedQuestion ? (
@@ -1212,27 +1405,47 @@ const startPracticeMode = async () => {
                 <Mic className="w-16 h-16 text-white" />
               </div>
               <h2 className="text-4xl font-bold mb-4">Live Interview Prompter</h2>
-              <p className="text-xl text-gray-300 mb-8">Hold SPACEBAR while interviewer asks question</p>
-              <div className="max-w-md mx-auto">
-                <button onMouseDown={startListening} onMouseUp={stopListening} onTouchStart={startListening} onTouchEnd={stopListening} className={`w-full py-8 rounded-2xl font-bold text-2xl transition ${isListening ? 'bg-red-600 animate-pulse' : 'bg-green-600 hover:bg-green-700'}`}>
-                  {isListening ? 'Release to Stop' : 'Hold to Listen'}
-                </button>
-              </div>
-              {transcript && (
-                <div className="mt-8 bg-gray-800 rounded-lg p-6 max-w-2xl mx-auto">
-                  <p className="text-sm text-gray-400 mb-2">Captured:</p>
-                  <p className="text-lg">{transcript}</p>
-                </div>
+              
+              {!interviewSessionActive ? (
+                <>
+                  <p className="text-xl text-gray-300 mb-8">Click "Start Interview" to begin session-based mode</p>
+                  <div className="mt-12 bg-blue-900/30 rounded-lg p-6 max-w-2xl mx-auto">
+                    <h4 className="font-bold mb-3">💡 Session Mode Benefits:</h4>
+                    <ul className="text-left text-sm space-y-2">
+                      <li>✅ Only 2 sounds (start + end) - no annoying beeps!</li>
+                      <li>✅ Hold SPACEBAR to capture questions</li>
+                      <li>✅ Your answers NOT recorded</li>
+                      <li>✅ Clean separation between questions</li>
+                      <li>✅ Works with external keyboard on mobile</li>
+                    </ul>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="text-xl text-green-300 mb-4">✨ Session Active - Ready to capture questions!</p>
+                  <p className="text-lg text-gray-300 mb-8">Hold SPACEBAR when interviewer asks a question</p>
+                  
+                  {transcript && (
+                    <div className="mt-8 bg-gray-800 rounded-lg p-6 max-w-2xl mx-auto">
+                      <p className="text-sm text-gray-400 mb-2">
+                        {isCapturing ? '🔴 Capturing...' : '✅ Last captured:'}
+                      </p>
+                      <p className="text-lg">{transcript}</p>
+                    </div>
+                  )}
+                  
+                  <div className="mt-12 bg-green-900/30 rounded-lg p-6 max-w-2xl mx-auto border-2 border-green-500/50">
+                    <h4 className="font-bold mb-3 text-green-300">🎤 How to Use (Session Mode):</h4>
+                    <ol className="text-left text-sm space-y-2">
+                      <li>1. Interviewer asks: "Tell me about yourself"</li>
+                      <li>2. <strong>Hold SPACEBAR</strong> → Mic captures question</li>
+                      <li>3. <strong>Release SPACEBAR</strong> → Question processes, bullets appear!</li>
+                      <li>4. Give your answer (mic paused, not recording you)</li>
+                      <li>5. Repeat for next question</li>
+                    </ol>
+                  </div>
+                </>
               )}
-              <div className="mt-12 bg-blue-900/30 rounded-lg p-6 max-w-2xl mx-auto">
-                <h4 className="font-bold mb-3">💡 How to Use:</h4>
-                <ol className="text-left text-sm space-y-2">
-                  <li>1. Place device near interview speakers</li>
-                  <li>2. Hold SPACEBAR (or button) when question asked</li>
-                  <li>3. Release when done</li>
-                  <li>4. Your bullets appear!</li>
-                </ol>
-              </div>
             </div>
           ) : (
             <div className="max-w-5xl mx-auto">
@@ -1279,31 +1492,39 @@ const startPracticeMode = async () => {
                 </div>
               )}
 
-              {/* Floating Mic Button - MOBILE OPTIMIZED */}
-              <div className="fixed bottom-8 right-8 z-50">
-                <button
-                  onClick={() => {
-                    if (isListening) {
-                      stopListening();
-                    } else {
-                      startListening();
-                    }
-                  }}
-                  className={`relative w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 shadow-2xl ${
-                    isListening 
-                      ? 'bg-red-500 hover:bg-red-600 animate-pulse' 
-                      : 'bg-green-500 hover:bg-green-600'
-                  }`}
-                >
-                  {isListening && (
-                    <>
-                      <div className="ripple-ring w-20 h-20 text-red-300"></div>
-                      <div className="ripple-ring w-20 h-20 text-red-300"></div>
-                      <div className="ripple-ring w-20 h-20 text-red-300"></div>
-                    </>
-                  )}
-                  <Mic className="w-10 h-10 text-white z-10" />
-                </button>
+              {/* Floating Mic Button - SESSION-AWARE */}
+              {interviewSessionActive && (
+                <div className="fixed bottom-8 right-8 z-50">
+                  <button
+                    onMouseDown={() => {
+                      if (interviewSessionActive) handleSpacebarDown();
+                    }}
+                    onMouseUp={() => {
+                      if (interviewSessionActive) handleSpacebarUp();
+                    }}
+                    onTouchStart={(e) => {
+                      e.preventDefault();
+                      if (interviewSessionActive) handleSpacebarDown();
+                    }}
+                    onTouchEnd={(e) => {
+                      e.preventDefault();
+                      if (interviewSessionActive) handleSpacebarUp();
+                    }}
+                    className={`relative w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 shadow-2xl ${
+                      isCapturing
+                        ? 'bg-red-500 hover:bg-red-600 animate-pulse' 
+                        : 'bg-green-500 hover:bg-green-600'
+                    }`}
+                  >
+                    {isCapturing && (
+                      <>
+                        <div className="ripple-ring w-20 h-20 text-red-300"></div>
+                        <div className="ripple-ring w-20 h-20 text-red-300"></div>
+                        <div className="ripple-ring w-20 h-20 text-red-300"></div>
+                      </>
+                    )}
+                    <Mic className="w-10 h-10 text-white z-10" />
+                  </button>
                 <div className="text-center mt-2">
                   <span className="text-xs font-bold text-gray-400">
                     Hold to Start
