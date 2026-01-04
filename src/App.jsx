@@ -330,6 +330,77 @@ Consider upgrading to Pro for more sessions!`);
     console.log(`✅ AI Usage: ${newUsage}/${usageLimit}`);
   };
 
+  // Handler for opening AI Coach from Template Library
+  const handleOpenAICoachFromTemplate = async (templateQuestion) => {
+    // First, save the template question to database
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        alert('Please sign in to use AI Coach');
+        return;
+      }
+
+      // Save question to database first
+      const { data: savedQuestion, error } = await supabase
+        .from('questions')
+        .insert([{
+          user_id: user.id,
+          question: templateQuestion.question,
+          category: templateQuestion.category || 'Template',
+          priority: templateQuestion.priority || 'Standard',
+          bullets: templateQuestion.bullets || [],
+          narrative: '',
+          keywords: []
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Now open AI Coach with the saved question
+      setAnswerAssistantQuestion(savedQuestion);
+      setShowAnswerAssistant(true);
+      setShowTemplateLibrary(false); // Close template library
+      
+      // Increment usage
+      incrementAIUsage();
+      
+      console.log('✅ Opened AI Coach for template question');
+    } catch (error) {
+      console.error('Error opening AI Coach:', error);
+      alert('Failed to open AI Coach: ' + error.message);
+    }
+  };
+
+  // Shared handler for when Answer Assistant saves an answer
+  const handleAnswerSaved = (answer) => {
+    // Update current question state
+    setAnswerAssistantQuestion({ 
+      ...answerAssistantQuestion, 
+      narrative: answer.narrative, 
+      bullets: answer.bullets,
+      keywords: answer.keywords || answerAssistantQuestion.keywords || []
+    });
+    
+    // Update questions list
+    const updatedQuestions = questions.map(q => 
+      q.id === answerAssistantQuestion.id 
+        ? { 
+            ...q, 
+            narrative: answer.narrative, 
+            bullets: answer.bullets,
+            keywords: answer.keywords || q.keywords || []
+          }
+        : q
+    );
+    setQuestions(updatedQuestions);
+    
+    // Reload from database to ensure sync
+    loadQuestions();
+    
+    console.log('✅ Answer saved with all fields:', { narrative: !!answer.narrative, bullets: answer.bullets?.length, keywords: answer.keywords?.length });
+  };
+
   // Load usage on mount
   useEffect(() => {
     const currentMonth = new Date().toISOString().slice(0, 7);
@@ -2244,19 +2315,7 @@ onClick={async () => {
             questionId={answerAssistantQuestion.id}
             userContext={getUserContext()}
             userTier={usageStats?.tier}
-            onAnswerSaved={(answer) => {
-              setAnswerAssistantQuestion({ 
-                ...answerAssistantQuestion, 
-                narrative: answer.narrative, 
-                bullets: answer.bullets 
-              });
-              const updatedQuestions = questions.map(q => 
-                q.id === answerAssistantQuestion.id 
-                  ? { ...q, narrative: answer.narrative, bullets: answer.bullets }
-                  : q
-              );
-              setQuestions(updatedQuestions);
-            }}
+            onAnswerSaved={handleAnswerSaved}
             onClose={() => {
               setShowAnswerAssistant(false);
               setAnswerAssistantQuestion(null);
@@ -2845,19 +2904,7 @@ onClick={async () => {
             questionId={answerAssistantQuestion.id}
             userContext={getUserContext()}
             userTier={usageStats?.tier}
-            onAnswerSaved={(answer) => {
-              setAnswerAssistantQuestion({ 
-                ...answerAssistantQuestion, 
-                narrative: answer.narrative, 
-                bullets: answer.bullets 
-              });
-              const updatedQuestions = questions.map(q => 
-                q.id === answerAssistantQuestion.id 
-                  ? { ...q, narrative: answer.narrative, bullets: answer.bullets }
-                  : q
-              );
-              setQuestions(updatedQuestions);
-            }}
+            onAnswerSaved={handleAnswerSaved}
             onClose={() => {
               setShowAnswerAssistant(false);
               setAnswerAssistantQuestion(null);
@@ -4065,6 +4112,8 @@ onClick={async () => {
                 {showTemplateLibrary && (
                   <TemplateLibrary
                     onClose={() => setShowTemplateLibrary(false)}
+                    onOpenAICoach={handleOpenAICoachFromTemplate}
+                    checkUsageLimit={checkAIUsageLimit}
                     onImport={async (importedQuestions) => {
                       console.log('Importing questions:', importedQuestions);
                       try {
@@ -4339,24 +4388,7 @@ onClick={async () => {
           questionId={answerAssistantQuestion.id}
           userContext={getUserContext()}
           userTier={usageStats?.tier}
-          onAnswerSaved={(answer) => {
-            // Update the current question with the new answer
-            setAnswerAssistantQuestion({ 
-              ...answerAssistantQuestion, 
-              narrative: answer.narrative, 
-              bullets: answer.bullets 
-            });
-            
-            // Update questions array
-            const updatedQuestions = questions.map(q => 
-              q.id === answerAssistantQuestion.id 
-                ? { ...q, narrative: answer.narrative, bullets: answer.bullets }
-                : q
-            );
-            setQuestions(updatedQuestions);
-            
-            alert('✅ Answer saved! Now available in Prompter, Flashcards, and Question Bank.');
-          }}
+          onAnswerSaved={handleAnswerSaved}
           onClose={() => {
             setShowAnswerAssistant(false);
             setAnswerAssistantQuestion(null);
