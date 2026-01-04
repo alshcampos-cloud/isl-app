@@ -115,6 +115,11 @@ const ISL = () => {
   const [showResumeToast, setShowResumeToast] = useState(false);
   const [resumedQuestion, setResumedQuestion] = useState(null);
   const [flashcardSide, setFlashcardSide] = useState('question');
+  const [flashcardIndex, setFlashcardIndex] = useState(0);
+  const [showStudyTips, setShowStudyTips] = useState(false);
+  const [visualizationTimer, setVisualizationTimer] = useState(null);
+  const [swipeStart, setSwipeStart] = useState(null);
+  const [swipeDistance, setSwipeDistance] = useState(0);
   const [completedQuestions, setCompletedQuestions] = useState(new Set());
   const [usageStats, setUsageStats] = useState(null);
   const [showStrengths, setShowStrengths] = useState(true);
@@ -2521,53 +2526,152 @@ onClick={async () => {
   }
   // FLASHCARD MODE
   if (currentView === 'flashcard' && currentQuestion) {
+    // Filter and sort questions for flashcard deck
+    let availableQuestions = questions;
+    if (filterCategory !== 'All') {
+      availableQuestions = availableQuestions.filter(q => q.category === filterCategory);
+    }
+    const flashcardDeck = [...availableQuestions].sort((a, b) => {
+      if (a.practiceCount === 0) return -1;
+      if (b.practiceCount === 0) return 1;
+      return a.averageScore - b.averageScore;
+    });
+
+    // Swipe handlers
+    const handleTouchStart = (e) => {
+      setSwipeStart(e.touches[0].clientX);
+    };
+
+    const handleTouchMove = (e) => {
+      if (swipeStart === null) return;
+      const currentX = e.touches[0].clientX;
+      setSwipeDistance(currentX - swipeStart);
+    };
+
+    const handleTouchEnd = () => {
+      if (Math.abs(swipeDistance) > 100) {
+        if (swipeDistance > 0) {
+          // Swipe right - Previous card
+          goToPreviousCard();
+        } else {
+          // Swipe left - Next card
+          goToNextCard();
+        }
+      }
+      setSwipeStart(null);
+      setSwipeDistance(0);
+    };
+
+    const goToNextCard = () => {
+      const nextIndex = (flashcardIndex + 1) % flashcardDeck.length;
+      setFlashcardIndex(nextIndex);
+      setCurrentQuestion(flashcardDeck[nextIndex]);
+      setFlashcardSide('question');
+      setShowBullets(false);
+      setShowNarrative(false);
+      setShowStudyTips(false);
+    };
+
+    const goToPreviousCard = () => {
+      const prevIndex = flashcardIndex === 0 ? flashcardDeck.length - 1 : flashcardIndex - 1;
+      setFlashcardIndex(prevIndex);
+      setCurrentQuestion(flashcardDeck[prevIndex]);
+      setFlashcardSide('question');
+      setShowBullets(false);
+      setShowNarrative(false);
+      setShowStudyTips(false);
+    };
+
+    const startVisualization = () => {
+      let countdown = 20;
+      setVisualizationTimer(countdown);
+      const interval = setInterval(() => {
+        countdown--;
+        setVisualizationTimer(countdown);
+        if (countdown === 0) {
+          clearInterval(interval);
+          setVisualizationTimer(null);
+        }
+      }, 1000);
+    };
+
+    const saveConfidenceRating = async (rating) => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Save to practice_sessions for this question
+        await supabase
+          .from('practice_sessions')
+          .insert([{
+            user_id: user.id,
+            question_id: currentQuestion.id,
+            mode: 'flashcard',
+            confidence_rating: rating,
+            score: rating * 2 // Convert 1-5 to 2-10 scale
+          }]);
+
+        // Reload questions to update stats
+        await loadQuestions();
+
+        // Move to next card after rating
+        goToNextCard();
+      } catch (error) {
+        console.error('Error saving confidence:', error);
+      }
+    };
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-500 to-teal-600">
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 py-6">
+          {/* Header */}
           <div className="flex items-center justify-between mb-6 text-white">
-            <button onClick={() => setCurrentView('home')} className="text-white/80 hover:text-white">← Exit</button>
-            <h1 className="text-2xl font-bold">Flashcard Mode</h1>
             <button 
-              onClick={() => {
-                let available = questions;
-                if (filterCategory !== 'All') available = available.filter(q => q.category === filterCategory);
-                const sorted = [...available].sort((a, b) => {
-                  if (a.practiceCount === 0) return -1;
-                  if (b.practiceCount === 0) return 1;
-                  return a.averageScore - b.averageScore;
-                });
-                const nextQ = sorted.find(q => q.id !== currentQuestion.id) || sorted[0];
-                setCurrentQuestion(nextQ);
-                setFlashcardSide('question');
-                setShowBullets(false);
-                setShowNarrative(false);
-              }}
-              className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg"
+              onClick={() => setCurrentView('home')} 
+              className="text-white/90 hover:text-white font-bold text-sm"
+            >
+              ← Exit
+            </button>
+            <h1 className="text-xl font-bold">Flashcard Mode</h1>
+            <button 
+              onClick={goToNextCard}
+              className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg font-bold text-sm"
             >
               Next →
             </button>
           </div>
 
-          <div className="max-w-4xl mx-auto">
-            {/* Flashcard */}
+          <div className="max-w-3xl mx-auto">
+            {/* Flashcard - Swipeable */}
             <div 
-              className="bg-white rounded-3xl shadow-2xl p-12 min-h-96 flex items-center justify-center cursor-pointer transition-transform hover:scale-105"
+              className="bg-white rounded-2xl shadow-2xl p-8 md:p-12 min-h-[400px] flex items-center justify-center cursor-pointer transition-all select-none"
               onClick={() => setFlashcardSide(flashcardSide === 'question' ? 'answer' : 'question')}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              style={{
+                transform: `translateX(${swipeDistance * 0.5}px)`,
+                transition: swipeStart === null ? 'transform 0.3s ease-out' : 'none'
+              }}
             >
               {flashcardSide === 'question' ? (
-                <div className="text-center">
-                  <h2 className="text-5xl font-bold text-gray-900 mb-6">{currentQuestion.question}</h2>
-                  <p className="text-gray-500 text-lg">Click to see answer</p>
+                <div className="text-center w-full">
+                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 leading-tight">
+                    {currentQuestion.question}
+                  </h2>
+                  <p className="text-gray-500 text-base font-medium">Tap card to flip</p>
+                  <p className="text-gray-400 text-sm mt-2">or swipe ← →</p>
                 </div>
               ) : (
                 <div className="w-full">
-                  <h3 className="text-3xl font-bold text-gray-900 mb-6">Answer:</h3>
-                  <ul className="space-y-4 text-left">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-4">Answer:</h3>
+                  <ul className="space-y-3 text-left">
                     {currentQuestion.bullets.filter(b => b).map((bullet, idx) => (
                       <li key={idx} className="flex items-start gap-3">
-<span className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold">                          {idx + 1}
+                        <span className="flex-shrink-0 w-7 h-7 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                          {idx + 1}
                         </span>
-                        <span className="text-xl text-gray-800">{bullet}</span>
+                        <span className="text-base md:text-lg text-gray-800 leading-snug">{bullet}</span>
                       </li>
                     ))}
                   </ul>
@@ -2575,18 +2679,101 @@ onClick={async () => {
               )}
             </div>
 
-            {/* Controls */}
-            <div className="mt-8 flex gap-4">
+            {/* Study Tips - Collapsible */}
+            {flashcardSide === 'answer' && (
+              <div className="mt-6">
+                <button
+                  onClick={() => setShowStudyTips(!showStudyTips)}
+                  className="w-full bg-white/20 backdrop-blur-lg border-2 border-white/30 rounded-xl p-4 text-white font-bold text-left flex items-center justify-between hover:bg-white/30 transition"
+                >
+                  <span className="text-base">🧠 Study Tips</span>
+                  <span className="text-xl">{showStudyTips ? '▲' : '▼'}</span>
+                </button>
+
+                {showStudyTips && (
+                  <div className="mt-3 bg-white rounded-xl p-5 shadow-xl space-y-5 animate-slideUp">
+                    {/* Visualization Timer */}
+                    <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-4 border-2 border-purple-200">
+                      <h4 className="font-bold text-purple-900 mb-2 flex items-center gap-2">
+                        🎨 Visualization Exercise
+                      </h4>
+                      <p className="text-sm text-purple-800 mb-3 leading-relaxed">
+                        Close your eyes. Picture yourself IN this scenario. Make it vivid—see the people, hear the sounds, feel the pressure.
+                      </p>
+                      {visualizationTimer === null ? (
+                        <button
+                          onClick={startVisualization}
+                          className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg transition text-sm"
+                        >
+                          Start 20-Second Visualization
+                        </button>
+                      ) : (
+                        <div className="text-center">
+                          <div className="text-4xl font-black text-purple-600 mb-1">{visualizationTimer}s</div>
+                          <div className="w-full bg-purple-200 rounded-full h-2">
+                            <div 
+                              className="bg-purple-600 h-2 rounded-full transition-all duration-1000"
+                              style={{ width: `${(20 - visualizationTimer) / 20 * 100}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Blank Recall Reminder */}
+                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border-2 border-blue-200">
+                      <h4 className="font-bold text-blue-900 mb-2 flex items-center gap-2">
+                        ✏️ Next Time: Blank Recall
+                      </h4>
+                      <p className="text-sm text-blue-800 leading-relaxed">
+                        Before flipping the card, try to recall the answer from memory. Testing yourself = strongest learning method! (50% better than re-reading)
+                      </p>
+                    </div>
+
+                    {/* Confidence Rating */}
+                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 border-2 border-green-200">
+                      <h4 className="font-bold text-green-900 mb-3 text-center">
+                        How well did you know this?
+                      </h4>
+                      <div className="flex justify-between gap-2 mb-2">
+                        {[
+                          { emoji: '😰', label: "Don't know", rating: 1 },
+                          { emoji: '😐', label: 'Vague', rating: 2 },
+                          { emoji: '🙂', label: 'Okay', rating: 3 },
+                          { emoji: '😊', label: 'Good', rating: 4 },
+                          { emoji: '🎯', label: 'Mastered', rating: 5 }
+                        ].map((option) => (
+                          <button
+                            key={option.rating}
+                            onClick={() => saveConfidenceRating(option.rating)}
+                            className="flex-1 bg-white hover:bg-green-100 border-2 border-green-300 hover:border-green-500 rounded-lg p-2 transition-all hover:scale-105"
+                          >
+                            <div className="text-3xl mb-1">{option.emoji}</div>
+                            <div className="text-xs font-bold text-gray-700">{option.label}</div>
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-xs text-center text-green-800 font-medium mt-2">
+                        Rating saved automatically and moves to next card
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Show Bullets/Narrative Buttons */}
+            <div className="mt-6 flex gap-3">
               <button
                 onClick={() => setShowBullets(!showBullets)}
-                className="flex-1 bg-white/20 hover:bg-white/30 backdrop-blur text-white font-bold py-4 rounded-xl transition"
+                className="flex-1 bg-white/20 hover:bg-white/30 backdrop-blur text-white font-bold py-3 rounded-xl transition text-sm"
               >
                 {showBullets ? '👁️ Hide' : '👁️ Show'} Bullets
               </button>
               {currentQuestion.narrative && (
                 <button
                   onClick={() => setShowNarrative(!showNarrative)}
-                  className="flex-1 bg-white/20 hover:bg-white/30 backdrop-blur text-white font-bold py-4 rounded-xl transition"
+                  className="flex-1 bg-white/20 hover:bg-white/30 backdrop-blur text-white font-bold py-3 rounded-xl transition text-sm"
                 >
                   {showNarrative ? '📖 Hide' : '📖 Show'} Narrative
                 </button>
@@ -2595,14 +2782,15 @@ onClick={async () => {
 
             {/* Bullets Overlay */}
             {showBullets && (
-              <div className="mt-6 bg-white rounded-2xl p-8 shadow-xl">
-                <h4 className="text-2xl font-bold mb-4">Key Points:</h4>
-                <ul className="space-y-3">
+              <div className="mt-4 bg-white rounded-xl p-6 shadow-xl">
+                <h4 className="text-xl font-bold mb-3 text-gray-900">Key Points:</h4>
+                <ul className="space-y-2">
                   {currentQuestion.bullets.filter(b => b).map((bullet, idx) => (
                     <li key={idx} className="flex items-start gap-3">
-<span className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold">                        {idx + 1}
+                      <span className="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-xs">
+                        {idx + 1}
                       </span>
-                      <span className="text-lg text-gray-800">{bullet}</span>
+                      <span className="text-base text-gray-800">{bullet}</span>
                     </li>
                   ))}
                 </ul>
@@ -2611,24 +2799,27 @@ onClick={async () => {
 
             {/* Narrative */}
             {showNarrative && currentQuestion.narrative && (
-              <div className="mt-6 bg-white rounded-2xl p-8 shadow-xl">
-                <h4 className="text-2xl font-bold mb-4">Full Narrative:</h4>
-                <p className="text-lg text-gray-800 leading-relaxed whitespace-pre-line">{currentQuestion.narrative}</p>
+              <div className="mt-4 bg-white rounded-xl p-6 shadow-xl">
+                <h4 className="text-xl font-bold mb-3 text-gray-900">Full Narrative:</h4>
+                <p className="text-base text-gray-800 leading-relaxed whitespace-pre-line">{currentQuestion.narrative}</p>
               </div>
             )}
 
             {/* Progress */}
-            <div className="mt-8 bg-white/10 backdrop-blur rounded-2xl p-6 text-white">
+            <div className="mt-6 bg-white/10 backdrop-blur rounded-xl p-5 text-white">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm">Questions Reviewed:</span>
-                <span className="text-2xl font-bold">{questions.filter(q => q.practiceCount > 0).length} / {questions.length}</span>
+                <span className="text-sm font-medium">Progress:</span>
+                <span className="text-xl font-black">{flashcardIndex + 1} / {flashcardDeck.length}</span>
               </div>
               <div className="w-full bg-white/20 rounded-full h-3">
                 <div 
-                  className="bg-white h-3 rounded-full transition-all"
-                  style={{ width: `${(questions.filter(q => q.practiceCount > 0).length / questions.length) * 100}%` }}
+                  className="bg-white h-3 rounded-full transition-all duration-300"
+                  style={{ width: `${((flashcardIndex + 1) / flashcardDeck.length) * 100}%` }}
                 ></div>
               </div>
+              <p className="text-xs text-white/75 mt-2 text-center font-medium">
+                Swipe ← or → to navigate • Tap card to flip
+              </p>
             </div>
           </div>
         </div>
