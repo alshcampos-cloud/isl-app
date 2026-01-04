@@ -2537,19 +2537,22 @@ onClick={async () => {
       return a.averageScore - b.averageScore;
     });
 
-    // Swipe handlers
+    // Swipe handlers - Robust threshold
     const handleTouchStart = (e) => {
       setSwipeStart(e.touches[0].clientX);
+      setSwipeDistance(0);
     };
 
     const handleTouchMove = (e) => {
       if (swipeStart === null) return;
       const currentX = e.touches[0].clientX;
-      setSwipeDistance(currentX - swipeStart);
+      const distance = currentX - swipeStart;
+      setSwipeDistance(distance);
     };
 
     const handleTouchEnd = () => {
-      if (Math.abs(swipeDistance) > 100) {
+      // Robust threshold: 150px to prevent accidental swipes
+      if (Math.abs(swipeDistance) > 150) {
         if (swipeDistance > 0) {
           // Swipe right - Previous card
           goToPreviousCard();
@@ -2580,6 +2583,10 @@ onClick={async () => {
       setShowBullets(false);
       setShowNarrative(false);
       setShowStudyTips(false);
+    };
+
+    const flipCard = () => {
+      setFlashcardSide(flashcardSide === 'question' ? 'answer' : 'question');
     };
 
     const startVisualization = () => {
@@ -2642,41 +2649,58 @@ onClick={async () => {
           </div>
 
           <div className="max-w-3xl mx-auto">
-            {/* Flashcard - Swipeable */}
-            <div 
-              className="bg-white rounded-2xl shadow-2xl p-8 md:p-12 min-h-[400px] flex items-center justify-center cursor-pointer transition-all select-none"
-              onClick={() => setFlashcardSide(flashcardSide === 'question' ? 'answer' : 'question')}
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
-              style={{
-                transform: `translateX(${swipeDistance * 0.5}px)`,
-                transition: swipeStart === null ? 'transform 0.3s ease-out' : 'none'
-              }}
-            >
-              {flashcardSide === 'question' ? (
-                <div className="text-center w-full">
-                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 leading-tight">
-                    {currentQuestion.question}
-                  </h2>
-                  <p className="text-gray-500 text-base font-medium">Tap card to flip</p>
-                  <p className="text-gray-400 text-sm mt-2">or swipe ← →</p>
-                </div>
-              ) : (
-                <div className="w-full">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-4">Answer:</h3>
-                  <ul className="space-y-3 text-left">
-                    {currentQuestion.bullets.filter(b => b).map((bullet, idx) => (
-                      <li key={idx} className="flex items-start gap-3">
-                        <span className="flex-shrink-0 w-7 h-7 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
-                          {idx + 1}
-                        </span>
-                        <span className="text-base md:text-lg text-gray-800 leading-snug">{bullet}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+            {/* Flashcard Container with Desktop Arrows */}
+            <div className="relative">
+              {/* Left Arrow - Desktop Only */}
+              <button
+                onClick={goToPreviousCard}
+                className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-16 w-12 h-12 bg-white/20 hover:bg-white/30 backdrop-blur rounded-full items-center justify-center text-white text-2xl font-bold transition-all hover:scale-110 z-10"
+              >
+                ←
+              </button>
+
+              {/* Flashcard - Swipeable on Mobile, Clickable to Flip */}
+              <div 
+                className="bg-white rounded-2xl shadow-2xl p-8 md:p-12 min-h-[400px] flex items-center justify-center cursor-pointer transition-all select-none"
+                onClick={flipCard}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                style={{
+                  transform: `translateX(${swipeDistance * 0.3}px)`,
+                  transition: swipeStart === null ? 'transform 0.3s ease-out' : 'none'
+                }}
+              >
+                {flashcardSide === 'question' ? (
+                  <div className="text-center w-full">
+                    <h2 className="text-2xl md:text-4xl font-bold text-gray-900 leading-tight">
+                      {currentQuestion.question}
+                    </h2>
+                  </div>
+                ) : (
+                  <div className="w-full">
+                    <h3 className="text-2xl font-bold text-gray-900 mb-4">Answer:</h3>
+                    <ul className="space-y-3 text-left">
+                      {currentQuestion.bullets.filter(b => b).map((bullet, idx) => (
+                        <li key={idx} className="flex items-start gap-3">
+                          <span className="flex-shrink-0 w-7 h-7 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                            {idx + 1}
+                          </span>
+                          <span className="text-base md:text-lg text-gray-800 leading-snug">{bullet}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              {/* Right Arrow - Desktop Only */}
+              <button
+                onClick={goToNextCard}
+                className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-16 w-12 h-12 bg-white/20 hover:bg-white/30 backdrop-blur rounded-full items-center justify-center text-white text-2xl font-bold transition-all hover:scale-110 z-10"
+              >
+                →
+              </button>
             </div>
 
             {/* Study Tips - Collapsible */}
