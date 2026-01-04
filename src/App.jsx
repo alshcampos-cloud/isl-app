@@ -136,6 +136,19 @@ const ISL = () => {
   const [comparisonMode, setComparisonMode] = useState(false);
   const [showAnswerAssistant, setShowAnswerAssistant] = useState(false);
   const [answerAssistantQuestion, setAnswerAssistantQuestion] = useState(null);
+  
+  // Usage tracking
+  const [usageThisMonth, setUsageThisMonth] = useState(0);
+  const [usageLimit, setUsageLimit] = useState(5);
+  
+  // Collapsible feedback sections
+  const [showSTARAnalysis, setShowSTARAnalysis] = useState(true);
+  const [showCARAnalysis, setShowCARAnalysis] = useState(false);
+  const [showStrongExample, setShowStrongExample] = useState(false);
+  const [showYourAnswer, setShowYourAnswer] = useState(false);
+  const [showStrengths, setShowStrengths] = useState(true);
+  const [showGaps, setShowGaps] = useState(true);
+  const [showActionSteps, setShowActionSteps] = useState(false);
 
   // ✅ Inject styles ONCE, safely, inside the component (hooks allowed here)
   useEffect(() => {
@@ -253,6 +266,78 @@ const ISL = () => {
     }
   };
 
+  // USAGE TRACKING FUNCTIONS
+  const checkAIUsageLimit = async () => {
+    // Get current month's usage
+    const currentMonth = new Date().toISOString().slice(0, 7); // "2026-01"
+    const storageKey = `isl_usage_${currentMonth}`;
+    const currentUsage = parseInt(localStorage.getItem(storageKey) || '0');
+    
+    const isPro = usageStats?.tier === 'pro' || 
+                  usageStats?.tier === 'premium' || 
+                  usageStats?.tier === 'beta';
+    
+    const limit = usageStats?.tier === 'premium' || usageStats?.tier === 'beta' ? 999999 :
+                  usageStats?.tier === 'pro' ? 40 : 5;
+    
+    setUsageThisMonth(currentUsage);
+    setUsageLimit(limit);
+    
+    if (currentUsage >= limit && !isPro) {
+      alert(`⚠️ Monthly AI Limit Reached
+
+You've used all ${limit} AI sessions this month.
+
+Upgrade to Pro ($9.99/month) for 40 sessions!
+
+✓ AI Answer Coach
+✓ Smart practice queue
+✓ Pre-interview prep
+✓ More practice sessions
+
+Your free features still work:
+✓ Flashcards (unlimited)
+✓ Live Prompter (unlimited)
+✓ Question Bank (unlimited)`);
+      return false;
+    }
+    
+    // Warning at 80%
+    if (currentUsage === Math.floor(limit * 0.8) && limit < 999999) {
+      alert(`⚠️ 80% of AI sessions used
+
+You've used ${currentUsage} of ${limit} sessions this month.
+
+Consider upgrading to Pro for more sessions!`);
+    }
+    
+    return true;
+  };
+
+  const incrementAIUsage = () => {
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    const storageKey = `isl_usage_${currentMonth}`;
+    const newUsage = usageThisMonth + 1;
+    
+    localStorage.setItem(storageKey, newUsage.toString());
+    setUsageThisMonth(newUsage);
+    
+    console.log(`✅ AI Usage: ${newUsage}/${usageLimit}`);
+  };
+
+  // Load usage on mount
+  useEffect(() => {
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    const storageKey = `isl_usage_${currentMonth}`;
+    const currentUsage = parseInt(localStorage.getItem(storageKey) || '0');
+    
+    const limit = usageStats?.tier === 'premium' || usageStats?.tier === 'beta' ? 999999 :
+                  usageStats?.tier === 'pro' ? 40 : 5;
+    
+    setUsageThisMonth(currentUsage);
+    setUsageLimit(limit);
+  }, [usageStats]);
+
   // INIT
   useEffect(() => {
     const savedKey = localStorage.getItem('isl_api_key');
@@ -324,6 +409,15 @@ const ISL = () => {
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = 'en-US';
+    
+    // CRITICAL: Disable sound events to prevent beeps
+    recognition.onsoundstart = null;
+    recognition.onsoundend = null;
+    recognition.onspeechstart = null;
+    recognition.onspeechend = null;
+    recognition.onaudiostart = null;
+    recognition.onaudioend = null;
+    
 recognition.onresult = (event) => {
       let interim = '', final = '';
       for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -524,6 +618,11 @@ const startListening = () => {
     console.log('Already listening, skipping');
     return;
   }
+  
+  // CRITICAL FIX: Reset accumulated transcript for new question
+  accumulatedTranscript.current = '';
+  setTranscript('');
+  setSpokenAnswer('');
   
   // Auto-resume last question if available
 if (questionHistory.length > 0 && currentMode === 'prompter') {

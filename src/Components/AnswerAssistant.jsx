@@ -71,18 +71,45 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
       const aiResponse = data.content[0].text.trim();
       
       setConversation([...newConversation, { role: 'assistant', text: aiResponse }]);
-      
-      // Check if AI has generated a complete answer
-      if (aiResponse.includes('Great!') || aiResponse.length > 150 && !aiResponse.endsWith('?')) {
-        setStage('complete');
-        setGeneratedAnswer(aiResponse);
-        
-        // Auto-generate bullets from the answer
-        await generateBullets(aiResponse);
-      }
     } catch (error) {
       console.error('Error:', error);
       alert('Failed to get response');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const synthesizeAnswer = async () => {
+    setIsLoading(true);
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      // Call AI to synthesize conversation into clean STAR answer
+      const response = await fetch('https://tzrlpwtkrtvjpdhcaayu.supabase.co/functions/v1/ai-feedback', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          mode: 'synthesize-star-answer',
+          question: question,
+          conversation: conversation
+        })
+      });
+
+      const data = await response.json();
+      const synthesizedAnswer = data.content[0].text.trim();
+      
+      setGeneratedAnswer(synthesizedAnswer);
+      setStage('complete');
+      
+      // Auto-generate bullets from the synthesized answer
+      await generateBullets(synthesizedAnswer);
+    } catch (error) {
+      console.error('Error synthesizing:', error);
+      alert('Failed to create final answer');
     } finally {
       setIsLoading(false);
     }
@@ -208,27 +235,36 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
             </div>
           ) : stage === 'complete' ? (
             <>
+              {/* SUCCESS MESSAGE */}
+              <div className="text-center mb-6">
+                <div className="text-6xl mb-3">🎉</div>
+                <h4 className="text-2xl font-bold text-gray-900">Your Polished Answer is Ready!</h4>
+                <p className="text-gray-600 mt-2">Based on our conversation, here's your professional STAR-formatted answer</p>
+              </div>
+
               {/* GENERATED ANSWER DISPLAY */}
               <div className="mb-6">
-                <h4 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <Sparkles className="w-6 h-6 text-green-600" />
-                  Here's the answer we came up with:
+                <h4 className="text-lg font-bold text-green-700 mb-3 flex items-center gap-2">
+                  <Sparkles className="w-5 h-5" />
+                  Your Professional Answer:
                 </h4>
                 <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-300 rounded-xl p-6">
-                  <p className="text-gray-800 leading-relaxed text-lg whitespace-pre-line">{generatedAnswer}</p>
+                  <p className="text-gray-900 leading-relaxed text-base whitespace-pre-line">{generatedAnswer}</p>
                 </div>
               </div>
 
               {/* GENERATED BULLETS */}
               {generatedBullets.length > 0 && (
                 <div className="mb-6 bg-blue-50 border-2 border-blue-300 rounded-xl p-6">
-                  <h4 className="font-bold text-blue-900 mb-3 text-lg">
+                  <h4 className="font-bold text-blue-900 mb-3">
                     📝 Key Bullet Points (for Prompter & Flashcards):
                   </h4>
                   <ul className="space-y-2">
                     {generatedBullets.map((bullet, idx) => (
                       <li key={idx} className="flex items-start gap-2 text-gray-800">
-                        <span className="text-blue-600 font-bold">•</span>
+                        <span className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                          {idx + 1}
+                        </span>
                         <span>{bullet}</span>
                       </li>
                     ))}
@@ -240,22 +276,22 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
               <div className="flex gap-4">
                 <button
                   onClick={keepWorking}
-                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 py-4 rounded-lg font-bold text-lg flex items-center justify-center gap-2 transition border-2 border-gray-300"
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition border-2 border-gray-300"
                 >
                   <RefreshCw className="w-5 h-5" />
-                  Keep Working
+                  Revise Answer
                 </button>
                 <button
                   onClick={saveAnswer}
                   disabled={!generatedBullets.length}
-                  className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 rounded-lg font-bold text-lg hover:from-green-700 hover:to-emerald-700 flex items-center justify-center gap-2 transition disabled:opacity-50"
+                  className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 rounded-xl font-bold text-lg hover:from-green-700 hover:to-emerald-700 flex items-center justify-center gap-2 transition disabled:opacity-50 shadow-lg"
                 >
                   <Save className="w-5 h-5" />
                   Save Answer
                 </button>
               </div>
               <p className="text-xs text-center text-gray-600 mt-3">
-                ✅ This will be saved to Prompter, AI Interviewer, Practice, Flashcards, and Question Bank
+                ✅ Saves to all modes: Prompter, AI Interviewer, Practice, Flashcards, Question Bank
               </p>
             </>
           ) : (
@@ -287,23 +323,43 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
               </div>
 
               {/* Input - ALWAYS VISIBLE during probing */}
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={userInput}
-                  onChange={(e) => setUserInput(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-                  placeholder="Share your experience..."
-                  className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none"
-                  autoFocus
-                />
-                <button
-                  onClick={sendMessage}
-                  disabled={isLoading || !userInput.trim()}
-                  className="bg-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-indigo-700 disabled:opacity-50 transition"
-                >
-                  Send
-                </button>
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={userInput}
+                    onChange={(e) => setUserInput(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
+                    placeholder="Share your experience..."
+                    className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none"
+                    autoFocus
+                  />
+                  <button
+                    onClick={sendMessage}
+                    disabled={isLoading || !userInput.trim()}
+                    className="bg-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-indigo-700 disabled:opacity-50 transition"
+                  >
+                    Send
+                  </button>
+                </div>
+                
+                {/* Synthesize Button - Shows after some conversation */}
+                {conversation.length >= 4 && (
+                  <button
+                    onClick={synthesizeAnswer}
+                    disabled={isLoading}
+                    className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-4 rounded-xl font-bold text-lg hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 transition shadow-lg flex items-center justify-center gap-2"
+                  >
+                    <Sparkles className="w-6 h-6" />
+                    I'm Done - Create My Answer
+                  </button>
+                )}
+                
+                <p className="text-xs text-center text-gray-500">
+                  {conversation.length < 4 
+                    ? "Keep answering questions - the AI will help draw out details"
+                    : "Ready? Click above to generate your polished STAR answer"}
+                </p>
               </div>
             </>
           )}
