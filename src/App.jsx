@@ -1066,11 +1066,22 @@ const startPracticeMode = async () => {
                 <Zap className="w-8 h-8 text-yellow-300 flex-shrink-0" />
                 <div className="min-w-0">
                   <p className="text-2xl font-bold leading-tight">
-                    {usageStats ? `${usageStats.session_count}/${usageStats.tier === 'free' ? '25' : usageStats.tier === 'pro' ? '100' : '∞'}` : '0/∞'}
+                    {usageStats?.tier === 'premium' || usageStats?.tier === 'beta' 
+                      ? '∞' 
+                      : `${usageThisMonth}/${usageLimit}`
+                    }
                   </p>
                   <p className="text-sm text-white/90 leading-tight whitespace-nowrap font-medium">
-                    {usageStats ? (usageStats.tier === 'free' ? 'Free Tier' : usageStats.tier === 'pro' ? 'Pro Tier' : 'Beta Tester') : 'Beta Tester'}
+                    {usageStats?.tier === 'premium' || usageStats?.tier === 'beta'
+                      ? '✨ Unlimited AI'
+                      : 'AI Uses This Month'
+                    }
                   </p>
+                  {usageStats?.tier !== 'premium' && usageStats?.tier !== 'beta' && usageThisMonth >= usageLimit * 0.8 && (
+                    <p className="text-xs text-yellow-300 mt-1 font-bold">
+                      {usageThisMonth >= usageLimit ? '❌ Limit reached' : '⚠️ Running low'}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -1263,14 +1274,21 @@ const startPracticeMode = async () => {
                 </div>
               )}
 
-              {/* Floating Mic Button */}
+              {/* Floating Mic Button - MOBILE OPTIMIZED */}
               <div className="fixed bottom-8 right-8 z-50">
                 <button
-                  onMouseDown={startListening}
-                  onMouseUp={stopListening}
-                  onTouchStart={startListening}
-                  onTouchEnd={stopListening}
-                  className="relative w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 shadow-2xl bg-green-500 hover:bg-green-600"
+                  onClick={() => {
+                    if (isListening) {
+                      stopListening();
+                    } else {
+                      startListening();
+                    }
+                  }}
+                  className={`relative w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 shadow-2xl ${
+                    isListening 
+                      ? 'bg-red-500 hover:bg-red-600 animate-pulse' 
+                      : 'bg-green-500 hover:bg-green-600'
+                  }`}
                 >
                   {isListening && (
                     <>
@@ -3948,12 +3966,45 @@ onClick={async () => {
                           </div>
                         )}
                       </div>
-                      <div className="flex gap-2">
-                        <button onClick={() => setEditingQuestion(q)} className="p-2 text-gray-600 hover:text-indigo-600">
+                      <div className="flex flex-col gap-2">
+                        <button 
+                          onClick={() => setEditingQuestion(q)} 
+                          className="px-3 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition font-medium text-sm flex items-center justify-center gap-1"
+                        >
                           <Edit2 className="w-4 h-4" />
+                          <span>Edit</span>
                         </button>
-                        <button onClick={() => deleteQuestion(q.id)} className="p-2 text-gray-600 hover:text-red-600">
+                        
+                        {/* AI ANSWER COACH BUTTON */}
+                        <button
+                          onClick={async () => {
+                            // Check AI usage limit
+                            const canUse = await checkAIUsageLimit();
+                            if (!canUse) return;
+                            
+                            // Increment usage
+                            incrementAIUsage();
+                            
+                            // Open AI Answer Coach
+                            setAnswerAssistantQuestion(q);
+                            setShowAnswerAssistant(true);
+                          }}
+                          className="px-3 py-2 bg-gradient-to-r from-purple-100 to-indigo-100 hover:from-purple-200 hover:to-indigo-200 text-purple-700 rounded-lg transition font-bold text-sm flex items-center justify-center gap-1"
+                        >
+                          <Sparkles className="w-4 h-4" />
+                          <span>AI Coach</span>
+                        </button>
+                        
+                        <button 
+                          onClick={() => {
+                            if (confirm('Delete this question?')) {
+                              deleteQuestion(q.id);
+                            }
+                          }} 
+                          className="px-3 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition font-medium text-sm flex items-center justify-center gap-1"
+                        >
                           <Trash2 className="w-4 h-4" />
+                          <span>Delete</span>
                         </button>
                       </div>
                     </div>
