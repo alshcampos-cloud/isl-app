@@ -624,20 +624,25 @@ const startListening = () => {
   setTranscript('');
   setSpokenAnswer('');
   
-  // Auto-resume last question if available
-if (questionHistory.length > 0 && currentMode === 'prompter') {
-  setResumedQuestion(questionHistory[0]);
-  setShowResumeToast(true);
+  // Auto-resume last question ONLY if no question is currently showing
+  if (questionHistory.length > 0 && currentMode === 'prompter' && !matchedQuestion) {
+    setResumedQuestion(questionHistory[0]);
+    setShowResumeToast(true);
+    
+    // Show "Resumed" for 2 seconds, THEN display question
+    setTimeout(() => {
+      setMatchedQuestion(questionHistory[0]);
+      setShowResumeToast(false);
+    }, 2000);
+  }
   
-  // Show "Resumed" for 2 seconds, THEN display question
-  setTimeout(() => {
-    setMatchedQuestion(questionHistory[0]);
-    setShowResumeToast(false);
-  }, 2000);
-}
+  // Clear matched question if starting fresh (user wants a new question)
+  if (currentMode === 'prompter' && matchedQuestion) {
+    console.log('Clearing previous question for fresh start');
+    setMatchedQuestion(null);
+  }
   
   if (recognitionRef.current && !isListening) {
-    if (currentMode === 'prompter' && questionHistory.length === 0) setMatchedQuestion(null);
     setIsListening(true);
     try { recognitionRef.current.start(); console.log('Started'); } catch (err) { console.error('Start failed:', err); setIsListening(false); }
   }
