@@ -964,11 +964,21 @@ const startListening = () => {
   // VASTLY IMPROVED MATCHING ALGORITHM
   const matchQuestion = (text) => {
     console.log('🔍 Matching:', text);
+    console.log('📚 Questions available:', questions.length);
+    
+    if (!questions || questions.length === 0) {
+      console.log('❌ No questions loaded yet!');
+      setLiveTranscript(`Heard: "${text}"\n\n⚠️ No questions loaded. Check your question bank.`);
+      return;
+    }
     
     const inputNormalized = normalizeText(text);
     const inputWords = inputNormalized.split(' ').filter(w => w.length > 2);
     const inputBigrams = getNGrams(inputNormalized, 2);
     const inputTrigrams = getNGrams(inputNormalized, 3);
+    
+    console.log('🔤 Normalized input:', inputNormalized);
+    console.log('📝 Input words:', inputWords);
     
     // Common interview question patterns to detect
     const questionPatterns = {
@@ -997,6 +1007,7 @@ const startListening = () => {
       
       // 1. EXACT KEYWORD MATCHES (highest weight: 10 per multi-word, 5 per single-word)
       if (q.keywords && q.keywords.length > 0) {
+        console.log(`  Checking "${q.question.substring(0, 30)}..." keywords:`, q.keywords);
         q.keywords.forEach(kw => {
           if (!kw || kw.trim().length === 0) return;
           
@@ -1007,6 +1018,7 @@ const startListening = () => {
           if (kwWords.length > 1 && inputNormalized.includes(kwNorm)) {
             score += 10 * kwWords.length;
             matchReasons.push(`exact phrase "${kw}" (+${10 * kwWords.length})`);
+            console.log(`    ✓ PHRASE MATCH: "${kw}" → +${10 * kwWords.length}`);
           }
           // Single-word keyword match
           else if (kwWords.length === 1) {
@@ -1135,7 +1147,8 @@ const startListening = () => {
       console.log(`✅ Matched! (threshold: ${threshold})`); 
     } else { 
       console.log(`❌ No match - score ${highestScore} below threshold ${threshold}`); 
-      if (currentMode === 'prompter' || currentMode === 'ai-interviewer') {
+      const mode = currentModeRef.current;
+      if (mode === 'prompter' || mode === 'ai-interviewer') {
         // Show what was heard and top candidates
         const topCandidates = debugInfo.slice(0, 2).map(d => d.question).join(' | ');
         if (topCandidates) {
