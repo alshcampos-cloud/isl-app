@@ -1601,10 +1601,12 @@ const startPracticeMode = async () => {
                 </div>
               </div>
           )}
-    );
-  }
-
-
+    </div>
+ )} 
+ </div>
+</div>
+);
+} 
 
   // FILE 1 END - More views in File 2
  // ==========================================
