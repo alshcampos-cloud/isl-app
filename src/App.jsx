@@ -133,6 +133,12 @@ const ISL = () => {
   const [interviewSessionActive, setInterviewSessionActive] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
   const [sessionReady, setSessionReady] = useState(false);
+  
+  // REFS TO AVOID STALE CLOSURES IN SPEECH RECOGNITION
+  const interviewSessionActiveRef = useRef(false);
+  const isCapturingRef = useRef(false);
+  const currentModeRef = useRef(null);
+  const isListeningRef = useRef(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [interviewDate, setInterviewDate] = useState(localStorage.getItem('isl_interview_date') || '');
   const [dailyGoal, setDailyGoal] = useState(parseInt(localStorage.getItem('isl_daily_goal') || '3', 10));
@@ -157,6 +163,23 @@ const ISL = () => {
   const [liveTranscript, setLiveTranscript] = useState('');
   const [matchConfidence, setMatchConfidence] = useState(0);
   const [matchDebug, setMatchDebug] = useState('');
+
+  // KEEP REFS IN SYNC WITH STATE (for speech recognition callbacks)
+  useEffect(() => {
+    interviewSessionActiveRef.current = interviewSessionActive;
+  }, [interviewSessionActive]);
+  
+  useEffect(() => {
+    isCapturingRef.current = isCapturing;
+  }, [isCapturing]);
+  
+  useEffect(() => {
+    currentModeRef.current = currentMode;
+  }, [currentMode]);
+  
+  useEffect(() => {
+    isListeningRef.current = isListening;
+  }, [isListening]);
 
   // ✅ Inject styles ONCE, safely, inside the component (hooks allowed here)
   useEffect(() => {
@@ -505,9 +528,16 @@ recognition.onresult = (event) => {
         else interim += part;
       }
       
+      // USE REFS to avoid stale closure - refs always have current value
+      const sessionActive = interviewSessionActiveRef.current;
+      const capturing = isCapturingRef.current;
+      const mode = currentModeRef.current;
+      
       // SESSION MODE: Only accumulate when capturing
       // NON-SESSION MODE: Always accumulate
-      const shouldAccumulate = interviewSessionActive ? isCapturing : true;
+      const shouldAccumulate = sessionActive ? capturing : true;
+      
+      console.log('Speech event - sessionActive:', sessionActive, 'capturing:', capturing, 'shouldAccumulate:', shouldAccumulate);
       
       if (shouldAccumulate) {
         // ACCUMULATE text instead of replacing
@@ -516,7 +546,7 @@ recognition.onresult = (event) => {
           setTranscript(accumulatedTranscript.current);
           setLiveTranscript(accumulatedTranscript.current); // Update live display
           console.log('Speech (final):', accumulatedTranscript.current);
-          if (currentMode === 'ai-interviewer' || currentMode === 'practice') {
+          if (mode === 'ai-interviewer' || mode === 'practice') {
             setSpokenAnswer(accumulatedTranscript.current);
           }
         } else if (interim) {
@@ -525,10 +555,9 @@ recognition.onresult = (event) => {
           setTranscript(tempTranscript);
           setLiveTranscript(tempTranscript); // Update live display with interim
         }
-      } else if (interviewSessionActive && !isCapturing) {
-        // Session active but not capturing - show status
-        setTranscript('🟢 Session active - Hold SPACEBAR to capture next question');
-        setLiveTranscript('');
+      } else if (sessionActive && !capturing) {
+        // Session active but not capturing - don't update (silent listening)
+        // Removed the status message to avoid UI clutter
       }
     };
 recognition.onerror = (event) => {
@@ -547,8 +576,12 @@ recognition.onerror = (event) => {
     recognition.onend = () => { 
   console.log('Speech ended'); 
   
+  // USE REFS to avoid stale closure
+  const sessionActive = interviewSessionActiveRef.current;
+  const listening = isListeningRef.current;
+  
   // SESSION MODE: Always restart (continuous listening)
-  if (interviewSessionActive) {
+  if (sessionActive) {
     console.log('Session mode - auto-restarting...');
     try {
       recognitionRef.current.start();
@@ -559,7 +592,7 @@ recognition.onerror = (event) => {
     }
   } 
   // NON-SESSION MODE: Restart if still supposed to be listening
-  else if (isListening) {
+  else if (listening) {
     console.log('Restarting recognition...');
     try {
       recognitionRef.current.start();
@@ -720,7 +753,7 @@ const startInterviewSession = () => {
     return; 
   }
   
-  if (interviewSessionActive) {
+  if (interviewSessionActiveRef.current) {
     console.log('Session already active');
     return;
   }
@@ -730,14 +763,17 @@ const startInterviewSession = () => {
   setTranscript('');
   setSpokenAnswer('');
   setMatchedQuestion(null);
+  setLiveTranscript('');
   
   // Start mic ONCE - it will stay active throughout session
   if (recognitionRef.current) {
     try {
       recognitionRef.current.start();
       setInterviewSessionActive(true);
+      interviewSessionActiveRef.current = true; // Update ref immediately
       setSessionReady(true);
       setIsListening(true);
+      isListeningRef.current = true; // Update ref immediately
       console.log('✅ Session started - mic will stay active');
     } catch (err) {
       console.error('Session start failed:', err);
@@ -748,18 +784,22 @@ const startInterviewSession = () => {
 const endInterviewSession = () => {
   console.log('🛑 Ending interview session');
   
-  if (!interviewSessionActive) return;
+  if (!interviewSessionActiveRef.current) return;
   
   // Stop mic ONCE
   if (recognitionRef.current) {
     try {
       recognitionRef.current.stop();
       setInterviewSessionActive(false);
+      interviewSessionActiveRef.current = false; // Update ref immediately
       setSessionReady(false);
       setIsListening(false);
+      isListeningRef.current = false; // Update ref immediately
       setIsCapturing(false);
+      isCapturingRef.current = false; // Update ref immediately
       setMatchedQuestion(null);
       setTranscript('');
+      setLiveTranscript('');
       accumulatedTranscript.current = '';
       console.log('✅ Session ended');
     } catch (err) {
@@ -770,15 +810,16 @@ const endInterviewSession = () => {
 
 // SPACEBAR CONTROLS CAPTURING (NOT MIC START/STOP)
 const handleSpacebarDown = () => {
-  if (!interviewSessionActive) {
+  if (!interviewSessionActiveRef.current) {
     console.log('No active session - start session first');
     return;
   }
   
-  if (isCapturing) return; // Already capturing
+  if (isCapturingRef.current) return; // Already capturing
   
   console.log('🎤 Started capturing');
   setIsCapturing(true);
+  isCapturingRef.current = true; // Update ref immediately
   
   // Clear for fresh capture
   accumulatedTranscript.current = '';
@@ -789,10 +830,11 @@ const handleSpacebarDown = () => {
 };
 
 const handleSpacebarUp = () => {
-  if (!interviewSessionActive || !isCapturing) return;
+  if (!interviewSessionActiveRef.current || !isCapturingRef.current) return;
   
   console.log('⏸️ Stopped capturing, processing...');
   setIsCapturing(false);
+  isCapturingRef.current = false; // Update ref immediately
   
   // Process the captured text
   const capturedText = accumulatedTranscript.current.trim();
