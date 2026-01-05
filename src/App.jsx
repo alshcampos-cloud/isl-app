@@ -151,8 +151,6 @@ const ISL = () => {
   const [showCARAnalysis, setShowCARAnalysis] = useState(false);
   const [showStrongExample, setShowStrongExample] = useState(false);
   const [showYourAnswer, setShowYourAnswer] = useState(false);
-  const [showStrengths, setShowStrengths] = useState(true);
-  const [showGaps, setShowGaps] = useState(true);
   const [showActionSteps, setShowActionSteps] = useState(false);
 
   // ✅ Inject styles ONCE, safely, inside the component (hooks allowed here)
