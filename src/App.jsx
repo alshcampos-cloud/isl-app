@@ -88,6 +88,7 @@ const ISL = () => {
   const recognitionRef = useRef(null);
   const synthRef = useRef(null);
   const accumulatedTranscript = useRef('');
+  const currentInterimRef = useRef(''); // Track current interim separately
 
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
@@ -537,27 +538,29 @@ recognition.onresult = (event) => {
       // NON-SESSION MODE: Always accumulate
       const shouldAccumulate = sessionActive ? capturing : true;
       
-      console.log('Speech event - sessionActive:', sessionActive, 'capturing:', capturing, 'shouldAccumulate:', shouldAccumulate);
-      
       if (shouldAccumulate) {
-        // ACCUMULATE text instead of replacing
+        // Save FINAL results permanently
         if (final) {
           accumulatedTranscript.current = (accumulatedTranscript.current + ' ' + final).trim();
-          setTranscript(accumulatedTranscript.current);
-          setLiveTranscript(accumulatedTranscript.current); // Update live display
+          currentInterimRef.current = ''; // Clear interim when we get final
           console.log('Speech (final):', accumulatedTranscript.current);
-          if (mode === 'ai-interviewer' || mode === 'practice') {
-            setSpokenAnswer(accumulatedTranscript.current);
-          }
-        } else if (interim) {
-          // Show interim results without saving
-          const tempTranscript = (accumulatedTranscript.current + ' ' + interim).trim();
-          setTranscript(tempTranscript);
-          setLiveTranscript(tempTranscript); // Update live display with interim
+        }
+        
+        // Track INTERIM separately (replaces previous interim, doesn't accumulate)
+        if (interim) {
+          currentInterimRef.current = interim;
+        }
+        
+        // Display combined: all finals + current interim
+        const displayText = (accumulatedTranscript.current + ' ' + currentInterimRef.current).trim();
+        setTranscript(displayText);
+        setLiveTranscript(displayText);
+        
+        if (mode === 'ai-interviewer' || mode === 'practice') {
+          setSpokenAnswer(displayText);
         }
       } else if (sessionActive && !capturing) {
         // Session active but not capturing - don't update (silent listening)
-        // Removed the status message to avoid UI clutter
       }
     };
 recognition.onerror = (event) => {
@@ -760,6 +763,7 @@ const startInterviewSession = () => {
   
   // Clear everything for fresh session
   accumulatedTranscript.current = '';
+  currentInterimRef.current = '';
   setTranscript('');
   setSpokenAnswer('');
   setMatchedQuestion(null);
@@ -801,6 +805,7 @@ const endInterviewSession = () => {
       setTranscript('');
       setLiveTranscript('');
       accumulatedTranscript.current = '';
+      currentInterimRef.current = '';
       console.log('✅ Session ended');
     } catch (err) {
       console.error('Session end failed:', err);
@@ -823,6 +828,7 @@ const handleSpacebarDown = () => {
   
   // Clear for fresh capture
   accumulatedTranscript.current = '';
+  currentInterimRef.current = ''; // Clear interim too
   setTranscript('');
   setLiveTranscript(''); // Clear live display
   setMatchConfidence(0); // Reset confidence
@@ -832,21 +838,19 @@ const handleSpacebarDown = () => {
 const handleSpacebarUp = () => {
   if (!interviewSessionActiveRef.current || !isCapturingRef.current) return;
   
-  console.log('⏸️ Stopped capturing, processing...');
   setIsCapturing(false);
-  isCapturingRef.current = false; // Update ref immediately
+  isCapturingRef.current = false;
   
-  // Process the captured text
-  const capturedText = accumulatedTranscript.current.trim();
+  // Use BOTH final results AND current interim (in case user released before finalization)
+  const capturedText = (accumulatedTranscript.current + ' ' + currentInterimRef.current).trim();
+  
+  console.log('⏸️ Captured:', capturedText || '(empty)');
   
   if (capturedText) {
-    console.log('Processing:', capturedText);
-    // Keep liveTranscript showing what was captured (for display)
     setLiveTranscript(capturedText);
     matchQuestion(capturedText);
     
-    // Auto-clear the live transcript after 5 seconds if still showing
-    // (gives user time to see what was captured and debug info)
+    // Auto-clear the live transcript after 5 seconds
     setTimeout(() => {
       setLiveTranscript(prev => prev === capturedText ? '' : prev);
     }, 5000);
@@ -855,8 +859,9 @@ const handleSpacebarUp = () => {
     setTimeout(() => setLiveTranscript(''), 3000);
   }
   
-  // Clear accumulator for next capture
+  // Clear both accumulators for next capture
   accumulatedTranscript.current = '';
+  currentInterimRef.current = '';
   setTranscript('');
 };
 
@@ -963,8 +968,7 @@ const startListening = () => {
 
   // VASTLY IMPROVED MATCHING ALGORITHM
   const matchQuestion = (text) => {
-    console.log('🔍 Matching:', text);
-    console.log('📚 Questions available:', questions.length);
+    console.log('🔍 Matching:', text, `(${questions.length} questions available)`);
     
     if (!questions || questions.length === 0) {
       console.log('❌ No questions loaded yet!');
@@ -976,9 +980,6 @@ const startListening = () => {
     const inputWords = inputNormalized.split(' ').filter(w => w.length > 2);
     const inputBigrams = getNGrams(inputNormalized, 2);
     const inputTrigrams = getNGrams(inputNormalized, 3);
-    
-    console.log('🔤 Normalized input:', inputNormalized);
-    console.log('📝 Input words:', inputWords);
     
     // Common interview question patterns to detect
     const questionPatterns = {
@@ -1007,7 +1008,6 @@ const startListening = () => {
       
       // 1. EXACT KEYWORD MATCHES (highest weight: 10 per multi-word, 5 per single-word)
       if (q.keywords && q.keywords.length > 0) {
-        console.log(`  Checking "${q.question.substring(0, 30)}..." keywords:`, q.keywords);
         q.keywords.forEach(kw => {
           if (!kw || kw.trim().length === 0) return;
           
@@ -1018,7 +1018,6 @@ const startListening = () => {
           if (kwWords.length > 1 && inputNormalized.includes(kwNorm)) {
             score += 10 * kwWords.length;
             matchReasons.push(`exact phrase "${kw}" (+${10 * kwWords.length})`);
-            console.log(`    ✓ PHRASE MATCH: "${kw}" → +${10 * kwWords.length}`);
           }
           // Single-word keyword match
           else if (kwWords.length === 1) {
