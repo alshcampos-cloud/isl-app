@@ -1602,8 +1602,6 @@ const startPracticeMode = async () => {
               </div>
             </div>
           )}
-        </div>
-      </div>
     );
   }
 
