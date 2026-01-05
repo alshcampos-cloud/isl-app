@@ -153,6 +153,11 @@ const ISL = () => {
   const [showYourAnswer, setShowYourAnswer] = useState(false);
   const [showActionSteps, setShowActionSteps] = useState(false);
 
+  // STATE FOR LIVE TRANSCRIPT BOX (Prompter mode)
+  const [liveTranscript, setLiveTranscript] = useState('');
+  const [matchConfidence, setMatchConfidence] = useState(0);
+  const [matchDebug, setMatchDebug] = useState('');
+
   // ✅ Inject styles ONCE, safely, inside the component (hooks allowed here)
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -509,6 +514,7 @@ recognition.onresult = (event) => {
         if (final) {
           accumulatedTranscript.current = (accumulatedTranscript.current + ' ' + final).trim();
           setTranscript(accumulatedTranscript.current);
+          setLiveTranscript(accumulatedTranscript.current); // Update live display
           console.log('Speech (final):', accumulatedTranscript.current);
           if (currentMode === 'ai-interviewer' || currentMode === 'practice') {
             setSpokenAnswer(accumulatedTranscript.current);
@@ -517,10 +523,12 @@ recognition.onresult = (event) => {
           // Show interim results without saving
           const tempTranscript = (accumulatedTranscript.current + ' ' + interim).trim();
           setTranscript(tempTranscript);
+          setLiveTranscript(tempTranscript); // Update live display with interim
         }
       } else if (interviewSessionActive && !isCapturing) {
         // Session active but not capturing - show status
         setTranscript('🟢 Session active - Hold SPACEBAR to capture next question');
+        setLiveTranscript('');
       }
     };
 recognition.onerror = (event) => {
@@ -775,6 +783,9 @@ const handleSpacebarDown = () => {
   // Clear for fresh capture
   accumulatedTranscript.current = '';
   setTranscript('');
+  setLiveTranscript(''); // Clear live display
+  setMatchConfidence(0); // Reset confidence
+  setMatchDebug(''); // Clear debug info
 };
 
 const handleSpacebarUp = () => {
@@ -788,10 +799,21 @@ const handleSpacebarUp = () => {
   
   if (capturedText) {
     console.log('Processing:', capturedText);
+    // Keep liveTranscript showing what was captured (for display)
+    setLiveTranscript(capturedText);
     matchQuestion(capturedText);
+    
+    // Auto-clear the live transcript after 5 seconds if still showing
+    // (gives user time to see what was captured and debug info)
+    setTimeout(() => {
+      setLiveTranscript(prev => prev === capturedText ? '' : prev);
+    }, 5000);
+  } else {
+    setLiveTranscript('(No speech detected - try speaking louder or closer to mic)');
+    setTimeout(() => setLiveTranscript(''), 3000);
   }
   
-  // Clear for next capture
+  // Clear accumulator for next capture
   accumulatedTranscript.current = '';
   setTranscript('');
 };
@@ -844,53 +866,241 @@ const startListening = () => {
     }
   };
 
-  const matchQuestion = (text) => {
-    console.log('Matching:', text);
-    
-    // Fuzzy matching improvements
-    const lower = text.toLowerCase()
-      .replace(/kaiser permanente/gi, 'kaiser')
-      .replace(/tell me about yourself/gi, 'about yourself')
+  // IMPROVED FUZZY MATCHING UTILITIES
+  const normalizeText = (text) => {
+    return text.toLowerCase()
+      .replace(/['']/g, "'")
+      .replace(/[""]/g, '"')
+      .replace(/[^\w\s'-]/g, ' ')
+      .replace(/\s+/g, ' ')
       .trim();
+  };
+
+  // Levenshtein distance for fuzzy matching
+  const levenshteinDistance = (str1, str2) => {
+    const m = str1.length, n = str2.length;
+    if (m === 0) return n;
+    if (n === 0) return m;
     
-    let bestMatch = null, highestScore = 0;
+    const dp = Array.from({ length: m + 1 }, (_, i) => 
+      Array.from({ length: n + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0))
+    );
+    
+    for (let i = 1; i <= m; i++) {
+      for (let j = 1; j <= n; j++) {
+        dp[i][j] = str1[i-1] === str2[j-1] 
+          ? dp[i-1][j-1] 
+          : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+      }
+    }
+    return dp[m][n];
+  };
+
+  // Check if words are similar (fuzzy)
+  const wordsSimilar = (word1, word2, threshold = 0.75) => {
+    if (word1 === word2) return true;
+    if (word1.length < 3 || word2.length < 3) return word1 === word2;
+    
+    // Check if one contains the other (stems)
+    if (word1.includes(word2) || word2.includes(word1)) return true;
+    
+    const maxLen = Math.max(word1.length, word2.length);
+    const distance = levenshteinDistance(word1, word2);
+    return (1 - distance / maxLen) >= threshold;
+  };
+
+  // Generate n-grams (phrases) from text
+  const getNGrams = (text, n) => {
+    const words = text.split(' ').filter(w => w.length > 0);
+    const ngrams = [];
+    for (let i = 0; i <= words.length - n; i++) {
+      ngrams.push(words.slice(i, i + n).join(' '));
+    }
+    return ngrams;
+  };
+
+  // VASTLY IMPROVED MATCHING ALGORITHM
+  const matchQuestion = (text) => {
+    console.log('🔍 Matching:', text);
+    
+    const inputNormalized = normalizeText(text);
+    const inputWords = inputNormalized.split(' ').filter(w => w.length > 2);
+    const inputBigrams = getNGrams(inputNormalized, 2);
+    const inputTrigrams = getNGrams(inputNormalized, 3);
+    
+    // Common interview question patterns to detect
+    const questionPatterns = {
+      'tell me about yourself': ['tell', 'about', 'yourself', 'walk me through', 'introduce'],
+      'why this role': ['why', 'interested', 'role', 'position', 'job', 'apply'],
+      'why leaving': ['why', 'leaving', 'leave', 'current', 'transition'],
+      'strengths': ['strengths', 'strength', 'excel', 'good at', 'best'],
+      'weaknesses': ['weaknesses', 'weakness', 'weak', 'improve', 'development area'],
+      'conflict': ['conflict', 'disagreement', 'difficult', 'coworker', 'colleague'],
+      'leadership': ['leadership', 'lead', 'leader', 'manage', 'team'],
+      'challenge': ['challenge', 'difficult', 'obstacle', 'overcome', 'problem'],
+      'experience': ['experience', 'background', 'worked', 'done'],
+      'why company': ['why', 'company', 'organization', 'kaiser', 'stanford'],
+    };
+    
+    let bestMatch = null;
+    let highestScore = 0;
+    let debugInfo = [];
+    
     questions.forEach(q => {
       let score = 0;
+      let matchReasons = [];
       
-      // Keyword matching (high weight)
-      if (q.keywords) q.keywords.forEach(kw => { 
-        if (lower.includes(kw.toLowerCase())) { 
-          score += kw.split(' ').length * 3; 
-          console.log(`✓ "${kw}" +${score}`); 
-        } 
+      const questionNormalized = normalizeText(q.question);
+      const questionWords = questionNormalized.split(' ').filter(w => w.length > 2);
+      
+      // 1. EXACT KEYWORD MATCHES (highest weight: 10 per multi-word, 5 per single-word)
+      if (q.keywords && q.keywords.length > 0) {
+        q.keywords.forEach(kw => {
+          if (!kw || kw.trim().length === 0) return;
+          
+          const kwNorm = normalizeText(kw);
+          const kwWords = kwNorm.split(' ').filter(w => w.length > 0);
+          
+          // Multi-word keyword match (exact phrase)
+          if (kwWords.length > 1 && inputNormalized.includes(kwNorm)) {
+            score += 10 * kwWords.length;
+            matchReasons.push(`exact phrase "${kw}" (+${10 * kwWords.length})`);
+          }
+          // Single-word keyword match
+          else if (kwWords.length === 1) {
+            const kwWord = kwWords[0];
+            // Exact match
+            if (inputWords.includes(kwWord)) {
+              score += 5;
+              matchReasons.push(`keyword "${kw}" (+5)`);
+            }
+            // Fuzzy match
+            else if (inputWords.some(w => wordsSimilar(w, kwWord))) {
+              score += 3;
+              matchReasons.push(`fuzzy "${kw}" (+3)`);
+            }
+          }
+          // Partial multi-word keyword (at least 2 words match)
+          else if (kwWords.length > 1) {
+            const matchCount = kwWords.filter(kw => 
+              inputWords.some(iw => wordsSimilar(iw, kw))
+            ).length;
+            if (matchCount >= 2) {
+              score += 4 * matchCount;
+              matchReasons.push(`partial phrase "${kw}" (${matchCount}/${kwWords.length} words) (+${4 * matchCount})`);
+            }
+          }
+        });
+      }
+      
+      // 2. QUESTION TEXT MATCHING (medium weight)
+      // Important words from the question (excluding common words)
+      const stopWords = ['what', 'how', 'why', 'can', 'you', 'tell', 'me', 'about', 'the', 'a', 'an', 'is', 'are', 'do', 'did', 'your', 'have', 'has', 'been', 'with', 'for', 'and', 'or', 'to', 'in', 'of', 'that', 'this', 'would', 'could', 'should'];
+      
+      const importantQuestionWords = questionWords.filter(w => 
+        w.length > 3 && !stopWords.includes(w)
+      );
+      
+      importantQuestionWords.forEach(qWord => {
+        if (inputWords.includes(qWord)) {
+          score += 2;
+          matchReasons.push(`question word "${qWord}" (+2)`);
+        } else if (inputWords.some(w => wordsSimilar(w, qWord))) {
+          score += 1;
+          matchReasons.push(`fuzzy question word "${qWord}" (+1)`);
+        }
       });
       
-      // Question word matching (lower weight)
-      q.question.toLowerCase().split(' ').filter(w => w.length > 3).forEach(word => { 
-        if (lower.includes(word)) score += 1; 
+      // 3. BIGRAM/TRIGRAM MATCHING (phrase similarity)
+      const questionBigrams = getNGrams(questionNormalized, 2);
+      const questionTrigrams = getNGrams(questionNormalized, 3);
+      
+      inputTrigrams.forEach(tri => {
+        if (questionTrigrams.some(qt => qt === tri)) {
+          score += 6;
+          matchReasons.push(`trigram "${tri}" (+6)`);
+        }
       });
       
-      if (score > 0) console.log(`"${q.question}" = ${score}`);
-      if (score > highestScore) { highestScore = score; bestMatch = q; }
+      inputBigrams.forEach(bi => {
+        if (questionBigrams.some(qb => qb === bi)) {
+          score += 3;
+          matchReasons.push(`bigram "${bi}" (+3)`);
+        }
+      });
+      
+      // 4. PATTERN DETECTION (boost for common interview question types)
+      Object.entries(questionPatterns).forEach(([pattern, indicators]) => {
+        const inputHasPattern = indicators.filter(ind => 
+          inputWords.some(w => wordsSimilar(w, ind))
+        ).length;
+        const questionHasPattern = indicators.filter(ind => 
+          questionWords.some(w => wordsSimilar(w, ind))
+        ).length;
+        
+        if (inputHasPattern >= 2 && questionHasPattern >= 2) {
+          score += 4;
+          matchReasons.push(`pattern "${pattern}" (+4)`);
+        }
+      });
+      
+      // Log detailed match info
+      if (score > 0) {
+        const shortQ = q.question.substring(0, 50) + (q.question.length > 50 ? '...' : '');
+        debugInfo.push({ question: shortQ, score, reasons: matchReasons });
+        console.log(`📊 "${shortQ}" = ${score} [${matchReasons.join(', ')}]`);
+      }
+      
+      if (score > highestScore) {
+        highestScore = score;
+        bestMatch = q;
+      }
     });
     
-    console.log('Best:', bestMatch?.question, highestScore);
+    // Calculate confidence (0-100%)
+    const confidence = Math.min(100, Math.round(highestScore * 5));
+    setMatchConfidence(confidence);
     
-    // LOWERED THRESHOLD: 1 instead of 2
-    if (bestMatch && highestScore >= 1) { 
+    // Sort debug info by score
+    debugInfo.sort((a, b) => b.score - a.score);
+    setMatchDebug(debugInfo.slice(0, 3).map(d => 
+      `${d.question}: ${d.score}pts`
+    ).join('\n'));
+    
+    console.log('🏆 Best:', bestMatch?.question, `(score: ${highestScore}, confidence: ${confidence}%)`);
+    
+    // DYNAMIC THRESHOLD based on input length and keyword presence
+    // Longer inputs need higher scores, very short inputs need exact matches
+    const inputLength = inputWords.length;
+    let threshold;
+    if (inputLength <= 3) {
+      threshold = 5; // Short input needs strong match
+    } else if (inputLength <= 6) {
+      threshold = 4;
+    } else if (inputLength <= 10) {
+      threshold = 6;
+    } else {
+      threshold = 8; // Long input should have multiple matches
+    }
+    
+    if (bestMatch && highestScore >= threshold) { 
       setMatchedQuestion(bestMatch); 
       setShowNarrative(false); 
       setQuestionHistory(prev => {
-        const newHistory = [bestMatch, ...prev.filter(q => q !== bestMatch)];
+        const newHistory = [bestMatch, ...prev.filter(q => q.id !== bestMatch.id)];
         return newHistory.slice(0, 3);
       });
-      console.log('✅ Matched!'); 
-    }
-    else { 
-      console.log('❌ No match - score too low:', highestScore); 
-      // Show helpful message
-      if (currentMode === 'prompter') {
-        setTranscript(`No match found for: "${text}". Try rephrasing or check your keywords.`);
+      console.log(`✅ Matched! (threshold: ${threshold})`); 
+    } else { 
+      console.log(`❌ No match - score ${highestScore} below threshold ${threshold}`); 
+      if (currentMode === 'prompter' || currentMode === 'ai-interviewer') {
+        // Show what was heard and top candidates
+        const topCandidates = debugInfo.slice(0, 2).map(d => d.question).join(' | ');
+        if (topCandidates) {
+          setTranscript(`Heard: "${text}"\n\nClosest matches: ${topCandidates}\n\n(Score too low for auto-match. Try adding better keywords.)`);
+        } else {
+          setTranscript(`Heard: "${text}"\n\nNo matching questions found. Add keywords that match this phrasing.`);
+        }
       }
     }
   };
@@ -1560,49 +1770,79 @@ const startPracticeMode = async () => {
                   )}
                 </div>
               )}
-
-              {/* Floating Mic Button - SESSION-AWARE */}
-              {interviewSessionActive && (
-                <div className="fixed bottom-8 right-8 z-50">
-                  <button
-                    onMouseDown={() => {
-                      if (interviewSessionActive) handleSpacebarDown();
-                    }}
-                    onMouseUp={() => {
-                      if (interviewSessionActive) handleSpacebarUp();
-                    }}
-                    onTouchStart={(e) => {
-                      e.preventDefault();
-                      if (interviewSessionActive) handleSpacebarDown();
-                    }}
-                    onTouchEnd={(e) => {
-                      e.preventDefault();
-                      if (interviewSessionActive) handleSpacebarUp();
-                    }}
-                    className={`relative w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 shadow-2xl ${
-                      isCapturing
-                        ? 'bg-red-500 hover:bg-red-600 animate-pulse' 
-                        : 'bg-green-500 hover:bg-green-600'
-                    }`}
-                  >
-                    {isCapturing && (
-                      <>
-                        <div className="ripple-ring w-20 h-20 text-red-300"></div>
-                        <div className="ripple-ring w-20 h-20 text-red-300"></div>
-                        <div className="ripple-ring w-20 h-20 text-red-300"></div>
-                      </>
-                    )}
-                    <Mic className="w-10 h-10 text-white z-10" />
-                  </button>
-                <div className="text-center mt-2">
-                  <span className="text-xs font-bold text-gray-400">
-                    Hold to Start
-                  </span>
-                </div>
-              </div>
-          )}
     </div>
  )} 
+ 
+          {/* FLOATING MIC BUTTON - MOVED OUTSIDE matchedQuestion conditional */}
+          {/* Now shows in BOTH states: waiting for first question AND after question matched */}
+          {interviewSessionActive && (
+            <div className="fixed bottom-8 right-8 z-50">
+              {/* LIVE TRANSCRIPT BOX - Shows what mic is hearing in real-time */}
+              {(isCapturing || liveTranscript) && (
+                <div className="absolute bottom-24 right-0 w-80 max-w-[90vw] bg-black/90 backdrop-blur-lg rounded-2xl p-4 shadow-2xl border border-green-500/50 animate-fadeIn">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className={`w-3 h-3 rounded-full ${isCapturing ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`}></div>
+                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wide">
+                      {isCapturing ? '🎤 Listening...' : '✓ Captured'}
+                    </span>
+                    {matchConfidence > 0 && !isCapturing && (
+                      <span className={`ml-auto text-xs font-bold px-2 py-1 rounded ${
+                        matchConfidence >= 70 ? 'bg-green-600 text-white' : 
+                        matchConfidence >= 40 ? 'bg-yellow-600 text-white' : 
+                        'bg-red-600 text-white'
+                      }`}>
+                        {matchConfidence}% match
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-white text-sm leading-relaxed max-h-32 overflow-y-auto">
+                    {liveTranscript || 'Speak now...'}
+                  </p>
+                  {matchDebug && !isCapturing && (
+                    <div className="mt-2 pt-2 border-t border-gray-700">
+                      <p className="text-xs text-gray-500 font-mono whitespace-pre-line">{matchDebug}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              <button
+                onMouseDown={() => {
+                  if (interviewSessionActive) handleSpacebarDown();
+                }}
+                onMouseUp={() => {
+                  if (interviewSessionActive) handleSpacebarUp();
+                }}
+                onTouchStart={(e) => {
+                  e.preventDefault();
+                  if (interviewSessionActive) handleSpacebarDown();
+                }}
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  if (interviewSessionActive) handleSpacebarUp();
+                }}
+                className={`relative w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 shadow-2xl ${
+                  isCapturing
+                    ? 'bg-red-500 hover:bg-red-600 animate-pulse' 
+                    : 'bg-green-500 hover:bg-green-600'
+                }`}
+              >
+                {isCapturing && (
+                  <>
+                    <div className="ripple-ring w-20 h-20 text-red-300"></div>
+                    <div className="ripple-ring w-20 h-20 text-red-300"></div>
+                    <div className="ripple-ring w-20 h-20 text-red-300"></div>
+                  </>
+                )}
+                <Mic className="w-10 h-10 text-white z-10" />
+              </button>
+              <div className="text-center mt-2">
+                <span className="text-xs font-bold text-gray-400">
+                  Hold to Capture
+                </span>
+              </div>
+            </div>
+          )}
  </div>
 </div>
 );
