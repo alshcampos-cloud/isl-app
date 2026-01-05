@@ -1120,6 +1120,8 @@ const startListening = () => {
         const newHistory = [perfectMatch, ...prev.filter(q => q.id !== perfectMatch.id)];
         return newHistory.slice(0, 3);
       });
+      // Auto-scroll to top when new question detected
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       console.log('✅ Perfect match used!');
       return;
     }
@@ -1269,6 +1271,8 @@ const startListening = () => {
         const newHistory = [bestMatch, ...prev.filter(q => q.id !== bestMatch.id)];
         return newHistory.slice(0, 3);
       });
+      // Auto-scroll to top when new question detected
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       console.log(`✅ Matched! (threshold: ${threshold})`); 
     } else { 
       console.log(`❌ No match - score ${highestScore} below threshold ${threshold}`); 
