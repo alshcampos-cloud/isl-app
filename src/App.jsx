@@ -140,6 +140,7 @@ const ISL = () => {
   const isCapturingRef = useRef(false);
   const currentModeRef = useRef(null);
   const isListeningRef = useRef(false);
+  const captureSourceRef = useRef(null); // Track if capture was started by 'mouse' or 'keyboard'
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [interviewDate, setInterviewDate] = useState(localStorage.getItem('isl_interview_date') || '');
   const [dailyGoal, setDailyGoal] = useState(parseInt(localStorage.getItem('isl_daily_goal') || '3', 10));
@@ -164,6 +165,8 @@ const ISL = () => {
   const [liveTranscript, setLiveTranscript] = useState('');
   const [matchConfidence, setMatchConfidence] = useState(0);
   const [matchDebug, setMatchDebug] = useState('');
+  const [useSystemAudio, setUseSystemAudio] = useState(false); // Capture from speakers instead of mic
+  const [systemAudioStream, setSystemAudioStream] = useState(null);
 
   // KEEP REFS IN SYNC WITH STATE (for speech recognition callbacks)
   useEffect(() => {
@@ -748,6 +751,67 @@ question_id: (questionData.id && questionData.id !== "0" && typeof questionData.
     }
   };
 
+// SYSTEM AUDIO CAPTURE (for Teams/Zoom calls)
+// Uses getDisplayMedia to capture audio from browser tab
+const startSystemAudioCapture = async () => {
+  try {
+    console.log('🔊 Requesting system audio capture...');
+    
+    // Request screen share with audio - user must select the tab with Teams/Zoom
+    const stream = await navigator.mediaDevices.getDisplayMedia({
+      video: true, // Required by some browsers
+      audio: {
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: false
+      }
+    });
+    
+    // Check if audio track is present
+    const audioTracks = stream.getAudioTracks();
+    if (audioTracks.length === 0) {
+      alert('No audio track found. Make sure to check "Share tab audio" or "Share system audio" when selecting the tab.');
+      stream.getTracks().forEach(t => t.stop());
+      return false;
+    }
+    
+    // Stop video track - we only need audio
+    const videoTracks = stream.getVideoTracks();
+    videoTracks.forEach(t => t.stop());
+    
+    // Create audio-only stream
+    const audioStream = new MediaStream(audioTracks);
+    setSystemAudioStream(audioStream);
+    
+    // Create a new speech recognition that uses this audio
+    // Note: Web Speech API doesn't directly support custom audio sources
+    // But the system audio will go through the default input if using virtual audio cable
+    // For now, we'll inform the user about the limitation
+    
+    console.log('✅ System audio capture started');
+    alert('System audio capture started!\n\nIMPORTANT: For best results with Teams/Zoom:\n1. Make sure Teams/Zoom is in the shared browser tab\n2. Speech recognition will capture from your selected audio source\n3. You may need a virtual audio cable to route system audio to mic input');
+    
+    return true;
+  } catch (err) {
+    console.error('System audio capture failed:', err);
+    if (err.name === 'NotAllowedError') {
+      alert('Screen sharing was denied. System audio capture requires screen share permission.');
+    } else {
+      alert('System audio capture failed: ' + err.message);
+    }
+    return false;
+  }
+};
+
+const stopSystemAudioCapture = () => {
+  if (systemAudioStream) {
+    systemAudioStream.getTracks().forEach(t => t.stop());
+    setSystemAudioStream(null);
+    console.log('🔇 System audio capture stopped');
+  }
+  setUseSystemAudio(false);
+};
+
 // SESSION-BASED MICROPHONE CONTROL
 const startInterviewSession = () => {
   console.log('🎬 Starting interview session');
@@ -814,32 +878,44 @@ const endInterviewSession = () => {
 };
 
 // SPACEBAR CONTROLS CAPTURING (NOT MIC START/STOP)
-const handleSpacebarDown = () => {
+const handleSpacebarDown = (source = 'keyboard') => {
   if (!interviewSessionActiveRef.current) {
     console.log('No active session - start session first');
     return;
   }
   
-  if (isCapturingRef.current) return; // Already capturing
+  // If already capturing, only allow the same source to continue
+  if (isCapturingRef.current) {
+    console.log(`Already capturing via ${captureSourceRef.current}, ignoring ${source}`);
+    return;
+  }
   
-  console.log('🎤 Started capturing');
+  console.log(`🎤 Started capturing (source: ${source})`);
   setIsCapturing(true);
-  isCapturingRef.current = true; // Update ref immediately
+  isCapturingRef.current = true;
+  captureSourceRef.current = source; // Track who started the capture
   
   // Clear for fresh capture
   accumulatedTranscript.current = '';
-  currentInterimRef.current = ''; // Clear interim too
+  currentInterimRef.current = '';
   setTranscript('');
-  setLiveTranscript(''); // Clear live display
-  setMatchConfidence(0); // Reset confidence
-  setMatchDebug(''); // Clear debug info
+  setLiveTranscript('');
+  setMatchConfidence(0);
+  setMatchDebug('');
 };
 
-const handleSpacebarUp = () => {
+const handleSpacebarUp = (source = 'keyboard') => {
   if (!interviewSessionActiveRef.current || !isCapturingRef.current) return;
+  
+  // Only allow the source that started capturing to stop it
+  if (captureSourceRef.current !== source) {
+    console.log(`Capture started by ${captureSourceRef.current}, ignoring ${source} release`);
+    return;
+  }
   
   setIsCapturing(false);
   isCapturingRef.current = false;
+  captureSourceRef.current = null;
   
   // Use BOTH final results AND current interim (in case user released before finalization)
   const capturedText = (accumulatedTranscript.current + ' ' + currentInterimRef.current).trim();
@@ -998,7 +1074,57 @@ const startListening = () => {
     let bestMatch = null;
     let highestScore = 0;
     let debugInfo = [];
+    let perfectMatch = null;
     
+    // FIRST PASS: Check for PERFECT/NEAR-PERFECT matches
+    // This handles cases where the question is asked exactly or almost exactly
+    questions.forEach(q => {
+      const questionNormalized = normalizeText(q.question);
+      
+      // PERFECT MATCH: Input contains the exact question or vice versa
+      if (inputNormalized.includes(questionNormalized) || questionNormalized.includes(inputNormalized)) {
+        const similarity = Math.min(inputNormalized.length, questionNormalized.length) / 
+                          Math.max(inputNormalized.length, questionNormalized.length);
+        if (similarity > 0.5) { // At least 50% overlap
+          console.log(`🎯 PERFECT MATCH: "${q.question}" (similarity: ${(similarity * 100).toFixed(0)}%)`);
+          perfectMatch = q;
+          return;
+        }
+      }
+      
+      // KEYWORD PERFECT MATCH: Input exactly matches a keyword
+      if (q.keywords && q.keywords.length > 0) {
+        for (const kw of q.keywords) {
+          if (!kw) continue;
+          const kwNorm = normalizeText(kw);
+          // Input is exactly the keyword or keyword is exactly in input
+          if (inputNormalized === kwNorm || inputNormalized.includes(kwNorm)) {
+            const kwWords = kwNorm.split(' ').filter(w => w.length > 0);
+            if (kwWords.length >= 2) { // Multi-word keyword exact match
+              console.log(`🎯 KEYWORD PERFECT MATCH: "${kw}" for "${q.question}"`);
+              perfectMatch = q;
+              return;
+            }
+          }
+        }
+      }
+    });
+    
+    // If we found a perfect match, use it immediately
+    if (perfectMatch) {
+      setMatchConfidence(95);
+      setMatchDebug('Perfect match!');
+      setMatchedQuestion(perfectMatch);
+      setShowNarrative(false);
+      setQuestionHistory(prev => {
+        const newHistory = [perfectMatch, ...prev.filter(q => q.id !== perfectMatch.id)];
+        return newHistory.slice(0, 3);
+      });
+      console.log('✅ Perfect match used!');
+      return;
+    }
+    
+    // SECOND PASS: Fuzzy matching for non-perfect matches
     questions.forEach(q => {
       let score = 0;
       let matchReasons = [];
@@ -1122,18 +1248,18 @@ const startListening = () => {
     
     console.log('🏆 Best:', bestMatch?.question, `(score: ${highestScore}, confidence: ${confidence}%)`);
     
-    // DYNAMIC THRESHOLD based on input length and keyword presence
-    // Longer inputs need higher scores, very short inputs need exact matches
+    // DYNAMIC THRESHOLD based on input length
+    // LOWERED thresholds to be more permissive
     const inputLength = inputWords.length;
     let threshold;
     if (inputLength <= 3) {
-      threshold = 5; // Short input needs strong match
+      threshold = 3; // Very short input - be more permissive
     } else if (inputLength <= 6) {
-      threshold = 4;
+      threshold = 3;
     } else if (inputLength <= 10) {
-      threshold = 6;
+      threshold = 4;
     } else {
-      threshold = 8; // Long input should have multiple matches
+      threshold = 5; // Long input should have multiple matches
     }
     
     if (bestMatch && highestScore >= threshold) { 
@@ -1170,7 +1296,7 @@ useEffect(() => {
         
         // SESSION MODE: Spacebar controls capturing, not mic
         if (interviewSessionActive) {
-          handleSpacebarDown();
+          handleSpacebarDown('keyboard');
         } else {
           // NON-SESSION MODE: Old behavior
           startListening();
@@ -1188,7 +1314,7 @@ useEffect(() => {
         
         // SESSION MODE: Spacebar controls capturing, not mic
         if (interviewSessionActive) {
-          handleSpacebarUp();
+          handleSpacebarUp('keyboard');
         } else {
           // NON-SESSION MODE: Old behavior
           stopListening();
@@ -1696,6 +1822,7 @@ const startPracticeMode = async () => {
           <div className="flex items-center justify-between mb-6">
             <button onClick={() => { 
               if (interviewSessionActive) endInterviewSession();
+              stopSystemAudioCapture(); // Stop system audio if active
               stopListening(); 
               setCurrentView('home'); 
               setMatchedQuestion(null); 
@@ -1703,6 +1830,29 @@ const startPracticeMode = async () => {
             
             {/* SESSION CONTROLS */}
             <div className="flex items-center gap-4">
+              {/* System Audio Toggle - for Teams/Zoom calls */}
+              {!interviewSessionActive && (
+                <button
+                  onClick={async () => {
+                    if (useSystemAudio) {
+                      stopSystemAudioCapture();
+                    } else {
+                      const success = await startSystemAudioCapture();
+                      if (success) setUseSystemAudio(true);
+                    }
+                  }}
+                  className={`px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 transition-all ${
+                    useSystemAudio 
+                      ? 'bg-orange-500 hover:bg-orange-600 text-white' 
+                      : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                  }`}
+                  title="Enable to capture audio from Teams/Zoom (speaker output)"
+                >
+                  <Volume2 className="w-4 h-4" />
+                  {useSystemAudio ? 'Tab Audio ON' : 'Tab Audio'}
+                </button>
+              )}
+              
               {!interviewSessionActive ? (
                 <button
                   onClick={startInterviewSession}
@@ -1751,6 +1901,10 @@ const startPracticeMode = async () => {
                       <li>✅ Clean separation between questions</li>
                       <li>✅ Works with external keyboard on mobile</li>
                     </ul>
+                    <div className="mt-4 pt-4 border-t border-blue-500/30">
+                      <h5 className="font-bold mb-2 text-orange-300">🎧 For Teams/Zoom Calls:</h5>
+                      <p className="text-sm text-gray-300">Click "Tab Audio" before starting to capture audio from the browser tab where your Teams/Zoom call is running.</p>
+                    </div>
                   </div>
                 </>
               ) : (
@@ -1862,18 +2016,24 @@ const startPracticeMode = async () => {
               
               <button
                 onMouseDown={() => {
-                  if (interviewSessionActive) handleSpacebarDown();
+                  if (interviewSessionActive) handleSpacebarDown('mouse');
                 }}
                 onMouseUp={() => {
-                  if (interviewSessionActive) handleSpacebarUp();
+                  if (interviewSessionActive) handleSpacebarUp('mouse');
+                }}
+                onMouseLeave={() => {
+                  // If user drags mouse off button while holding, release capture
+                  if (interviewSessionActive && isCapturing && captureSourceRef.current === 'mouse') {
+                    handleSpacebarUp('mouse');
+                  }
                 }}
                 onTouchStart={(e) => {
                   e.preventDefault();
-                  if (interviewSessionActive) handleSpacebarDown();
+                  if (interviewSessionActive) handleSpacebarDown('touch');
                 }}
                 onTouchEnd={(e) => {
                   e.preventDefault();
-                  if (interviewSessionActive) handleSpacebarUp();
+                  if (interviewSessionActive) handleSpacebarUp('touch');
                 }}
                 className={`relative w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 shadow-2xl ${
                   isCapturing
