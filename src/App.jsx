@@ -1692,6 +1692,40 @@ const startPracticeMode = async () => {
     setSpokenAnswer(''); 
     setFeedback(null); 
   };
+
+  // Navigation functions for prev/next question
+  const goToNextQuestion = () => {
+    if (!currentQuestion || questions.length === 0) return;
+    const currentIndex = questions.findIndex(q => q.id === currentQuestion.id);
+    const nextIndex = (currentIndex + 1) % questions.length;
+    const nextQ = questions[nextIndex];
+    setCurrentQuestion(nextQ);
+    setUserAnswer('');
+    setSpokenAnswer('');
+    setTranscript('');
+    accumulatedTranscript.current = '';
+    setFeedback(null);
+    setFollowUpQuestion(null);
+    setConversationHistory([]);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const goToPreviousQuestion = () => {
+    if (!currentQuestion || questions.length === 0) return;
+    const currentIndex = questions.findIndex(q => q.id === currentQuestion.id);
+    const prevIndex = (currentIndex - 1 + questions.length) % questions.length;
+    const prevQ = questions[prevIndex];
+    setCurrentQuestion(prevQ);
+    setUserAnswer('');
+    setSpokenAnswer('');
+    setTranscript('');
+    accumulatedTranscript.current = '';
+    setFeedback(null);
+    setFollowUpQuestion(null);
+    setConversationHistory([]);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  
   const startFlashcardMode = () => { if (questions.length === 0) { alert('Add questions first!'); return; } let available = questions; if (filterCategory !== 'All') available = available.filter(q => q.category === filterCategory); if (available.length === 0) { alert('No matching questions!'); return; } const sorted = [...available].sort((a, b) => { if (a.practiceCount === 0) return -1; if (b.practiceCount === 0) return 1; return a.averageScore - b.averageScore; }); setCurrentQuestion(sorted[0]); setCurrentMode('flashcard'); setCurrentView('flashcard'); setFlashcardSide('question'); setShowBullets(false); setShowNarrative(false); };
 
   // ==========================================
@@ -1830,7 +1864,7 @@ const startPracticeMode = async () => {
             <div 
               className="bg-white/10 backdrop-blur-lg rounded-xl p-4 text-white hover:bg-white/15 transition-all duration-200 cursor-pointer"
               onClick={() => {
-                setCurrentView('command');
+                setCurrentView('command-center');
                 setCommandCenterTab('prep');
               }}
             >
@@ -2218,7 +2252,14 @@ const startPracticeMode = async () => {
           <div className="flex items-center justify-between mb-6 text-white">
             <button onClick={() => { stopSpeaking(); setCurrentView('home'); }} className="text-gray-300 hover:text-white">← Exit</button>
             <h1 className="text-2xl font-bold">AI Mock Interview</h1>
-            <button onClick={startAIInterviewer} className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg">Next</button>
+            <div className="flex items-center gap-2">
+              <button onClick={goToPreviousQuestion} className="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg font-semibold flex items-center gap-1">
+                ← Prev
+              </button>
+              <button onClick={goToNextQuestion} className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg font-semibold flex items-center gap-1">
+                Next →
+              </button>
+            </div>
           </div>
           
           <div className="max-w-4xl mx-auto mb-8">
@@ -2959,7 +3000,14 @@ onClick={async () => {
           <div className="container mx-auto px-4 py-4 flex items-center justify-between">
             <button onClick={() => setCurrentView('home')} className="text-gray-600 hover:text-gray-900">← Exit</button>
             <h1 className="text-2xl font-bold">Practice Mode</h1>
-            <button onClick={startPracticeMode} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">Next</button>
+            <div className="flex items-center gap-2">
+              <button onClick={goToPreviousQuestion} className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg font-semibold flex items-center gap-1">
+                ← Prev
+              </button>
+              <button onClick={goToNextQuestion} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold flex items-center gap-1">
+                Next →
+              </button>
+            </div>
           </div>
         </div>
         <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -3937,14 +3985,7 @@ onClick={async () => {
                 </div>
                 <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-xl p-5 text-white">
                   <p className="text-sm text-white/90 font-medium mb-1">This Month</p>
-                  <p className="text-4xl font-black">
-                    {practiceHistory.filter(s => {
-                      const sessionDate = new Date(s.date);
-                      const now = new Date();
-                      return sessionDate.getMonth() === now.getMonth() && 
-                             sessionDate.getFullYear() === now.getFullYear();
-                    }).length}
-                  </p>
+                  <p className="text-4xl font-black">{usageStats?.session_count || 0}</p>
                   <p className="text-xs text-white/75 mt-1">🔥 On fire!</p>
                 </div>
               </div>
