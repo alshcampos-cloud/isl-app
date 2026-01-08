@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Lightbulb, X, MessageCircle, Sparkles, Save, Crown, RefreshCw } from 'lucide-react';
+import { Lightbulb, X, MessageCircle, Sparkles, Save, Crown, RefreshCw, HelpCircle, Zap } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onClose, userTier }) => {
@@ -9,6 +9,27 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
   const [stage, setStage] = useState('intro'); // intro, probing, building, complete
   const [generatedAnswer, setGeneratedAnswer] = useState(null);
   const [generatedBullets, setGeneratedBullets] = useState([]);
+  const [showMIInfo, setShowMIInfo] = useState(false);
+  const [isRushAnswer, setIsRushAnswer] = useState(false);
+
+  // Clean markdown code blocks and formatting from AI responses
+  const cleanAIResponse = (text) => {
+    if (!text) return '';
+    
+    // Remove markdown code blocks (```...```)
+    let cleaned = text.replace(/```[\s\S]*?```/g, '');
+    
+    // Remove inline code (`...`)
+    cleaned = cleaned.replace(/`([^`]+)`/g, '$1');
+    
+    // Remove JSON-like structures if they appear at the start
+    cleaned = cleaned.replace(/^\{[\s\S]*?\}\n*/g, '');
+    
+    // Remove excessive line breaks
+    cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+    
+    return cleaned.trim();
+  };
 
   const startAssistant = async () => {
     setIsLoading(true);
@@ -31,7 +52,7 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
       });
 
       const data = await response.json();
-      const aiQuestion = data.content[0].text.trim();
+      const aiQuestion = cleanAIResponse(data.content[0].text);
       
       setConversation([{ role: 'assistant', text: aiQuestion }]);
     } catch (error) {
@@ -68,7 +89,7 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
       });
 
       const data = await response.json();
-      const aiResponse = data.content[0].text.trim();
+      const aiResponse = cleanAIResponse(data.content[0].text);
       
       setConversation([...newConversation, { role: 'assistant', text: aiResponse }]);
     } catch (error) {
@@ -79,8 +100,9 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
     }
   };
 
-  const synthesizeAnswer = async () => {
+  const synthesizeAnswer = async (isRush = false) => {
     setIsLoading(true);
+    setIsRushAnswer(isRush);
     
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -95,12 +117,13 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
         body: JSON.stringify({
           mode: 'synthesize-star-answer',
           question: question,
-          conversation: conversation
+          conversation: conversation,
+          rushMode: isRush
         })
       });
 
       const data = await response.json();
-      const synthesizedAnswer = data.content[0].text.trim();
+      const synthesizedAnswer = cleanAIResponse(data.content[0].text);
       
       setGeneratedAnswer(synthesizedAnswer);
       setStage('complete');
@@ -132,11 +155,18 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
       });
 
       const data = await response.json();
-      const bulletsText = data.content[0].text.trim();
+      const bulletsText = cleanAIResponse(data.content[0].text);
       const bullets = bulletsText
         .split('\n')
-        .filter(line => line.trim().startsWith('-') || line.trim().startsWith('•'))
-        .map(line => line.replace(/^[-•]\s*/, '').trim());
+        .filter(line => {
+          const trimmed = line.trim();
+          return trimmed.startsWith('-') || 
+                 trimmed.startsWith('•') || 
+                 trimmed.startsWith('*') ||
+                 /^\d+\./.test(trimmed); // Also match numbered lists
+        })
+        .map(line => line.replace(/^[-•*]\s*/, '').replace(/^\d+\.\s*/, '').trim())
+        .filter(bullet => bullet.length > 0);
       
       setGeneratedBullets(bullets);
     } catch (error) {
@@ -205,8 +235,23 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
             <div className="flex items-center gap-3">
               <Lightbulb className="w-8 h-8" />
               <div>
-                <h3 className="text-2xl font-bold">AI Answer Coach</h3>
-                <p className="text-sm opacity-90">Let's develop your answer together using MI</p>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-2xl font-bold">AI Answer Coach</h3>
+                  <button
+                    onClick={() => setShowMIInfo(!showMIInfo)}
+                    className="hover:bg-white/20 rounded-full p-1 transition"
+                    title="What is MI?"
+                  >
+                    <HelpCircle className="w-5 h-5" />
+                  </button>
+                </div>
+                {showMIInfo ? (
+                  <p className="text-sm opacity-90 mt-1 bg-white/10 rounded px-2 py-1">
+                    <strong>Motivational Interviewing (MI)</strong> is a collaborative conversation technique that draws out your own experiences and insights through thoughtful questions, helping you craft authentic, detailed answers.
+                  </p>
+                ) : (
+                  <p className="text-sm opacity-90">Let's develop your answer together using MI</p>
+                )}
               </div>
             </div>
             <button onClick={onClose} className="text-white hover:bg-white/20 rounded-full p-2 transition">
@@ -224,7 +269,9 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
               <div className="bg-gray-50 rounded-lg p-4 mb-6">
                 <p className="text-gray-900 font-medium mb-2">"{question}"</p>
               </div>
-              <p className="text-gray-600 mb-6">I'll ask you some questions using <strong>Motivational Interviewing</strong> techniques to help draw out a great answer!</p>
+              <p className="text-gray-600 mb-6">
+                I'll guide you using <strong>Motivational Interviewing (MI)</strong> - a proven technique that helps draw out your experiences through thoughtful questions, making it easier to craft authentic, detailed answers!
+              </p>
               <button
                 onClick={startAssistant}
                 disabled={isLoading}
@@ -238,8 +285,19 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
               {/* SUCCESS MESSAGE */}
               <div className="text-center mb-6">
                 <div className="text-6xl mb-3">🎉</div>
-                <h4 className="text-2xl font-bold text-gray-900">Your Polished Answer is Ready!</h4>
-                <p className="text-gray-600 mt-2">Based on our conversation, here's your professional STAR-formatted answer</p>
+                <h4 className="text-2xl font-bold text-gray-900">
+                  {isRushAnswer ? 'Your Quick Answer is Ready!' : 'Your Polished Answer is Ready!'}
+                </h4>
+                <p className="text-gray-600 mt-2">
+                  {isRushAnswer 
+                    ? 'Here\'s a solid answer based on what you\'ve shared so far'
+                    : 'Based on our full conversation, here\'s your professional STAR-formatted answer'}
+                </p>
+                {isRushAnswer && (
+                  <p className="text-sm text-orange-600 font-semibold mt-2">
+                    ⚡ Rush Mode - Consider continuing the conversation for an even better answer
+                  </p>
+                )}
               </div>
 
               {/* GENERATED ANSWER DISPLAY */}
@@ -343,22 +401,41 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
                   </button>
                 </div>
                 
-                {/* Synthesize Button - Shows after some conversation */}
-                {conversation.length >= 4 && (
-                  <button
-                    onClick={synthesizeAnswer}
-                    disabled={isLoading}
-                    className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-4 rounded-xl font-bold text-lg hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 transition shadow-lg flex items-center justify-center gap-2"
-                  >
-                    <Sparkles className="w-6 h-6" />
-                    I'm Done - Create My Answer
-                  </button>
+                {/* Answer Generation Buttons - Shows after some conversation */}
+                {conversation.length >= 2 && (
+                  <div className="space-y-2">
+                    {/* Rush Answer - Available after 2 exchanges */}
+                    {conversation.length >= 2 && conversation.length < 4 && (
+                      <button
+                        onClick={() => synthesizeAnswer(true)}
+                        disabled={isLoading}
+                        className="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-4 rounded-xl font-bold text-lg hover:from-orange-600 hover:to-amber-600 disabled:opacity-50 transition shadow-lg flex items-center justify-center gap-2"
+                      >
+                        <Zap className="w-6 h-6" />
+                        ⚡ Rush Answer (Quick Version)
+                      </button>
+                    )}
+                    
+                    {/* Full Answer - Available after 4 exchanges */}
+                    {conversation.length >= 4 && (
+                      <button
+                        onClick={() => synthesizeAnswer(false)}
+                        disabled={isLoading}
+                        className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-4 rounded-xl font-bold text-lg hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 transition shadow-lg flex items-center justify-center gap-2"
+                      >
+                        <Sparkles className="w-6 h-6" />
+                        ✨ Create Polished Answer
+                      </button>
+                    )}
+                  </div>
                 )}
                 
                 <p className="text-xs text-center text-gray-500">
-                  {conversation.length < 4 
+                  {conversation.length < 2
                     ? "Keep answering questions - the AI will help draw out details"
-                    : "Ready? Click above to generate your polished STAR answer"}
+                    : conversation.length < 4
+                    ? "🟡 Rush answer available now • 🟢 Keep going for best results (2 more exchanges)"
+                    : "🟢 Answer ready! Choose 'Rush' for quick version or 'Polished' for best quality"}
                 </p>
               </div>
             </>
