@@ -185,6 +185,91 @@ const ISL = () => {
     isListeningRef.current = isListening;
   }, [isListening]);
 
+  // ==========================================
+  // 🔴 CRITICAL: MIC CLEANUP EFFECTS
+  // Prevents mic from staying active in background
+  // ==========================================
+
+  // CLEANUP 1: Stop mic when component unmounts
+  useEffect(() => {
+    return () => {
+      console.log('🧹 Component unmounting - cleaning up mic resources');
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch (err) {
+          // Ignore - may already be stopped
+        }
+      }
+      // Also stop system audio if active
+      if (systemAudioStream) {
+        systemAudioStream.getTracks().forEach(t => t.stop());
+      }
+    };
+  }, []);
+
+  // CLEANUP 2: Stop mic when leaving mic-using modes
+  useEffect(() => {
+    // Only cleanup when switching AWAY from mic-using modes
+    const micModes = ['prompter', 'ai-interviewer', 'practice'];
+    const wasInMicMode = micModes.includes(currentModeRef.current);
+    const isInMicMode = micModes.includes(currentMode);
+    
+    // If we're leaving a mic mode (or going to null/home)
+    if (wasInMicMode && !isInMicMode) {
+      console.log('🧹 Leaving mic mode - stopping recognition');
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch (err) {
+          // Ignore
+        }
+      }
+      // Reset all mic state
+      setInterviewSessionActive(false);
+      interviewSessionActiveRef.current = false;
+      setIsListening(false);
+      isListeningRef.current = false;
+      setIsCapturing(false);
+      isCapturingRef.current = false;
+      setSessionReady(false);
+      
+      // Stop system audio capture too
+      if (systemAudioStream) {
+        systemAudioStream.getTracks().forEach(t => t.stop());
+        setSystemAudioStream(null);
+        setUseSystemAudio(false);
+      }
+    }
+  }, [currentMode]);
+
+  // CLEANUP 3: Stop mic when app goes to background (Safari tab switch, app switch)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        console.log('🧹 App backgrounded - stopping mic');
+        if (recognitionRef.current && interviewSessionActiveRef.current) {
+          try {
+            recognitionRef.current.stop();
+          } catch (err) {
+            // Ignore
+          }
+          // Mark session as ended so it doesn't auto-restart
+          setInterviewSessionActive(false);
+          interviewSessionActiveRef.current = false;
+          setIsListening(false);
+          isListeningRef.current = false;
+          setSessionReady(false);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
   // ✅ Inject styles ONCE, safely, inside the component (hooks allowed here)
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -1546,6 +1631,8 @@ useEffect(() => {
     setCurrentQuestion(randomQ); 
     setCurrentMode('ai-interviewer'); 
     setCurrentView('ai-interviewer'); 
+    // Scroll to top when entering AI Interviewer
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     setUserAnswer(''); 
     setSpokenAnswer(''); 
     setFeedback(null); 
@@ -1570,6 +1657,8 @@ const startPracticeMode = async () => {
     setCurrentQuestion(randomQ); 
     setCurrentMode('practice'); 
     setCurrentView('practice'); 
+    // Scroll to top when entering Practice mode
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     setUserAnswer(''); 
     setSpokenAnswer(''); 
     setFeedback(null); 
@@ -1681,15 +1770,6 @@ const startPracticeMode = async () => {
                 <div className="min-w-0">
                   <p className="text-2xl font-bold leading-tight">{practiceHistory.length}</p>
                   <p className="text-sm text-white/90 leading-tight font-medium">Sessions</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-lg rounded-xl p-4 text-white hover:bg-white/15 transition-all duration-200">
-              <div className="flex items-center gap-3">
-                <Sparkles className="w-8 h-8 text-pink-300 flex-shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-2xl font-bold leading-tight">{apiKey ? '✓' : '✗'}</p>
-                  <p className="text-sm text-white/90 leading-tight whitespace-nowrap font-medium">AI Ready</p>
                 </div>
               </div>
             </div>
