@@ -542,8 +542,37 @@ Consider upgrading to Pro for more sessions!`);
     const savedType = localStorage.getItem('isl_interview_type');
     if (savedType) setInterviewType(savedType);
 
+// Load practice history from Supabase (not just localStorage)
+const loadPracticeHistory = async () => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    
+    const { data: sessions } = await supabase
+      .from('practice_sessions')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+    
+    if (sessions && sessions.length > 0) {
+      const history = sessions.map(s => ({
+        question: s.question_text,
+        answer: s.user_answer,
+        feedback: s.ai_feedback,
+        date: s.created_at,
+        mode: s.mode
+      }));
+      setPracticeHistory(history);
+      console.log(`✅ Loaded ${history.length} practice sessions from Supabase`);
+    }
+  } catch (err) {
+    console.error('Error loading practice history:', err);
+    // Fallback to localStorage
     const savedHistory = localStorage.getItem('isl_history');
     if (savedHistory) setPracticeHistory(JSON.parse(savedHistory));
+  }
+};
+loadPracticeHistory();
 
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       synthRef.current = window.speechSynthesis;
