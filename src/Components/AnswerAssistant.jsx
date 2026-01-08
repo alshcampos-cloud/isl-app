@@ -1,20 +1,26 @@
-import React, { useState } from 'react';
-import { Lightbulb, X, MessageCircle, Sparkles, Save, Crown, RefreshCw, HelpCircle, Zap } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Lightbulb, X, MessageCircle, Sparkles, Save, Crown, RefreshCw, HelpCircle, Zap, AlertTriangle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onClose, userTier, existingNarrative, existingBullets }) => {
+  // Check if there's an existing answer
+  const hasExistingAnswer = existingNarrative && existingNarrative.trim().length > 0;
+  
   const [conversation, setConversation] = useState([]);
   const [userInput, setUserInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [stage, setStage] = useState('intro'); // intro, probing, building, complete
+  const [stage, setStage] = useState('intro'); // existing-answer, intro, probing, building, complete
   const [generatedAnswer, setGeneratedAnswer] = useState(null);
   const [generatedBullets, setGeneratedBullets] = useState([]);
   const [showMIInfo, setShowMIInfo] = useState(false);
   const [isRushAnswer, setIsRushAnswer] = useState(false);
-  const [showExistingAnswer, setShowExistingAnswer] = useState(false);
   
-  // Check if there's an existing answer
-  const hasExistingAnswer = existingNarrative && existingNarrative.trim().length > 0;
+  // Set stage to existing-answer if there's already an answer
+  useEffect(() => {
+    if (hasExistingAnswer) {
+      setStage('existing-answer');
+    }
+  }, [hasExistingAnswer]);
 
   // Clean markdown code blocks and formatting from AI responses
   const cleanAIResponse = (text) => {
@@ -326,48 +332,74 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
 
         {/* Content */}
         <div className="p-6 max-h-[calc(85vh-100px)] overflow-y-auto">
-          {stage === 'intro' ? (
+          {stage === 'existing-answer' ? (
+            <div className="py-8">
+              <div className="text-center mb-6">
+                <AlertTriangle className="w-20 h-20 text-orange-500 mx-auto mb-4" />
+                <h4 className="text-2xl font-bold text-gray-900 mb-2">⚠️ This Question Already Has an Answer</h4>
+                <p className="text-gray-600">Creating a new answer will permanently replace the existing one.</p>
+              </div>
+
+              <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                <p className="text-sm font-bold text-gray-700 mb-2">Question:</p>
+                <p className="text-gray-900 font-medium">"{question}"</p>
+              </div>
+
+              {/* Current Answer Display */}
+              <div className="bg-yellow-50 border-2 border-yellow-400 rounded-xl p-5 mb-6">
+                <p className="text-sm font-bold text-orange-900 mb-3 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4" />
+                  Current Answer:
+                </p>
+                <div className="bg-white rounded-lg p-4 mb-4 max-h-60 overflow-y-auto">
+                  <p className="text-gray-800 whitespace-pre-line leading-relaxed">{existingNarrative}</p>
+                </div>
+                
+                {existingBullets && existingBullets.length > 0 && (
+                  <>
+                    <p className="text-sm font-bold text-orange-900 mb-2">Current Bullets:</p>
+                    <div className="bg-white rounded-lg p-4">
+                      <ul className="space-y-2">
+                        {existingBullets.map((bullet, idx) => (
+                          <li key={idx} className="flex gap-2 text-gray-800">
+                            <span className="flex-shrink-0 w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                              {idx + 1}
+                            </span>
+                            <span className="leading-relaxed">{bullet}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  onClick={onClose}
+                  className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-4 rounded-xl font-bold text-lg transition"
+                >
+                  ← Keep Current Answer
+                </button>
+                <button
+                  onClick={() => setStage('intro')}
+                  className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white px-6 py-4 rounded-xl font-bold text-lg transition shadow-lg"
+                >
+                  🔄 Create New Answer
+                </button>
+              </div>
+              <p className="text-xs text-center text-gray-500 mt-3">
+                💡 Tip: Only replace if you have a significantly better experience to share
+              </p>
+            </div>
+          ) : stage === 'intro' ? (
             <div className="text-center py-8">
               <div className="text-6xl mb-4">🤔</div>
               <h4 className="text-xl font-bold mb-3">Can't think of an answer?</h4>
               <div className="bg-gray-50 rounded-lg p-4 mb-6">
                 <p className="text-gray-900 font-medium mb-2">"{question}"</p>
               </div>
-              
-              {/* Show Existing Answer if present */}
-              {hasExistingAnswer && (
-                <div className="mb-6">
-                  <button
-                    onClick={() => setShowExistingAnswer(!showExistingAnswer)}
-                    className="text-sm text-indigo-600 hover:text-indigo-800 font-semibold mb-2 flex items-center gap-2 mx-auto"
-                  >
-                    {showExistingAnswer ? '🔽' : '▶️'} You already have an answer for this question
-                  </button>
-                  
-                  {showExistingAnswer && (
-                    <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-4 text-left mb-4">
-                      <p className="text-sm font-bold text-yellow-900 mb-2">⚠️ Current Answer:</p>
-                      <p className="text-gray-800 mb-3 text-sm whitespace-pre-line">{existingNarrative}</p>
-                      {existingBullets && existingBullets.length > 0 && (
-                        <>
-                          <p className="text-sm font-bold text-yellow-900 mb-2">Bullets:</p>
-                          <ul className="text-sm text-gray-800 space-y-1">
-                            {existingBullets.map((bullet, idx) => (
-                              <li key={idx} className="flex gap-2">
-                                <span className="font-bold">{idx + 1}.</span>
-                                <span>{bullet}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </>
-                      )}
-                      <p className="text-xs text-yellow-800 mt-3 font-semibold">
-                        💡 Creating a new answer will REPLACE this one
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
               
               <p className="text-gray-600 mb-6">
                 I'll guide you using <strong>Motivational Interviewing (MI)</strong> - a proven technique that helps draw out your experiences through thoughtful questions, making it easier to craft authentic, detailed answers!
@@ -377,7 +409,7 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
                 disabled={isLoading}
                 className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-4 rounded-lg font-bold text-lg hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 transition"
               >
-                {isLoading ? 'Starting...' : hasExistingAnswer ? "🔄 Create New Answer" : "🚀 Let's Get Started"}
+                {isLoading ? 'Starting...' : "🚀 Let's Get Started"}
               </button>
             </div>
           ) : stage === 'complete' ? (
