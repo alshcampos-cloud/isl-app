@@ -16,19 +16,45 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
   const cleanAIResponse = (text) => {
     if (!text) return '';
     
-    // Remove markdown code blocks (```...```)
-    let cleaned = text.replace(/```[\s\S]*?```/g, '');
-    
-    // Remove inline code (`...`)
-    cleaned = cleaned.replace(/`([^`]+)`/g, '$1');
-    
-    // Remove JSON-like structures if they appear at the start
-    cleaned = cleaned.replace(/^\{[\s\S]*?\}\n*/g, '');
-    
-    // Remove excessive line breaks
-    cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
-    
-    return cleaned.trim();
+    try {
+      const trimmed = text.trim();
+      
+      // Check if the ENTIRE response is ONLY a JSON object (backend error/metadata)
+      if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+        try {
+          const parsed = JSON.parse(trimmed);
+          // If it's metadata structure, return empty
+          if (parsed.points_covered !== undefined || 
+              parsed.points_missed !== undefined || 
+              parsed.error !== undefined ||
+              parsed.mode !== undefined) {
+            console.error('Backend returned metadata instead of answer:', parsed);
+            return ''; // Return empty so validation catches it
+          }
+        } catch (e) {
+          // Not valid JSON, proceed with normal cleaning
+        }
+      }
+      
+      let cleaned = text;
+      
+      // Remove markdown code blocks (```...```)
+      cleaned = cleaned.replace(/```[\s\S]*?```/g, '');
+      
+      // Remove inline code (`...`)  
+      cleaned = cleaned.replace(/`([^`]+)`/g, '$1');
+      
+      // Remove excessive line breaks
+      cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+      
+      // Trim whitespace
+      cleaned = cleaned.trim();
+      
+      return cleaned;
+    } catch (error) {
+      console.error('Error cleaning AI response:', error);
+      return text;
+    }
   };
 
   const startAssistant = async () => {
@@ -124,6 +150,15 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
 
       const data = await response.json();
       const synthesizedAnswer = cleanAIResponse(data.content[0].text);
+      
+      // Check if we got an empty response (backend returned metadata/error)
+      if (!synthesizedAnswer || synthesizedAnswer.length < 10) {
+        console.error('Backend returned invalid response:', data.content[0].text);
+        alert('⚠️ Not enough information to create an answer yet.\n\nPlease continue the conversation and answer a few more questions, then try again!');
+        setStage('probing');
+        setIsLoading(false);
+        return;
+      }
       
       setGeneratedAnswer(synthesizedAnswer);
       setStage('complete');
