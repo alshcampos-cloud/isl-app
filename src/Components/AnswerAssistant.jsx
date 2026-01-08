@@ -100,6 +100,13 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
     try {
       const { data: { session } } = await supabase.auth.getSession();
 
+      // DEBUG: Log conversation state
+      console.log('🔍 SENDING MESSAGE:', {
+        conversationLength: newConversation.length,
+        userMessage: userInput,
+        fullConversation: newConversation
+      });
+
       const response = await fetch('https://tzrlpwtkrtvjpdhcaayu.supabase.co/functions/v1/ai-feedback', {
         method: 'POST',
         headers: {
@@ -117,6 +124,9 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
       const data = await response.json();
       const aiResponse = cleanAIResponse(data.content[0].text);
       
+      // DEBUG: Log AI response
+      console.log('🔍 AI RESPONSE:', aiResponse);
+      
       setConversation([...newConversation, { role: 'assistant', text: aiResponse }]);
     } catch (error) {
       console.error('Error:', error);
@@ -132,6 +142,14 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
     
     try {
       const { data: { session } } = await supabase.auth.getSession();
+
+      // DEBUG: Log what we're sending to backend
+      console.log('🔍 SYNTHESIZE REQUEST:', {
+        conversationLength: conversation.length,
+        isRush: isRush,
+        conversation: conversation,
+        question: question
+      });
 
       // Call AI to synthesize conversation into clean STAR answer
       const response = await fetch('https://tzrlpwtkrtvjpdhcaayu.supabase.co/functions/v1/ai-feedback', {
@@ -149,11 +167,19 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
       });
 
       const data = await response.json();
+      
+      // DEBUG: Log what backend returned
+      console.log('🔍 BACKEND RESPONSE:', data);
+      console.log('🔍 RAW TEXT:', data.content[0].text);
+      
       const synthesizedAnswer = cleanAIResponse(data.content[0].text);
+      
+      // DEBUG: Log cleaned result
+      console.log('🔍 CLEANED ANSWER:', synthesizedAnswer);
       
       // Check if we got an empty response (backend returned metadata/error)
       if (!synthesizedAnswer || synthesizedAnswer.length < 10) {
-        console.error('Backend returned invalid response:', data.content[0].text);
+        console.error('❌ Backend returned invalid response:', data.content[0].text);
         alert('⚠️ Not enough information to create an answer yet.\n\nPlease continue the conversation and answer a few more questions, then try again!');
         setStage('probing');
         setIsLoading(false);
@@ -439,8 +465,8 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
                 {/* Answer Generation Buttons - Shows after some conversation */}
                 {conversation.length >= 2 && (
                   <div className="space-y-2">
-                    {/* Rush Answer - Available after 2 exchanges */}
-                    {conversation.length >= 2 && conversation.length < 4 && (
+                    {/* Rush Answer - Available after 2 exchanges, hidden after 6 */}
+                    {conversation.length >= 2 && conversation.length < 6 && (
                       <button
                         onClick={() => synthesizeAnswer(true)}
                         disabled={isLoading}
@@ -451,8 +477,8 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
                       </button>
                     )}
                     
-                    {/* Full Answer - Available after 4 exchanges */}
-                    {conversation.length >= 4 && (
+                    {/* Full Answer - Available after 6 exchanges */}
+                    {conversation.length >= 6 && (
                       <button
                         onClick={() => synthesizeAnswer(false)}
                         disabled={isLoading}
@@ -468,9 +494,9 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
                 <p className="text-xs text-center text-gray-500">
                   {conversation.length < 2
                     ? "Keep answering questions - the AI will help draw out details"
-                    : conversation.length < 4
-                    ? "🟡 Rush answer available now • 🟢 Keep going for best results (2 more exchanges)"
-                    : "🟢 Answer ready! Choose 'Rush' for quick version or 'Polished' for best quality"}
+                    : conversation.length < 6
+                    ? `🟡 Rush answer available now • 🟢 ${6 - conversation.length} more exchange${6 - conversation.length === 1 ? '' : 's'} for polished answer`
+                    : "🟢 Ready for polished answer! Or choose 'Rush' for a quicker version"}
                 </p>
               </div>
             </>
