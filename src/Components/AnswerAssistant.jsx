@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Lightbulb, X, MessageCircle, Sparkles, Save, Crown, RefreshCw, HelpCircle, Zap } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
-const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onClose, userTier }) => {
+const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onClose, userTier, existingNarrative, existingBullets }) => {
   const [conversation, setConversation] = useState([]);
   const [userInput, setUserInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -11,6 +11,10 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
   const [generatedBullets, setGeneratedBullets] = useState([]);
   const [showMIInfo, setShowMIInfo] = useState(false);
   const [isRushAnswer, setIsRushAnswer] = useState(false);
+  const [showExistingAnswer, setShowExistingAnswer] = useState(false);
+  
+  // Check if there's an existing answer
+  const hasExistingAnswer = existingNarrative && existingNarrative.trim().length > 0;
 
   // Clean markdown code blocks and formatting from AI responses
   const cleanAIResponse = (text) => {
@@ -255,8 +259,7 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
           .from('questions')
           .update({
             narrative: generatedAnswer,
-            bullets: generatedBullets,
-            updated_at: new Date().toISOString()
+            bullets: generatedBullets
           })
           .eq('id', questionId)
           .eq('user_id', user.id);
@@ -330,6 +333,42 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
               <div className="bg-gray-50 rounded-lg p-4 mb-6">
                 <p className="text-gray-900 font-medium mb-2">"{question}"</p>
               </div>
+              
+              {/* Show Existing Answer if present */}
+              {hasExistingAnswer && (
+                <div className="mb-6">
+                  <button
+                    onClick={() => setShowExistingAnswer(!showExistingAnswer)}
+                    className="text-sm text-indigo-600 hover:text-indigo-800 font-semibold mb-2 flex items-center gap-2 mx-auto"
+                  >
+                    {showExistingAnswer ? '🔽' : '▶️'} You already have an answer for this question
+                  </button>
+                  
+                  {showExistingAnswer && (
+                    <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-4 text-left mb-4">
+                      <p className="text-sm font-bold text-yellow-900 mb-2">⚠️ Current Answer:</p>
+                      <p className="text-gray-800 mb-3 text-sm whitespace-pre-line">{existingNarrative}</p>
+                      {existingBullets && existingBullets.length > 0 && (
+                        <>
+                          <p className="text-sm font-bold text-yellow-900 mb-2">Bullets:</p>
+                          <ul className="text-sm text-gray-800 space-y-1">
+                            {existingBullets.map((bullet, idx) => (
+                              <li key={idx} className="flex gap-2">
+                                <span className="font-bold">{idx + 1}.</span>
+                                <span>{bullet}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </>
+                      )}
+                      <p className="text-xs text-yellow-800 mt-3 font-semibold">
+                        💡 Creating a new answer will REPLACE this one
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+              
               <p className="text-gray-600 mb-6">
                 I'll guide you using <strong>Motivational Interviewing (MI)</strong> - a proven technique that helps draw out your experiences through thoughtful questions, making it easier to craft authentic, detailed answers!
               </p>
@@ -338,7 +377,7 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
                 disabled={isLoading}
                 className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-4 rounded-lg font-bold text-lg hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 transition"
               >
-                {isLoading ? 'Starting...' : "🚀 Let's Get Started"}
+                {isLoading ? 'Starting...' : hasExistingAnswer ? "🔄 Create New Answer" : "🚀 Let's Get Started"}
               </button>
             </div>
           ) : stage === 'complete' ? (

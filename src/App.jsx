@@ -2951,6 +2951,8 @@ onClick={async () => {
             questionId={answerAssistantQuestion.id}
             userContext={getUserContext()}
             userTier={usageStats?.tier}
+            existingNarrative={answerAssistantQuestion.narrative}
+            existingBullets={answerAssistantQuestion.bullets}
             onAnswerSaved={handleAnswerSaved}
             onClose={() => {
               setShowAnswerAssistant(false);
@@ -3547,6 +3549,8 @@ onClick={async () => {
             questionId={answerAssistantQuestion.id}
             userContext={getUserContext()}
             userTier={usageStats?.tier}
+            existingNarrative={answerAssistantQuestion.narrative}
+            existingBullets={answerAssistantQuestion.bullets}
             onAnswerSaved={handleAnswerSaved}
             onClose={() => {
               setShowAnswerAssistant(false);
@@ -5038,6 +5042,8 @@ onClick={async () => {
           questionId={answerAssistantQuestion.id}
           userContext={getUserContext()}
           userTier={usageStats?.tier}
+          existingNarrative={answerAssistantQuestion.narrative}
+          existingBullets={answerAssistantQuestion.bullets}
           onAnswerSaved={handleAnswerSaved}
           onClose={() => {
             setShowAnswerAssistant(false);
