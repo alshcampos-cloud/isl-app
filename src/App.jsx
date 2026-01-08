@@ -4,7 +4,7 @@ import {
   Brain, Database, Play, Plus, Edit2, Trash2, TrendingUp, Download, Upload,
   Mic, MicOff, Volume2, Eye, EyeOff, Settings, Sparkles, ChevronRight, X,
   Zap, CheckCircle, Target, Bot, BookOpen, SkipForward, Pause, Award, Filter,
-  Crown, Lightbulb, Square
+  Crown, Lightbulb, Square, Calendar
 } from 'lucide-react';
 
 import SupabaseTest from './SupabaseTest';
@@ -1797,6 +1797,31 @@ const startPracticeMode = async () => {
                 </div>
               </div>
             </div>
+            {/* Days Until Interview Card */}
+            <div 
+              className="bg-white/10 backdrop-blur-lg rounded-xl p-4 text-white hover:bg-white/15 transition-all duration-200 cursor-pointer"
+              onClick={() => setCurrentView('command')}
+            >
+              <div className="flex items-center gap-3">
+                <Calendar className="w-8 h-8 text-pink-300 flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-2xl font-bold leading-tight">
+                    {interviewDate 
+                      ? Math.max(0, Math.ceil((new Date(interviewDate) - new Date()) / (1000 * 60 * 60 * 24)))
+                      : '—'
+                    }
+                  </p>
+                  <p className="text-sm text-white/90 leading-tight whitespace-nowrap font-medium">
+                    {interviewDate ? 'Days to Go!' : 'Set Date →'}
+                  </p>
+                  {interviewDate && Math.ceil((new Date(interviewDate) - new Date()) / (1000 * 60 * 60 * 24)) <= 3 && (
+                    <p className="text-xs text-pink-300 mt-1 font-bold animate-pulse">
+                      🔥 Almost time!
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Quick Start Tip - Compact */}
@@ -2405,6 +2430,9 @@ onClick={async () => {
       
       // Set the follow-up question
       setFollowUpQuestion(feedbackJson.follow_up_question);
+      
+      // Scroll to top so user sees the new question
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       
       // Increment exchange count
       setExchangeCount(exchangeCount + 1);
