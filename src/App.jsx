@@ -3985,7 +3985,14 @@ onClick={async () => {
                 </div>
                 <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-xl p-5 text-white">
                   <p className="text-sm text-white/90 font-medium mb-1">This Month</p>
-                  <p className="text-4xl font-black">{usageStats?.session_count || 0}</p>
+                  <p className="text-4xl font-black">
+                    {practiceHistory.filter(s => {
+                      const sessionDate = new Date(s.date);
+                      const now = new Date();
+                      return sessionDate.getMonth() === now.getMonth() && 
+                             sessionDate.getFullYear() === now.getFullYear();
+                    }).length}
+                  </p>
                   <p className="text-xs text-white/75 mt-1">🔥 On fire!</p>
                 </div>
               </div>
