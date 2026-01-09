@@ -4085,7 +4085,9 @@ onClick={async () => {
                             </div>
                           </div>
                           <div className="flex-shrink-0 text-center bg-white rounded-lg p-3 shadow-sm">
-                            <div className="text-3xl font-black text-indigo-600">{session.feedback?.overall?.toFixed(1) || 'N/A'}</div>
+                            <div className="text-3xl font-black text-indigo-600">
+                              {session.feedback?.overall?.toFixed(1) || (session.feedback?.match_percentage ? (session.feedback.match_percentage / 10).toFixed(1) : 'N/A')}
+                            </div>
                             <div className="text-xs text-gray-600 font-bold">score</div>
                           </div>
                         </div>
