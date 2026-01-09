@@ -141,6 +141,7 @@ const ISL = () => {
   const currentModeRef = useRef(null);
   const isListeningRef = useRef(false);
   const captureSourceRef = useRef(null); // Track if capture was started by 'mouse' or 'keyboard'
+  const aiQuestionRef = useRef(null); // For auto-scrolling to AI questions
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [interviewDate, setInterviewDate] = useState(localStorage.getItem('isl_interview_date') || '');
   const [aiGeneratorCollapsed, setAiGeneratorCollapsed] = useState(true);
@@ -619,6 +620,17 @@ loadPracticeHistory();
     }
   }, [currentView]);
   useEffect(() => { if (currentMode === 'prompter' && transcript && !isListening) { console.log('Auto-match:', transcript); matchQuestion(transcript); } }, [transcript, isListening, currentMode]);
+  
+  // Auto-scroll to question when AI asks a new question
+  useEffect(() => {
+    if (currentView === 'ai-interviewer' && aiQuestionRef.current && (followUpQuestion || currentQuestion)) {
+      // Smooth scroll to the question area when new question appears
+      setTimeout(() => {
+        aiQuestionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300); // Small delay to ensure content is rendered
+    }
+  }, [followUpQuestion, currentQuestion, currentView]);
+  
   // Helper to check if section should be visible
   const isSectionVisible = (stage) => {
     return showAllFeedback || revealStage >= stage;
@@ -1445,15 +1457,47 @@ useEffect(() => {
     
     if (currentMode) { window.addEventListener('keydown', handleKeyDown); window.addEventListener('keyup', handleKeyUp); return () => { window.removeEventListener('keydown', handleKeyDown); window.removeEventListener('keyup', handleKeyUp); }; }
   }, [currentMode, spacebarHeld, isListening, interviewSessionActive, isCapturing]);
-  // TTS
+  // TTS with improved voice selection
   const speakText = (text) => {
     if (!synthRef.current) { console.warn('TTS not available'); return; }
     synthRef.current.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     const voices = synthRef.current.getVoices();
-    const goodVoice = voices.find(v => v.name.includes('Google') || v.name.includes('Microsoft') || v.name.includes('Samantha') || v.name.includes('Alex')) || voices[0];
-    if (goodVoice) { utterance.voice = goodVoice; console.log('Voice:', goodVoice.name); }
-    utterance.rate = 0.95; utterance.pitch = 1.0; utterance.volume = 1.0;
+    
+    // Priority order for best voices (more natural sounding)
+    const voicePriority = [
+      'Samantha',           // macOS - very natural
+      'Google US English',  // Google voices are good
+      'Google UK English Female',
+      'Microsoft Zira',     // Windows - decent
+      'Microsoft David',
+      'Alex',              // macOS male
+      'Karen',             // macOS female
+      'Fiona'              // macOS Scottish
+    ];
+    
+    // Find the best available voice
+    let selectedVoice = null;
+    for (const voiceName of voicePriority) {
+      selectedVoice = voices.find(v => v.name.includes(voiceName));
+      if (selectedVoice) break;
+    }
+    
+    // Fallback to any English voice if no priority match
+    if (!selectedVoice) {
+      selectedVoice = voices.find(v => v.lang.startsWith('en-')) || voices[0];
+    }
+    
+    if (selectedVoice) { 
+      utterance.voice = selectedVoice; 
+      console.log('🎙️ Voice:', selectedVoice.name); 
+    }
+    
+    // Optimized settings for more natural speech
+    utterance.rate = 0.92;   // Slightly slower for clarity
+    utterance.pitch = 1.05;  // Slightly higher pitch sounds more natural
+    utterance.volume = 1.0;
+    
     utterance.onstart = () => { setAiSpeaking(true); setAiSubtitle(text); };
     utterance.onend = () => { setAiSpeaking(false); setAiSubtitle(''); };
     synthRef.current.speak(utterance);
@@ -2267,7 +2311,7 @@ const startPracticeMode = async () => {
           
           <div className="max-w-4xl mx-auto mb-8">
             {/* CLOUD AVATAR CONTAINER */}
-            <div className="relative bg-gradient-to-br from-purple-800/50 to-pink-800/50 backdrop-blur-lg rounded-3xl p-12 shadow-2xl">
+            <div ref={aiQuestionRef} className="relative bg-gradient-to-br from-purple-800/50 to-pink-800/50 backdrop-blur-lg rounded-3xl p-12 shadow-2xl">
               {/* Animated Cloud Avatar */}
               <div className="flex justify-center mb-8">
                 <div className="relative">
@@ -2278,9 +2322,9 @@ const startPracticeMode = async () => {
                     <div className={`absolute top-0 left-8 w-24 h-24 rounded-full opacity-80 ${aiSpeaking ? 'bg-pink-300' : 'bg-purple-300'}`}></div>
                     <div className={`absolute top-2 right-8 w-20 h-20 rounded-full opacity-80 ${aiSpeaking ? 'bg-indigo-300' : 'bg-pink-300'}`}></div>
                     <div className={`absolute bottom-0 left-12 w-28 h-20 rounded-full opacity-70 ${aiSpeaking ? 'bg-purple-400' : 'bg-purple-400'}`}></div>
-                    {/* Face */}
+                    {/* Face with enhanced pulse */}
                     <div className="absolute inset-0 flex items-center justify-center z-10">
-                      <Brain className="w-16 h-16 text-white opacity-90" />
+                      <Brain className={`w-16 h-16 text-white opacity-90 transition-transform duration-300 ${aiSpeaking ? 'scale-110 animate-pulse' : 'scale-100'}`} />
                     </div>
                     {/* Sound waves */}
                     {aiSpeaking && (
