@@ -3894,6 +3894,7 @@ onClick={async () => {
 // COMMAND CENTER
   if (currentView === 'command-center') {
     return (
+      <>
       <div className="min-h-screen bg-gray-50">
         {/* Header - Compact */}
         <div className="bg-white shadow-sm">
@@ -4007,28 +4008,59 @@ onClick={async () => {
               {/* Most Practiced Questions */}
               <div className="bg-white rounded-xl shadow-md p-5 mb-6">
                 <h3 className="text-xl font-bold mb-4 text-gray-900">🔥 You're Crushing These!</h3>
-                {questions.filter(q => q.practiceCount > 0).length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-gray-600 text-base mb-2">No practice sessions yet</p>
-                    <p className="text-sm text-gray-500">Start practicing to see your progress here!</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {questions
-                      .filter(q => q.practiceCount > 0)
-                      .sort((a, b) => b.practiceCount - a.practiceCount)
-                      .slice(0, 5)
-                      .map((q, idx) => (
-                        <div key={q.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                {(() => {
+                  // Calculate practice counts and averages from history
+                  const questionStats = {};
+                  practiceHistory.forEach(session => {
+                    if (!questionStats[session.question]) {
+                      questionStats[session.question] = {
+                        question: session.question,
+                        count: 0,
+                        scores: []
+                      };
+                    }
+                    questionStats[session.question].count++;
+                    const score = session.feedback?.overall || (session.feedback?.match_percentage / 10);
+                    if (score) {
+                      questionStats[session.question].scores.push(score);
+                    }
+                  });
+                  
+                  const topQuestions = Object.values(questionStats)
+                    .map(stat => ({
+                      ...stat,
+                      average: stat.scores.length > 0 
+                        ? stat.scores.reduce((a, b) => a + b, 0) / stat.scores.length 
+                        : 0
+                    }))
+                    .sort((a, b) => b.count - a.count)
+                    .slice(0, 5);
+                  
+                  if (topQuestions.length === 0) {
+                    return (
+                      <div className="text-center py-8">
+                        <p className="text-gray-600 text-base mb-2">No practice sessions yet</p>
+                        <p className="text-sm text-gray-500">Start practicing to see your progress here!</p>
+                      </div>
+                    );
+                  }
+                  
+                  return (
+                    <div className="space-y-3">
+                      {topQuestions.map((stat, idx) => (
+                        <div key={idx} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
                           <div className="text-2xl font-black text-indigo-600">#{idx + 1}</div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-bold text-gray-900 text-base truncate">{q.question}</p>
-                            <p className="text-sm text-gray-600 font-medium">Practiced {q.practiceCount}x • Avg: {q.averageScore.toFixed(1)}/10</p>
+                            <p className="font-bold text-gray-900 text-base truncate">{stat.question}</p>
+                            <p className="text-sm text-gray-600 font-medium">
+                              Practiced {stat.count}x • Avg: {stat.average.toFixed(1)}/10
+                            </p>
                           </div>
                         </div>
                       ))}
-                  </div>
-                )}
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Practice History */}
@@ -4248,8 +4280,16 @@ onClick={async () => {
                 <div className="space-y-4">
                   {['Core Narrative', 'System-Level', 'Behavioral', 'Technical'].map(category => {
                     const categoryQuestions = questions.filter(q => q.category === category);
-                    const practiced = categoryQuestions.filter(q => q.practiceCount > 0).length;
                     const total = categoryQuestions.length;
+                    
+                    // Calculate how many questions in this category have been practiced
+                    const practicedQuestionTexts = new Set(
+                      practiceHistory.map(s => s.question)
+                    );
+                    const practiced = categoryQuestions.filter(q => 
+                      practicedQuestionTexts.has(q.question)
+                    ).length;
+                    
                     const percentage = total > 0 ? (practiced / total) * 100 : 0;
                     
                     return (
@@ -5115,6 +5155,7 @@ onClick={async () => {
           </div>
         </div>
       )}
+      </>
     );
   }
   // PRIVACY POLICY
