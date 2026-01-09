@@ -2,7 +2,7 @@
 
 import {
   Brain, Database, Play, Plus, Edit2, Trash2, TrendingUp, Download, Upload,
-  Mic, MicOff, Volume2, Eye, EyeOff, Settings, Sparkles, ChevronRight, X,
+  Mic, MicOff, Volume2, Eye, EyeOff, Settings, Sparkles, ChevronRight, ChevronDown, X,
   Zap, CheckCircle, Target, Bot, BookOpen, SkipForward, Pause, Award, Filter,
   Crown, Lightbulb, Square, Calendar
 } from 'lucide-react';
@@ -143,6 +143,9 @@ const ISL = () => {
   const captureSourceRef = useRef(null); // Track if capture was started by 'mouse' or 'keyboard'
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [interviewDate, setInterviewDate] = useState(localStorage.getItem('isl_interview_date') || '');
+  const [aiGeneratorCollapsed, setAiGeneratorCollapsed] = useState(true);
+  const [selectedChartPoint, setSelectedChartPoint] = useState(null);
+  const [showChartModal, setShowChartModal] = useState(false);
   const [dailyGoal, setDailyGoal] = useState(parseInt(localStorage.getItem('isl_daily_goal') || '3', 10));
   const [selectedSession, setSelectedSession] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
@@ -4427,60 +4430,75 @@ onClick={async () => {
         </div>
       ) : (
         <>
-          <div className="relative mb-8" style={{ height: '400px' }}>
-            <svg viewBox="0 0 900 350" className="w-full h-full">
-              {[0, 2, 4, 6, 8, 10].map(score => (
-                <g key={score}>
-                  <line x1="60" y1={300 - (score * 27)} x2="850" y2={300 - (score * 27)} stroke="#e5e7eb" strokeWidth="1" strokeDasharray={score === 0 ? "0" : "4,4"} />
-                  <text x="35" y={305 - (score * 27)} fontSize="14" fill="#6b7280" fontWeight="600">{score}</text>
-                </g>
-              ))}
-              
-              <defs>
-                <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#6366f1" />
-                  <stop offset="50%" stopColor="#8b5cf6" />
-                  <stop offset="100%" stopColor="#ec4899" />
-                </linearGradient>
-              </defs>
-              
-              {(() => {
-                const validSessions = practiceHistory.filter(s => s.feedback?.overall || s.feedback?.match_percentage);
-                if (validSessions.length < 2) return null;
-                return (
-                  <polyline
-                    points={validSessions.map((session, idx) => {
-                      const score = session.feedback?.overall || (session.feedback?.match_percentage / 10);
-                      const x = 60 + (idx / Math.max(1, validSessions.length - 1)) * 790;
-                      const y = 300 - (score * 27);
-                      return `${x},${y}`;
-                    }).join(' ')}
-                    fill="none"
-                    stroke="url(#lineGradient)"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                );
-              })()}
-              
-              {(() => {
-                const validSessions = practiceHistory.filter(s => s.feedback?.overall || s.feedback?.match_percentage);
-                return validSessions.map((session, idx) => {
-                  const score = session.feedback?.overall || (session.feedback?.match_percentage / 10);
-                  const x = 60 + (idx / Math.max(1, validSessions.length - 1)) * 790;
-                  const y = 300 - (score * 27);
+          <div className="overflow-x-auto pb-4">
+            <div className="relative min-w-[800px]" style={{ height: '400px' }}>
+              <svg viewBox="0 0 900 350" className="w-full h-full">
+                {[0, 2, 4, 6, 8, 10].map(score => (
+                  <g key={score}>
+                    <line x1="60" y1={300 - (score * 27)} x2="850" y2={300 - (score * 27)} stroke="#e5e7eb" strokeWidth="1" strokeDasharray={score === 0 ? "0" : "4,4"} />
+                    <text x="35" y={305 - (score * 27)} fontSize="14" fill="#6b7280" fontWeight="600">{score}</text>
+                  </g>
+                ))}
+                
+                <defs>
+                  <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#6366f1" />
+                    <stop offset="50%" stopColor="#8b5cf6" />
+                    <stop offset="100%" stopColor="#ec4899" />
+                  </linearGradient>
+                </defs>
+                
+                {(() => {
+                  const validSessions = practiceHistory.filter(s => s.feedback?.overall || s.feedback?.match_percentage);
+                  if (validSessions.length < 2) return null;
                   return (
-                    <g key={idx}>
-                      <circle cx={x} cy={y} r="8" fill="#6366f1" stroke="white" strokeWidth="3" className="cursor-pointer" onClick={() => setSelectedSession(session)} />
-                    </g>
+                    <polyline
+                      points={validSessions.map((session, idx) => {
+                        const score = session.feedback?.overall || (session.feedback?.match_percentage / 10);
+                        const x = 60 + (idx / Math.max(1, validSessions.length - 1)) * 790;
+                        const y = 300 - (score * 27);
+                        return `${x},${y}`;
+                      }).join(' ')}
+                      fill="none"
+                      stroke="url(#lineGradient)"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   );
-                });
-              })()}
-              
-              <text x="450" y="340" fontSize="14" fill="#6b7280" textAnchor="middle" fontWeight="600">Practice Sessions (click dots for details)</text>
-              <text x="20" y="180" fontSize="14" fill="#6b7280" textAnchor="middle" transform="rotate(-90, 20, 180)" fontWeight="600">Score</text>
-            </svg>
+                })()}
+                
+                {(() => {
+                  const validSessions = practiceHistory.filter(s => s.feedback?.overall || s.feedback?.match_percentage);
+                  return validSessions.map((session, idx) => {
+                    const score = session.feedback?.overall || (session.feedback?.match_percentage / 10);
+                    const x = 60 + (idx / Math.max(1, validSessions.length - 1)) * 790;
+                    const y = 300 - (score * 27);
+                    return (
+                      <g key={idx}>
+                        <circle 
+                          cx={x} 
+                          cy={y} 
+                          r="10" 
+                          fill="#6366f1" 
+                          stroke="white" 
+                          strokeWidth="3" 
+                          className="cursor-pointer hover:r-12 transition-all" 
+                          onClick={() => {
+                            setSelectedChartPoint({ session, score, idx: idx + 1, total: validSessions.length });
+                            setShowChartModal(true);
+                          }} 
+                        />
+                      </g>
+                    );
+                  });
+                })()}
+                
+                <text x="450" y="340" fontSize="14" fill="#6b7280" textAnchor="middle" fontWeight="600">Practice Sessions (click dots for details)</text>
+                <text x="20" y="180" fontSize="14" fill="#6b7280" textAnchor="middle" transform="rotate(-90, 20, 180)" fontWeight="600">Score</text>
+              </svg>
+            </div>
+            <p className="text-xs text-gray-500 text-center mt-2">💡 Scroll horizontally to see all data points</p>
           </div>
 
           {(() => {
@@ -4588,61 +4606,72 @@ onClick={async () => {
                       </div>
                     </div>
                     
-                    {/* Middle: Mini Sparkline Chart */}
-                    <div className="flex flex-col items-center">
-                      <svg width="200" height="80" className="mb-2">
-                        {/* Grid lines */}
-                        {[0, 5, 10].map(score => (
-                          <line 
-                            key={score}
-                            x1="0" 
-                            y1={70 - (score * 6)} 
-                            x2="200" 
-                            y2={70 - (score * 6)} 
-                            stroke="#e5e7eb" 
-                            strokeWidth="1"
-                            strokeDasharray="2,2"
-                          />
-                        ))}
-                        
-                        {/* Line connecting points */}
-                        {qStat.sessions.length > 1 && (
-                          <polyline
-                            points={qStat.sessions.map((s, sIdx) => {
-                              const score = getScore(s);
-                              const x = (sIdx / Math.max(1, qStat.sessions.length - 1)) * 200;
-                              const y = 70 - (score * 6);
-                              return `${x},${y}`;
-                            }).join(' ')}
-                            fill="none"
-                            stroke="#6366f1"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                          />
-                        )}
-                        
-                        {/* Clickable dots */}
-                        {qStat.sessions.map((s, sIdx) => {
-                          const score = getScore(s);
-                          const x = (sIdx / Math.max(1, qStat.sessions.length - 1)) * 200;
-                          const y = 70 - (score * 6);
-                          return (
-                            <circle
-                              key={sIdx}
-                              cx={x}
-                              cy={y}
-                              r="4"
-                              fill="#6366f1"
-                              stroke="white"
-                              strokeWidth="2"
-                              className="cursor-pointer hover:r-6 transition-all"
-                              onClick={() => setSelectedSession(s)}
-                            >
-                              <title>Attempt {sIdx + 1}: {score.toFixed(1)}/10</title>
-                            </circle>
-                          );
-                        })}
-                      </svg>
+                    {/* Middle: Sparkline Chart - Scrollable on Mobile */}
+                    <div className="flex flex-col items-center overflow-x-auto">
+                      <div className="min-w-[280px]">
+                        <svg width="280" height="100" className="mb-2">
+                          {/* Grid lines */}
+                          {[0, 5, 10].map(score => (
+                            <line 
+                              key={score}
+                              x1="0" 
+                              y1={90 - (score * 8)} 
+                              x2="280" 
+                              y2={90 - (score * 8)} 
+                              stroke="#e5e7eb" 
+                              strokeWidth="1"
+                              strokeDasharray="2,2"
+                            />
+                          ))}
+                          
+                          {/* Line connecting points */}
+                          {qStat.sessions.length > 1 && (
+                            <polyline
+                              points={qStat.sessions.map((s, sIdx) => {
+                                const score = getScore(s);
+                                const x = 20 + (sIdx / Math.max(1, qStat.sessions.length - 1)) * 240;
+                                const y = 90 - (score * 8);
+                                return `${x},${y}`;
+                              }).join(' ')}
+                              fill="none"
+                              stroke="#6366f1"
+                              strokeWidth="3"
+                              strokeLinecap="round"
+                            />
+                          )}
+                          
+                          {/* Clickable dots - BIGGER */}
+                          {qStat.sessions.map((s, sIdx) => {
+                            const score = getScore(s);
+                            const x = 20 + (sIdx / Math.max(1, qStat.sessions.length - 1)) * 240;
+                            const y = 90 - (score * 8);
+                            return (
+                              <circle
+                                key={sIdx}
+                                cx={x}
+                                cy={y}
+                                r="6"
+                                fill="#6366f1"
+                                stroke="white"
+                                strokeWidth="2"
+                                className="cursor-pointer hover:r-8 transition-all"
+                                onClick={() => {
+                                  setSelectedChartPoint({ 
+                                    session: s, 
+                                    score, 
+                                    idx: sIdx + 1, 
+                                    total: qStat.sessions.length,
+                                    question: qStat.question 
+                                  });
+                                  setShowChartModal(true);
+                                }}
+                              >
+                                <title>Attempt {sIdx + 1}: {score.toFixed(1)}/10</title>
+                              </circle>
+                            );
+                          })}
+                        </svg>
+                      </div>
                       <p className="text-xs text-gray-500 font-semibold">Click dots for details</p>
                     </div>
                     
@@ -4655,19 +4684,29 @@ onClick={async () => {
                   
                   <details className="mt-4 pt-4 border-t">
                     <summary className="cursor-pointer text-sm font-bold text-indigo-600">
-                      View {qStat.sessions.length} attempts →
+                      📋 View {qStat.sessions.length} attempts →
                     </summary>
                     <div className="mt-4 space-y-2">
                       {qStat.sessions.slice().reverse().map((session, sIdx) => {
                         const score = getScore(session);
+                        const attemptNum = qStat.sessions.length - sIdx;
                         return (
                           <div 
                             key={sIdx}
-                            className="flex justify-between bg-gray-50 p-4 rounded-lg cursor-pointer hover:bg-indigo-50"
-                            onClick={() => setSelectedSession(session)}
+                            className="flex justify-between bg-gray-50 p-4 rounded-lg cursor-pointer hover:bg-indigo-50 transition"
+                            onClick={() => {
+                              setSelectedChartPoint({ 
+                                session, 
+                                score, 
+                                idx: attemptNum, 
+                                total: qStat.sessions.length,
+                                question: qStat.question 
+                              });
+                              setShowChartModal(true);
+                            }}
                           >
-                            <span className="text-sm">
-                              {new Date(session.date).toLocaleDateString()} at {new Date(session.date).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}
+                            <span className="text-sm font-semibold text-gray-700">
+                              Attempt {attemptNum} • {new Date(session.date).toLocaleDateString()} at {new Date(session.date).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}
                             </span>
                             <span className="text-xl font-black text-indigo-600">{score.toFixed(1)}</span>
                           </div>
@@ -4688,63 +4727,90 @@ onClick={async () => {
 {/* ==================== QUESTION BANK TAB ==================== */}
 {commandCenterTab === 'bank' && (
             <div>
-              {/* AI Question Generator - Pro/Premium Only */}
-{(usageStats?.tier === 'pro' || usageStats?.tier === 'premium' || usageStats?.tier === 'beta') ? (
-  <QuestionAssistant
-    onQuestionGenerated={async (generatedQuestion) => {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data, error } = await supabase
-        .from('questions')
-        .insert([{
-          user_id: user.id,
-          question: generatedQuestion,
-          category: 'Generated',
-          priority: 'Technical',
-          bullets: [],
-          narrative: ''
-        }])
-        .select()
-        .single();
-      
-      if (!error && data) {
-        // Add to local state
-        setQuestions([...questions, data]);
-        alert('✅ Question added to bank!');
-      }
-    }
-  } catch (error) {
-    console.error('Save error:', error);
-    alert('Failed to save question');
-  }
-}}
-    existingQuestions={questions}
-  />
-) : (
-  <div className="bg-gradient-to-br from-purple-50 via-indigo-50 to-pink-50 rounded-xl p-8 border-2 border-purple-300 mb-6 text-center shadow-lg">
-    <div className="text-6xl mb-4">✨</div>
-    <h3 className="text-2xl font-bold text-gray-900 mb-2">AI Question Generator</h3>
-    <p className="text-gray-600 mb-4 max-w-md mx-auto">
-      Generate personalized, MI-powered interview questions tailored to your role, background, and target company.
-    </p>
-    <div className="bg-white rounded-lg p-4 mb-6 max-w-sm mx-auto">
-      <p className="text-sm font-semibold text-purple-900 mb-2">🎯 What You Get:</p>
-      <ul className="text-xs text-left text-gray-700 space-y-1">
-        <li>✓ Questions tailored to YOUR background</li>
-        <li>✓ Learns from your existing questions</li>
-        <li>✓ MI-powered for authentic practice</li>
-        <li>✓ Role & company-specific</li>
-      </ul>
-    </div>
-    <button
-      onClick={() => alert('Upgrade feature coming soon!')}
-      className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-8 py-3 rounded-lg font-bold hover:from-purple-700 hover:to-indigo-700 shadow-lg transform hover:scale-105 transition"
-    >
-      Upgrade to Pro - $19.99/month
-    </button>
-  </div>
-)}
+              {/* AI Question Generator - Pro/Premium Only - COLLAPSIBLE */}
+              <div className="mb-6">
+                <button
+                  onClick={() => setAiGeneratorCollapsed(!aiGeneratorCollapsed)}
+                  className="w-full bg-gradient-to-br from-purple-50 via-indigo-50 to-pink-50 rounded-xl p-4 border-2 border-purple-300 hover:border-purple-400 transition flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="text-3xl">✨</div>
+                    <div className="text-left">
+                      <h3 className="text-lg font-bold text-gray-900">AI Question Generator</h3>
+                      <p className="text-sm text-gray-600">Generate personalized interview questions</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {(usageStats?.tier === 'pro' || usageStats?.tier === 'premium' || usageStats?.tier === 'beta') && (
+                      <span className="px-3 py-1 bg-purple-600 text-white text-xs font-bold rounded-full">ACTIVE</span>
+                    )}
+                    {aiGeneratorCollapsed ? (
+                      <ChevronRight className="w-6 h-6 text-gray-600" />
+                    ) : (
+                      <ChevronDown className="w-6 h-6 text-gray-600" />
+                    )}
+                  </div>
+                </button>
+                
+                {!aiGeneratorCollapsed && (
+                  <div className="mt-4 p-6 bg-white rounded-xl border-2 border-purple-200">
+                    {(usageStats?.tier === 'pro' || usageStats?.tier === 'premium' || usageStats?.tier === 'beta') ? (
+                      <QuestionAssistant
+                        onQuestionGenerated={async (generatedQuestion) => {
+                          try {
+                            const { data: { user } } = await supabase.auth.getUser();
+                            if (user) {
+                              const { data, error } = await supabase
+                                .from('questions')
+                                .insert([{
+                                  user_id: user.id,
+                                  question: generatedQuestion,
+                                  category: 'Generated',
+                                  priority: 'Technical',
+                                  bullets: [],
+                                  narrative: ''
+                                }])
+                                .select()
+                                .single();
+                              
+                              if (!error && data) {
+                                setQuestions([...questions, data]);
+                                alert('✅ Question added to bank!');
+                                setAiGeneratorCollapsed(true); // Collapse after adding
+                              }
+                            }
+                          } catch (error) {
+                            console.error('Save error:', error);
+                            alert('Failed to save question');
+                          }
+                        }}
+                        existingQuestions={questions}
+                      />
+                    ) : (
+                      <div className="text-center py-8">
+                        <p className="text-gray-600 mb-4 max-w-md mx-auto">
+                          Generate personalized, MI-powered interview questions tailored to your role, background, and target company.
+                        </p>
+                        <div className="bg-gray-50 rounded-lg p-4 mb-6 max-w-sm mx-auto">
+                          <p className="text-sm font-semibold text-purple-900 mb-2">🎯 What You Get:</p>
+                          <ul className="text-xs text-left text-gray-700 space-y-1">
+                            <li>✓ Questions tailored to YOUR background</li>
+                            <li>✓ Learns from your existing questions</li>
+                            <li>✓ MI-powered for authentic practice</li>
+                            <li>✓ Role & company-specific</li>
+                          </ul>
+                        </div>
+                        <button
+                          onClick={() => alert('Upgrade feature coming soon!')}
+                          className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-8 py-3 rounded-lg font-bold hover:from-purple-700 hover:to-indigo-700 shadow-lg transform hover:scale-105 transition"
+                        >
+                          Upgrade to Pro - $19.99/month
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
               <button onClick={() => setEditingQuestion({ question: '', keywords: [], category: 'Core Narrative', priority: 'Must-Know', bullets: [''], narrative: '', followups: [] })} className="mb-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-3 rounded-lg flex items-center gap-2">
                 <Plus className="w-5 h-5" />
                 Add Question
@@ -4944,6 +5010,111 @@ onClick={async () => {
           )}
         </div>
       </div>
+      
+      {/* Chart Detail Modal */}
+      {showChartModal && selectedChartPoint && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowChartModal(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-t-2xl">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-2xl font-bold mb-2">
+                    {selectedChartPoint.question ? '📊 Practice Session Details' : '📈 Session Details'}
+                  </h3>
+                  <p className="text-indigo-100">
+                    Attempt {selectedChartPoint.idx} of {selectedChartPoint.total}
+                  </p>
+                </div>
+                <button 
+                  onClick={() => setShowChartModal(false)}
+                  className="text-white hover:bg-white/20 rounded-full p-2 transition"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              {/* Score Display */}
+              <div className="text-center bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-8">
+                <p className="text-gray-600 font-semibold mb-2">Score</p>
+                <p className="text-6xl font-black text-indigo-600 mb-2">{selectedChartPoint.score.toFixed(1)}</p>
+                <p className="text-gray-500 text-sm">out of 10.0</p>
+              </div>
+              
+              {/* Question (if available) */}
+              {selectedChartPoint.question && (
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-sm font-bold text-gray-700 mb-2">Question:</p>
+                  <p className="text-gray-900">{selectedChartPoint.question}</p>
+                </div>
+              )}
+              
+              {/* Session Info */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-sm text-gray-600 mb-1">📅 Date</p>
+                  <p className="font-bold text-gray-900">
+                    {new Date(selectedChartPoint.session.date).toLocaleDateString()}
+                  </p>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-sm text-gray-600 mb-1">⏰ Time</p>
+                  <p className="font-bold text-gray-900">
+                    {new Date(selectedChartPoint.session.date).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}
+                  </p>
+                </div>
+              </div>
+              
+              {/* Feedback Details */}
+              {selectedChartPoint.session.feedback && (
+                <>
+                  {selectedChartPoint.session.feedback.strengths && selectedChartPoint.session.feedback.strengths.length > 0 && (
+                    <div className="bg-green-50 rounded-xl p-4 border-2 border-green-200">
+                      <p className="font-bold text-green-900 mb-3 flex items-center gap-2">
+                        <CheckCircle className="w-5 h-5" />
+                        Strengths
+                      </p>
+                      <ul className="space-y-2">
+                        {selectedChartPoint.session.feedback.strengths.map((strength, idx) => (
+                          <li key={idx} className="text-sm text-green-800 flex gap-2">
+                            <span className="text-green-600">✓</span>
+                            <span>{strength}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  
+                  {selectedChartPoint.session.feedback.gaps && selectedChartPoint.session.feedback.gaps.length > 0 && (
+                    <div className="bg-orange-50 rounded-xl p-4 border-2 border-orange-200">
+                      <p className="font-bold text-orange-900 mb-3 flex items-center gap-2">
+                        <Target className="w-5 h-5" />
+                        Areas for Improvement
+                      </p>
+                      <ul className="space-y-2">
+                        {selectedChartPoint.session.feedback.gaps.map((gap, idx) => (
+                          <li key={idx} className="text-sm text-orange-800 flex gap-2">
+                            <span className="text-orange-600">→</span>
+                            <span>{gap}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </>
+              )}
+              
+              <button 
+                onClick={() => setShowChartModal(false)}
+                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-4 rounded-xl transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     );
   }
   // PRIVACY POLICY
