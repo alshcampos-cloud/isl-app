@@ -5157,6 +5157,23 @@ onClick={async () => {
           </div>
         </div>
       )}
+      
+      {/* Answer Assistant Modal */}
+      {showAnswerAssistant && answerAssistantQuestion && (
+        <AnswerAssistant
+          question={answerAssistantQuestion.question}
+          questionId={answerAssistantQuestion.id}
+          userContext={getUserContext()}
+          userTier={usageStats?.tier}
+          existingNarrative={answerAssistantQuestion.narrative}
+          existingBullets={answerAssistantQuestion.bullets}
+          onAnswerSaved={handleAnswerSaved}
+          onClose={() => {
+            setShowAnswerAssistant(false);
+            setAnswerAssistantQuestion(null);
+          }}
+        />
+      )}
       </>
     );
   }
@@ -5246,29 +5263,6 @@ onClick={async () => {
       </div>
     );
 }
-
-  // Answer Assistant Modal - ALWAYS render if active
-  return (
-    <>
-      {showAnswerAssistant && answerAssistantQuestion && (
-        <AnswerAssistant
-          question={answerAssistantQuestion.question}
-          questionId={answerAssistantQuestion.id}
-          userContext={getUserContext()}
-          userTier={usageStats?.tier}
-          existingNarrative={answerAssistantQuestion.narrative}
-          existingBullets={answerAssistantQuestion.bullets}
-          onAnswerSaved={handleAnswerSaved}
-          onClose={() => {
-            setShowAnswerAssistant(false);
-            setAnswerAssistantQuestion(null);
-          }}
-        />
-      )}
-      {null}
-    </>
-  );
-};
 
 // Wrap ISL with ProtectedRoute before exporting
 function App() {
