@@ -5015,22 +5015,16 @@ onClick={async () => {
                         {/* AI ANSWER COACH BUTTON */}
                         <button
                           onClick={async () => {
-                            console.log('🎯 AI Coach clicked!');
-                            console.log('Question:', q);
-                            
                             // Check AI usage limit
                             const canUse = await checkAIUsageLimit();
-                            console.log('Can use AI?', canUse);
                             if (!canUse) return;
                             
                             // Increment usage
                             incrementAIUsage();
                             
                             // Open AI Answer Coach
-                            console.log('Setting Answer Assistant Question:', q);
                             setAnswerAssistantQuestion(q);
                             setShowAnswerAssistant(true);
-                            console.log('Show Answer Assistant set to TRUE');
                           }}
                           className="px-3 py-2 bg-gradient-to-r from-purple-100 to-indigo-100 hover:from-purple-200 hover:to-indigo-200 text-purple-700 rounded-lg transition font-bold text-sm flex items-center justify-center gap-1"
                         >
@@ -5165,14 +5159,6 @@ onClick={async () => {
       )}
       
       {/* Answer Assistant Modal */}
-      {(() => {
-        console.log('Command Center - Check AnswerAssistant render:', {
-          showAnswerAssistant,
-          hasQuestion: !!answerAssistantQuestion,
-          question: answerAssistantQuestion?.question
-        });
-        return null;
-      })()}
       {showAnswerAssistant && answerAssistantQuestion && (
         <AnswerAssistant
           question={answerAssistantQuestion.question}
@@ -5276,7 +5262,8 @@ onClick={async () => {
         </div>
       </div>
     );
-}
+  }
+}; // Close ISL component
 
 // Wrap ISL with ProtectedRoute before exporting
 function App() {
