@@ -154,6 +154,11 @@ const ISL = () => {
   const [showAnswerAssistant, setShowAnswerAssistant] = useState(false);
   const [answerAssistantQuestion, setAnswerAssistantQuestion] = useState(null);
   
+  // Legal Protection States
+  const [showConsentDialog, setShowConsentDialog] = useState(false);
+  const [hasConsented, setHasConsented] = useState(false);
+  const [showLivePrompterWarning, setShowLivePrompterWarning] = useState(false);
+  
   // Usage tracking
   const [usageThisMonth, setUsageThisMonth] = useState(0);
   const [usageLimit, setUsageLimit] = useState(5);
@@ -210,6 +215,14 @@ const ISL = () => {
         systemAudioStream.getTracks().forEach(t => t.stop());
       }
     };
+  }, []);
+
+  // Check if user has already consented to recording
+  useEffect(() => {
+    const consent = localStorage.getItem('isl_recording_consent');
+    if (consent === 'true') {
+      setHasConsented(true);
+    }
   }, []);
 
   // CLEANUP 2: Stop mic when leaving mic-using modes
@@ -1690,8 +1703,23 @@ useEffect(() => {
   };
 
   // MODE STARTERS
-  const startPrompterMode = () => { accumulatedTranscript.current = ''; if (questions.length === 0) { alert('Add questions first!'); return; } setCurrentMode('prompter'); setCurrentView('prompter'); setMatchedQuestion(null); setTranscript(''); };
+  const startPrompterMode = () => { 
+    // Check consent first
+    if (!hasConsented) {
+      setShowConsentDialog(true);
+      return;
+    }
+    
+    // Then show Live Prompter warning
+    setShowLivePrompterWarning(true);
+  };
  const startAIInterviewer = async () => { 
+    // Check consent first
+    if (!hasConsented) {
+      setShowConsentDialog(true);
+      return;
+    }
+    
     accumulatedTranscript.current = ''; 
     if (questions.length === 0) { alert('Add questions first!'); return; } 
 
@@ -1718,6 +1746,12 @@ setExchangeCount(0);
     setTimeout(() => { speakText(randomQ.question); }, 500); 
   };
 const startPracticeMode = async () => { 
+    // Check consent first
+    if (!hasConsented) {
+      setShowConsentDialog(true);
+      return;
+    }
+    
     accumulatedTranscript.current = ''; 
     if (questions.length === 0) { alert('Add questions first!'); return; }
 
@@ -1812,6 +1846,17 @@ const startPracticeMode = async () => {
                     </p>
                     <p className="text-sm opacity-70">{currentUser?.email}</p>
                   </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowProfileDropdown(false);
+                      setCurrentView('settings');
+                    }}
+                    className="w-full px-4 py-3 text-left hover:bg-gray-50 transition flex items-center gap-3 text-gray-700 border-b border-gray-100"
+                  >
+                    <Settings className="w-5 h-5 text-indigo-600" />
+                    <span className="font-semibold">Settings</span>
+                  </button>
                   <button
                     onClick={async (e) => {
                       e.stopPropagation();
@@ -2633,6 +2678,24 @@ onClick={async () => {
 
  {feedback && (
   <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-2xl p-8">
+    {/* AI DISCLAIMER - Legal Protection */}
+    <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-4 mb-6">
+      <div className="flex items-start gap-3">
+        <span className="text-2xl flex-shrink-0">🤖</span>
+        <div>
+          <p className="font-bold text-yellow-900 mb-1">AI-Generated Feedback</p>
+          <p className="text-sm text-yellow-800 leading-relaxed">
+            This feedback is AI-generated and for practice purposes only. It is <strong>not professional career advice</strong>. 
+            AI may contain errors—use your judgment and consult a professional for important career decisions.
+          </p>
+          <p className="text-xs text-yellow-700 mt-2">
+            ⚠️ <strong>Recording Reminder:</strong> If you used Live Prompter during an actual interview, 
+            make sure you had consent from all parties. Recording without consent may be illegal in your state.
+          </p>
+        </div>
+      </div>
+    </div>
+    
     <div className="flex items-center justify-between mb-6">
       <h3 className="text-3xl font-bold">Your Performance</h3>
       
@@ -3229,6 +3292,24 @@ onClick={async () => {
 
  {feedback && (
   <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-2xl p-8">
+    {/* AI DISCLAIMER - Legal Protection */}
+    <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-4 mb-6">
+      <div className="flex items-start gap-3">
+        <span className="text-2xl flex-shrink-0">🤖</span>
+        <div>
+          <p className="font-bold text-yellow-900 mb-1">AI-Generated Feedback</p>
+          <p className="text-sm text-yellow-800 leading-relaxed">
+            This feedback is AI-generated and for practice purposes only. It is <strong>not professional career advice</strong>. 
+            AI may contain errors—use your judgment and consult a professional for important career decisions.
+          </p>
+          <p className="text-xs text-yellow-700 mt-2">
+            ⚠️ <strong>Recording Reminder:</strong> If you used Live Prompter during an actual interview, 
+            make sure you had consent from all parties. Recording without consent may be illegal in your state.
+          </p>
+        </div>
+      </div>
+    </div>
+    
     <div className="flex items-center justify-between mb-6">
       <h3 className="text-3xl font-bold">Your Performance</h3>
       
@@ -5221,7 +5302,282 @@ onClick={async () => {
       </>
     );
   }
-  // PRIVACY POLICY
+  
+  // CONSENT DIALOG - Shows before first recording
+  if (showConsentDialog && !hasConsented) {
+    return (
+      <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999] p-4">
+        <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-auto shadow-2xl">
+          <div className="p-8">
+            <h2 className="text-3xl font-bold mb-4 text-gray-900">Recording Consent Required</h2>
+            
+            <p className="text-gray-700 mb-4 leading-relaxed">
+              Interview as a Second Language uses your device's microphone to record your practice interview responses.
+            </p>
+
+            <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 mb-4">
+              <p className="text-blue-900 mb-2">✓ Recordings are used only to provide feedback</p>
+              <p className="text-blue-900 mb-2">✓ You can delete your recordings at any time</p>
+              <p className="text-blue-900">✓ Your data is stored securely and encrypted</p>
+            </div>
+
+            <div className="bg-orange-50 border-2 border-orange-300 rounded-xl p-4 mb-4">
+              <p className="font-bold text-orange-900 mb-2">⚠️ IMPORTANT: Live Prompter Usage</p>
+              <p className="text-orange-800 text-sm leading-relaxed mb-2">
+                If you use the Live Prompter during actual interviews with other people, 
+                <strong> YOU are responsible for obtaining consent from all parties being recorded.</strong>
+              </p>
+              <p className="text-orange-800 text-sm leading-relaxed">
+                Many states (including California) require ALL parties to consent before recording. 
+                Recording without consent may be illegal.
+              </p>
+            </div>
+
+            <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-3 mb-6">
+              <p className="text-sm text-yellow-800">
+                <strong>Two-Party Consent States:</strong> California, Connecticut, Florida, Illinois, 
+                Maryland, Massachusetts, Michigan, Montana, Nevada, New Hampshire, Pennsylvania, Washington
+              </p>
+            </div>
+
+            <p className="text-sm text-gray-600 mb-6">
+              By clicking "I Agree," you consent to recording and our use of your data as described in our{' '}
+              <button onClick={() => {setShowConsentDialog(false); setCurrentView('privacy');}} className="text-indigo-600 underline">
+                Privacy Policy
+              </button>
+              {' '}and{' '}
+              <button onClick={() => {setShowConsentDialog(false); setCurrentView('terms');}} className="text-indigo-600 underline">
+                Terms of Service
+              </button>.
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowConsentDialog(false);
+                }}
+                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-4 px-6 rounded-xl transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  localStorage.setItem('isl_recording_consent', 'true');
+                  setHasConsented(true);
+                  setShowConsentDialog(false);
+                }}
+                className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-4 px-6 rounded-xl transition"
+              >
+                I Agree
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // LIVE PROMPTER WARNING - Shows before starting prompter mode
+  if (showLivePrompterWarning) {
+    return (
+      <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-4">
+        <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-auto shadow-2xl">
+          <div className="p-8">
+            <div className="text-center mb-6">
+              <span className="text-6xl">⚠️</span>
+            </div>
+            
+            <h2 className="text-3xl font-bold text-center mb-4 text-red-600">
+              Live Prompter - Legal Warning
+            </h2>
+            
+            <p className="text-gray-700 mb-4 text-center leading-relaxed">
+              You are about to use Live Prompter, which can record and assist during real interviews.
+            </p>
+
+            <div className="bg-red-50 border-2 border-red-300 rounded-xl p-5 mb-4">
+              <p className="font-bold text-red-900 mb-3">YOU MUST:</p>
+              <ul className="space-y-2">
+                <li className="text-red-800 text-sm flex gap-2">
+                  <span className="flex-shrink-0">•</span>
+                  <span><strong>Obtain explicit consent</strong> from the interviewer before recording</span>
+                </li>
+                <li className="text-red-800 text-sm flex gap-2">
+                  <span className="flex-shrink-0">•</span>
+                  <span><strong>Inform them</strong> you are using interview assistance technology</span>
+                </li>
+                <li className="text-red-800 text-sm flex gap-2">
+                  <span className="flex-shrink-0">•</span>
+                  <span><strong>Comply with state laws</strong> requiring all-party consent</span>
+                </li>
+                <li className="text-red-800 text-sm flex gap-2">
+                  <span className="flex-shrink-0">•</span>
+                  <span><strong>Confirm it's permitted</strong> by the employer's interview policies</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-5 mb-4">
+              <p className="font-bold text-yellow-900 mb-2">Legal Consequences:</p>
+              <p className="text-yellow-800 text-sm mb-2">
+                Recording someone without their consent is <strong>illegal</strong> in many states, 
+                including California. You could face:
+              </p>
+              <ul className="space-y-1 text-sm text-yellow-800">
+                <li>• Criminal charges</li>
+                <li>• Civil lawsuits and damages</li>
+                <li>• Disqualification from job consideration</li>
+              </ul>
+            </div>
+
+            <div className="bg-gray-100 rounded-xl p-4 mb-6">
+              <p className="text-sm text-gray-700">
+                <strong>Ethical Note:</strong> Using undisclosed interview assistance may be considered 
+                dishonest by employers and could damage your professional reputation.
+              </p>
+            </div>
+
+            <div className="bg-green-50 rounded-xl p-4 mb-6 text-center">
+              <p className="text-sm text-green-800">
+                <strong>Recommended:</strong> Use Live Prompter only for practice sessions, not actual interviews.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowLivePrompterWarning(false);
+                }}
+                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-4 px-6 rounded-xl transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setShowLivePrompterWarning(false);
+                  // Continue with prompter mode
+                  accumulatedTranscript.current = '';
+                  if (questions.length === 0) {
+                    alert('Add questions first!');
+                    return;
+                  }
+                  setCurrentMode('prompter');
+                  setCurrentView('prompter');
+                  setMatchedQuestion(null);
+                  setTranscript('');
+                }}
+                className="flex-2 bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-6 rounded-xl transition text-sm"
+              >
+                I Understand & Accept Responsibility
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // SETTINGS PAGE
+  if (currentView === 'settings') {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="bg-white shadow-sm border-b">
+          <div className="container mx-auto px-4 py-4">
+            <button onClick={() => setCurrentView('home')} className="text-gray-600 hover:text-gray-900">
+              ← Back to Home
+            </button>
+          </div>
+        </div>
+        <div className="max-w-3xl mx-auto px-4 py-12">
+          <h1 className="text-3xl font-bold mb-8">Settings</h1>
+
+          {/* App Information */}
+          <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800">App Information</h2>
+            <div className="flex justify-between items-center py-2">
+              <span className="text-gray-600">Version</span>
+              <span className="font-medium text-gray-900">1.0.0</span>
+            </div>
+          </div>
+
+          {/* Legal */}
+          <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800">Legal</h2>
+            
+            <button
+              onClick={() => setCurrentView('privacy')}
+              className="w-full flex justify-between items-center py-3 px-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition mb-3"
+            >
+              <span className="font-medium text-gray-700">Privacy Policy</span>
+              <ChevronRight className="w-5 h-5 text-gray-400" />
+            </button>
+            
+            <button
+              onClick={() => setCurrentView('terms')}
+              className="w-full flex justify-between items-center py-3 px-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition"
+            >
+              <span className="font-medium text-gray-700">Terms of Service</span>
+              <ChevronRight className="w-5 h-5 text-gray-400" />
+            </button>
+          </div>
+
+          {/* Data Management */}
+          <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800">Data Management</h2>
+            
+            <button
+              onClick={async () => {
+                if (window.confirm('Are you sure you want to delete ALL your data? This includes:\\n\\n• All practice sessions\\n• All questions\\n• All progress\\n• All settings\\n\\nThis action CANNOT be undone.')) {
+                  try {
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (user) {
+                      // Delete from Supabase
+                      await supabase.from('practice_sessions').delete().eq('user_id', user.id);
+                      await supabase.from('question_banks').delete().eq('user_id', user.id);
+                      await supabase.from('usage_tracking').delete().eq('user_id', user.id);
+                    }
+                    // Clear localStorage except API key
+                    const keysToKeep = ['isl_api_key'];
+                    const allKeys = Object.keys(localStorage);
+                    allKeys.forEach(key => {
+                      if (!keysToKeep.includes(key)) {
+                        localStorage.removeItem(key);
+                      }
+                    });
+                    alert('✅ All data deleted successfully');
+                    window.location.reload();
+                  } catch (error) {
+                    console.error('Error deleting data:', error);
+                    alert('❌ Error deleting data. Please try again.');
+                  }
+                }
+              }}
+              className="w-full bg-red-50 hover:bg-red-100 border-2 border-red-300 text-red-700 font-semibold py-3 px-4 rounded-lg transition"
+            >
+              🗑️ Delete All My Data
+            </button>
+            
+            <p className="text-sm text-gray-500 mt-3">
+              This will permanently delete all your recordings, practice history, and progress. Your API key will be preserved.
+            </p>
+          </div>
+
+          {/* Support */}
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800">Support</h2>
+            <p className="text-gray-600 mb-2">Questions or feedback?</p>
+            <a 
+              href="mailto:support@islapp.com" 
+              className="text-indigo-600 hover:text-indigo-700 font-medium"
+            >
+              support@islapp.com
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+    // PRIVACY POLICY
   if (currentView === 'privacy') {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -5235,7 +5591,7 @@ onClick={async () => {
         <div className="max-w-3xl mx-auto px-4 py-12">
           <h1 className="text-3xl font-bold mb-8">Privacy Policy</h1>
           <div className="prose prose-gray max-w-none">
-            <p className="text-sm text-gray-600 mb-6">Last updated: December 30, 2024</p>
+            <p className="text-sm text-gray-600 mb-6">Last updated: January 11, 2026</p>
             
             <h2 className="text-2xl font-semibold mt-8 mb-4">What We Collect</h2>
             <p className="mb-4">We collect your email address to create your account. When you practice interviews, we store your responses to provide AI feedback and track improvement.</p>
@@ -5278,7 +5634,7 @@ onClick={async () => {
         <div className="max-w-3xl mx-auto px-4 py-12">
           <h1 className="text-3xl font-bold mb-8">Terms of Service</h1>
           <div className="prose prose-gray max-w-none">
-            <p className="text-sm text-gray-600 mb-6">Last updated: December 30, 2024</p>
+            <p className="text-sm text-gray-600 mb-6">Last updated: January 11, 2026</p>
             
             <h2 className="text-2xl font-semibold mt-8 mb-4">Acceptance</h2>
             <p className="mb-4">By using ISL, you agree to these terms.</p>
