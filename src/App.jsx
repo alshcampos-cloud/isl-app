@@ -154,6 +154,12 @@ const ISL = () => {
   const [showAnswerAssistant, setShowAnswerAssistant] = useState(false);
   const [answerAssistantQuestion, setAnswerAssistantQuestion] = useState(null);
   
+  // Legal Protection States
+  const [showConsentDialog, setShowConsentDialog] = useState(false);
+  const [hasConsented, setHasConsented] = useState(false);
+  const [showLivePrompterWarning, setShowLivePrompterWarning] = useState(false);
+  const [pendingMode, setPendingMode] = useState(null);
+  
   // Usage tracking
   const [usageThisMonth, setUsageThisMonth] = useState(0);
   const [usageLimit, setUsageLimit] = useState(5);
@@ -210,6 +216,17 @@ const ISL = () => {
         systemAudioStream.getTracks().forEach(t => t.stop());
       }
     };
+  }, []);
+
+  // Check if user has already consented
+  useEffect(() => {
+    const consent = localStorage.getItem('isl_recording_consent');
+    if (consent === 'true') {
+      setHasConsented(true);
+      console.log('✅ User has already consented');
+    } else {
+      console.log('⚠️ User needs to consent');
+    }
   }, []);
 
   // CLEANUP 2: Stop mic when leaving mic-using modes
@@ -1690,16 +1707,63 @@ useEffect(() => {
   };
 
   // MODE STARTERS
-  const startPrompterMode = () => { accumulatedTranscript.current = ''; if (questions.length === 0) { alert('Add questions first!'); return; } setCurrentMode('prompter'); setCurrentView('prompter'); setMatchedQuestion(null); setTranscript(''); };
- const startAIInterviewer = async () => { 
+  const startPrompterMode = () => { 
+    console.log('🎬 startPrompterMode called');
+    
+    if (questions.length === 0) { 
+      alert('Add questions first!'); 
+      return; 
+    }
+    
+    if (!hasConsented) {
+      console.log('⚠️ No consent - showing dialog');
+      setPendingMode('prompter');
+      setShowConsentDialog(true);
+      return;
+    }
+    
+    console.log('✅ Has consent - showing Live Prompter warning');
+    setPendingMode('prompter');
+    setShowLivePrompterWarning(true);
+  };
+  
+  const actuallyStartPrompter = () => {
+    console.log('🚀 Actually starting prompter mode');
     accumulatedTranscript.current = ''; 
-    if (questions.length === 0) { alert('Add questions first!'); return; } 
+    setCurrentMode('prompter'); 
+    setCurrentView('prompter'); 
+    setMatchedQuestion(null); 
+    setTranscript('');
+    setPendingMode(null);
+    setShowLivePrompterWarning(false);
+  };
+ const startAIInterviewer = async () => { 
+    console.log('🎬 startAIInterviewer called');
+    
+    if (questions.length === 0) { 
+      alert('Add questions first!'); 
+      return; 
+    }
+    
+    if (!hasConsented) {
+      console.log('⚠️ No consent - showing dialog');
+      setPendingMode('ai-interviewer');
+      setShowConsentDialog(true);
+      return;
+    }
+    
+    console.log('✅ Has consent - starting AI Interviewer');
+    await actuallyStartAIInterviewer();
+  };
+  
+  const actuallyStartAIInterviewer = async () => {
+    console.log('🚀 Actually starting AI Interviewer');
+    accumulatedTranscript.current = ''; 
 
     const usageCheck = await checkAndIncrementUsage();
     if (!usageCheck.allowed) {
       const limit = usageCheck.tier === 'free' ? '25' : '100';
       alert(`⚠️ Monthly Limit Reached\n\nYou've used all ${limit} sessions this month.\n\nUpgrade to Pro for 100 sessions/month!`);
-
       return;
     }
 
@@ -1707,7 +1771,6 @@ useEffect(() => {
     setCurrentQuestion(randomQ); 
     setCurrentMode('ai-interviewer'); 
     setCurrentView('ai-interviewer'); 
-    // Scroll to top when entering AI Interviewer
     window.scrollTo({ top: 0, behavior: 'smooth' });
     setUserAnswer(''); 
     setSpokenAnswer(''); 
@@ -1715,17 +1778,36 @@ useEffect(() => {
     setConversationHistory([]);
 setFollowUpQuestion(null);
 setExchangeCount(0);
-    setTimeout(() => { speakText(randomQ.question); }, 500); 
+    setTimeout(() => { speakText(randomQ.question); }, 500);
+    setPendingMode(null);
   };
 const startPracticeMode = async () => { 
+    console.log('🎬 startPracticeMode called');
+    
+    if (questions.length === 0) { 
+      alert('Add questions first!'); 
+      return; 
+    }
+    
+    if (!hasConsented) {
+      console.log('⚠️ No consent - showing dialog');
+      setPendingMode('practice');
+      setShowConsentDialog(true);
+      return;
+    }
+    
+    console.log('✅ Has consent - starting Practice');
+    await actuallyStartPractice();
+  };
+  
+  const actuallyStartPractice = async () => {
+    console.log('🚀 Actually starting Practice mode');
     accumulatedTranscript.current = ''; 
-    if (questions.length === 0) { alert('Add questions first!'); return; }
 
     const usageCheck = await checkAndIncrementUsage();
     if (!usageCheck.allowed) {
       const limit = usageCheck.tier === 'free' ? '25' : '100';
       alert(`⚠️ Monthly Limit Reached\n\nYou've used all ${limit} sessions this month.\n\nUpgrade to Pro for 100 sessions/month!`);
-
       return;
     }
 
@@ -1733,11 +1815,11 @@ const startPracticeMode = async () => {
     setCurrentQuestion(randomQ); 
     setCurrentMode('practice'); 
     setCurrentView('practice'); 
-    // Scroll to top when entering Practice mode
     window.scrollTo({ top: 0, behavior: 'smooth' });
     setUserAnswer(''); 
     setSpokenAnswer(''); 
-    setFeedback(null); 
+    setFeedback(null);
+    setPendingMode(null);
   };
 
   // Navigation functions for prev/next question
@@ -1779,7 +1861,149 @@ const startPracticeMode = async () => {
   // RENDERS START HERE
   // ==========================================
 
+  // OVERLAY DIALOGS - Render BEFORE view checks so they always work
+  return (
+    <>
+      {/* CONSENT DIALOG - First-time recording consent */}
+      {showConsentDialog && !hasConsented && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999] p-4">
+          <div className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-auto shadow-2xl">
+            <div className="p-6">
+              <h2 className="text-xl font-bold mb-3 text-gray-900">Recording Consent Required</h2>
+              
+              <p className="text-gray-700 mb-3 text-sm">
+                ISL uses your microphone to record practice responses for AI feedback.
+              </p>
 
+              <div className="bg-blue-50 border-l-4 border-blue-400 rounded p-3 mb-3 text-xs">
+                <p className="text-blue-900 mb-1">✓ Recordings for feedback only</p>
+                <p className="text-blue-900 mb-1">✓ Delete anytime in Settings</p>
+                <p className="text-blue-900">✓ Data stored securely</p>
+              </div>
+
+              <div className="bg-orange-50 border-l-4 border-orange-400 rounded p-3 mb-3">
+                <p className="font-bold text-orange-900 text-sm mb-1">⚠️ Live Prompter Use</p>
+                <p className="text-orange-800 text-xs">
+                  If using during actual interviews, <strong>YOU must obtain consent from all parties</strong>. 
+                  Recording without consent may be illegal.
+                </p>
+              </div>
+
+              <p className="text-xs text-gray-600 mb-4">
+                By clicking "I Agree," you consent to our{' '}
+                <button onClick={() => {setShowConsentDialog(false); setCurrentView('privacy');}} className="text-indigo-600 underline">
+                  Privacy Policy
+                </button>
+                {' '}and{' '}
+                <button onClick={() => {setShowConsentDialog(false); setCurrentView('terms');}} className="text-indigo-600 underline">
+                  Terms
+                </button>.
+              </p>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    console.log('❌ Consent canceled');
+                    setShowConsentDialog(false);
+                    setPendingMode(null);
+                  }}
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    console.log('✅ User agreed to consent');
+                    localStorage.setItem('isl_recording_consent', 'true');
+                    setHasConsented(true);
+                    setShowConsentDialog(false);
+                    if (pendingMode === 'prompter') {
+                      setShowLivePrompterWarning(true);
+                    } else if (pendingMode === 'ai-interviewer') {
+                      actuallyStartAIInterviewer();
+                    } else if (pendingMode === 'practice') {
+                      actuallyStartPractice();
+                    }
+                  }}
+                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg text-sm"
+                >
+                  I Agree
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* LIVE PROMPTER WARNING - Shows before activating prompter */}
+      {showLivePrompterWarning && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-4">
+          <div className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-auto shadow-2xl">
+            <div className="p-6">
+              <div className="text-center mb-3">
+                <span className="text-5xl">⚠️</span>
+              </div>
+              
+              <h2 className="text-xl font-bold text-center mb-3 text-red-600">
+                Live Prompter - Legal Warning
+              </h2>
+              
+              <p className="text-gray-700 mb-3 text-sm text-center">
+                You're about to use Live Prompter during real interviews.
+              </p>
+
+              <div className="bg-red-50 border-l-4 border-red-400 rounded p-3 mb-3">
+                <p className="font-bold text-red-900 text-sm mb-2">YOU MUST:</p>
+                <ul className="space-y-1 text-xs text-red-800">
+                  <li>• <strong>Obtain consent</strong> from interviewer before recording</li>
+                  <li>• <strong>Inform them</strong> you're using assistance technology</li>
+                  <li>• <strong>Comply with laws</strong> requiring all-party consent</li>
+                </ul>
+              </div>
+
+              <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded p-3 mb-3">
+                <p className="font-bold text-yellow-900 text-xs mb-1">Legal Consequences:</p>
+                <p className="text-yellow-800 text-xs">
+                  Recording without consent is <strong>illegal</strong> in CA, FL, IL, MA, PA, WA, etc. 
+                  You could face criminal charges or job disqualification.
+                </p>
+              </div>
+
+              <div className="bg-green-50 rounded p-3 mb-4 text-center">
+                <p className="text-xs text-green-800">
+                  <strong>Recommended:</strong> Use for practice only, not actual interviews.
+                </p>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    console.log('❌ Live Prompter warning canceled');
+                    setShowLivePrompterWarning(false);
+                    setPendingMode(null);
+                  }}
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    console.log('✅ User accepted Live Prompter warning');
+                    setShowLivePrompterWarning(false);
+                    actuallyStartPrompter();
+                  }}
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg text-xs"
+                >
+                  I Understand & Accept Responsibility
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* NOW RENDER THE ACTUAL VIEW CONTENT */}
+      {(() => {
 
 // HOME
   if (currentView === 'home') {
@@ -1812,6 +2036,18 @@ const startPracticeMode = async () => {
                     </p>
                     <p className="text-sm opacity-70">{currentUser?.email}</p>
                   </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      console.log('Settings clicked');
+                      setShowProfileDropdown(false);
+                      setCurrentView('settings');
+                    }}
+                    className="w-full px-4 py-3 text-left hover:bg-gray-50 transition flex items-center gap-3 text-gray-700 border-b border-gray-100"
+                  >
+                    <Settings className="w-5 h-5 text-indigo-600" />
+                    <span className="font-semibold">Settings</span>
+                  </button>
                   <button
                     onClick={async (e) => {
                       e.stopPropagation();
@@ -2633,6 +2869,13 @@ onClick={async () => {
 
  {feedback && (
   <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-2xl p-8">
+    {/* AI DISCLAIMER */}
+    <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded p-3 mb-4">
+      <p className="text-xs text-yellow-900">
+        <span className="font-semibold">🤖 AI-Generated:</span> For practice only. Not professional advice.
+      </p>
+    </div>
+    
     <div className="flex items-center justify-between mb-6">
       <h3 className="text-3xl font-bold">Your Performance</h3>
       
@@ -3229,6 +3472,13 @@ onClick={async () => {
 
  {feedback && (
   <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-2xl p-8">
+    {/* AI DISCLAIMER */}
+    <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded p-3 mb-4">
+      <p className="text-xs text-yellow-900">
+        <span className="font-semibold">🤖 AI-Generated:</span> For practice only. Not professional advice.
+      </p>
+    </div>
+    
     <div className="flex items-center justify-between mb-6">
       <h3 className="text-3xl font-bold">Your Performance</h3>
       
@@ -5221,6 +5471,105 @@ onClick={async () => {
       </>
     );
   }
+  // SETTINGS
+  if (currentView === 'settings') {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="bg-white shadow-sm border-b">
+          <div className="container mx-auto px-4 py-4">
+            <button onClick={() => setCurrentView('home')} className="text-gray-600 hover:text-gray-900 text-sm">
+              ← Back to Home
+            </button>
+          </div>
+        </div>
+        <div className="max-w-2xl mx-auto px-4 py-8">
+          <h1 className="text-2xl font-bold mb-6">Settings</h1>
+
+          <div className="bg-white rounded-xl shadow-sm p-5 mb-4">
+            <h2 className="text-lg font-semibold mb-3 text-gray-800">App Information</h2>
+            <div className="flex justify-between py-2">
+              <span className="text-gray-600 text-sm">Version</span>
+              <span className="font-medium text-gray-900 text-sm">1.0.0</span>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm p-5 mb-4">
+            <h2 className="text-lg font-semibold mb-3 text-gray-800">Legal</h2>
+            
+            <button
+              onClick={() => setCurrentView('privacy')}
+              className="w-full flex justify-between items-center py-3 px-3 bg-gray-50 hover:bg-gray-100 rounded-lg mb-2 text-sm"
+            >
+              <span className="font-medium text-gray-700">Privacy Policy</span>
+              <ChevronRight className="w-4 h-4 text-gray-400" />
+            </button>
+            
+            <button
+              onClick={() => setCurrentView('terms')}
+              className="w-full flex justify-between items-center py-3 px-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm"
+            >
+              <span className="font-medium text-gray-700">Terms of Service</span>
+              <ChevronRight className="w-4 h-4 text-gray-400" />
+            </button>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm p-5 mb-4">
+            <h2 className="text-lg font-semibold mb-3 text-gray-800">Data Management</h2>
+            
+            <button
+              onClick={async () => {
+                if (window.confirm('⚠️ DELETE ALL DATA?\n\nThis will PERMANENTLY delete:\n• All practice sessions\n• All questions\n• All progress\n\nThis CANNOT be undone.\n\nClick OK to continue.')) {
+                  if (window.confirm('🛑 FINAL CONFIRMATION\n\nYou are about to DELETE EVERYTHING.\n\nThis is PERMANENT.\n\nClick OK to DELETE ALL DATA NOW.')) {
+                    try {
+                      const { data: { user } } = await supabase.auth.getUser();
+                      if (user) {
+                        await supabase.from('practice_sessions').delete().eq('user_id', user.id);
+                        await supabase.from('question_banks').delete().eq('user_id', user.id);
+                        await supabase.from('usage_tracking').delete().eq('user_id', user.id);
+                      }
+                      const keysToKeep = ['isl_api_key'];
+                      Object.keys(localStorage).forEach(key => {
+                        if (!keysToKeep.includes(key)) {
+                          localStorage.removeItem(key);
+                        }
+                      });
+                      alert('✅ All data deleted');
+                      window.location.reload();
+                    } catch (error) {
+                      console.error('Delete error:', error);
+                      alert('❌ Error deleting data');
+                    }
+                  }
+                }
+              }}
+              className="w-full bg-red-50 hover:bg-red-100 border-2 border-red-400 text-red-700 font-bold py-3 px-4 rounded-lg text-sm"
+            >
+              🗑️ Delete All My Data
+            </button>
+            
+            <p className="text-xs text-gray-500 mt-2">
+              Permanently deletes everything. <strong>Cannot be undone.</strong>
+            </p>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm p-5">
+            <h2 className="text-lg font-semibold mb-3 text-gray-800">Support</h2>
+            <p className="text-gray-600 mb-2 text-sm">Questions or feedback?</p>
+            <a 
+              href="mailto:YOUR_EMAIL@example.com" 
+              className="text-indigo-600 hover:text-indigo-700 font-medium text-sm"
+            >
+              YOUR_EMAIL@example.com
+            </a>
+            <p className="text-xs text-orange-600 mt-2 font-medium">
+              ⚠️ Replace with your actual email
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // PRIVACY POLICY
   if (currentView === 'privacy') {
     return (
@@ -5307,6 +5656,10 @@ onClick={async () => {
       </div>
     );
   }
+  
+  })()} {/* Close IIFE that wraps all views */}
+    </>
+  ); {/* Close fragment that contains dialogs + views */}
 }; // Close ISL component
 
 // Wrap ISL with ProtectedRoute before exporting
