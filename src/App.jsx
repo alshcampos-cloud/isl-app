@@ -5584,29 +5584,125 @@ onClick={async () => {
         <div className="max-w-3xl mx-auto px-4 py-12">
           <h1 className="text-3xl font-bold mb-8">Privacy Policy</h1>
           <div className="prose prose-gray max-w-none">
-            <p className="text-sm text-gray-600 mb-6">Last updated: December 30, 2024</p>
+            <p className="text-sm text-gray-600 mb-6">Last updated: January 12, 2026</p>
             
-            <h2 className="text-2xl font-semibold mt-8 mb-4">What We Collect</h2>
-            <p className="mb-4">We collect your email address to create your account. When you practice interviews, we store your responses to provide AI feedback and track improvement.</p>
+            <p className="mb-6 text-gray-700 leading-relaxed">
+              Interview as a Second Language ("ISL") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and protect your personal information.
+            </p>
             
-            <h2 className="text-2xl font-semibold mt-8 mb-4">How We Use Your Data</h2>
-            <ul className="list-disc pl-6 mb-4 space-y-2">
-              <li>Authenticate your account and sync progress</li>
-              <li>Provide interview feedback and track improvement</li>
-              <li>Send occasional product updates (you can opt out)</li>
+            <h2 className="text-2xl font-semibold mt-8 mb-4">Information We Collect</h2>
+            <p className="mb-4 text-gray-700">We collect the following information:</p>
+            <ul className="list-disc pl-6 mb-6 space-y-2 text-gray-700">
+              <li>Email address for account creation and authentication</li>
+              <li>Audio recordings of your practice interview responses</li>
+              <li>Text transcriptions generated from your audio responses</li>
+              <li>Practice session history, scores, and progress metrics</li>
+              <li>Question banks and custom questions you create</li>
+              <li>Usage data and analytics to improve our services</li>
             </ul>
             
-            <h2 className="text-2xl font-semibold mt-8 mb-4">Data Storage</h2>
-            <p className="mb-4">We use Supabase to securely store your data. All data is encrypted in transit and at rest.</p>
+            <h2 className="text-2xl font-semibold mt-8 mb-4">How We Use Your Information</h2>
+            <ul className="list-disc pl-6 mb-6 space-y-2 text-gray-700">
+              <li>Authenticate your account and enable access across devices</li>
+              <li>Generate AI-powered feedback on your interview responses</li>
+              <li>Track your progress and improvement over time</li>
+              <li>Improve our AI models and service features</li>
+              <li>Send service-related communications and product updates</li>
+              <li>Provide customer support when requested</li>
+            </ul>
             
-            <h2 className="text-2xl font-semibold mt-8 mb-4">Your Rights</h2>
-            <p className="mb-4">You can delete your account and all data anytime from Settings.</p>
+            <h2 className="text-2xl font-semibold mt-8 mb-4">Data Storage and Security</h2>
+            <p className="mb-4 text-gray-700">
+              We use Supabase as our database provider to store your account information and practice data. 
+              Audio recordings are stored locally on your device. All data transmitted between your device 
+              and our servers is encrypted using industry-standard HTTPS/TLS protocols. Data at rest is 
+              encrypted using AES-256 encryption.
+            </p>
             
-            <h2 className="text-2xl font-semibold mt-8 mb-4">Microphone Access</h2>
-            <p className="mb-4">We request microphone access for interview practice. You control when recording happens. Audio is processed for feedback only.</p>
+            <h2 className="text-2xl font-semibold mt-8 mb-4">Third-Party Services</h2>
+            <p className="mb-4 text-gray-700">We use the following third-party services:</p>
+            <ul className="list-disc pl-6 mb-6 space-y-2 text-gray-700">
+              <li><strong>Supabase:</strong> Database and authentication services</li>
+              <li><strong>OpenAI:</strong> AI-powered feedback generation</li>
+              <li><strong>Web Speech API:</strong> Browser-based speech recognition (no data sent to external servers)</li>
+            </ul>
+            <p className="mb-6 text-gray-700">
+              We do not sell, rent, or share your personal information with third parties for their marketing purposes.
+            </p>
             
-            <h2 className="text-2xl font-semibold mt-8 mb-4">Contact</h2>
-            <p className="mb-4">Questions? Email: privacy@islapp.com</p>
+            <h2 className="text-2xl font-semibold mt-8 mb-4">Microphone Access and Recording</h2>
+            <p className="mb-4 text-gray-700">
+              ISL requests microphone access to record your practice interview responses. You have complete 
+              control over when recording occurs. Audio is used solely to generate transcriptions and provide 
+              feedback. We do not monitor, listen to, or store your recordings on external servers without 
+              your explicit consent.
+            </p>
+            
+            <h3 className="text-xl font-semibold mt-6 mb-3">Recording Consent and Legal Compliance</h3>
+            <p className="mb-4 text-gray-700">
+              <strong>Important:</strong> If you use ISL's Live Prompter feature during actual interviews with other people, 
+              you are solely responsible for obtaining consent from all parties being recorded and complying with 
+              applicable recording laws. Many jurisdictions require all-party consent before recording conversations.
+            </p>
+            <p className="mb-4 text-gray-700">
+              States requiring all-party consent include: California, Connecticut, Florida, Illinois, Maryland, 
+              Massachusetts, Michigan, Montana, Nevada, New Hampshire, Pennsylvania, and Washington. This list 
+              is not exhaustive. You should consult local laws and obtain appropriate consent before recording 
+              any conversation.
+            </p>
+            
+            <h2 className="text-2xl font-semibold mt-8 mb-4">Your Rights and Data Control</h2>
+            <p className="mb-4 text-gray-700">You have the following rights regarding your data:</p>
+            <ul className="list-disc pl-6 mb-6 space-y-2 text-gray-700">
+              <li><strong>Access:</strong> You can view all your data within the app</li>
+              <li><strong>Deletion:</strong> You can delete all your data at any time from Settings</li>
+              <li><strong>Export:</strong> You can request a copy of your data by contacting us</li>
+              <li><strong>Correction:</strong> You can update or correct your information within the app</li>
+              <li><strong>Opt-out:</strong> You can opt-out of non-essential communications</li>
+            </ul>
+            
+            <h2 className="text-2xl font-semibold mt-8 mb-4">California Privacy Rights (CCPA)</h2>
+            <p className="mb-4 text-gray-700">
+              If you are a California resident, you have additional rights under the California Consumer Privacy Act:
+            </p>
+            <ul className="list-disc pl-6 mb-6 space-y-2 text-gray-700">
+              <li>Right to know what personal information we collect and how we use it</li>
+              <li>Right to delete your personal information</li>
+              <li>Right to opt-out of the sale of personal information (we do not sell your data)</li>
+              <li>Right to non-discrimination for exercising your privacy rights</li>
+            </ul>
+            <p className="mb-6 text-gray-700">
+              To exercise these rights, use the Delete Data function in Settings or contact us at YOUR_EMAIL@example.com
+            </p>
+            
+            <h2 className="text-2xl font-semibold mt-8 mb-4">Data Retention</h2>
+            <p className="mb-6 text-gray-700">
+              We retain your personal information for as long as your account is active or as needed to provide 
+              services. You may delete your account and all associated data at any time from the Settings page. 
+              After deletion, your data will be permanently removed from our systems within 30 days, except where 
+              we are required to retain it for legal compliance.
+            </p>
+            
+            <h2 className="text-2xl font-semibold mt-8 mb-4">Children's Privacy</h2>
+            <p className="mb-6 text-gray-700">
+              ISL is not intended for children under the age of 13. We do not knowingly collect personal 
+              information from children under 13. If you believe we have collected information from a child 
+              under 13, please contact us immediately and we will delete such information.
+            </p>
+            
+            <h2 className="text-2xl font-semibold mt-8 mb-4">Changes to This Policy</h2>
+            <p className="mb-6 text-gray-700">
+              We may update this Privacy Policy from time to time. We will notify you of any material changes 
+              by posting the new Privacy Policy on this page and updating the "Last updated" date. Your continued 
+              use of ISL after such changes constitutes acceptance of the updated policy.
+            </p>
+            
+            <h2 className="text-2xl font-semibold mt-8 mb-4">Contact Us</h2>
+            <p className="mb-4 text-gray-700">
+              If you have questions about this Privacy Policy or wish to exercise your privacy rights, please contact us:
+            </p>
+            <p className="mb-2 text-gray-700">Email: YOUR_EMAIL@example.com</p>
+            <p className="text-sm text-gray-500 italic">Please replace with your actual email address</p>
           </div>
         </div>
       </div>
@@ -5627,30 +5723,159 @@ onClick={async () => {
         <div className="max-w-3xl mx-auto px-4 py-12">
           <h1 className="text-3xl font-bold mb-8">Terms of Service</h1>
           <div className="prose prose-gray max-w-none">
-            <p className="text-sm text-gray-600 mb-6">Last updated: December 30, 2024</p>
+            <p className="text-sm text-gray-600 mb-6">Last updated: January 12, 2026</p>
             
-            <h2 className="text-2xl font-semibold mt-8 mb-4">Acceptance</h2>
-            <p className="mb-4">By using ISL, you agree to these terms.</p>
+            <h2 className="text-2xl font-semibold mt-8 mb-4">1. Acceptance of Terms</h2>
+            <p className="mb-6 text-gray-700">
+              By accessing or using Interview as a Second Language ("ISL"), you agree to be bound by these Terms of Service 
+              and all applicable laws and regulations. If you do not agree with these terms, you may not use ISL.
+            </p>
             
-            <h2 className="text-2xl font-semibold mt-8 mb-4">Use License</h2>
-            <p className="mb-4">We grant you a personal, non-transferable license to use ISL for interview practice.</p>
+            <h2 className="text-2xl font-semibold mt-8 mb-4">2. License to Use</h2>
+            <p className="mb-6 text-gray-700">
+              We grant you a limited, non-exclusive, non-transferable, revocable license to access and use ISL 
+              for personal interview practice and preparation. You may not use ISL for any commercial purpose 
+              without our prior written consent.
+            </p>
             
-            <h2 className="text-2xl font-semibold mt-8 mb-4">Acceptable Use</h2>
-            <p className="mb-4">You agree not to:</p>
-            <ul className="list-disc pl-6 mb-4 space-y-2">
-              <li>Upload illegal or harmful content</li>
-              <li>Attempt to bypass security measures</li>
-              <li>Harass other users or staff</li>
+            <h2 className="text-2xl font-semibold mt-8 mb-4">3. AI-Generated Content</h2>
+            <p className="mb-4 text-gray-700">
+              ISL uses artificial intelligence to generate interview feedback and suggestions. You acknowledge and agree that:
+            </p>
+            <ul className="list-disc pl-6 mb-6 space-y-2 text-gray-700">
+              <li>AI-generated feedback may contain errors, inaccuracies, or biases</li>
+              <li>Feedback is provided for educational and practice purposes only</li>
+              <li>AI feedback does not constitute professional career counseling or advice</li>
+              <li>You should exercise your own judgment and seek professional guidance for important career decisions</li>
+              <li>We make no guarantees regarding interview success, job offers, or career outcomes</li>
             </ul>
             
-            <h2 className="text-2xl font-semibold mt-8 mb-4">No Guarantees</h2>
-            <p className="mb-4">ISL provides practice tools and feedback. We do not guarantee interview success or job offers.</p>
+            <h2 className="text-2xl font-semibold mt-8 mb-4">4. Recording Consent and Legal Compliance</h2>
+            <p className="mb-4 text-gray-700 font-semibold">
+              User Responsibility for Recording Consent:
+            </p>
+            <p className="mb-4 text-gray-700">
+              If you use ISL's Live Prompter feature or any recording functionality during actual interviews 
+              or conversations with other people, you are solely responsible for:
+            </p>
+            <ul className="list-disc pl-6 mb-4 space-y-2 text-gray-700">
+              <li>Obtaining explicit consent from all parties before recording</li>
+              <li>Complying with all applicable federal, state, and local recording laws</li>
+              <li>Informing all parties that you are using assistance technology</li>
+              <li>Verifying that such use is permitted by the organization conducting the interview</li>
+            </ul>
+            <p className="mb-6 text-gray-700">
+              Many jurisdictions require all-party consent before recording conversations. States with all-party 
+              consent laws include California, Connecticut, Florida, Illinois, Maryland, Massachusetts, Michigan, 
+              Montana, Nevada, New Hampshire, Pennsylvania, and Washington. This list is not exhaustive. Recording 
+              without proper consent may result in criminal penalties, civil liability, and disqualification from 
+              employment consideration. You agree to indemnify and hold ISL harmless from any claims arising from 
+              your failure to obtain proper recording consent.
+            </p>
             
-            <h2 className="text-2xl font-semibold mt-8 mb-4">Termination</h2>
-            <p className="mb-4">We may suspend accounts that violate these terms. You may delete your account at any time.</p>
+            <h2 className="text-2xl font-semibold mt-8 mb-4">5. Acceptable Use Policy</h2>
+            <p className="mb-4 text-gray-700">You agree not to:</p>
+            <ul className="list-disc pl-6 mb-6 space-y-2 text-gray-700">
+              <li>Record conversations without obtaining legally required consent from all parties</li>
+              <li>Use ISL for any unlawful purpose or in violation of any applicable laws</li>
+              <li>Upload, transmit, or share illegal, harmful, threatening, or offensive content</li>
+              <li>Attempt to gain unauthorized access to ISL's systems or other users' accounts</li>
+              <li>Reverse engineer, decompile, or disassemble any part of ISL</li>
+              <li>Use automated systems to access or interact with ISL without authorization</li>
+              <li>Interfere with or disrupt the operation of ISL or its servers</li>
+              <li>Impersonate any person or entity or misrepresent your affiliation</li>
+            </ul>
             
-            <h2 className="text-2xl font-semibold mt-8 mb-4">Contact</h2>
-            <p className="mb-4">Support: support@islapp.com</p>
+            <h2 className="text-2xl font-semibold mt-8 mb-4">6. Limitation of Liability</h2>
+            <p className="mb-4 text-gray-700 font-semibold">
+              Maximum Liability Cap:
+            </p>
+            <p className="mb-6 text-gray-700">
+              To the maximum extent permitted by law, ISL's total liability for all claims related to the service 
+              shall not exceed the lesser of (a) the amount you paid to ISL in the twelve months preceding the 
+              claim, or (b) one hundred dollars ($100 USD).
+            </p>
+            <p className="mb-4 text-gray-700 font-semibold">
+              Exclusion of Damages:
+            </p>
+            <p className="mb-6 text-gray-700">
+              ISL shall not be liable for any indirect, incidental, special, consequential, or punitive damages, 
+              including but not limited to loss of profits, data, business opportunities, or goodwill, whether based 
+              on contract, tort, negligence, strict liability, or otherwise, arising from your use of ISL, reliance 
+              on AI-generated feedback, or violation of recording consent laws, even if ISL has been advised of the 
+              possibility of such damages.
+            </p>
+            
+            <h2 className="text-2xl font-semibold mt-8 mb-4">7. Disclaimer of Warranties</h2>
+            <p className="mb-6 text-gray-700">
+              ISL IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
+              INCLUDING BUT NOT LIMITED TO IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, 
+              OR NON-INFRINGEMENT. We do not warrant that ISL will be uninterrupted, secure, or error-free, that 
+              defects will be corrected, or that AI-generated feedback will be accurate, complete, or reliable.
+            </p>
+            
+            <h2 className="text-2xl font-semibold mt-8 mb-4">8. Indemnification</h2>
+            <p className="mb-6 text-gray-700">
+              You agree to indemnify, defend, and hold harmless ISL and its officers, directors, employees, and 
+              agents from and against any claims, liabilities, damages, losses, costs, or expenses (including 
+              reasonable attorneys' fees) arising from or related to: (a) your use of ISL; (b) your violation 
+              of these Terms; (c) your violation of any recording laws or failure to obtain proper consent; 
+              (d) your reliance on AI-generated feedback; or (e) your violation of any third-party rights.
+            </p>
+            
+            <h2 className="text-2xl font-semibold mt-8 mb-4">9. Account Termination</h2>
+            <p className="mb-6 text-gray-700">
+              We reserve the right to suspend or terminate your access to ISL at any time, with or without notice, 
+              for any reason, including but not limited to violation of these Terms, fraudulent conduct, or 
+              misuse of the service. You may terminate your account at any time by deleting your account 
+              through the Settings page. Upon termination, your right to use ISL will immediately cease.
+            </p>
+            
+            <h2 className="text-2xl font-semibold mt-8 mb-4">10. Dispute Resolution and Arbitration</h2>
+            <p className="mb-4 text-gray-700">
+              Any dispute, claim, or controversy arising out of or relating to these Terms or your use of ISL 
+              shall be resolved through binding arbitration administered by the American Arbitration Association 
+              under its Commercial Arbitration Rules. The arbitration shall take place in San Francisco, California, 
+              or another mutually agreed location.
+            </p>
+            <p className="mb-6 text-gray-700 font-semibold">
+              You waive your right to a jury trial and your right to participate in class action lawsuits or 
+              class-wide arbitrations.
+            </p>
+            
+            <h2 className="text-2xl font-semibold mt-8 mb-4">11. Modifications to Terms</h2>
+            <p className="mb-6 text-gray-700">
+              We reserve the right to modify these Terms at any time. We will notify you of material changes 
+              by posting the updated Terms on this page and updating the "Last updated" date. Your continued 
+              use of ISL after such changes constitutes your acceptance of the modified Terms.
+            </p>
+            
+            <h2 className="text-2xl font-semibold mt-8 mb-4">12. Governing Law</h2>
+            <p className="mb-6 text-gray-700">
+              These Terms shall be governed by and construed in accordance with the laws of the State of California, 
+              without regard to its conflict of law provisions.
+            </p>
+            
+            <h2 className="text-2xl font-semibold mt-8 mb-4">13. Severability</h2>
+            <p className="mb-6 text-gray-700">
+              If any provision of these Terms is found to be unenforceable or invalid, that provision shall be 
+              limited or eliminated to the minimum extent necessary, and the remaining provisions shall remain 
+              in full force and effect.
+            </p>
+            
+            <h2 className="text-2xl font-semibold mt-8 mb-4">14. Contact Information</h2>
+            <p className="mb-4 text-gray-700">
+              If you have questions about these Terms of Service, please contact us:
+            </p>
+            <p className="mb-2 text-gray-700">Email: YOUR_EMAIL@example.com</p>
+            <p className="text-sm text-gray-500 italic mb-6">Please replace with your actual email address</p>
+            
+            <hr className="my-8 border-gray-300" />
+            
+            <p className="text-sm text-gray-600 italic">
+              By using ISL, you acknowledge that you have read, understood, and agree to be bound by these 
+              Terms of Service. These Terms constitute a legal agreement between you and ISL.
+            </p>
           </div>
         </div>
       </div>
