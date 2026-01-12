@@ -154,12 +154,6 @@ const ISL = () => {
   const [showAnswerAssistant, setShowAnswerAssistant] = useState(false);
   const [answerAssistantQuestion, setAnswerAssistantQuestion] = useState(null);
   
-  // Legal Protection States
-  const [showConsentDialog, setShowConsentDialog] = useState(false);
-  const [hasConsented, setHasConsented] = useState(false);
-  const [showLivePrompterWarning, setShowLivePrompterWarning] = useState(false);
-  const [pendingMode, setPendingMode] = useState(null);
-  
   // Usage tracking
   const [usageThisMonth, setUsageThisMonth] = useState(0);
   const [usageLimit, setUsageLimit] = useState(5);
@@ -217,23 +211,6 @@ const ISL = () => {
       }
     };
   }, []);
-
-  // Check if user has already consented to recording
-  useEffect(() => {
-    const consent = localStorage.getItem('isl_recording_consent');
-    if (consent === 'true') {
-      setHasConsented(true);
-    }
-  }, []);
-  
-  // Clear dialog states when view changes (prevents dialogs showing at wrong times)
-  useEffect(() => {
-    if (currentView !== 'home') {
-      setShowConsentDialog(false);
-      setShowLivePrompterWarning(false);
-      setPendingMode(null);
-    }
-  }, [currentView]);
 
   // CLEANUP 2: Stop mic when leaving mic-using modes
   useEffect(() => {
@@ -1713,52 +1690,16 @@ useEffect(() => {
   };
 
   // MODE STARTERS
-  const startPrompterMode = () => { 
-    if (questions.length === 0) { 
-      alert('Add questions first!'); 
-      return; 
-    }
-    
-    if (!hasConsented) {
-      setPendingMode('prompter');
-      setShowConsentDialog(true);
-      return;
-    }
-    
-    setPendingMode('prompter');
-    setShowLivePrompterWarning(true);
-  };
-  
-  const actuallyStartPrompter = () => {
-    accumulatedTranscript.current = ''; 
-    setCurrentMode('prompter'); 
-    setCurrentView('prompter'); 
-    setMatchedQuestion(null); 
-    setTranscript('');
-    setPendingMode(null);
-  };
+  const startPrompterMode = () => { accumulatedTranscript.current = ''; if (questions.length === 0) { alert('Add questions first!'); return; } setCurrentMode('prompter'); setCurrentView('prompter'); setMatchedQuestion(null); setTranscript(''); };
  const startAIInterviewer = async () => { 
-    if (questions.length === 0) { 
-      alert('Add questions first!'); 
-      return; 
-    }
-    
-    if (!hasConsented) {
-      setPendingMode('ai-interviewer');
-      setShowConsentDialog(true);
-      return;
-    }
-    
-    await actuallyStartAIInterviewer();
-  };
-  
-  const actuallyStartAIInterviewer = async () => {
     accumulatedTranscript.current = ''; 
+    if (questions.length === 0) { alert('Add questions first!'); return; } 
 
     const usageCheck = await checkAndIncrementUsage();
     if (!usageCheck.allowed) {
       const limit = usageCheck.tier === 'free' ? '25' : '100';
       alert(`⚠️ Monthly Limit Reached\n\nYou've used all ${limit} sessions this month.\n\nUpgrade to Pro for 100 sessions/month!`);
+
       return;
     }
 
@@ -1766,6 +1707,7 @@ useEffect(() => {
     setCurrentQuestion(randomQ); 
     setCurrentMode('ai-interviewer'); 
     setCurrentView('ai-interviewer'); 
+    // Scroll to top when entering AI Interviewer
     window.scrollTo({ top: 0, behavior: 'smooth' });
     setUserAnswer(''); 
     setSpokenAnswer(''); 
@@ -1773,31 +1715,17 @@ useEffect(() => {
     setConversationHistory([]);
 setFollowUpQuestion(null);
 setExchangeCount(0);
-    setTimeout(() => { speakText(randomQ.question); }, 500);
-    setPendingMode(null);
+    setTimeout(() => { speakText(randomQ.question); }, 500); 
   };
 const startPracticeMode = async () => { 
-    if (questions.length === 0) { 
-      alert('Add questions first!'); 
-      return; 
-    }
-    
-    if (!hasConsented) {
-      setPendingMode('practice');
-      setShowConsentDialog(true);
-      return;
-    }
-    
-    await actuallyStartPractice();
-  };
-  
-  const actuallyStartPractice = async () => {
     accumulatedTranscript.current = ''; 
+    if (questions.length === 0) { alert('Add questions first!'); return; }
 
     const usageCheck = await checkAndIncrementUsage();
     if (!usageCheck.allowed) {
       const limit = usageCheck.tier === 'free' ? '25' : '100';
       alert(`⚠️ Monthly Limit Reached\n\nYou've used all ${limit} sessions this month.\n\nUpgrade to Pro for 100 sessions/month!`);
+
       return;
     }
 
@@ -1805,11 +1733,11 @@ const startPracticeMode = async () => {
     setCurrentQuestion(randomQ); 
     setCurrentMode('practice'); 
     setCurrentView('practice'); 
+    // Scroll to top when entering Practice mode
     window.scrollTo({ top: 0, behavior: 'smooth' });
     setUserAnswer(''); 
     setSpokenAnswer(''); 
-    setFeedback(null);
-    setPendingMode(null);
+    setFeedback(null); 
   };
 
   // Navigation functions for prev/next question
@@ -1884,17 +1812,6 @@ const startPracticeMode = async () => {
                     </p>
                     <p className="text-sm opacity-70">{currentUser?.email}</p>
                   </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowProfileDropdown(false);
-                      setCurrentView('settings');
-                    }}
-                    className="w-full px-4 py-3 text-left hover:bg-gray-50 transition flex items-center gap-3 text-gray-700 border-b border-gray-100"
-                  >
-                    <Settings className="w-5 h-5 text-indigo-600" />
-                    <span className="font-semibold">Settings</span>
-                  </button>
                   <button
                     onClick={async (e) => {
                       e.stopPropagation();
@@ -2716,19 +2633,6 @@ onClick={async () => {
 
  {feedback && (
   <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-2xl p-8">
-    {/* AI DISCLAIMER - Compact & Professional */}
-    <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded p-3 mb-6">
-      <div className="flex items-start gap-2">
-        <span className="text-xl flex-shrink-0">🤖</span>
-        <div className="flex-1">
-          <p className="font-semibold text-yellow-900 text-xs mb-1">AI-Generated Feedback</p>
-          <p className="text-xs text-yellow-800 leading-snug">
-            For practice purposes only. Not professional career advice. Use your judgment.
-          </p>
-        </div>
-      </div>
-    </div>
-    
     <div className="flex items-center justify-between mb-6">
       <h3 className="text-3xl font-bold">Your Performance</h3>
       
@@ -3325,19 +3229,6 @@ onClick={async () => {
 
  {feedback && (
   <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-2xl p-8">
-    {/* AI DISCLAIMER - Compact & Professional */}
-    <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded p-3 mb-6">
-      <div className="flex items-start gap-2">
-        <span className="text-xl flex-shrink-0">🤖</span>
-        <div className="flex-1">
-          <p className="font-semibold text-yellow-900 text-xs mb-1">AI-Generated Feedback</p>
-          <p className="text-xs text-yellow-800 leading-snug">
-            For practice purposes only. Not professional career advice. Use your judgment.
-          </p>
-        </div>
-      </div>
-    </div>
-    
     <div className="flex items-center justify-between mb-6">
       <h3 className="text-3xl font-bold">Your Performance</h3>
       
@@ -5330,243 +5221,6 @@ onClick={async () => {
       </>
     );
   }
-
-  // CONSENT DIALOG - Shows before first recording
-  if (showConsentDialog && !hasConsented) {
-    return (
-      <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999] p-4">
-        <div className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-auto shadow-2xl">
-          <div className="p-6">
-            <h2 className="text-xl font-bold mb-3 text-gray-900">Recording Consent Required</h2>
-            
-            <p className="text-gray-700 mb-3 text-sm">
-              ISL uses your microphone to record practice responses for AI feedback.
-            </p>
-
-            <div className="bg-blue-50 border-l-4 border-blue-400 rounded p-3 mb-3 text-xs">
-              <p className="text-blue-900 mb-1">✓ Recordings for feedback only</p>
-              <p className="text-blue-900 mb-1">✓ Delete anytime in Settings</p>
-              <p className="text-blue-900">✓ Data stored securely</p>
-            </div>
-
-            <div className="bg-orange-50 border-l-4 border-orange-400 rounded p-3 mb-3">
-              <p className="font-bold text-orange-900 text-sm mb-1">⚠️ IMPORTANT</p>
-              <p className="text-orange-800 text-xs">
-                If using Live Prompter during actual interviews, <strong>YOU must obtain consent from all parties</strong>. 
-                Recording without consent may be illegal in your state.
-              </p>
-            </div>
-
-            <p className="text-xs text-gray-600 mb-4">
-              By clicking "I Agree," you consent to our{' '}
-              <button onClick={() => {setShowConsentDialog(false); setCurrentView('privacy');}} className="text-indigo-600 underline">
-                Privacy Policy
-              </button>
-              {' '}and{' '}
-              <button onClick={() => {setShowConsentDialog(false); setCurrentView('terms');}} className="text-indigo-600 underline">
-                Terms
-              </button>.
-            </p>
-
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  setShowConsentDialog(false);
-                  setPendingMode(null);
-                }}
-                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg text-sm"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  localStorage.setItem('isl_recording_consent', 'true');
-                  setHasConsented(true);
-                  setShowConsentDialog(false);
-                  if (pendingMode === 'prompter') {
-                    setShowLivePrompterWarning(true);
-                  } else if (pendingMode === 'ai-interviewer') {
-                    actuallyStartAIInterviewer();
-                  } else if (pendingMode === 'practice') {
-                    actuallyStartPractice();
-                  }
-                }}
-                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg text-sm"
-              >
-                I Agree
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // LIVE PROMPTER WARNING
-  if (showLivePrompterWarning) {
-    return (
-      <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-4">
-        <div className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-auto shadow-2xl">
-          <div className="p-6">
-            <div className="text-center mb-3">
-              <span className="text-5xl">⚠️</span>
-            </div>
-            
-            <h2 className="text-xl font-bold text-center mb-3 text-red-600">
-              Live Prompter - Legal Warning
-            </h2>
-            
-            <p className="text-gray-700 mb-3 text-sm text-center">
-              You're about to use Live Prompter during real interviews.
-            </p>
-
-            <div className="bg-red-50 border-l-4 border-red-400 rounded p-3 mb-3">
-              <p className="font-bold text-red-900 text-sm mb-2">YOU MUST:</p>
-              <ul className="space-y-1 text-xs text-red-800">
-                <li>• <strong>Obtain consent</strong> from interviewer before recording</li>
-                <li>• <strong>Inform them</strong> you're using assistance technology</li>
-                <li>• <strong>Comply with state laws</strong> requiring all-party consent</li>
-              </ul>
-            </div>
-
-            <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded p-3 mb-3">
-              <p className="font-bold text-yellow-900 text-xs mb-1">Legal Consequences:</p>
-              <p className="text-yellow-800 text-xs">
-                Recording without consent is <strong>illegal</strong> in CA, FL, IL, MA, PA, WA, etc. 
-                You could face criminal charges, lawsuits, or job disqualification.
-              </p>
-            </div>
-
-            <div className="bg-green-50 rounded p-3 mb-4 text-center">
-              <p className="text-xs text-green-800">
-                <strong>Recommended:</strong> Use for practice only, not actual interviews.
-              </p>
-            </div>
-
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  setShowLivePrompterWarning(false);
-                  setPendingMode(null);
-                }}
-                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg text-sm"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  setShowLivePrompterWarning(false);
-                  actuallyStartPrompter();
-                }}
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg text-xs"
-              >
-                I Understand & Accept Responsibility
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // SETTINGS PAGE
-  if (currentView === 'settings') {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="bg-white shadow-sm border-b">
-          <div className="container mx-auto px-4 py-4">
-            <button onClick={() => setCurrentView('home')} className="text-gray-600 hover:text-gray-900 text-sm">
-              ← Back to Home
-            </button>
-          </div>
-        </div>
-        <div className="max-w-2xl mx-auto px-4 py-8">
-          <h1 className="text-2xl font-bold mb-6">Settings</h1>
-
-          <div className="bg-white rounded-xl shadow-sm p-5 mb-4">
-            <h2 className="text-lg font-semibold mb-3 text-gray-800">App Information</h2>
-            <div className="flex justify-between py-2">
-              <span className="text-gray-600 text-sm">Version</span>
-              <span className="font-medium text-gray-900 text-sm">1.0.0</span>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm p-5 mb-4">
-            <h2 className="text-lg font-semibold mb-3 text-gray-800">Legal</h2>
-            
-            <button
-              onClick={() => setCurrentView('privacy')}
-              className="w-full flex justify-between items-center py-3 px-3 bg-gray-50 hover:bg-gray-100 rounded-lg mb-2 text-sm"
-            >
-              <span className="font-medium text-gray-700">Privacy Policy</span>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
-            </button>
-            
-            <button
-              onClick={() => setCurrentView('terms')}
-              className="w-full flex justify-between items-center py-3 px-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm"
-            >
-              <span className="font-medium text-gray-700">Terms of Service</span>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
-            </button>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm p-5 mb-4">
-            <h2 className="text-lg font-semibold mb-3 text-gray-800">Data Management</h2>
-            
-            <button
-              onClick={async () => {
-                if (window.confirm('⚠️ DELETE ALL DATA?\n\nThis will PERMANENTLY delete:\n• All practice sessions\n• All questions\n• All progress\n• All settings\n\nThis CANNOT be undone.\n\nClick OK to continue or Cancel to keep your data.')) {
-                  if (window.confirm('🛑 FINAL CONFIRMATION\n\nYou are about to DELETE EVERYTHING.\n\nThis is PERMANENT and CANNOT be recovered.\n\nClick OK to DELETE ALL DATA NOW, or Cancel to keep your data safe.')) {
-                    try {
-                      const { data: { user } } = await supabase.auth.getUser();
-                      if (user) {
-                        await supabase.from('practice_sessions').delete().eq('user_id', user.id);
-                        await supabase.from('question_banks').delete().eq('user_id', user.id);
-                        await supabase.from('usage_tracking').delete().eq('user_id', user.id);
-                      }
-                      const keysToKeep = ['isl_api_key'];
-                      Object.keys(localStorage).forEach(key => {
-                        if (!keysToKeep.includes(key)) {
-                          localStorage.removeItem(key);
-                        }
-                      });
-                      alert('✅ All data deleted successfully');
-                      window.location.reload();
-                    } catch (error) {
-                      console.error('Delete error:', error);
-                      alert('❌ Error deleting data. Please try again.');
-                    }
-                  }
-                }
-              }}
-              className="w-full bg-red-50 hover:bg-red-100 border-2 border-red-400 text-red-700 font-bold py-3 px-4 rounded-lg text-sm"
-            >
-              🗑️ Delete All My Data
-            </button>
-            
-            <p className="text-xs text-gray-500 mt-2">
-              Permanently deletes all your data. API key preserved. <strong>Cannot be undone.</strong>
-            </p>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm p-5">
-            <h2 className="text-lg font-semibold mb-3 text-gray-800">Support</h2>
-            <p className="text-gray-600 mb-2 text-sm">Questions or feedback?</p>
-            <a 
-              href="mailto:YOUR_EMAIL@example.com" 
-              className="text-indigo-600 hover:text-indigo-700 font-medium text-sm"
-            >
-              YOUR_EMAIL@example.com
-            </a>
-            <p className="text-xs text-orange-600 mt-2 font-medium">
-              ⚠️ Replace with your actual email in the code
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
   // PRIVACY POLICY
   if (currentView === 'privacy') {
     return (
@@ -5581,103 +5235,29 @@ onClick={async () => {
         <div className="max-w-3xl mx-auto px-4 py-12">
           <h1 className="text-3xl font-bold mb-8">Privacy Policy</h1>
           <div className="prose prose-gray max-w-none">
-            <p className="text-sm text-gray-600 mb-6">Last updated: January 11, 2026</p>
-            
-            <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
-              <p className="font-bold text-red-900 mb-2">⚠️ CRITICAL - Recording Consent</p>
-              <p className="text-red-800 text-sm">
-                If you use ISL's Live Prompter feature during actual interviews with other people, 
-                <strong> YOU are responsible for obtaining consent from ALL parties being recorded.</strong> Many states 
-                require all-party consent. Recording without consent may be illegal.
-              </p>
-            </div>
+            <p className="text-sm text-gray-600 mb-6">Last updated: December 30, 2024</p>
             
             <h2 className="text-2xl font-semibold mt-8 mb-4">What We Collect</h2>
-            <p className="mb-4">We collect:</p>
-            <ul className="list-disc pl-6 mb-4 space-y-2">
-              <li>Email address for account creation</li>
-              <li>Audio recordings of your practice responses (stored locally on your device)</li>
-              <li>Text transcriptions of your responses</li>
-              <li>Practice history and progress data</li>
-              <li>Usage analytics to improve the app</li>
-            </ul>
+            <p className="mb-4">We collect your email address to create your account. When you practice interviews, we store your responses to provide AI feedback and track improvement.</p>
             
             <h2 className="text-2xl font-semibold mt-8 mb-4">How We Use Your Data</h2>
             <ul className="list-disc pl-6 mb-4 space-y-2">
-              <li>Authenticate your account and sync progress across devices</li>
-              <li>Provide AI-powered interview feedback</li>
-              <li>Track your improvement over time</li>
+              <li>Authenticate your account and sync progress</li>
+              <li>Provide interview feedback and track improvement</li>
               <li>Send occasional product updates (you can opt out)</li>
-              <li>Improve app features and user experience</li>
             </ul>
             
-            <h2 className="text-2xl font-semibold mt-8 mb-4">Data Storage & Security</h2>
-            <p className="mb-4">
-              We use Supabase to securely store your account data and practice history. 
-              Audio recordings are stored locally on your device. All data transmission is 
-              encrypted using HTTPS/TLS. Data at rest is encrypted using industry-standard encryption.
-            </p>
+            <h2 className="text-2xl font-semibold mt-8 mb-4">Data Storage</h2>
+            <p className="mb-4">We use Supabase to securely store your data. All data is encrypted in transit and at rest.</p>
             
-            <h2 className="text-2xl font-semibold mt-8 mb-4">Your Rights (California CCPA)</h2>
-            <p className="mb-4">You have the right to:</p>
-            <ul className="list-disc pl-6 mb-4 space-y-2">
-              <li>Know what personal information we collect and how we use it</li>
-              <li>Request deletion of your personal information</li>
-              <li>Opt-out of data sale (we don't sell your data)</li>
-              <li>Non-discrimination for exercising your privacy rights</li>
-            </ul>
-            <p className="mb-4">To exercise these rights, go to Settings → Delete All My Data, or contact us at YOUR_EMAIL@example.com</p>
+            <h2 className="text-2xl font-semibold mt-8 mb-4">Your Rights</h2>
+            <p className="mb-4">You can delete your account and all data anytime from Settings.</p>
             
             <h2 className="text-2xl font-semibold mt-8 mb-4">Microphone Access</h2>
-            <p className="mb-4">
-              We request microphone access for interview practice recording. You control when recording happens. 
-              Audio is processed for speech-to-text and AI feedback only. We do not listen to or monitor your recordings.
-            </p>
+            <p className="mb-4">We request microphone access for interview practice. You control when recording happens. Audio is processed for feedback only.</p>
             
-            <h2 className="text-2xl font-semibold mt-8 mb-4">Recording Consent Requirements</h2>
-            <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-4">
-              <p className="font-bold text-yellow-900 mb-2">Two-Party Consent States</p>
-              <p className="text-yellow-800 text-sm mb-2">
-                The following states require consent from ALL parties before recording:
-              </p>
-              <p className="text-yellow-800 text-sm mb-2">
-                <strong>California, Connecticut, Florida, Illinois, Maryland, Massachusetts, Michigan, Montana, 
-                Nevada, New Hampshire, Pennsylvania, Washington</strong>
-              </p>
-              <p className="text-yellow-800 text-sm font-bold">
-                If you use Live Prompter during actual interviews, YOU must obtain consent. 
-                We are not responsible for your compliance with recording laws.
-              </p>
-            </div>
-            
-            <h2 className="text-2xl font-semibold mt-8 mb-4">Third-Party Services</h2>
-            <p className="mb-4">We use:</p>
-            <ul className="list-disc pl-6 mb-4 space-y-2">
-              <li>Supabase for authentication and database services</li>
-              <li>OpenAI API for AI-powered feedback generation</li>
-              <li>Web Speech API (browser-based) for speech recognition</li>
-            </ul>
-            <p className="mb-4">We do NOT sell your personal data to third parties.</p>
-            
-            <h2 className="text-2xl font-semibold mt-8 mb-4">Data Retention</h2>
-            <p className="mb-4">
-              • Practice recordings: Stored on your device until you delete them<br/>
-              • Account data: Stored in Supabase until you delete your account<br/>
-              • You can delete all your data anytime from Settings
-            </p>
-            
-            <h2 className="text-2xl font-semibold mt-8 mb-4">Children's Privacy</h2>
-            <p className="mb-4">
-              ISL is not intended for children under 13. We do not knowingly collect information from 
-              children under 13. If you believe we have collected data from a child under 13, please 
-              contact us immediately.
-            </p>
-            
-            <h2 className="text-2xl font-semibold mt-8 mb-4">Contact Us</h2>
-            <p className="mb-4">
-              Questions about this Privacy Policy?<br/>
-              Email: YOUR_EMAIL@example.com
-            </p>
+            <h2 className="text-2xl font-semibold mt-8 mb-4">Contact</h2>
+            <p className="mb-4">Questions? Email: privacy@islapp.com</p>
           </div>
         </div>
       </div>
@@ -5698,129 +5278,30 @@ onClick={async () => {
         <div className="max-w-3xl mx-auto px-4 py-12">
           <h1 className="text-3xl font-bold mb-8">Terms of Service</h1>
           <div className="prose prose-gray max-w-none">
-            <p className="text-sm text-gray-600 mb-6">Last updated: January 11, 2026</p>
+            <p className="text-sm text-gray-600 mb-6">Last updated: December 30, 2024</p>
             
-            <h2 className="text-2xl font-semibold mt-8 mb-4">Acceptance of Terms</h2>
-            <p className="mb-4">By using Interview as a Second Language ("ISL"), you agree to these Terms of Service. If you do not agree, do not use ISL.</p>
+            <h2 className="text-2xl font-semibold mt-8 mb-4">Acceptance</h2>
+            <p className="mb-4">By using ISL, you agree to these terms.</p>
             
             <h2 className="text-2xl font-semibold mt-8 mb-4">Use License</h2>
-            <p className="mb-4">
-              We grant you a personal, non-transferable, non-exclusive license to use ISL for 
-              interview practice. You may not use ISL for any commercial purpose without our written permission.
-            </p>
-            
-            <h2 className="text-2xl font-semibold mt-8 mb-4">AI-Generated Content Disclaimer</h2>
-            <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-4">
-              <p className="font-bold text-yellow-900 mb-2">⚠️ AI Feedback is Not Professional Advice</p>
-              <p className="text-yellow-800 text-sm mb-2">
-                ISL uses artificial intelligence to generate interview feedback. You acknowledge and agree that:
-              </p>
-              <ul className="list-disc pl-6 text-sm text-yellow-800 space-y-1">
-                <li>AI-generated feedback may contain errors or inaccuracies</li>
-                <li>Feedback is for educational and practice purposes only</li>
-                <li>It does not constitute professional career counseling or advice</li>
-                <li>You should use your own judgment and seek professional advice for important decisions</li>
-                <li>We do not guarantee interview success, job offers, or any specific outcome</li>
-              </ul>
-            </div>
-            
-            <h2 className="text-2xl font-semibold mt-8 mb-4">Recording Consent - USER RESPONSIBILITY</h2>
-            <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
-              <p className="font-bold text-red-900 mb-2 text-lg">🚨 CRITICAL: You Are Responsible for Recording Consent</p>
-              <p className="text-red-800 mb-2">
-                If you use ISL's Live Prompter feature during actual interviews or conversations with other people, 
-                <strong> YOU ARE SOLELY RESPONSIBLE FOR:</strong>
-              </p>
-              <ul className="list-disc pl-6 text-red-800 space-y-1 text-sm mb-2">
-                <li>Obtaining explicit consent from ALL parties being recorded</li>
-                <li>Complying with all applicable recording and consent laws</li>
-                <li>Informing interviewers you are using assistance technology</li>
-                <li>Confirming it's permitted by the employer's policies</li>
-              </ul>
-              <p className="text-red-800 text-sm mb-2">
-                <strong>Two-Party Consent States:</strong> California, Connecticut, Florida, Illinois, 
-                Maryland, Massachusetts, Michigan, Montana, Nevada, New Hampshire, Pennsylvania, Washington 
-                require consent from ALL parties before recording.
-              </p>
-              <p className="text-red-800 font-bold text-sm">
-                Recording someone without consent may result in criminal charges, civil lawsuits, and 
-                disqualification from job consideration. WE ARE NOT RESPONSIBLE for your failure to 
-                obtain proper consent or comply with applicable laws.
-              </p>
-            </div>
+            <p className="mb-4">We grant you a personal, non-transferable license to use ISL for interview practice.</p>
             
             <h2 className="text-2xl font-semibold mt-8 mb-4">Acceptable Use</h2>
-            <p className="mb-4">You agree NOT to:</p>
+            <p className="mb-4">You agree not to:</p>
             <ul className="list-disc pl-6 mb-4 space-y-2">
-              <li>Record conversations without obtaining proper consent from all parties</li>
-              <li>Use ISL to violate any local, state, federal, or international law</li>
-              <li>Upload illegal, harmful, or offensive content</li>
-              <li>Attempt to bypass security measures or reverse engineer the app</li>
-              <li>Harass, abuse, or harm another person</li>
-              <li>Use ISL for any commercial purpose without permission</li>
+              <li>Upload illegal or harmful content</li>
+              <li>Attempt to bypass security measures</li>
+              <li>Harass other users or staff</li>
             </ul>
             
-            <h2 className="text-2xl font-semibold mt-8 mb-4">Limitation of Liability</h2>
-            <div className="bg-gray-100 border-l-4 border-gray-500 p-4 mb-4">
-              <p className="font-bold text-gray-900 mb-2">Maximum Liability: $100</p>
-              <p className="text-gray-700 text-sm">
-                TO THE MAXIMUM EXTENT PERMITTED BY LAW, our total liability for all claims related to 
-                ISL shall not exceed the amount you paid for ISL in the past 12 months, or $100, whichever is less.
-              </p>
-              <p className="text-gray-700 text-sm mt-2">
-                WE ARE NOT LIABLE FOR any indirect, incidental, special, consequential, or punitive damages, 
-                including loss of profits, data, or business opportunities, damages resulting from your use of ISL, 
-                damages from reliance on AI-generated feedback, or damages from your violation of recording consent laws.
-              </p>
-            </div>
-            
-            <h2 className="text-2xl font-semibold mt-8 mb-4">No Warranties</h2>
-            <p className="mb-4">
-              ISL IS PROVIDED "AS IS" WITHOUT WARRANTIES OF ANY KIND. We do not warrant that:
-            </p>
-            <ul className="list-disc pl-6 mb-4 space-y-2">
-              <li>The app will be error-free, secure, or uninterrupted</li>
-              <li>AI-generated feedback will be accurate or reliable</li>
-              <li>Your use will result in job offers or interview success</li>
-            </ul>
-            
-            <h2 className="text-2xl font-semibold mt-8 mb-4">Indemnification</h2>
-            <p className="mb-4">
-              You agree to indemnify and hold harmless ISL from any claims, damages, or expenses arising from:
-            </p>
-            <ul className="list-disc pl-6 mb-4 space-y-2">
-              <li>Your violation of these Terms</li>
-              <li>Your violation of recording consent laws</li>
-              <li>Your misuse of AI-generated feedback</li>
-              <li>Your violation of any third-party rights</li>
-            </ul>
+            <h2 className="text-2xl font-semibold mt-8 mb-4">No Guarantees</h2>
+            <p className="mb-4">ISL provides practice tools and feedback. We do not guarantee interview success or job offers.</p>
             
             <h2 className="text-2xl font-semibold mt-8 mb-4">Termination</h2>
-            <p className="mb-4">
-              We may suspend or terminate your access to ISL immediately for violation of these Terms, 
-              fraudulent conduct, or any reason at our discretion. You may stop using ISL at any time 
-              by deleting the app.
-            </p>
+            <p className="mb-4">We may suspend accounts that violate these terms. You may delete your account at any time.</p>
             
-            <h2 className="text-2xl font-semibold mt-8 mb-4">Arbitration & Waiver of Class Actions</h2>
-            <p className="mb-4">
-              Any disputes arising from these Terms or your use of ISL shall be resolved through binding 
-              arbitration. <strong>YOU WAIVE YOUR RIGHT TO A JURY TRIAL AND TO PARTICIPATE IN CLASS ACTION LAWSUITS.</strong>
-            </p>
-            
-            <h2 className="text-2xl font-semibold mt-8 mb-4">Contact Us</h2>
-            <p className="mb-4">
-              Questions about these Terms?<br/>
-              Email: YOUR_EMAIL@example.com
-            </p>
-            
-            <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mt-8">
-              <p className="font-bold text-blue-900 mb-2">This is a Legal Agreement</p>
-              <p className="text-blue-800 text-sm">
-                By using ISL, you acknowledge that you have read, understood, and agree to be bound by 
-                these Terms of Service. If you do not agree, do not use ISL.
-              </p>
-            </div>
+            <h2 className="text-2xl font-semibold mt-8 mb-4">Contact</h2>
+            <p className="mb-4">Support: support@islapp.com</p>
           </div>
         </div>
       </div>
