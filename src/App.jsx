@@ -14,6 +14,7 @@ import FirstTimeConsent from "./Components/FirstTimeConsent";
 import QuestionAssistant from './Components/QuestionAssistant';
 import AnswerAssistant from './Components/AnswerAssistant';
 import TemplateLibrary from './TemplateLibrary';
+import { DEFAULT_QUESTIONS } from './default_questions';
 
 // CSS string is OK at top-level
 const styles = `
@@ -153,6 +154,12 @@ const ISL = () => {
   const [comparisonMode, setComparisonMode] = useState(false);
   const [showAnswerAssistant, setShowAnswerAssistant] = useState(false);
   const [answerAssistantQuestion, setAnswerAssistantQuestion] = useState(null);
+  
+  // Customization & Onboarding States
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [showCustomizationNudge, setShowCustomizationNudge] = useState(false);
+  const [sessionCount, setSessionCount] = useState(0);
+  const [isNewUser, setIsNewUser] = useState(false);
   
   // Legal Protection States
   const [showConsentDialog, setShowConsentDialog] = useState(false);
@@ -407,6 +414,77 @@ const ISL = () => {
     }
   };
 
+  // CUSTOMIZATION SYSTEM HELPERS
+  const initializeDefaultQuestions = async (userId) => {
+    try {
+      console.log('🆕 Initializing default questions for new user:', userId);
+      
+      const questionsToInsert = DEFAULT_QUESTIONS.map(q => ({
+        user_id: userId,
+        question: q.question,
+        category: q.category,
+        priority: q.priority,
+        keywords: q.keywords,
+        bullets: q.bullets,
+        narrative: q.narrative,
+        follow_ups: q.followUps,
+        is_default: true,
+        created_at: new Date().toISOString()
+      }));
+
+      const { data, error } = await supabase
+        .from('questions')
+        .insert(questionsToInsert);
+
+      if (error) {
+        console.error('❌ Error inserting default questions:', error);
+        return false;
+      }
+
+      console.log(`✅ Initialized ${DEFAULT_QUESTIONS.length} default questions`);
+      return true;
+    } catch (err) {
+      console.error('❌ Exception initializing default questions:', err);
+      return false;
+    }
+  };
+
+  const incrementSessionCount = () => {
+    if (!currentUser) return;
+    
+    const storageKey = `isl_session_count_${currentUser.id}`;
+    const currentCount = parseInt(localStorage.getItem(storageKey) || '0', 10);
+    const newCount = currentCount + 1;
+    
+    setSessionCount(newCount);
+    localStorage.setItem(storageKey, newCount.toString());
+    
+    console.log(`📊 Session count: ${newCount}`);
+    
+    // Show nudge at sessions 4 and 6
+    if (newCount === 4 || newCount === 6) {
+      setTimeout(() => {
+        setShowCustomizationNudge(true);
+      }, 2000);
+    }
+    
+    return newCount;
+  };
+
+  const getCustomizationStatus = () => {
+    const customized = questions.filter(q => !q.is_default).length;
+    const withKeywords = questions.filter(q => 
+      q.keywords && Array.isArray(q.keywords) && q.keywords.length >= 5
+    ).length;
+    
+    return {
+      customizedQuestions: customized,
+      questionsWithKeywords: withKeywords,
+      isLocked: sessionCount >= 7 && customized < 3 && withKeywords < 3
+    };
+  };
+
+
   // USAGE TRACKING FUNCTIONS
   const checkAIUsageLimit = async () => {
     // Get current month's usage
@@ -627,6 +705,60 @@ loadPracticeHistory();
       subscription.unsubscribe();
     };
   }, []);
+
+  // NEW USER SETUP - Initialize default questions for first-time users
+  useEffect(() => {
+    const setupNewUserIfNeeded = async () => {
+      if (!currentUser) return;
+      
+      // Load session count from localStorage
+      const storageKey = `isl_session_count_${currentUser.id}`;
+      const savedCount = parseInt(localStorage.getItem(storageKey) || '0', 10);
+      setSessionCount(savedCount);
+      
+      console.log('👤 Checking if user needs default questions');
+      
+      try {
+        // Check if user has any questions
+        const { data: existingQuestions, error } = await supabase
+          .from('questions')
+          .select('id')
+          .eq('user_id', currentUser.id)
+          .limit(1);
+
+        if (error) {
+          console.error('❌ Error checking questions:', error);
+          return;
+        }
+
+        // If no questions exist, this is a new user
+        if (!existingQuestions || existingQuestions.length === 0) {
+          console.log('🆕 New user detected! Setting up...');
+          setIsNewUser(true);
+          
+          // Initialize default questions
+          const success = await initializeDefaultQuestions(currentUser.id);
+          
+          if (success) {
+            // Reload questions to get the defaults
+            await loadQuestions();
+            
+            // Show welcome modal ONLY if they haven't seen it before
+            const hasSeenWelcome = localStorage.getItem(`isl_welcome_seen_${currentUser.id}`);
+            if (!hasSeenWelcome) {
+              setShowWelcomeModal(true);
+            }
+          }
+        } else {
+          console.log('✅ Existing user - questions already loaded');
+        }
+      } catch (err) {
+        console.error('❌ Error in new user setup:', err);
+      }
+    };
+
+    setupNewUserIfNeeded();
+  }, [currentUser]);
 
   useEffect(() => {
     if (currentView === 'home') {
@@ -1017,6 +1149,9 @@ const endInterviewSession = () => {
       accumulatedTranscript.current = '';
       currentInterimRef.current = '';
       console.log('✅ Session ended');
+      
+      // Track session completion for customization nudges
+      incrementSessionCount();
     } catch (err) {
       console.error('Session end failed:', err);
     }
@@ -1864,6 +1999,121 @@ const startPracticeMode = async () => {
   // OVERLAY DIALOGS - Render BEFORE view checks so they always work
   return (
     <>
+      {/* WELCOME MODAL - First-time user onboarding */}
+      {showWelcomeModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl max-w-2xl w-full p-8 shadow-2xl border border-green-500/30">
+            <div className="text-center mb-6">
+              <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Sparkles className="w-10 h-10 text-white" />
+              </div>
+              <h2 className="text-3xl font-bold mb-2">Welcome to ISL!</h2>
+              <p className="text-xl text-gray-300">We've loaded 12 common interview questions so you can start immediately</p>
+            </div>
+
+            <div className="bg-gray-800/50 rounded-xl p-6 mb-6">
+              <h3 className="font-bold text-lg mb-3 text-green-400">✨ You can now use:</h3>
+              <ul className="space-y-2 text-gray-300">
+                <li className="flex items-start gap-2">
+                  <span className="text-green-400 font-bold">✓</span>
+                  <span><strong>Live Prompter</strong> - Real-time interview assistance (works right now!)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-400 font-bold">✓</span>
+                  <span><strong>AI Practice</strong> - Get feedback on your answers</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-400 font-bold">✓</span>
+                  <span><strong>Flashcard Mode</strong> - Study with spaced repetition</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="bg-blue-900/30 rounded-xl p-6 mb-8 border border-blue-500/30">
+              <h3 className="font-bold text-lg mb-3 text-blue-300">💡 Pro Tip:</h3>
+              <p className="text-gray-300 mb-3">
+                These default questions work great, but <strong>customizing them for YOUR specific role</strong> makes 
+                Live Prompter 10x more accurate.
+              </p>
+              <p className="text-sm text-gray-400">
+                You can customize anytime in Command Center → Bank
+              </p>
+            </div>
+
+            <div className="flex gap-4">
+              <button
+                onClick={() => {
+                  setShowWelcomeModal(false);
+                  localStorage.setItem(`isl_welcome_seen_${currentUser.id}`, 'true');
+                  setCurrentView('commandCenter');
+                  setCommandCenterTab('bank');
+                }}
+                className="flex-1 bg-gray-700 hover:bg-gray-600 py-4 rounded-xl font-bold transition-all border border-gray-600"
+              >
+                Customize First (2 min)
+              </button>
+              <button
+                onClick={() => {
+                  setShowWelcomeModal(false);
+                  localStorage.setItem(`isl_welcome_seen_${currentUser.id}`, 'true');
+                  setCurrentView('prompter');
+                }}
+                className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 py-4 rounded-xl font-bold transition-all shadow-lg"
+              >
+                Try Live Prompter Now! →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CUSTOMIZATION NUDGE - After sessions 4 and 6 */}
+      {showCustomizationNudge && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl max-w-lg w-full p-8 shadow-2xl border border-yellow-500/30">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <TrendingUp className="w-8 h-8 text-gray-900" />
+              </div>
+              <h2 className="text-2xl font-bold mb-2">Great session!</h2>
+              <p className="text-gray-300">Session #{sessionCount} complete</p>
+            </div>
+
+            <div className="bg-yellow-900/20 rounded-xl p-6 mb-6 border border-yellow-500/30">
+              <h3 className="font-bold mb-3 text-yellow-300">💡 Want better accuracy?</h3>
+              <p className="text-gray-300 mb-4">
+                Customizing questions for YOUR specific role and adding more keywords can boost 
+                match rates to 90%+
+              </p>
+              <ul className="text-sm text-gray-400 space-y-1">
+                <li>• Add industry-specific terminology</li>
+                <li>• Include variations of how YOUR interviewer asks questions</li>
+                <li>• Takes just 2-3 minutes</li>
+              </ul>
+            </div>
+
+            <div className="flex gap-4">
+              <button
+                onClick={() => setShowCustomizationNudge(false)}
+                className="flex-1 bg-gray-700 hover:bg-gray-600 py-3 rounded-xl font-bold transition-all"
+              >
+                Maybe Later
+              </button>
+              <button
+                onClick={() => {
+                  setShowCustomizationNudge(false);
+                  setCurrentView('commandCenter');
+                  setCommandCenterTab('bank');
+                }}
+                className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 py-3 rounded-xl font-bold transition-all shadow-lg"
+              >
+                Customize Now (2 min)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* CONSENT DIALOG - First-time recording consent */}
       {showConsentDialog && !hasConsented && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999] p-4">
@@ -2274,6 +2524,70 @@ const startPracticeMode = async () => {
 
   // LIVE PROMPTER
   if (currentView === 'prompter') {
+    // Check if user is locked out (7+ sessions without customization)
+    const status = getCustomizationStatus();
+    
+    if (status.isLocked) {
+      return (
+        <div className="min-h-screen bg-gray-900 text-white p-8 flex items-center justify-center">
+          <div className="text-center max-w-md">
+            <div className="w-20 h-20 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Target className="w-10 h-10 text-white" />
+            </div>
+            <h2 className="text-3xl font-bold mb-4">Customize to Continue</h2>
+            <p className="text-gray-300 mb-6">
+              You've used your 7 free sessions! Customize at least 3 questions with 5+ keywords to unlock unlimited access.
+            </p>
+            
+            <div className="bg-gray-800 rounded-xl p-6 mb-6">
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <div className="text-3xl font-bold text-orange-400">{status.customizedQuestions}/3</div>
+                  <div className="text-sm text-gray-400">Custom Questions</div>
+                </div>
+                <div>
+                  <div className="text-3xl font-bold text-orange-400">{status.questionsWithKeywords}/3</div>
+                  <div className="text-sm text-gray-400">With 5+ Keywords</div>
+                </div>
+              </div>
+            </div>
+            
+            <button
+              onClick={() => {
+                setCurrentView('commandCenter');
+                setCommandCenterTab('bank');
+              }}
+              className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 px-8 py-4 rounded-xl font-bold text-lg transition-all shadow-lg"
+            >
+              Go Customize Now →
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // Check for empty question bank (before defaults load)
+    if (!questions || questions.length === 0) {
+      return (
+        <div className="min-h-screen bg-gray-900 text-white p-8 flex items-center justify-center">
+          <div className="text-center max-w-md">
+            <div className="w-20 h-20 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
+              <Database className="w-10 h-10 text-white" />
+            </div>
+            <h2 className="text-3xl font-bold mb-4">Loading Your Questions...</h2>
+            <p className="text-gray-300 mb-6">
+              Setting up your question bank. This only happens once!
+            </p>
+            <div className="bg-gray-800 rounded-xl p-6">
+              <p className="text-sm text-gray-400">
+                If this screen doesn't change in 5 seconds, try refreshing the page.
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white">
         <div className="container mx-auto px-4 py-6">
