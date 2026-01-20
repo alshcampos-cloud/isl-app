@@ -716,6 +716,15 @@ loadPracticeHistory();
       const savedCount = parseInt(localStorage.getItem(storageKey) || '0', 10);
       setSessionCount(savedCount);
       
+      // CRITICAL: Check if we've already initialized defaults for this user
+      const defaultsInitializedKey = `isl_defaults_initialized_${currentUser.id}`;
+      const alreadyInitialized = localStorage.getItem(defaultsInitializedKey);
+      
+      if (alreadyInitialized) {
+        console.log('✅ Defaults already initialized for this user - skipping');
+        return;
+      }
+      
       console.log('👤 Checking if user needs default questions');
       
       try {
@@ -740,6 +749,9 @@ loadPracticeHistory();
           const success = await initializeDefaultQuestions(currentUser.id);
           
           if (success) {
+            // Mark that we've initialized defaults for this user
+            localStorage.setItem(defaultsInitializedKey, 'true');
+            
             // Reload questions to get the defaults
             await loadQuestions();
             
@@ -751,6 +763,8 @@ loadPracticeHistory();
           }
         } else {
           console.log('✅ Existing user - questions already loaded');
+          // Mark as initialized if they have questions
+          localStorage.setItem(defaultsInitializedKey, 'true');
         }
       } catch (err) {
         console.error('❌ Error in new user setup:', err);
