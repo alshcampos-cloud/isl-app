@@ -1,3 +1,4 @@
+// Password reset page - updated 2026-01-20
 import { useState } from 'react'
 import { supabase } from './lib/supabase'
 import { Lock, CheckCircle, AlertCircle } from 'lucide-react'
