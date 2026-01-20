@@ -160,6 +160,8 @@ const ISL = () => {
   const [showCustomizationNudge, setShowCustomizationNudge] = useState(false);
   const [sessionCount, setSessionCount] = useState(0);
   const [isNewUser, setIsNewUser] = useState(false);
+  const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
+  const [showDeleteChoiceModal, setShowDeleteChoiceModal] = useState(false);
   
   // Legal Protection States
   const [showConsentDialog, setShowConsentDialog] = useState(false);
@@ -715,6 +717,15 @@ loadPracticeHistory();
       const storageKey = `isl_session_count_${currentUser.id}`;
       const savedCount = parseInt(localStorage.getItem(storageKey) || '0', 10);
       setSessionCount(savedCount);
+      
+      // CRITICAL: Check if user wants to keep their bank empty
+      const keepEmptyKey = `isl_keep_empty_${currentUser.id}`;
+      const wantsEmpty = localStorage.getItem(keepEmptyKey);
+      
+      if (wantsEmpty === 'true') {
+        console.log('✅ User prefers empty question bank - skipping defaults');
+        return;
+      }
       
       // CRITICAL: Check if we've already initialized defaults for this user
       const defaultsInitializedKey = `isl_defaults_initialized_${currentUser.id}`;
@@ -1862,6 +1873,38 @@ useEffect(() => {
     alert('Failed to delete question: ' + error.message);
   }
 };
+
+  const deleteAllQuestions = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        alert('Please sign in to delete questions');
+        return;
+      }
+
+      const { error } = await supabase
+        .from('questions')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setQuestions([]);
+      setShowDeleteAllConfirm(false);
+      
+      // Clear the initialization flag so defaults CAN be reloaded if user wants
+      localStorage.removeItem(`isl_defaults_initialized_${user.id}`);
+      
+      console.log('✅ All questions deleted from Supabase');
+      
+      // Show choice modal: Keep empty or load defaults
+      setShowDeleteChoiceModal(true);
+    } catch (error) {
+      console.error('❌ Error deleting all questions:', error);
+      alert('Failed to delete questions: ' + error.message);
+    }
+  };
+
   const exportQuestions = () => { const dataStr = JSON.stringify(questions, null, 2); const blob = new Blob([dataStr], { type: 'application/json' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = `isl-questions-${Date.now()}.json`; link.click(); };
   const importQuestions = async (jsonData) => { 
     try { 
@@ -2109,7 +2152,7 @@ const startPracticeMode = async () => {
                 onClick={() => {
                   setShowWelcomeModal(false);
                   localStorage.setItem(`isl_welcome_seen_${currentUser.id}`, 'true');
-                  setCurrentView('commandCenter');
+                  setCurrentView('command-center');
                   setCommandCenterTab('bank');
                 }}
                 className="flex-1 bg-gray-700 hover:bg-gray-600 py-4 rounded-xl font-bold transition-all border border-gray-600"
@@ -2166,12 +2209,112 @@ const startPracticeMode = async () => {
               <button
                 onClick={() => {
                   setShowCustomizationNudge(false);
-                  setCurrentView('commandCenter');
+                  setCurrentView('command-center');
                   setCommandCenterTab('bank');
                 }}
                 className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 py-3 rounded-xl font-bold transition-all shadow-lg"
               >
                 Customize Now (2 min)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DELETE ALL CONFIRMATION MODAL */}
+      {showDeleteAllConfirm && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl">
+            <div className="text-center mb-6">
+              <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertCircle className="w-10 h-10 text-red-600" />
+              </div>
+              <h2 className="text-2xl font-bold mb-2 text-gray-900">Delete All Questions?</h2>
+              <p className="text-gray-600">
+                This will permanently delete all <strong>{questions.length} questions</strong> from your account.
+              </p>
+            </div>
+
+            <div className="bg-red-50 rounded-xl p-4 mb-6 border border-red-200">
+              <p className="text-sm text-red-800 font-medium mb-2">⚠️ This action cannot be undone!</p>
+              <p className="text-xs text-red-700">
+                All questions, keywords, bullets, and practice history will be deleted.
+              </p>
+            </div>
+
+            <div className="flex gap-4">
+              <button
+                onClick={() => setShowDeleteAllConfirm(false)}
+                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-lg transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={deleteAllQuestions}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition-all"
+              >
+                Delete All {questions.length}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DELETE CHOICE MODAL - After deleting all questions */}
+      {showDeleteChoiceModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl max-w-lg w-full p-8 shadow-2xl border border-green-500/30">
+            <div className="text-center mb-6">
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="w-10 h-10 text-green-600" />
+              </div>
+              <h2 className="text-2xl font-bold mb-2">All Questions Deleted!</h2>
+              <p className="text-lg text-gray-300">What would you like to do next?</p>
+            </div>
+
+            <div className="space-y-4 mb-6">
+              <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
+                <h3 className="font-bold text-green-400 mb-2">📦 Load 12 Default Questions</h3>
+                <p className="text-sm text-gray-400">
+                  Get common interview questions to start using Live Prompter immediately
+                </p>
+              </div>
+              
+              <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
+                <h3 className="font-bold text-blue-400 mb-2">🗑️ Keep Question Bank Empty</h3>
+                <p className="text-sm text-gray-400">
+                  Start fresh - you can add custom questions or load defaults anytime in Command Center
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <button
+                onClick={async () => {
+                  // Set "keep empty" preference
+                  localStorage.setItem(`isl_keep_empty_${currentUser.id}`, 'true');
+                  setShowDeleteChoiceModal(false);
+                  console.log('✅ User chose to keep question bank empty');
+                }}
+                className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-bold py-4 rounded-xl transition-all border border-gray-600"
+              >
+                Keep Empty
+              </button>
+              <button
+                onClick={async () => {
+                  // Clear "keep empty" preference and load defaults
+                  localStorage.removeItem(`isl_keep_empty_${currentUser.id}`);
+                  const success = await initializeDefaultQuestions(currentUser.id);
+                  if (success) {
+                    await loadQuestions();
+                    localStorage.setItem(`isl_defaults_initialized_${currentUser.id}`, 'true');
+                    setShowDeleteChoiceModal(false);
+                    console.log('✅ Loaded 12 default questions');
+                  }
+                }}
+                className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg"
+              >
+                Load 12 Defaults
               </button>
             </div>
           </div>
@@ -5525,10 +5668,22 @@ onClick={async () => {
                   </div>
                 )}
               </div>
-              <button onClick={() => setEditingQuestion({ question: '', keywords: [], category: 'Core Narrative', priority: 'Must-Know', bullets: [''], narrative: '', followups: [] })} className="mb-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-3 rounded-lg flex items-center gap-2">
-                <Plus className="w-5 h-5" />
-                Add Question
-              </button>
+              <div className="flex items-center justify-between mb-6">
+                <button onClick={() => setEditingQuestion({ question: '', keywords: [], category: 'Core Narrative', priority: 'Must-Know', bullets: [''], narrative: '', followups: [] })} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-3 rounded-lg flex items-center gap-2">
+                  <Plus className="w-5 h-5" />
+                  Add Question
+                </button>
+                
+                {questions.length > 0 && (
+                  <button 
+                    onClick={() => setShowDeleteAllConfirm(true)} 
+                    className="bg-red-100 hover:bg-red-200 text-red-700 font-bold px-6 py-3 rounded-lg flex items-center gap-2 border-2 border-red-300"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                    Delete All ({questions.length})
+                  </button>
+                )}
+              </div>
               
               <div className="flex gap-2 mb-6">
                 <button onClick={() => { const input = document.createElement('input'); input.type = 'file'; input.accept = '.json'; input.onchange = (e) => { const file = e.target.files[0]; const reader = new FileReader(); reader.onload = (event) => importQuestions(event.target.result); reader.readAsText(file); }; input.click(); }} className="px-4 py-2 bg-gray-200 rounded-lg flex items-center gap-2">
