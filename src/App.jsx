@@ -143,6 +143,7 @@ const ISL = () => {
   const isListeningRef = useRef(false);
   const captureSourceRef = useRef(null); // Track if capture was started by 'mouse' or 'keyboard'
   const aiQuestionRef = useRef(null); // For auto-scrolling to AI questions
+  const initializingDefaultsRef = useRef(false); // Prevent double-initialization in React Strict Mode
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [interviewDate, setInterviewDate] = useState(localStorage.getItem('isl_interview_date') || '');
   const [aiGeneratorCollapsed, setAiGeneratorCollapsed] = useState(true);
@@ -713,6 +714,12 @@ loadPracticeHistory();
     const setupNewUserIfNeeded = async () => {
       if (!currentUser) return;
       
+      // CRITICAL: Prevent double-run in React Strict Mode
+      if (initializingDefaultsRef.current) {
+        console.log('⏭️ Already initializing defaults - skipping duplicate run');
+        return;
+      }
+      
       // Load session count from localStorage
       const storageKey = `isl_session_count_${currentUser.id}`;
       const savedCount = parseInt(localStorage.getItem(storageKey) || '0', 10);
@@ -756,6 +763,9 @@ loadPracticeHistory();
           console.log('🆕 New user detected! Setting up...');
           setIsNewUser(true);
           
+          // Set flag IMMEDIATELY before async operation
+          initializingDefaultsRef.current = true;
+          
           // Initialize default questions
           const success = await initializeDefaultQuestions(currentUser.id);
           
@@ -772,6 +782,9 @@ loadPracticeHistory();
               setShowWelcomeModal(true);
             }
           }
+          
+          // Reset flag after completion
+          initializingDefaultsRef.current = false;
         } else {
           console.log('✅ Existing user - questions already loaded');
           // Mark as initialized if they have questions
@@ -779,6 +792,7 @@ loadPracticeHistory();
         }
       } catch (err) {
         console.error('❌ Error in new user setup:', err);
+        initializingDefaultsRef.current = false; // Reset on error
       }
     };
 
