@@ -1093,6 +1093,13 @@ const stopSystemAudioCapture = () => {
 // SESSION-BASED MICROPHONE CONTROL
 const startInterviewSession = () => {
   console.log('🎬 Starting interview session');
+  
+  // Reinitialize recognition if it was cleaned up
+  if (!recognitionRef.current) {
+    console.log('🔄 Recognition was cleaned up, reinitializing...');
+    initSpeechRecognition();
+  }
+  
   if (!micPermission) { 
     requestMicPermission(); 
     return; 
@@ -1132,30 +1139,73 @@ const endInterviewSession = () => {
   
   if (!interviewSessionActiveRef.current) return;
   
-  // Stop mic ONCE
+  // CRITICAL: Stop and clean up microphone completely
   if (recognitionRef.current) {
     try {
+      // Stop recognition
       recognitionRef.current.stop();
-      setInterviewSessionActive(false);
-      interviewSessionActiveRef.current = false; // Update ref immediately
-      setSessionReady(false);
-      setIsListening(false);
-      isListeningRef.current = false; // Update ref immediately
-      setIsCapturing(false);
-      isCapturingRef.current = false; // Update ref immediately
-      setMatchedQuestion(null);
-      setTranscript('');
-      setLiveTranscript('');
-      accumulatedTranscript.current = '';
-      currentInterimRef.current = '';
-      console.log('✅ Session ended');
       
-      // Track session completion for customization nudges
-      incrementSessionCount();
+      // Abort any pending processing to release mic immediately
+      try {
+        recognitionRef.current.abort();
+      } catch (abortErr) {
+        // abort() might not be available in all browsers, ignore error
+      }
+      
+      // Remove all event listeners to prevent ghost restarts
+      recognitionRef.current.onresult = null;
+      recognitionRef.current.onerror = null;
+      recognitionRef.current.onend = null;
+      recognitionRef.current.onstart = null;
+      recognitionRef.current.onsoundstart = null;
+      recognitionRef.current.onsoundend = null;
+      recognitionRef.current.onspeechstart = null;
+      recognitionRef.current.onspeechend = null;
+      recognitionRef.current.onaudiostart = null;
+      recognitionRef.current.onaudioend = null;
+      
+      // Nullify the reference to ensure complete cleanup
+      recognitionRef.current = null;
+      
+      console.log('✅ Speech recognition fully cleaned up');
     } catch (err) {
-      console.error('Session end failed:', err);
+      console.error('Error stopping recognition:', err);
     }
   }
+  
+  // Clean up system audio capture if active
+  if (systemAudioStream) {
+    try {
+      systemAudioStream.getTracks().forEach(track => {
+        track.stop();
+        console.log('🔇 Stopped audio track:', track.label);
+      });
+      setSystemAudioStream(null);
+      setUseSystemAudio(false);
+      console.log('✅ System audio fully cleaned up');
+    } catch (err) {
+      console.error('Error stopping system audio:', err);
+    }
+  }
+  
+  // Reset all state
+  setInterviewSessionActive(false);
+  interviewSessionActiveRef.current = false;
+  setSessionReady(false);
+  setIsListening(false);
+  isListeningRef.current = false;
+  setIsCapturing(false);
+  isCapturingRef.current = false;
+  setMatchedQuestion(null);
+  setTranscript('');
+  setLiveTranscript('');
+  accumulatedTranscript.current = '';
+  currentInterimRef.current = '';
+  
+  console.log('✅ Session ended and mic fully released');
+  
+  // Track session completion for customization nudges
+  incrementSessionCount();
 };
 
 // SPACEBAR CONTROLS CAPTURING (NOT MIC START/STOP)
