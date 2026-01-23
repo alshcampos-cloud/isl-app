@@ -2236,9 +2236,11 @@ const startPracticeMode = async () => {
               {/* Option 1: AI Generator */}
               <div className="bg-white/10 backdrop-blur rounded-xl p-5 border-2 border-purple-400/50 hover:border-purple-400 transition cursor-pointer"
                 onClick={() => {
+                  console.log('🟣 AI Generator clicked in Add Questions Prompt');
                   setShowAddQuestionsPrompt(false);
                   setCurrentView('command-center');
                   setCommandCenterTab('bank');
+                  console.log('🟣 Should navigate to Command Center (bank tab)');
                 }}
               >
                 <div className="flex items-start gap-4">
@@ -2260,8 +2262,12 @@ const startPracticeMode = async () => {
               {/* Option 2: Template Library */}
               <div className="bg-white/10 backdrop-blur rounded-xl p-5 border-2 border-indigo-400/30 hover:border-indigo-400 transition cursor-pointer"
                 onClick={() => {
+                  console.log('🔵 Template Library clicked in Add Questions Prompt');
+                  console.log('🔵 Closing Add Questions Prompt...');
                   setShowAddQuestionsPrompt(false);
+                  console.log('🔵 Opening Template Library...');
                   setShowTemplateLibrary(true);
+                  console.log('🔵 Template Library state should now be true');
                 }}
               >
                 <div className="flex items-start gap-4">
@@ -2280,9 +2286,11 @@ const startPracticeMode = async () => {
               {/* Option 3: Manual */}
               <div className="bg-white/10 backdrop-blur rounded-xl p-5 border-2 border-indigo-400/30 hover:border-indigo-400 transition cursor-pointer"
                 onClick={() => {
+                  console.log('⚪ Manual Entry clicked in Add Questions Prompt');
                   setShowAddQuestionsPrompt(false);
                   setCurrentView('command-center');
                   setCommandCenterTab('bank');
+                  console.log('⚪ Should navigate to Command Center (bank tab)');
                 }}
               >
                 <div className="flex items-start gap-4">
