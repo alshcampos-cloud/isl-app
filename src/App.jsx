@@ -2849,27 +2849,29 @@ const startPracticeMode = async () => {
                 </div>
               </div>
             </div>
-            <div className="bg-white/10 backdrop-blur-lg rounded-xl p-4 text-white hover:bg-white/15 transition-all duration-200">
+            {/* Usage Dashboard Link Card - Clickable */}
+            <div 
+              className="bg-white/10 backdrop-blur-lg rounded-xl p-4 text-white hover:bg-white/15 transition-all duration-200 cursor-pointer"
+              onClick={() => setShowUsageDashboard(true)}
+            >
               <div className="flex items-center gap-3">
                 <Zap className="w-8 h-8 text-yellow-300 flex-shrink-0" />
                 <div className="min-w-0">
                   <p className="text-2xl font-bold leading-tight">
-                    {usageStats?.tier === 'premium' || usageStats?.tier === 'beta' 
+                    {userTier === 'pro' 
                       ? '∞' 
-                      : `${usageThisMonth}/${usageLimit}`
+                      : 'View Usage'
                     }
                   </p>
                   <p className="text-sm text-white/90 leading-tight whitespace-nowrap font-medium">
-                    {usageStats?.tier === 'premium' || usageStats?.tier === 'beta'
-                      ? '✨ Unlimited AI'
-                      : 'AI Uses This Month'
+                    {userTier === 'pro'
+                      ? '✨ Unlimited Access'
+                      : 'Track Your Limits'
                     }
                   </p>
-                  {usageStats?.tier !== 'premium' && usageStats?.tier !== 'beta' && usageThisMonth >= usageLimit * 0.8 && (
-                    <p className="text-xs text-yellow-300 mt-1 font-bold">
-                      {usageThisMonth >= usageLimit ? '❌ Limit reached' : '⚠️ Running low'}
-                    </p>
-                  )}
+                  <p className="text-xs text-blue-300 mt-1 font-bold">
+                    👆 Click to see details
+                  </p>
                 </div>
               </div>
             </div>
@@ -5888,7 +5890,7 @@ onClick={async () => {
 {/* ==================== QUESTION BANK TAB ==================== */}
 {commandCenterTab === 'bank' && (
             <div>
-              {/* AI Question Generator - Pro Only - COLLAPSIBLE */}
+              {/* AI Question Generator - Free: 5/month, Pro: Unlimited */}
               <div className="mb-6">
                 <button
                   onClick={() => setAiGeneratorCollapsed(!aiGeneratorCollapsed)}
@@ -5902,8 +5904,13 @@ onClick={async () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    {(usageStats?.tier === 'pro' || usageStats?.tier === 'premium' || usageStats?.tier === 'beta') && (
-                      <span className="px-3 py-1 bg-purple-600 text-white text-xs font-bold rounded-full">ACTIVE</span>
+                    {usageStatsData?.questionGen?.unlimited && (
+                      <span className="px-3 py-1 bg-purple-600 text-white text-xs font-bold rounded-full">UNLIMITED</span>
+                    )}
+                    {!usageStatsData?.questionGen?.unlimited && usageStatsData?.questionGen && (
+                      <span className="px-3 py-1 bg-gray-200 text-gray-700 text-xs font-bold rounded-full">
+                        {usageStatsData.questionGen.remaining}/{usageStatsData.questionGen.limit}
+                      </span>
                     )}
                     {aiGeneratorCollapsed ? (
                       <ChevronRight className="w-6 h-6 text-gray-600" />
@@ -5915,9 +5922,18 @@ onClick={async () => {
                 
                 {!aiGeneratorCollapsed && (
                   <div className="mt-4 p-6 bg-white rounded-xl border-2 border-purple-200">
-                    {(usageStats?.tier === 'pro' || usageStats?.tier === 'premium' || usageStats?.tier === 'beta') ? (
+                    {(usageStatsData?.questionGen?.unlimited || usageStatsData?.questionGen?.remaining > 0) ? (
                       <QuestionAssistant
                         onQuestionGenerated={async (generatedQuestion) => {
+                          // Increment usage first
+                          if (!usageStatsData?.questionGen?.unlimited) {
+                            const canUse = await checkAndIncrementUsage('questionGen', 'Question Generator');
+                            if (!canUse) {
+                              console.log('❌ Out of Question Generator credits');
+                              return;
+                            }
+                          }
+                          
                           try {
                             const { data: { user } } = await supabase.auth.getUser();
                             if (user) {
@@ -5949,23 +5965,30 @@ onClick={async () => {
                       />
                     ) : (
                       <div className="text-center py-8">
-                        <p className="text-gray-600 mb-4 max-w-md mx-auto">
-                          Generate personalized, MI-powered interview questions tailored to your role, background, and target company.
-                        </p>
-                        <div className="bg-gray-50 rounded-lg p-4 mb-6 max-w-sm mx-auto">
-                          <p className="text-sm font-semibold text-purple-900 mb-2">🎯 What You Get:</p>
-                          <ul className="text-xs text-left text-gray-700 space-y-1">
-                            <li>✓ Questions tailored to YOUR background</li>
-                            <li>✓ Learns from your existing questions</li>
-                            <li>✓ MI-powered for authentic practice</li>
-                            <li>✓ Role & company-specific</li>
+                        <div className="mb-6">
+                          <div className="text-5xl mb-3">🚫</div>
+                          <h3 className="text-xl font-bold text-gray-900 mb-2">
+                            You've used all 5 free Question Generations this month!
+                          </h3>
+                          <p className="text-gray-600 mb-4 max-w-md mx-auto">
+                            Upgrade to Pro for unlimited AI-powered question generation
+                          </p>
+                        </div>
+                        <div className="bg-indigo-50 rounded-lg p-4 mb-6 max-w-sm mx-auto">
+                          <p className="text-sm font-semibold text-indigo-900 mb-2">💎 Pro Benefits:</p>
+                          <ul className="text-sm text-left text-indigo-800 space-y-1">
+                            <li>✨ <strong>UNLIMITED</strong> Question Generator</li>
+                            <li>✨ <strong>UNLIMITED</strong> AI Interviewer</li>
+                            <li>✨ <strong>UNLIMITED</strong> Practice Mode</li>
+                            <li>✨ <strong>UNLIMITED</strong> Answer Assistant</li>
+                            <li>✨ <strong>UNLIMITED</strong> Live Prompter</li>
                           </ul>
                         </div>
                         <button
                           onClick={() => setShowPricingPage(true)}
-                          className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-8 py-3 rounded-lg font-bold hover:from-purple-700 hover:to-indigo-700 shadow-lg transform hover:scale-105 transition"
+                          className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-10 py-4 rounded-lg font-bold text-lg hover:from-purple-700 hover:to-indigo-700 shadow-lg transform hover:scale-105 transition"
                         >
-                          Upgrade to Pro - $29.99/month for UNLIMITED
+                          Upgrade to Pro - $29.99/month
                         </button>
                       </div>
                     )}
