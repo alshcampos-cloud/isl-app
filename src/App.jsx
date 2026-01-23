@@ -3528,7 +3528,7 @@ const startPracticeMode = async () => {
                     </button>
                   ) : (
                     <button
-                      onClick={() => alert('⭐ Pro Feature\n\nUpgrade to Pro ($19.99/month) to use the AI Answer Coach!\n\n✓ AI guides you through developing answers\n✓ Auto-generates bullet points\n✓ Saves to all your question modes')}
+                      onClick={() => alert('⭐ Pro Feature\n\nUpgrade to Pro ($29.99/month) for UNLIMITED access!\n\n✓ Unlimited AI Answer Coach sessions\n✓ Unlimited AI Interview practice\n✓ Unlimited Practice Mode\n✓ Everything unlimited - practice as much as you need!')}
                       className="text-sm bg-gradient-to-r from-yellow-100 to-amber-100 hover:from-yellow-200 hover:to-amber-200 text-yellow-800 px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2"
                     >
                       <Crown className="w-4 h-4" />
@@ -4196,7 +4196,7 @@ onClick={async () => {
                       </button>
                     ) : (
                       <button
-                        onClick={() => alert('⭐ Pro Feature\n\nUpgrade to Pro ($19.99/month) to use the AI Answer Coach!\n\n✓ AI guides you through developing answers\n✓ Auto-generates bullet points\n✓ Saves to all your question modes')}
+                        onClick={() => alert('⭐ Pro Feature\n\nUpgrade to Pro ($29.99/month) for UNLIMITED access!\n\n✓ Unlimited AI Answer Coach sessions\n✓ Unlimited AI Interview practice\n✓ Unlimited Practice Mode\n✓ Everything unlimited - practice as much as you need!')}
                         className="text-sm bg-gradient-to-r from-yellow-100 to-amber-100 hover:from-yellow-200 hover:to-amber-200 text-yellow-800 px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2"
                       >
                         <Crown className="w-4 h-4" />
@@ -5888,7 +5888,7 @@ onClick={async () => {
 {/* ==================== QUESTION BANK TAB ==================== */}
 {commandCenterTab === 'bank' && (
             <div>
-              {/* AI Question Generator - Pro/Premium Only - COLLAPSIBLE */}
+              {/* AI Question Generator - Pro Only - COLLAPSIBLE */}
               <div className="mb-6">
                 <button
                   onClick={() => setAiGeneratorCollapsed(!aiGeneratorCollapsed)}
@@ -5962,10 +5962,10 @@ onClick={async () => {
                           </ul>
                         </div>
                         <button
-                          onClick={() => alert('Upgrade feature coming soon!')}
+                          onClick={() => setShowPricingPage(true)}
                           className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-8 py-3 rounded-lg font-bold hover:from-purple-700 hover:to-indigo-700 shadow-lg transform hover:scale-105 transition"
                         >
-                          Upgrade to Pro - $19.99/month
+                          Upgrade to Pro - $29.99/month for UNLIMITED
                         </button>
                       </div>
                     )}
