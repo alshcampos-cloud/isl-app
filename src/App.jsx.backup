@@ -16,9 +16,6 @@ import AnswerAssistant from './Components/AnswerAssistant';
 import TemplateLibrary from './TemplateLibrary';
 import Tutorial from './Components/Tutorial';
 import { DEFAULT_QUESTIONS } from './default_questions';
-import { canUseFeature, incrementUsage, getUsageStats, TIER_LIMITS } from './utils/creditSystem';
-import UsageDashboard from './Components/UsageDashboard';
-import PricingPage from './Components/PricingPage';
 
 // CSS string is OK at top-level
 const styles = `
@@ -156,10 +153,6 @@ const ISL = () => {
   const [dailyGoal, setDailyGoal] = useState(parseInt(localStorage.getItem('isl_daily_goal') || '3', 10));
   const [selectedSession, setSelectedSession] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
-  const [userTier, setUserTier] = useState('free');
-  const [showPricingPage, setShowPricingPage] = useState(false);
-  const [showUsageDashboard, setShowUsageDashboard] = useState(false);
-  const [usageStatsData, setUsageStatsData] = useState(null);
   const [comparisonMode, setComparisonMode] = useState(false);
   const [showAnswerAssistant, setShowAnswerAssistant] = useState(false);
   const [answerAssistantQuestion, setAnswerAssistantQuestion] = useState(null);
@@ -706,54 +699,12 @@ loadPracticeHistory();
   }, [interviewType]);
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      const user = session?.user ?? null;
-      setCurrentUser(user);
-      
-      // Load user tier from user_profiles
-      if (user) {
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('tier, subscription_status')
-          .eq('user_id', user.id)
-          .single();
-        
-        if (profile) {
-          setUserTier(profile.tier || 'free');
-        } else {
-          // Create profile if doesn't exist
-          await supabase
-            .from('user_profiles')
-            .insert([{ user_id: user.id, tier: 'free' }]);
-          setUserTier('free');
-        }
-        
-        // Load usage stats
-        const stats = await getUsageStats(supabase, user.id, profile?.tier || 'free');
-        setUsageStatsData(stats);
-      }
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setCurrentUser(session?.user ?? null);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      const user = session?.user ?? null;
-      setCurrentUser(user);
-      
-      // Load user tier on auth change
-      if (user) {
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('tier, subscription_status')
-          .eq('user_id', user.id)
-          .single();
-        
-        if (profile) {
-          setUserTier(profile.tier || 'free');
-        }
-        
-        // Load usage stats
-        const stats = await getUsageStats(supabase, user.id, profile?.tier || 'free');
-        setUsageStatsData(stats);
-      }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCurrentUser(session?.user ?? null);
     });
 
     return () => {
@@ -1008,63 +959,61 @@ question_id: (questionData.id && questionData.id !== "0" && typeof questionData.
   };
 
  // Check and increment usage
-  // CHECK AND INCREMENT USAGE - Call this before using AI features
-  const checkAndIncrementUsage = async (feature, featureName) => {
-    if (!currentUser) {
-      alert('Please sign in first');
-      return false;
+  const checkAndIncrementUsage = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return { allowed: false, remaining: 0 };
+
+      const currentMonth = new Date().toISOString().slice(0, 7);
+
+      const { data: betaUser } = await supabase
+        .from('beta_testers')
+        .select('unlimited_access')
+        .eq('user_id', user.id)
+        .single();
+
+      if (betaUser?.unlimited_access) {
+        console.log('✅ Beta tester - unlimited access');
+        return { allowed: true, remaining: 'unlimited', tier: 'beta' };
+      }
+
+      let { data: usage, error } = await supabase
+        .from('usage_tracking')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('month', currentMonth)
+        .single();
+
+      if (error && error.code === 'PGRST116') {
+        const { data: newUsage } = await supabase
+          .from('usage_tracking')
+          .insert({ user_id: user.id, month: currentMonth, session_count: 0, tier: 'free' })
+          .select()
+          .single();
+        usage = newUsage;
+      }
+
+      const limits = { free: 25, pro: 100, beta: Infinity };
+      const limit = limits[usage.tier] || 25;
+      const remaining = limit - usage.session_count;
+
+      if (usage.session_count >= limit) {
+        console.log('❌ Usage limit reached');
+        return { allowed: false, remaining: 0, tier: usage.tier };
+      }
+
+      await supabase
+        .from('usage_tracking')
+        .update({ session_count: usage.session_count + 1 })
+        .eq('user_id', user.id)
+        .eq('month', currentMonth);
+
+      console.log(`✅ Usage tracked: ${usage.session_count + 1}/${limit}`);
+      return { allowed: true, remaining: remaining - 1, tier: usage.tier };
+    } catch (error) {
+      console.error('Usage tracking error:', error);
+      return { allowed: true, remaining: 0 };
     }
-
-    // Get current usage for this month
-    const currentPeriod = new Date().toISOString().slice(0, 7); // YYYY-MM
-    
-    const { data: usage, error } = await supabase
-      .from('usage_tracking')
-      .select('*')
-      .eq('user_id', currentUser.id)
-      .eq('period', currentPeriod)
-      .single();
-
-    if (error && error.code !== 'PGRST116') {
-      console.error('Error fetching usage:', error);
-    }
-
-    // Check if allowed
-    const check = canUseFeature(usage || {}, userTier, feature);
-    
-    if (!check.allowed) {
-      // Show upgrade modal with specific message
-      const tierLimits = TIER_LIMITS[userTier];
-      alert(`You've used all ${tierLimits[feature]} ${featureName} sessions this month!
-
-Upgrade to get more:
-• Starter ($14.99/mo): 20 AI Interviewer, 30 Practice, 5 Answer Assistant
-• Pro ($29.99/mo): 50 AI Interviewer, unlimited Practice, 15 Answer Assistant
-
-Click the Upgrade button to see all plans!`);
-      setShowPricingPage(true);
-      return false;
-    }
-
-    // Increment usage
-    await incrementUsage(supabase, currentUser.id, feature);
-    
-    // Reload stats
-    const stats = await getUsageStats(supabase, currentUser.id, userTier);
-    setUsageStatsData(stats);
-    
-    console.log(`✅ ${featureName} session started. ${check.remaining - 1} remaining this month.`);
-    
-    return true;
-  };
-
-  // Wrapper function to open Answer Assistant with usage check
-  const openAnswerAssistant = async (question) => {
-    const canUse = await checkAndIncrementUsage('answerAssistant', 'Answer Assistant');
-    if (!canUse) return;
-    
-    setAnswerAssistantQuestion(question);
-    setShowAnswerAssistant(true);
   };
 
   const getCurrentUsage = async () => {
@@ -2080,12 +2029,14 @@ useEffect(() => {
   
   const actuallyStartAIInterviewer = async () => {
     console.log('🚀 Actually starting AI Interviewer');
-    
-    // CHECK USAGE FIRST
-    const canUse = await checkAndIncrementUsage('aiInterviewer', 'AI Interviewer');
-    if (!canUse) return;
-    
     accumulatedTranscript.current = ''; 
+
+    const usageCheck = await checkAndIncrementUsage();
+    if (!usageCheck.allowed) {
+      const limit = usageCheck.tier === 'free' ? '25' : '100';
+      alert(`⚠️ Monthly Limit Reached\n\nYou've used all ${limit} sessions this month.\n\nUpgrade to Pro for 100 sessions/month!`);
+      return;
+    }
 
     const randomQ = questions[Math.floor(Math.random() * questions.length)]; 
     setCurrentQuestion(randomQ); 
@@ -2122,12 +2073,14 @@ const startPracticeMode = async () => {
   
   const actuallyStartPractice = async () => {
     console.log('🚀 Actually starting Practice mode');
-    
-    // CHECK USAGE FIRST
-    const canUse = await checkAndIncrementUsage('practiceMode', 'Practice Mode');
-    if (!canUse) return;
-    
     accumulatedTranscript.current = ''; 
+
+    const usageCheck = await checkAndIncrementUsage();
+    if (!usageCheck.allowed) {
+      const limit = usageCheck.tier === 'free' ? '25' : '100';
+      alert(`⚠️ Monthly Limit Reached\n\nYou've used all ${limit} sessions this month.\n\nUpgrade to Pro for 100 sessions/month!`);
+      return;
+    }
 
     const randomQ = questions[Math.floor(Math.random() * questions.length)]; 
     setCurrentQuestion(randomQ); 
@@ -2710,30 +2663,6 @@ const startPracticeMode = async () => {
                     </p>
                     <p className="text-sm opacity-70">{currentUser?.email}</p>
                   </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowProfileDropdown(false);
-                      setShowUsageDashboard(true);
-                    }}
-                    className="w-full px-4 py-3 text-left hover:bg-gray-50 transition flex items-center gap-3 text-gray-700 border-b border-gray-100"
-                  >
-                    <TrendingUp className="w-5 h-5 text-blue-600" />
-                    <span className="font-semibold">My Usage</span>
-                  </button>
-                  {userTier === 'free' && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowProfileDropdown(false);
-                        setShowPricingPage(true);
-                      }}
-                      className="w-full px-4 py-3 text-left hover:bg-indigo-50 transition flex items-center gap-3 text-indigo-600 border-b border-gray-100 font-semibold"
-                    >
-                      <Crown className="w-5 h-5" />
-                      <span>Upgrade to Pro</span>
-                    </button>
-                  )}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -6694,73 +6623,6 @@ onClick={async () => {
   }
   
   })()} {/* Close IIFE that wraps all views */}
-  
-      {/* ==========================================
-          USAGE DASHBOARD MODAL
-          ========================================== */}
-      {showUsageDashboard && (
-        <div 
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999] p-4"
-          onClick={() => setShowUsageDashboard(false)}
-        >
-          <div 
-            className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-auto relative"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setShowUsageDashboard(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10"
-            >
-              <X className="w-6 h-6" />
-            </button>
-            <UsageDashboard 
-              user={currentUser}
-              supabase={supabase}
-              userTier={userTier}
-              onUpgrade={() => {
-                setShowUsageDashboard(false);
-                setShowPricingPage(true);
-              }}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* ==========================================
-          PRICING PAGE MODAL
-          ========================================== */}
-      {showPricingPage && (
-        <div 
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999] overflow-auto"
-          onClick={() => setShowPricingPage(false)}
-        >
-          <div 
-            className="relative w-full min-h-screen flex items-center justify-center p-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setShowPricingPage(false)}
-              className="absolute top-4 right-4 text-white hover:text-gray-300 z-10"
-            >
-              <X className="w-8 h-8" />
-            </button>
-            <div onClick={(e) => e.stopPropagation()}>
-              <PricingPage
-                currentTier={userTier}
-                onSelectTier={(tier) => {
-                  if (tier === 'free') {
-                    setShowPricingPage(false);
-                    return;
-                  }
-                  // TODO: Stripe integration coming next!
-                  alert(`You selected ${tier} tier!\n\nStripe payment integration coming in the next step. For now, you can test the UI!`);
-                  console.log('User selected tier:', tier);
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
     </>
   ); {/* Close fragment that contains dialogs + views */}
 }; // Close ISL component
