@@ -6796,6 +6796,62 @@ onClick={async () => {
       )}
 
       {/* ==========================================
+          TEMPLATE LIBRARY MODAL
+          ========================================== */}
+      {showTemplateLibrary && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
+          <div 
+            className="bg-white rounded-xl max-w-6xl w-full max-h-[90vh] overflow-auto relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <TemplateLibrary
+              onClose={() => {
+                console.log('🔵 Closing Template Library modal');
+                setShowTemplateLibrary(false);
+              }}
+              onOpenAICoach={handleOpenAICoachFromTemplate}
+              checkUsageLimit={checkAIUsageLimit}
+              onImport={async (importedQuestions) => {
+                console.log('Importing questions:', importedQuestions);
+                try {
+                  const { data: { user } } = await supabase.auth.getUser();
+                  if (!user) {
+                    alert('Please sign in to import templates');
+                    return;
+                  }
+                  
+                  // Save to Supabase
+                  const questionsToImport = importedQuestions.map(q => ({
+                    user_id: user.id,
+                    question: q.question,
+                    category: q.category || 'Template',
+                    priority: q.priority || 'Standard',
+                    bullets: q.bullets || [],
+                    narrative: q.narrative || '',
+                    keywords: q.keywords || []
+                  }));
+                  
+                  const { error } = await supabase
+                    .from('questions')
+                    .insert(questionsToImport);
+                  
+                  if (error) throw error;
+                  
+                  // Reload questions
+                  await loadQuestions();
+                  setShowTemplateLibrary(false);
+                  alert(`✅ Imported ${importedQuestions.length} template questions!`);
+                } catch (error) {
+                  console.error('Error importing:', error);
+                  alert('Import failed: ' + error.message);
+                }
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ==========================================
           PASSWORD RESET MODAL
           ========================================== */}
       {showResetPassword && (
