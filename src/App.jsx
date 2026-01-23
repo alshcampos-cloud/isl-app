@@ -2206,6 +2206,15 @@ const startPracticeMode = async () => {
           // After tutorial, show add questions prompt
           setShowAddQuestionsPrompt(true);
         }}
+        onOpenTemplateLibrary={() => {
+          setShowTutorial(false);
+          setShowTemplateLibrary(true);
+        }}
+        onNavigateToCommandCenter={(tab = 'bank') => {
+          setShowTutorial(false);
+          setCurrentView('command-center');
+          setCommandCenterTab(tab);
+        }}
       />
 
       {/* ADD QUESTIONS PROMPT - Shows after tutorial or for users with no questions */}

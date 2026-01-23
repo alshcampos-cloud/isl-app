@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, ChevronRight, CheckCircle, Brain, Mic, Target, BookOpen, Sparkles, Lightbulb, Zap, AlertCircle, Crown } from 'lucide-react';
 
-export default function Tutorial({ user, isActive, onClose }) {
+export default function Tutorial({ user, isActive, onClose, onOpenTemplateLibrary, onNavigateToCommandCenter }) {
   const [currentStep, setCurrentStep] = useState(0);
   const [hasShownTutorial, setHasShownTutorial] = useState(false);
 
@@ -43,23 +43,47 @@ export default function Tutorial({ user, isActive, onClose }) {
             Start by adding questions you expect in your interviews. You have three options:
           </p>
           <div className="space-y-3">
-            <div className="bg-green-50 rounded-lg p-3 border-l-4 border-green-500">
+            <div 
+              className="bg-green-50 rounded-lg p-3 border-l-4 border-green-500 cursor-pointer hover:bg-green-100 transition"
+              onClick={() => {
+                if (onNavigateToCommandCenter) {
+                  onNavigateToCommandCenter('bank');
+                }
+              }}
+            >
               <p className="font-semibold text-green-900 mb-1">✨ AI Question Generator (Recommended)</p>
               <p className="text-sm text-green-800">
                 Enter your target role, background, and job description. The AI generates personalized questions that match what you'll actually be asked.
               </p>
+              <p className="text-xs text-green-700 mt-2 font-semibold">👉 Click here to open</p>
             </div>
-            <div className="bg-blue-50 rounded-lg p-3 border-l-4 border-blue-500">
+            <div 
+              className="bg-blue-50 rounded-lg p-3 border-l-4 border-blue-500 cursor-pointer hover:bg-blue-100 transition"
+              onClick={() => {
+                if (onOpenTemplateLibrary) {
+                  onOpenTemplateLibrary();
+                }
+              }}
+            >
               <p className="font-semibold text-blue-900 mb-1">📚 Template Library</p>
               <p className="text-sm text-blue-800">
                 Import pre-built question sets for common roles (Product Manager, Software Engineer, Emergency Management, etc.)
               </p>
+              <p className="text-xs text-blue-700 mt-2 font-semibold">👉 Click here to open</p>
             </div>
-            <div className="bg-gray-50 rounded-lg p-3 border-l-4 border-gray-500">
+            <div 
+              className="bg-gray-50 rounded-lg p-3 border-l-4 border-gray-500 cursor-pointer hover:bg-gray-100 transition"
+              onClick={() => {
+                if (onNavigateToCommandCenter) {
+                  onNavigateToCommandCenter('bank');
+                }
+              }}
+            >
               <p className="font-semibold text-gray-900 mb-1">✍️ Manual Entry</p>
               <p className="text-sm text-gray-800">
                 Add questions directly from job postings or past interview experiences
               </p>
+              <p className="text-xs text-gray-700 mt-2 font-semibold">👉 Click here to open</p>
             </div>
           </div>
         </div>
