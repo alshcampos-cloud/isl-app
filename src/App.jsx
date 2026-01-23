@@ -2331,7 +2331,7 @@ const startPracticeMode = async () => {
               <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Sparkles className="w-10 h-10 text-white" />
               </div>
-              <h2 className="text-3xl font-bold mb-2">Welcome to ISL!</h2>
+              <h2 className="text-3xl font-bold mb-2">Welcome to InterviewAnswers.ai!</h2>
               <p className="text-xl text-gray-300">We've loaded 12 common interview questions so you can start immediately</p>
             </div>
 
@@ -2562,7 +2562,7 @@ const startPracticeMode = async () => {
               </div>
               
               <p className="text-gray-700 mb-3 text-sm">
-                ISL uses your microphone to record practice responses for AI feedback.
+                InterviewAnswers.ai uses your microphone to record practice responses for AI feedback.
               </p>
 
               <div className="bg-blue-50 border-l-4 border-blue-400 rounded p-3 mb-3 text-xs">
@@ -2824,9 +2824,8 @@ const startPracticeMode = async () => {
 
           {/* Clean Centered Title */}
           <div className="text-center mb-10">
-            <h1 className="text-6xl font-bold text-white mb-3">ISL</h1>
-            <p className="text-3xl text-indigo-200 mb-2">Interview as a Second Language</p>
-            <p className="text-gray-300">Master interviews with AI-powered practice</p>
+            <h1 className="text-6xl font-bold text-white mb-3">InterviewAnswers.ai</h1>
+            <p className="text-3xl text-indigo-200 mb-2">Master Your Interview Answers with AI</p>
           </div>
 
           {/* Compact Stats Row - Professional */}
@@ -6453,7 +6452,7 @@ onClick={async () => {
             <p className="text-sm text-gray-600 mb-6">Last updated: January 12, 2026</p>
             
             <p className="mb-6 text-gray-700 leading-relaxed">
-              Interview as a Second Language ("ISL") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and protect your personal information.
+              InterviewAnswers.ai is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and protect your personal information.
             </p>
             
             <h2 className="text-2xl font-semibold mt-8 mb-4">Information We Collect</h2>
@@ -6498,7 +6497,7 @@ onClick={async () => {
             
             <h2 className="text-2xl font-semibold mt-8 mb-4">Microphone Access and Recording</h2>
             <p className="mb-4 text-gray-700">
-              ISL requests microphone access to record your practice interview responses. You have complete 
+              InterviewAnswers.ai requests microphone access to record your practice interview responses. You have complete 
               control over when recording occurs. Audio is used solely to generate transcriptions and provide 
               feedback. We do not monitor, listen to, or store your recordings on external servers without 
               your explicit consent.
@@ -6506,7 +6505,7 @@ onClick={async () => {
             
             <h3 className="text-xl font-semibold mt-6 mb-3">Recording Consent and Legal Compliance</h3>
             <p className="mb-4 text-gray-700">
-              <strong>Important:</strong> If you use ISL's Live Prompter feature during actual interviews with other people, 
+              <strong>Important:</strong> If you use InterviewAnswers.ai's Live Prompter feature during actual interviews with other people, 
               you are solely responsible for obtaining consent from all parties being recorded and complying with 
               applicable recording laws. Many jurisdictions require all-party consent before recording conversations.
             </p>
@@ -6551,7 +6550,7 @@ onClick={async () => {
             
             <h2 className="text-2xl font-semibold mt-8 mb-4">Children's Privacy</h2>
             <p className="mb-6 text-gray-700">
-              ISL is not intended for children under the age of 13. We do not knowingly collect personal 
+              InterviewAnswers.ai is not intended for children under the age of 13. We do not knowingly collect personal 
               information from children under 13. If you believe we have collected information from a child 
               under 13, please contact us immediately and we will delete such information.
             </p>
@@ -6560,7 +6559,7 @@ onClick={async () => {
             <p className="mb-6 text-gray-700">
               We may update this Privacy Policy from time to time. We will notify you of any material changes 
               by posting the new Privacy Policy on this page and updating the "Last updated" date. Your continued 
-              use of ISL after such changes constitutes acceptance of the updated policy.
+              use of InterviewAnswers.ai after such changes constitutes acceptance of the updated policy.
             </p>
             
             <h2 className="text-2xl font-semibold mt-8 mb-4">Contact Us</h2>
@@ -6593,20 +6592,20 @@ onClick={async () => {
             
             <h2 className="text-2xl font-semibold mt-8 mb-4">1. Acceptance of Terms</h2>
             <p className="mb-6 text-gray-700">
-              By accessing or using Interview as a Second Language ("ISL"), you agree to be bound by these Terms of Service 
-              and all applicable laws and regulations. If you do not agree with these terms, you may not use ISL.
+              By accessing or using InterviewAnswers.ai, you agree to be bound by these Terms of Service 
+              and all applicable laws and regulations. If you do not agree with these terms, you may not use InterviewAnswers.ai.
             </p>
             
             <h2 className="text-2xl font-semibold mt-8 mb-4">2. License to Use</h2>
             <p className="mb-6 text-gray-700">
-              We grant you a limited, non-exclusive, non-transferable, revocable license to access and use ISL 
-              for personal interview practice and preparation. You may not use ISL for any commercial purpose 
+              We grant you a limited, non-exclusive, non-transferable, revocable license to access and use InterviewAnswers.ai 
+              for personal interview practice and preparation. You may not use InterviewAnswers.ai for any commercial purpose 
               without our prior written consent.
             </p>
             
             <h2 className="text-2xl font-semibold mt-8 mb-4">3. AI-Generated Content</h2>
             <p className="mb-4 text-gray-700">
-              ISL uses artificial intelligence to generate interview feedback and suggestions. You acknowledge and agree that:
+              InterviewAnswers.ai uses artificial intelligence to generate interview feedback and suggestions. You acknowledge and agree that:
             </p>
             <ul className="list-disc pl-6 mb-6 space-y-2 text-gray-700">
               <li>AI-generated feedback may contain errors, inaccuracies, or biases</li>
@@ -6621,7 +6620,7 @@ onClick={async () => {
               User Responsibility for Recording Consent:
             </p>
             <p className="mb-4 text-gray-700">
-              If you use ISL's Live Prompter feature or any recording functionality during actual interviews 
+              If you use InterviewAnswers.ai's Live Prompter feature or any recording functionality during actual interviews 
               or conversations with other people, you are solely responsible for:
             </p>
             <ul className="list-disc pl-6 mb-4 space-y-2 text-gray-700">
@@ -6635,7 +6634,7 @@ onClick={async () => {
               consent laws include California, Connecticut, Florida, Illinois, Maryland, Massachusetts, Michigan, 
               Montana, Nevada, New Hampshire, Pennsylvania, and Washington. This list is not exhaustive. Recording 
               without proper consent may result in criminal penalties, civil liability, and disqualification from 
-              employment consideration. You agree to indemnify and hold ISL harmless from any claims arising from 
+              employment consideration. You agree to indemnify and hold InterviewAnswers.ai harmless from any claims arising from 
               your failure to obtain proper recording consent.
             </p>
             
@@ -6643,12 +6642,12 @@ onClick={async () => {
             <p className="mb-4 text-gray-700">You agree not to:</p>
             <ul className="list-disc pl-6 mb-6 space-y-2 text-gray-700">
               <li>Record conversations without obtaining legally required consent from all parties</li>
-              <li>Use ISL for any unlawful purpose or in violation of any applicable laws</li>
+              <li>Use InterviewAnswers.ai for any unlawful purpose or in violation of any applicable laws</li>
               <li>Upload, transmit, or share illegal, harmful, threatening, or offensive content</li>
-              <li>Attempt to gain unauthorized access to ISL's systems or other users' accounts</li>
-              <li>Reverse engineer, decompile, or disassemble any part of ISL</li>
-              <li>Use automated systems to access or interact with ISL without authorization</li>
-              <li>Interfere with or disrupt the operation of ISL or its servers</li>
+              <li>Attempt to gain unauthorized access to InterviewAnswers.ai's systems or other users' accounts</li>
+              <li>Reverse engineer, decompile, or disassemble any part of InterviewAnswers.ai</li>
+              <li>Use automated systems to access or interact with InterviewAnswers.ai without authorization</li>
+              <li>Interfere with or disrupt the operation of InterviewAnswers.ai or its servers</li>
               <li>Impersonate any person or entity or misrepresent your affiliation</li>
             </ul>
             
@@ -6657,49 +6656,49 @@ onClick={async () => {
               Maximum Liability Cap:
             </p>
             <p className="mb-6 text-gray-700">
-              To the maximum extent permitted by law, ISL's total liability for all claims related to the service 
-              shall not exceed the lesser of (a) the amount you paid to ISL in the twelve months preceding the 
+              To the maximum extent permitted by law, InterviewAnswers.ai's total liability for all claims related to the service 
+              shall not exceed the lesser of (a) the amount you paid to InterviewAnswers.ai in the twelve months preceding the 
               claim, or (b) one hundred dollars ($100 USD).
             </p>
             <p className="mb-4 text-gray-700 font-semibold">
               Exclusion of Damages:
             </p>
             <p className="mb-6 text-gray-700">
-              ISL shall not be liable for any indirect, incidental, special, consequential, or punitive damages, 
+              InterviewAnswers.ai shall not be liable for any indirect, incidental, special, consequential, or punitive damages, 
               including but not limited to loss of profits, data, business opportunities, or goodwill, whether based 
-              on contract, tort, negligence, strict liability, or otherwise, arising from your use of ISL, reliance 
-              on AI-generated feedback, or violation of recording consent laws, even if ISL has been advised of the 
+              on contract, tort, negligence, strict liability, or otherwise, arising from your use of InterviewAnswers.ai, reliance 
+              on AI-generated feedback, or violation of recording consent laws, even if InterviewAnswers.ai has been advised of the 
               possibility of such damages.
             </p>
             
             <h2 className="text-2xl font-semibold mt-8 mb-4">7. Disclaimer of Warranties</h2>
             <p className="mb-6 text-gray-700">
-              ISL IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
+              INTERVIEWANSWERS.AI IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
               INCLUDING BUT NOT LIMITED TO IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, 
-              OR NON-INFRINGEMENT. We do not warrant that ISL will be uninterrupted, secure, or error-free, that 
+              OR NON-INFRINGEMENT. We do not warrant that InterviewAnswers.ai will be uninterrupted, secure, or error-free, that 
               defects will be corrected, or that AI-generated feedback will be accurate, complete, or reliable.
             </p>
             
             <h2 className="text-2xl font-semibold mt-8 mb-4">8. Indemnification</h2>
             <p className="mb-6 text-gray-700">
-              You agree to indemnify, defend, and hold harmless ISL and its officers, directors, employees, and 
+              You agree to indemnify, defend, and hold harmless InterviewAnswers.ai and its officers, directors, employees, and 
               agents from and against any claims, liabilities, damages, losses, costs, or expenses (including 
-              reasonable attorneys' fees) arising from or related to: (a) your use of ISL; (b) your violation 
+              reasonable attorneys' fees) arising from or related to: (a) your use of InterviewAnswers.ai; (b) your violation 
               of these Terms; (c) your violation of any recording laws or failure to obtain proper consent; 
               (d) your reliance on AI-generated feedback; or (e) your violation of any third-party rights.
             </p>
             
             <h2 className="text-2xl font-semibold mt-8 mb-4">9. Account Termination</h2>
             <p className="mb-6 text-gray-700">
-              We reserve the right to suspend or terminate your access to ISL at any time, with or without notice, 
+              We reserve the right to suspend or terminate your access to InterviewAnswers.ai at any time, with or without notice, 
               for any reason, including but not limited to violation of these Terms, fraudulent conduct, or 
               misuse of the service. You may terminate your account at any time by deleting your account 
-              through the Settings page. Upon termination, your right to use ISL will immediately cease.
+              through the Settings page. Upon termination, your right to use InterviewAnswers.ai will immediately cease.
             </p>
             
             <h2 className="text-2xl font-semibold mt-8 mb-4">10. Dispute Resolution and Arbitration</h2>
             <p className="mb-4 text-gray-700">
-              Any dispute, claim, or controversy arising out of or relating to these Terms or your use of ISL 
+              Any dispute, claim, or controversy arising out of or relating to these Terms or your use of InterviewAnswers.ai 
               shall be resolved through binding arbitration administered by the American Arbitration Association 
               under its Commercial Arbitration Rules. The arbitration shall take place in San Francisco, California, 
               or another mutually agreed location.
@@ -6713,7 +6712,7 @@ onClick={async () => {
             <p className="mb-6 text-gray-700">
               We reserve the right to modify these Terms at any time. We will notify you of material changes 
               by posting the updated Terms on this page and updating the "Last updated" date. Your continued 
-              use of ISL after such changes constitutes your acceptance of the modified Terms.
+              use of InterviewAnswers.ai after such changes constitutes your acceptance of the modified Terms.
             </p>
             
             <h2 className="text-2xl font-semibold mt-8 mb-4">12. Governing Law</h2>
@@ -6733,14 +6732,13 @@ onClick={async () => {
             <p className="mb-4 text-gray-700">
               If you have questions about these Terms of Service, please contact us:
             </p>
-            <p className="mb-2 text-gray-700">Email: YOUR_EMAIL@example.com</p>
-            <p className="text-sm text-gray-500 italic mb-6">Please replace with your actual email address</p>
+            <p className="mb-6 text-gray-700">Email: support@interviewanswers.ai</p>
             
             <hr className="my-8 border-gray-300" />
             
             <p className="text-sm text-gray-600 italic">
-              By using ISL, you acknowledge that you have read, understood, and agree to be bound by these 
-              Terms of Service. These Terms constitute a legal agreement between you and ISL.
+              By using InterviewAnswers.ai, you acknowledge that you have read, understood, and agree to be bound by these 
+              Terms of Service. These Terms constitute a legal agreement between you and InterviewAnswers.ai.
             </p>
           </div>
         </div>
