@@ -62,8 +62,11 @@ export default function FirstTimeConsent({ user, onAccepted }) {
   if (isChecking || !showModal) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm overflow-y-auto p-4">
+      <div 
+        className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-8 my-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="text-center mb-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome to ISL</h2>
           <p className="text-gray-600">Before we begin, please review our policies</p>

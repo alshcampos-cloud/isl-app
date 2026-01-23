@@ -1133,44 +1133,67 @@ const stopSystemAudioCapture = () => {
 const startInterviewSession = () => {
   console.log('🎬 Starting interview session');
   
-  // Reinitialize recognition if it was cleaned up
+  // CRITICAL FIX: Always reinitialize recognition before starting new session
+  // This ensures we have a clean, working recognition object
   if (!recognitionRef.current) {
-    console.log('🔄 Recognition was cleaned up, reinitializing...');
+    console.log('🔄 Recognition null, initializing...');
+    initSpeechRecognition();
+  } else {
+    // Even if recognition exists, reinitialize to ensure clean state
+    console.log('🔄 Reinitializing recognition for new session...');
+    try {
+      // Clean up existing recognition first
+      recognitionRef.current.stop();
+      recognitionRef.current.abort?.();
+      recognitionRef.current.onresult = null;
+      recognitionRef.current.onerror = null;
+      recognitionRef.current.onend = null;
+    } catch (err) {
+      console.log('Cleanup during reinit:', err);
+    }
+    // Create fresh recognition object
     initSpeechRecognition();
   }
   
-  if (!micPermission) { 
-    requestMicPermission(); 
-    return; 
-  }
-  
-  if (interviewSessionActiveRef.current) {
-    console.log('Session already active');
-    return;
-  }
-  
-  // Clear everything for fresh session
-  accumulatedTranscript.current = '';
-  currentInterimRef.current = '';
-  setTranscript('');
-  setSpokenAnswer('');
-  setMatchedQuestion(null);
-  setLiveTranscript('');
-  
-  // Start mic ONCE - it will stay active throughout session
-  if (recognitionRef.current) {
-    try {
-      recognitionRef.current.start();
-      setInterviewSessionActive(true);
-      interviewSessionActiveRef.current = true; // Update ref immediately
-      setSessionReady(true);
-      setIsListening(true);
-      isListeningRef.current = true; // Update ref immediately
-      console.log('✅ Session started - mic will stay active');
-    } catch (err) {
-      console.error('Session start failed:', err);
+  // Give browser a moment to initialize
+  setTimeout(() => {
+    if (!micPermission) { 
+      requestMicPermission(); 
+      return; 
     }
-  }
+    
+    if (interviewSessionActiveRef.current) {
+      console.log('Session already active');
+      return;
+    }
+    
+    // Clear everything for fresh session
+    accumulatedTranscript.current = '';
+    currentInterimRef.current = '';
+    setTranscript('');
+    setSpokenAnswer('');
+    setMatchedQuestion(null);
+    setLiveTranscript('');
+    
+    // Start mic ONCE - it will stay active throughout session
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.start();
+        setInterviewSessionActive(true);
+        interviewSessionActiveRef.current = true; // Update ref immediately
+        setSessionReady(true);
+        setIsListening(true);
+        isListeningRef.current = true; // Update ref immediately
+        console.log('✅ Session started - mic will stay active');
+      } catch (err) {
+        console.error('Session start failed:', err);
+        alert('Failed to start microphone. Please refresh the page and try again.');
+      }
+    } else {
+      console.error('Recognition not initialized after init call');
+      alert('Microphone initialization failed. Please refresh the page.');
+    }
+  }, 100); // Small delay ensures recognition is ready
 };
 
 const endInterviewSession = () => {
@@ -2337,10 +2360,26 @@ const startPracticeMode = async () => {
 
       {/* CONSENT DIALOG - First-time recording consent */}
       {showConsentDialog && !hasConsented && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999] p-4">
-          <div className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-auto shadow-2xl">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 overflow-y-auto">
+          <div 
+            className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-auto shadow-2xl my-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="p-6">
-              <h2 className="text-xl font-bold mb-3 text-gray-900">Recording Consent Required</h2>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-xl font-bold text-gray-900">Recording Consent Required</h2>
+                <button
+                  onClick={() => {
+                    console.log('❌ Consent canceled via X');
+                    setShowConsentDialog(false);
+                    setPendingMode(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-600 transition"
+                  aria-label="Close"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
               
               <p className="text-gray-700 mb-3 text-sm">
                 ISL uses your microphone to record practice responses for AI feedback.
@@ -2378,7 +2417,7 @@ const startPracticeMode = async () => {
                     setShowConsentDialog(false);
                     setPendingMode(null);
                   }}
-                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg text-sm"
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded-lg text-sm"
                 >
                   Cancel
                 </button>
@@ -2396,7 +2435,7 @@ const startPracticeMode = async () => {
                       actuallyStartPractice();
                     }
                   }}
-                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg text-sm"
+                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg text-sm"
                 >
                   I Agree
                 </button>
@@ -2408,11 +2447,27 @@ const startPracticeMode = async () => {
 
       {/* LIVE PROMPTER WARNING - Shows before activating prompter */}
       {showLivePrompterWarning && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-4">
-          <div className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-auto shadow-2xl">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 overflow-y-auto">
+          <div 
+            className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-auto shadow-2xl my-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="p-6">
-              <div className="text-center mb-3">
-                <span className="text-5xl">⚠️</span>
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-center flex-1">
+                  <span className="text-5xl">⚠️</span>
+                </div>
+                <button
+                  onClick={() => {
+                    console.log('❌ Live Prompter warning canceled via X');
+                    setShowLivePrompterWarning(false);
+                    setPendingMode(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-600 transition"
+                  aria-label="Close"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
               
               <h2 className="text-xl font-bold text-center mb-3 text-red-600">
@@ -2453,7 +2508,7 @@ const startPracticeMode = async () => {
                     setShowLivePrompterWarning(false);
                     setPendingMode(null);
                   }}
-                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg text-sm"
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded-lg text-sm"
                 >
                   Cancel
                 </button>
@@ -2463,7 +2518,7 @@ const startPracticeMode = async () => {
                     setShowLivePrompterWarning(false);
                     actuallyStartPrompter();
                   }}
-                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg text-xs"
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-4 rounded-lg text-xs"
                 >
                   I Understand & Accept Responsibility
                 </button>
@@ -2814,11 +2869,42 @@ const startPracticeMode = async () => {
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between mb-6">
             <button onClick={() => { 
+              // CRITICAL: Comprehensive cleanup when exiting Live Prompter
+              console.log('🚪 Exiting Live Prompter - full cleanup');
+              
+              // 1. End interview session if active
               if (interviewSessionActive) endInterviewSession();
-              stopSystemAudioCapture(); // Stop system audio if active
-              stopListening(); 
+              
+              // 2. Stop system audio
+              stopSystemAudioCapture();
+              
+              // 3. Stop any active listening
+              stopListening();
+              
+              // 4. EXTRA CLEANUP: Force stop recognition if it somehow persists
+              if (recognitionRef.current) {
+                try {
+                  recognitionRef.current.stop();
+                  recognitionRef.current.abort?.(); // Try abort if available
+                  recognitionRef.current.onend = null;
+                  recognitionRef.current.onerror = null;
+                  recognitionRef.current.onresult = null;
+                } catch (err) {
+                  console.log('Recognition already stopped:', err);
+                }
+              }
+              
+              // 5. Reset all state
               setCurrentView('home'); 
-              setMatchedQuestion(null); 
+              setMatchedQuestion(null);
+              setIsListening(false);
+              setIsCapturing(false);
+              setTranscript('');
+              setLiveTranscript('');
+              accumulatedTranscript.current = '';
+              currentInterimRef.current = '';
+              
+              console.log('✅ Exit complete - all resources released');
             }} className="text-gray-300 hover:text-white">← Exit</button>
             
             {/* SESSION CONTROLS */}
