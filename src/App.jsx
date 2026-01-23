@@ -14,6 +14,7 @@ import FirstTimeConsent from "./Components/FirstTimeConsent";
 import QuestionAssistant from './Components/QuestionAssistant';
 import AnswerAssistant from './Components/AnswerAssistant';
 import TemplateLibrary from './TemplateLibrary';
+import Tutorial from './Components/Tutorial';
 import { DEFAULT_QUESTIONS } from './default_questions';
 
 // CSS string is OK at top-level
@@ -163,6 +164,8 @@ const ISL = () => {
   const [isNewUser, setIsNewUser] = useState(false);
   const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
   const [showDeleteChoiceModal, setShowDeleteChoiceModal] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [showAddQuestionsPrompt, setShowAddQuestionsPrompt] = useState(false);
   
   // Legal Protection States
   const [showConsentDialog, setShowConsentDialog] = useState(false);
@@ -760,31 +763,20 @@ loadPracticeHistory();
 
         // If no questions exist, this is a new user
         if (!existingQuestions || existingQuestions.length === 0) {
-          console.log('🆕 New user detected! Setting up...');
+          console.log('🆕 New user detected! Showing tutorial...');
           setIsNewUser(true);
           
-          // Set flag IMMEDIATELY before async operation
-          initializingDefaultsRef.current = true;
+          // Mark as initialized so we don't auto-load defaults
+          localStorage.setItem(defaultsInitializedKey, 'true');
           
-          // Initialize default questions
-          const success = await initializeDefaultQuestions(currentUser.id);
-          
-          if (success) {
-            // Mark that we've initialized defaults for this user
-            localStorage.setItem(defaultsInitializedKey, 'true');
-            
-            // Reload questions to get the defaults
-            await loadQuestions();
-            
-            // Show welcome modal ONLY if they haven't seen it before
-            const hasSeenWelcome = localStorage.getItem(`isl_welcome_seen_${currentUser.id}`);
-            if (!hasSeenWelcome) {
-              setShowWelcomeModal(true);
-            }
+          // Show tutorial for new users (if they haven't seen it)
+          const hasSeenTutorial = localStorage.getItem('isl_tutorial_seen');
+          if (!hasSeenTutorial) {
+            setShowTutorial(true);
+          } else {
+            // If they've seen tutorial but have no questions, show add questions prompt
+            setShowAddQuestionsPrompt(true);
           }
-          
-          // Reset flag after completion
-          initializingDefaultsRef.current = false;
         } else {
           console.log('✅ Existing user - questions already loaded');
           // Mark as initialized if they have questions
@@ -2143,6 +2135,115 @@ const startPracticeMode = async () => {
   // OVERLAY DIALOGS - Render BEFORE view checks so they always work
   return (
     <>
+      {/* TUTORIAL - Shows for new users first */}
+      <Tutorial 
+        user={currentUser}
+        isActive={showTutorial}
+        onClose={() => {
+          setShowTutorial(false);
+          // After tutorial, show add questions prompt
+          setShowAddQuestionsPrompt(true);
+        }}
+      />
+
+      {/* ADD QUESTIONS PROMPT - Shows after tutorial or for users with no questions */}
+      {showAddQuestionsPrompt && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div 
+            className="bg-gradient-to-br from-indigo-900 to-purple-900 rounded-2xl max-w-2xl w-full p-8 shadow-2xl border-2 border-indigo-500/50 my-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-center mb-6">
+              <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <BookOpen className="w-10 h-10 text-white" />
+              </div>
+              <h2 className="text-3xl font-bold mb-2 text-white">Ready to Add Questions?</h2>
+              <p className="text-xl text-indigo-200">Choose how you'd like to build your question bank</p>
+            </div>
+
+            <div className="space-y-4 mb-6">
+              {/* Option 1: AI Generator */}
+              <div className="bg-white/10 backdrop-blur rounded-xl p-5 border-2 border-purple-400/50 hover:border-purple-400 transition cursor-pointer"
+                onClick={() => {
+                  setShowAddQuestionsPrompt(false);
+                  setCurrentView('command-center');
+                  setCommandCenterTab('bank');
+                }}
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Sparkles className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-lg mb-1 text-white">AI Question Generator</h3>
+                    <p className="text-sm text-indigo-200 mb-2">
+                      Enter your target role, background, and job description. AI generates personalized questions.
+                    </p>
+                    <span className="inline-block px-3 py-1 bg-green-500/20 text-green-300 text-xs font-bold rounded-full border border-green-500/50">
+                      ⭐ RECOMMENDED
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Option 2: Template Library */}
+              <div className="bg-white/10 backdrop-blur rounded-xl p-5 border-2 border-indigo-400/30 hover:border-indigo-400 transition cursor-pointer"
+                onClick={() => {
+                  setShowAddQuestionsPrompt(false);
+                  setShowTemplateLibrary(true);
+                }}
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Database className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-lg mb-1 text-white">Template Library</h3>
+                    <p className="text-sm text-indigo-200">
+                      Import pre-built question sets for common roles (Product Manager, Software Engineer, etc.)
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Option 3: Manual */}
+              <div className="bg-white/10 backdrop-blur rounded-xl p-5 border-2 border-indigo-400/30 hover:border-indigo-400 transition cursor-pointer"
+                onClick={() => {
+                  setShowAddQuestionsPrompt(false);
+                  setCurrentView('command-center');
+                  setCommandCenterTab('bank');
+                }}
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-gray-500 to-gray-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Edit2 className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-lg mb-1 text-white">Add Manually</h3>
+                    <p className="text-sm text-indigo-200">
+                      Type or paste questions directly from job postings or past interviews
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-blue-500/20 border-2 border-blue-400/50 rounded-xl p-4 mb-6">
+              <p className="text-sm text-blue-200">
+                <strong>💡 Tip:</strong> You need at least a few questions to use Live Prompter, AI Interviewer, and Practice modes.
+              </p>
+            </div>
+
+            <button
+              onClick={() => setShowAddQuestionsPrompt(false)}
+              className="w-full py-3 px-4 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition"
+            >
+              I'll Add Questions Later
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* WELCOME MODAL - First-time user onboarding */}
       {showWelcomeModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -6156,21 +6257,27 @@ onClick={async () => {
                     try {
                       const { data: { user } } = await supabase.auth.getUser();
                       if (user) {
+                        // Delete ALL user data from Supabase
                         await supabase.from('practice_sessions').delete().eq('user_id', user.id);
+                        await supabase.from('questions').delete().eq('user_id', user.id); // ← CRITICAL: Delete questions table
                         await supabase.from('question_banks').delete().eq('user_id', user.id);
                         await supabase.from('usage_tracking').delete().eq('user_id', user.id);
+                        await supabase.from('user_profiles').delete().eq('user_id', user.id); // Also delete profile
                       }
-                      const keysToKeep = ['isl_api_key'];
-                      Object.keys(localStorage).forEach(key => {
-                        if (!keysToKeep.includes(key)) {
-                          localStorage.removeItem(key);
-                        }
-                      });
-                      alert('✅ All data deleted');
+                      
+                      // Clear ALL localStorage (including consent so user starts fresh)
+                      localStorage.clear();
+                      
+                      alert('✅ All data deleted. You will be signed out.');
+                      
+                      // Sign out user completely
+                      await supabase.auth.signOut();
+                      
+                      // Reload to login screen
                       window.location.reload();
                     } catch (error) {
                       console.error('Delete error:', error);
-                      alert('❌ Error deleting data');
+                      alert('❌ Error deleting data: ' + error.message);
                     }
                   }
                 }
