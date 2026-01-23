@@ -241,23 +241,23 @@ export default function Tutorial({ user, isActive, onClose }) {
             <ul className="space-y-2 text-sm text-indigo-800">
               <li className="flex items-start gap-2">
                 <Sparkles className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5" />
-                <span><strong>50 AI Interviewer sessions</strong> per month</span>
+                <span><strong>✨ UNLIMITED AI Interviewer</strong></span>
               </li>
               <li className="flex items-start gap-2">
                 <Sparkles className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5" />
-                <span><strong>Unlimited Practice Mode</strong></span>
+                <span><strong>✨ UNLIMITED Practice Mode</strong></span>
               </li>
               <li className="flex items-start gap-2">
                 <Sparkles className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5" />
-                <span><strong>15 Answer Assistant sessions</strong> per month</span>
+                <span><strong>✨ UNLIMITED Answer Assistant</strong></span>
               </li>
               <li className="flex items-start gap-2">
                 <Sparkles className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5" />
-                <span><strong>Unlimited Question Generator</strong></span>
+                <span><strong>✨ UNLIMITED Question Generator</strong></span>
               </li>
               <li className="flex items-start gap-2">
                 <Sparkles className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5" />
-                <span><strong>Unlimited Live Prompter</strong></span>
+                <span><strong>✨ UNLIMITED Live Prompter</strong></span>
               </li>
               <li className="flex items-start gap-2">
                 <Sparkles className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5" />

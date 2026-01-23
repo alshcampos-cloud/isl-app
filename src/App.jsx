@@ -1049,11 +1049,14 @@ question_id: (questionData.id && questionData.id !== "0" && typeof questionData.
       const tierLimits = TIER_LIMITS[userTier];
       alert(`You've used all ${tierLimits[feature]} ${featureName} sessions this month!
 
-Upgrade to get more:
-• Starter ($14.99/mo): 20 AI Interviewer, 30 Practice, 5 Answer Assistant
-• Pro ($29.99/mo): 50 AI Interviewer, unlimited Practice, 15 Answer Assistant
+Upgrade to Pro for UNLIMITED:
+• Unlimited AI Interviewer
+• Unlimited Practice Mode  
+• Unlimited Answer Assistant
+• Unlimited Question Generator
+• Unlimited Live Prompter
 
-Click the Upgrade button to see all plans!`);
+Just $29.99/month - practice as much as you need!`);
       setShowPricingPage(true);
       return false;
     }
