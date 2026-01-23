@@ -208,19 +208,27 @@ export default function Tutorial({ user, isActive, onClose }) {
             <ul className="space-y-2 text-sm text-yellow-800">
               <li className="flex items-start gap-2">
                 <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                <span><strong>7 FREE AI-powered sessions</strong> (AI Interviewer + Practice Mode)</span>
+                <span><strong>3 AI Interviewer sessions</strong> per month</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                <span><strong>Unlimited Live Prompter</strong> after customizing 3 questions</span>
+                <span><strong>5 Practice Mode sessions</strong> per month</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                <span><strong>Unlimited</strong> question bank, templates, Answer Assistant</span>
+                <span><strong>2 Answer Assistant sessions</strong> per month</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                <span><strong>Unlimited</strong> AI question generation</span>
+                <span><strong>5 Question Generations</strong> per month</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                <span><strong>10 Live Prompter questions</strong> per month</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                <span><strong>Unlimited</strong> question bank storage</span>
               </li>
             </ul>
           </div>
@@ -233,22 +241,34 @@ export default function Tutorial({ user, isActive, onClose }) {
             <ul className="space-y-2 text-sm text-indigo-800">
               <li className="flex items-start gap-2">
                 <Sparkles className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5" />
-                <span><strong>Unlimited AI sessions</strong> per month</span>
+                <span><strong>50 AI Interviewer sessions</strong> per month</span>
               </li>
               <li className="flex items-start gap-2">
                 <Sparkles className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5" />
-                <span><strong>Advanced feedback</strong> with expert-level insights</span>
+                <span><strong>Unlimited Practice Mode</strong></span>
               </li>
               <li className="flex items-start gap-2">
                 <Sparkles className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5" />
-                <span><strong>Priority processing</strong> for faster responses</span>
+                <span><strong>15 Answer Assistant sessions</strong> per month</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Sparkles className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5" />
+                <span><strong>Unlimited Question Generator</strong></span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Sparkles className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5" />
+                <span><strong>Unlimited Live Prompter</strong></span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Sparkles className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5" />
+                <span><strong>Priority feature updates</strong></span>
               </li>
             </ul>
           </div>
 
           <div className="bg-green-50 rounded-lg p-3 border-l-4 border-green-500">
             <p className="text-sm text-green-900">
-              <strong>💡 Smart Strategy:</strong> Use your 7 free sessions to prepare comprehensive answers with the Answer Assistant, then use Live Prompter unlimited during your actual interviews!
+              <strong>💡 Smart Strategy:</strong> Use the free tier to try out all features. When you're ready to practice seriously, upgrade to Pro for unlimited access to everything!
             </p>
           </div>
         </div>

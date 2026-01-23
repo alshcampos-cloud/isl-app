@@ -19,6 +19,7 @@ import { DEFAULT_QUESTIONS } from './default_questions';
 import { canUseFeature, incrementUsage, getUsageStats, TIER_LIMITS } from './utils/creditSystem';
 import UsageDashboard from './Components/UsageDashboard';
 import PricingPage from './Components/PricingPage';
+import ResetPassword from './Components/ResetPassword';
 
 // CSS string is OK at top-level
 const styles = `
@@ -159,6 +160,7 @@ const ISL = () => {
   const [userTier, setUserTier] = useState('free');
   const [showPricingPage, setShowPricingPage] = useState(false);
   const [showUsageDashboard, setShowUsageDashboard] = useState(false);
+  const [showResetPassword, setShowResetPassword] = useState(false);
   const [usageStatsData, setUsageStatsData] = useState(null);
   const [comparisonMode, setComparisonMode] = useState(false);
   const [showAnswerAssistant, setShowAnswerAssistant] = useState(false);
@@ -706,6 +708,16 @@ loadPracticeHistory();
   }, [interviewType]);
 
   useEffect(() => {
+    // Check for password reset token in URL hash
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const accessToken = hashParams.get('access_token');
+    const type = hashParams.get('type');
+    
+    if (type === 'recovery' && accessToken) {
+      console.log('🔑 Password reset token detected');
+      setShowResetPassword(true);
+    }
+
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       const user = session?.user ?? null;
       setCurrentUser(user);
@@ -6727,39 +6739,58 @@ onClick={async () => {
       )}
 
       {/* ==========================================
-          PRICING PAGE MODAL
+          PRICING PAGE MODAL - FIXED SCROLL
           ========================================== */}
       {showPricingPage && (
         <div 
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999] overflow-auto"
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9999] overflow-y-auto"
           onClick={() => setShowPricingPage(false)}
         >
+          {/* Close button - FIXED to viewport, always visible */}
+          <button
+            onClick={() => setShowPricingPage(false)}
+            className="fixed top-4 right-4 text-white hover:text-gray-300 z-[10000] bg-black/50 rounded-full p-2 backdrop-blur-sm"
+          >
+            <X className="w-8 h-8" />
+          </button>
+          
+          {/* Content wrapper - allows scrolling */}
           <div 
-            className="relative w-full min-h-screen flex items-center justify-center p-4"
+            className="min-h-screen w-full py-16 px-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <button
-              onClick={() => setShowPricingPage(false)}
-              className="absolute top-4 right-4 text-white hover:text-gray-300 z-10"
-            >
-              <X className="w-8 h-8" />
-            </button>
-            <div onClick={(e) => e.stopPropagation()}>
-              <PricingPage
-                currentTier={userTier}
-                onSelectTier={(tier) => {
-                  if (tier === 'free') {
-                    setShowPricingPage(false);
-                    return;
-                  }
-                  // TODO: Stripe integration coming next!
-                  alert(`You selected ${tier} tier!\n\nStripe payment integration coming in the next step. For now, you can test the UI!`);
-                  console.log('User selected tier:', tier);
-                }}
-              />
-            </div>
+            <PricingPage
+              currentTier={userTier}
+              onSelectTier={(tier) => {
+                if (tier === 'free') {
+                  setShowPricingPage(false);
+                  return;
+                }
+                // TODO: Stripe integration coming next!
+                alert(`You selected ${tier} tier!\n\nStripe payment integration coming in the next step. For now, you can test the UI!`);
+                console.log('User selected tier:', tier);
+              }}
+            />
           </div>
         </div>
+      )}
+
+      {/* ==========================================
+          PASSWORD RESET MODAL
+          ========================================== */}
+      {showResetPassword && (
+        <ResetPassword
+          supabase={supabase}
+          onClose={() => {
+            setShowResetPassword(false);
+            window.location.hash = ''; // Clear the hash
+          }}
+          onSuccess={() => {
+            alert('✅ Password reset successful! Please sign in with your new password.');
+            setShowResetPassword(false);
+            window.location.hash = '';
+          }}
+        />
       )}
     </>
   ); {/* Close fragment that contains dialogs + views */}

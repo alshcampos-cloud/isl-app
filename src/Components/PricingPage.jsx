@@ -1,5 +1,4 @@
-import { Check, Crown, Sparkles, Zap, X } from 'lucide-react';
-import { TIER_LIMITS } from '../utils/creditSystem';
+import { Check, Crown, X } from 'lucide-react';
 
 export default function PricingPage({ onSelectTier, currentTier = 'free' }) {
   
@@ -12,128 +11,89 @@ export default function PricingPage({ onSelectTier, currentTier = 'free' }) {
       description: 'Perfect for trying out ISL',
       badge: null,
       features: [
-        { text: '3 AI Interviewer sessions', included: true },
-        { text: '5 Practice Mode sessions', included: true },
-        { text: '2 Answer Assistant sessions', included: true },
-        { text: '5 Question Generations', included: true },
-        { text: '10 Live Prompter questions (ads for more)', included: true },
-        { text: 'Community support', included: true },
-        { text: 'Unlimited question bank', included: false },
-        { text: 'Priority processing', included: false },
-        { text: 'Advanced analytics', included: false }
+        { text: '3 AI Interviewer sessions/month', included: true },
+        { text: '5 Practice Mode sessions/month', included: true },
+        { text: '2 Answer Assistant sessions/month', included: true },
+        { text: '5 Question Generations/month', included: true },
+        { text: '10 Live Prompter questions/month', included: true },
+        { text: 'Unlimited question bank storage', included: true },
+        { text: 'Speech recognition', included: true },
+        { text: 'Session history & analytics', included: true },
+        { text: 'Template library access', included: true },
+        { text: 'Unlimited AI Interviewer', included: false },
+        { text: 'Unlimited Practice Mode', included: false },
+        { text: 'Unlimited Answer Assistant', included: false },
+        { text: 'Unlimited Question Generator', included: false },
+        { text: 'Unlimited Live Prompter', included: false }
       ],
       cta: currentTier === 'free' ? 'Current Plan' : 'Downgrade',
       ctaDisabled: currentTier === 'free',
       color: 'gray'
     },
     {
-      id: 'starter',
-      name: 'Starter',
-      price: 14.99,
-      period: '/month',
-      description: 'Great for students and early career',
-      badge: 'POPULAR',
-      badgeColor: 'bg-green-500',
-      features: [
-        { text: '20 AI Interviewer sessions/month', included: true },
-        { text: '30 Practice Mode sessions/month', included: true },
-        { text: '5 Answer Assistant sessions/month', included: true },
-        { text: 'Unlimited Question Generator', included: true },
-        { text: 'Live Prompter unlimited (no ads)', included: true },
-        { text: 'Email support', included: true },
-        { text: 'Question templates library', included: true },
-        { text: 'Export your answers', included: true },
-        { text: 'Priority processing', included: false }
-      ],
-      cta: currentTier === 'starter' ? 'Current Plan' : 'Upgrade to Starter',
-      ctaDisabled: currentTier === 'starter',
-      color: 'green'
-    },
-    {
       id: 'pro',
       name: 'Pro',
       price: 29.99,
       period: '/month',
-      description: 'For serious job seekers',
-      badge: 'BEST VALUE',
-      badgeColor: 'bg-indigo-500',
+      description: 'Unlimited practice for serious job seekers',
+      badge: 'UNLIMITED',
+      badgeColor: 'bg-gradient-to-r from-indigo-500 to-purple-500',
       features: [
-        { text: '50 AI Interviewer sessions/month', included: true },
-        { text: 'Unlimited Practice Mode', included: true },
-        { text: '15 Answer Assistant sessions/month', included: true },
-        { text: 'Unlimited Question Generator', included: true },
-        { text: 'Live Prompter unlimited (no ads)', included: true },
-        { text: 'Priority email support (24hr response)', included: true },
-        { text: 'Advanced analytics & insights', included: true },
-        { text: 'Custom templates', included: true },
-        { text: 'Priority processing', included: true }
+        { text: '✨ UNLIMITED AI Interviewer sessions', included: true, highlight: true },
+        { text: '✨ UNLIMITED Practice Mode', included: true, highlight: true },
+        { text: '✨ UNLIMITED Answer Assistant', included: true, highlight: true },
+        { text: '✨ UNLIMITED Question Generator', included: true, highlight: true },
+        { text: '✨ UNLIMITED Live Prompter', included: true, highlight: true },
+        { text: 'Unlimited question bank storage', included: true },
+        { text: 'Speech recognition', included: true },
+        { text: 'Session history & analytics', included: true },
+        { text: 'Template library access', included: true },
+        { text: 'Export your practice sessions', included: true },
+        { text: 'Priority feature updates', included: true }
       ],
       cta: currentTier === 'pro' ? 'Current Plan' : 'Upgrade to Pro',
       ctaDisabled: currentTier === 'pro',
       color: 'indigo',
       recommended: true
-    },
-    {
-      id: 'premium',
-      name: 'Premium',
-      price: 49.99,
-      period: '/month',
-      description: 'For executives and career changers',
-      badge: 'PREMIUM',
-      badgeColor: 'bg-purple-500',
-      features: [
-        { text: 'Unlimited AI Interviewer sessions', included: true },
-        { text: 'Unlimited Practice Mode', included: true },
-        { text: '30 Answer Assistant sessions/month', included: true },
-        { text: 'Unlimited Question Generator', included: true },
-        { text: 'Live Prompter unlimited (no ads)', included: true },
-        { text: '1-on-1 coaching session (monthly)', included: true },
-        { text: 'Custom template creation', included: true },
-        { text: 'Resume review & optimization', included: true },
-        { text: 'Priority processing + white glove support', included: true }
-      ],
-      cta: currentTier === 'premium' ? 'Current Plan' : 'Upgrade to Premium',
-      ctaDisabled: currentTier === 'premium',
-      color: 'purple'
     }
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-indigo-50 py-12 px-4">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Choose Your Perfect Plan
+            Choose Your Plan
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Get the interview preparation you need to land your dream job. All plans include our core features.
+            Unlimited interview practice for just $30/month. No limits. No stress. Just get ready.
           </p>
         </div>
 
-        {/* Pricing Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        {/* Pricing Cards - Side by Side */}
+        <div className="grid md:grid-cols-2 gap-8 mb-12 max-w-5xl mx-auto">
           {tiers.map((tier) => (
             <div
               key={tier.id}
-              className={`bg-white rounded-2xl shadow-xl overflow-hidden transition-all hover:shadow-2xl hover:scale-105 ${
-                tier.recommended ? 'ring-4 ring-indigo-500 ring-offset-4' : ''
+              className={`bg-white rounded-2xl shadow-xl overflow-hidden transition-all hover:shadow-2xl ${
+                tier.recommended ? 'ring-4 ring-indigo-500 ring-offset-4 transform md:scale-105' : ''
               }`}
             >
               {/* Badge */}
               {tier.badge && (
-                <div className={`${tier.badgeColor} text-white text-xs font-bold text-center py-2`}>
+                <div className={`${tier.badgeColor} text-white text-sm font-bold text-center py-2`}>
                   {tier.badge}
                 </div>
               )}
 
-              <div className="p-6">
+              <div className="p-8">
                 {/* Header */}
                 <div className="text-center mb-6">
                   <h3 className="text-2xl font-bold text-gray-900 mb-2">{tier.name}</h3>
                   <div className="flex items-baseline justify-center gap-1 mb-2">
-                    <span className="text-4xl font-bold text-gray-900">${tier.price}</span>
-                    <span className="text-gray-600">{tier.period}</span>
+                    <span className="text-5xl font-bold text-gray-900">${tier.price}</span>
+                    <span className="text-gray-600 text-lg">{tier.period}</span>
                   </div>
                   <p className="text-sm text-gray-600">{tier.description}</p>
                 </div>
@@ -142,27 +102,37 @@ export default function PricingPage({ onSelectTier, currentTier = 'free' }) {
                 <button
                   onClick={() => !tier.ctaDisabled && onSelectTier(tier.id)}
                   disabled={tier.ctaDisabled}
-                  className={`w-full py-3 rounded-lg font-bold text-white mb-6 transition ${
+                  className={`w-full py-4 rounded-lg font-bold text-white mb-8 transition text-lg ${
                     tier.ctaDisabled
                       ? 'bg-gray-300 cursor-not-allowed'
                       : tier.recommended
-                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700'
-                      : `bg-${tier.color}-600 hover:bg-${tier.color}-700`
+                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg'
+                      : 'bg-gray-600 hover:bg-gray-700'
                   }`}
                 >
                   {tier.cta}
                 </button>
 
                 {/* Features List */}
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {tier.features.map((feature, idx) => (
-                    <div key={idx} className="flex items-start gap-2">
+                    <div key={idx} className="flex items-start gap-3">
                       {feature.included ? (
-                        <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                        <div className="flex-shrink-0 w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                          <Check className="w-3 h-3 text-green-600" />
+                        </div>
                       ) : (
-                        <X className="w-5 h-5 text-gray-300 flex-shrink-0 mt-0.5" />
+                        <div className="flex-shrink-0 w-5 h-5 bg-gray-100 rounded-full flex items-center justify-center">
+                          <X className="w-3 h-3 text-gray-400" />
+                        </div>
                       )}
-                      <span className={`text-sm ${feature.included ? 'text-gray-700' : 'text-gray-400'}`}>
+                      <span className={`text-sm ${
+                        feature.included 
+                          ? feature.highlight 
+                            ? 'text-indigo-700 font-bold' 
+                            : 'text-gray-700 font-medium' 
+                          : 'text-gray-400'
+                      }`}>
                         {feature.text}
                       </span>
                     </div>
@@ -173,22 +143,81 @@ export default function PricingPage({ onSelectTier, currentTier = 'free' }) {
           ))}
         </div>
 
-        {/* FAQ Section */}
+        {/* Feature Comparison */}
         <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Compare Plans</h2>
+          
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b-2 border-gray-200">
+                  <th className="text-left py-4 px-4 font-bold text-gray-900">Feature</th>
+                  <th className="text-center py-4 px-4 font-bold text-gray-900">Free</th>
+                  <th className="text-center py-4 px-4 font-bold text-indigo-600">
+                    <div className="flex flex-col items-center">
+                      <Crown className="w-5 h-5 mb-1" />
+                      Pro
+                    </div>
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                <tr>
+                  <td className="py-4 px-4 text-gray-700">AI Interviewer sessions</td>
+                  <td className="py-4 px-4 text-center text-gray-600">3/month</td>
+                  <td className="py-4 px-4 text-center font-bold text-indigo-600">Unlimited</td>
+                </tr>
+                <tr>
+                  <td className="py-4 px-4 text-gray-700">Practice Mode sessions</td>
+                  <td className="py-4 px-4 text-center text-gray-600">5/month</td>
+                  <td className="py-4 px-4 text-center font-bold text-indigo-600">Unlimited</td>
+                </tr>
+                <tr>
+                  <td className="py-4 px-4 text-gray-700">Answer Assistant sessions</td>
+                  <td className="py-4 px-4 text-center text-gray-600">2/month</td>
+                  <td className="py-4 px-4 text-center font-bold text-indigo-600">Unlimited</td>
+                </tr>
+                <tr>
+                  <td className="py-4 px-4 text-gray-700">Question Generator</td>
+                  <td className="py-4 px-4 text-center text-gray-600">5/month</td>
+                  <td className="py-4 px-4 text-center font-bold text-indigo-600">Unlimited</td>
+                </tr>
+                <tr>
+                  <td className="py-4 px-4 text-gray-700">Live Prompter</td>
+                  <td className="py-4 px-4 text-center text-gray-600">10 questions</td>
+                  <td className="py-4 px-4 text-center font-bold text-indigo-600">Unlimited</td>
+                </tr>
+                <tr>
+                  <td className="py-4 px-4 text-gray-700">Question bank storage</td>
+                  <td className="py-4 px-4 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
+                  <td className="py-4 px-4 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
+                </tr>
+                <tr>
+                  <td className="py-4 px-4 text-gray-700">Session history & analytics</td>
+                  <td className="py-4 px-4 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
+                  <td className="py-4 px-4 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* FAQ Section */}
+        <div className="bg-white rounded-2xl shadow-xl p-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Frequently Asked Questions</h2>
           
           <div className="space-y-6 max-w-3xl mx-auto">
             <div>
-              <h3 className="font-bold text-gray-900 mb-2">Can I upgrade or downgrade anytime?</h3>
+              <h3 className="font-bold text-gray-900 mb-2">Is Pro really unlimited?</h3>
               <p className="text-gray-600">
-                Yes! You can change your plan at any time. When you upgrade, you'll be charged the prorated difference immediately. When you downgrade, the change takes effect at the start of your next billing cycle.
+                Yes! Pro tier gives you unlimited access to all features. We have a fair-use cap of 100 sessions per day to prevent abuse, but 99.9% of users will never hit this limit in normal practice.
               </p>
             </div>
 
             <div>
-              <h3 className="font-bold text-gray-900 mb-2">Do unused sessions roll over?</h3>
+              <h3 className="font-bold text-gray-900 mb-2">Can I upgrade or downgrade anytime?</h3>
               <p className="text-gray-600">
-                No, unused sessions reset at the start of each monthly billing cycle. We recommend using all your sessions each month for maximum value.
+                Yes! You can change your plan at any time. When you upgrade, you'll be charged the prorated difference immediately. When you downgrade, the change takes effect at the start of your next billing cycle.
               </p>
             </div>
 
@@ -211,26 +240,6 @@ export default function PricingPage({ onSelectTier, currentTier = 'free' }) {
               <p className="text-gray-600">
                 You'll retain access to your paid plan features until the end of your current billing period. After that, you'll be automatically moved to the free tier. Your data and question bank will be preserved.
               </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Trust Signals */}
-        <div className="text-center">
-          <div className="inline-flex items-center gap-8 bg-white rounded-lg p-6 shadow-md">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-indigo-600">500+</div>
-              <div className="text-sm text-gray-600">Jobs Landed</div>
-            </div>
-            <div className="w-px h-12 bg-gray-300"></div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-indigo-600">10,000+</div>
-              <div className="text-sm text-gray-600">Practice Sessions</div>
-            </div>
-            <div className="w-px h-12 bg-gray-300"></div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-indigo-600">4.9/5</div>
-              <div className="text-sm text-gray-600">User Rating</div>
             </div>
           </div>
         </div>

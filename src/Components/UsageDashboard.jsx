@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Brain, Target, Sparkles, HelpCircle, Mic, TrendingUp, Crown, ArrowRight } from 'lucide-react';
+import { Brain, Target, Sparkles, HelpCircle, Mic, TrendingUp, Crown, ArrowRight, Infinity } from 'lucide-react';
 import { getUsageStats, TIER_LIMITS } from '../utils/creditSystem';
 
 export default function UsageDashboard({ user, supabase, userTier = 'free', onUpgrade }) {
@@ -50,164 +50,146 @@ export default function UsageDashboard({ user, supabase, userTier = 'free', onUp
       name: 'Practice Mode',
       icon: <Target className="w-5 h-5" />,
       key: 'practiceMode',
-      description: 'Quick scoring and analysis',
-      color: 'green'
+      description: 'Quick practice with instant scoring',
+      color: 'blue'
     },
     {
       name: 'Answer Assistant',
       icon: <Sparkles className="w-5 h-5" />,
       key: 'answerAssistant',
-      description: 'STAR method coaching',
+      description: 'AI coach helps build answers',
       color: 'purple'
     },
     {
       name: 'Question Generator',
       icon: <HelpCircle className="w-5 h-5" />,
       key: 'questionGen',
-      description: 'AI-powered personalized questions',
-      color: 'blue'
+      description: 'Generate personalized questions',
+      color: 'green'
     },
     {
       name: 'Live Prompter',
       icon: <Mic className="w-5 h-5" />,
       key: 'livePrompterQuestions',
-      description: 'Real-time interview support',
+      description: 'Real-time interview assistance',
       color: 'orange'
     }
   ];
 
-  const getColorClasses = (color, usage, limit) => {
-    const percentUsed = (usage / limit) * 100;
-    
-    if (percentUsed >= 90) {
-      return {
-        bg: 'bg-red-50',
-        border: 'border-red-200',
-        text: 'text-red-900',
-        bar: 'bg-red-500',
-        light: 'bg-red-100'
-      };
-    }
-    
-    if (percentUsed >= 70) {
-      return {
-        bg: 'bg-yellow-50',
-        border: 'border-yellow-200',
-        text: 'text-yellow-900',
-        bar: 'bg-yellow-500',
-        light: 'bg-yellow-100'
-      };
-    }
-    
-    return {
-      bg: `bg-${color}-50`,
-      border: `border-${color}-200`,
-      text: `text-${color}-900`,
-      bar: `bg-${color}-500`,
-      light: `bg-${color}-100`
+  const getColorClass = (color, type = 'bg') => {
+    const colors = {
+      indigo: { bg: 'bg-indigo-100', text: 'text-indigo-700', bar: 'bg-indigo-600' },
+      blue: { bg: 'bg-blue-100', text: 'text-blue-700', bar: 'bg-blue-600' },
+      purple: { bg: 'bg-purple-100', text: 'text-purple-700', bar: 'bg-purple-600' },
+      green: { bg: 'bg-green-100', text: 'text-green-700', bar: 'bg-green-600' },
+      orange: { bg: 'bg-orange-100', text: 'text-orange-700', bar: 'bg-orange-600' }
     };
+    return colors[color][type];
   };
 
+  const getProgressColor = (used, limit) => {
+    if (limit >= 999999) return 'bg-green-500'; // Unlimited = green
+    const percentage = (used / limit) * 100;
+    if (percentage >= 90) return 'bg-red-500';
+    if (percentage >= 70) return 'bg-yellow-500';
+    return 'bg-green-500';
+  };
+
+  const isPro = userTier === 'pro';
+
   return (
-    <div className="bg-white rounded-xl p-6 shadow-lg">
+    <div className="bg-gradient-to-br from-gray-50 to-indigo-50 rounded-xl p-6 shadow-lg">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <TrendingUp className="w-6 h-6 text-indigo-600" />
-            Usage This Month
+            <TrendingUp className="w-6 h-6" />
+            My Usage
           </h2>
           <p className="text-sm text-gray-600 mt-1">
-            Your {TIER_LIMITS[userTier].name} tier usage for {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}
+            {isPro ? (
+              <span className="flex items-center gap-1">
+                <Crown className="w-4 h-4 text-yellow-600" />
+                Pro Plan - Unlimited Everything!
+              </span>
+            ) : (
+              'Track your monthly usage'
+            )}
           </p>
         </div>
-        
-        {userTier === 'free' && (
+        {!isPro && (
           <button
             onClick={onUpgrade}
-            className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition flex items-center gap-2"
+            className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2"
           >
             <Crown className="w-4 h-4" />
-            Upgrade
-            <ArrowRight className="w-4 h-4" />
+            Upgrade to Pro
           </button>
         )}
       </div>
 
       {/* Usage Cards */}
       <div className="space-y-4">
-        {features.map((feature) => {
+        {features.map(feature => {
           const featureStats = stats[feature.key];
-          const colors = featureStats.unlimited 
-            ? { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-900', bar: 'bg-green-500', light: 'bg-green-100' }
-            : getColorClasses(feature.color, featureStats.used, featureStats.limit);
-          
-          const percentUsed = featureStats.unlimited 
-            ? 0 
-            : Math.min(100, (featureStats.used / featureStats.limit) * 100);
+          const isUnlimited = featureStats.unlimited;
+          const used = featureStats.used;
+          const limit = featureStats.limit;
+          const remaining = featureStats.remaining;
+          const percentage = isUnlimited ? 0 : (used / limit) * 100;
 
           return (
             <div
               key={feature.key}
-              className={`${colors.bg} border-2 ${colors.border} rounded-lg p-4 transition-all hover:shadow-md`}
+              className={`${getColorClass(feature.color, 'bg')} rounded-lg p-4 transition-all hover:shadow-md`}
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
-                  <div className={`${colors.light} p-2 rounded-lg ${colors.text}`}>
+                  <div className={`${getColorClass(feature.color, 'text')}`}>
                     {feature.icon}
                   </div>
                   <div>
-                    <h3 className={`font-bold ${colors.text}`}>{feature.name}</h3>
+                    <h3 className={`font-bold ${getColorClass(feature.color, 'text')}`}>
+                      {feature.name}
+                    </h3>
                     <p className="text-xs text-gray-600">{feature.description}</p>
                   </div>
                 </div>
-                
                 <div className="text-right">
-                  {featureStats.unlimited ? (
-                    <div className={`font-bold ${colors.text} flex items-center gap-1`}>
-                      <Crown className="w-4 h-4" />
-                      Unlimited
+                  {isUnlimited ? (
+                    <div className="flex items-center gap-1">
+                      <Infinity className="w-5 h-5 text-green-600" />
+                      <span className="text-lg font-bold text-green-600">Unlimited</span>
                     </div>
                   ) : (
                     <>
-                      <div className={`text-2xl font-bold ${colors.text}`}>
-                        {featureStats.remaining}
+                      <div className="text-lg font-bold text-gray-900">
+                        {used}/{limit}
                       </div>
                       <div className="text-xs text-gray-600">
-                        of {featureStats.limit} left
+                        {remaining} left
                       </div>
                     </>
                   )}
                 </div>
               </div>
 
-              {!featureStats.unlimited && (
-                <div>
-                  {/* Progress Bar */}
-                  <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-                    <div
-                      className={`h-2 rounded-full ${colors.bar} transition-all duration-300`}
-                      style={{ width: `${percentUsed}%` }}
-                    ></div>
-                  </div>
-                  
-                  <div className="flex justify-between text-xs text-gray-600">
-                    <span>Used: {featureStats.used}</span>
-                    <span>{percentUsed.toFixed(0)}%</span>
-                  </div>
+              {/* Progress Bar - only show for non-unlimited */}
+              {!isUnlimited && (
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className={`h-2 rounded-full transition-all ${getProgressColor(used, limit)}`}
+                    style={{ width: `${Math.min(percentage, 100)}%` }}
+                  ></div>
+                </div>
+              )}
 
-                  {/* Low balance warning */}
-                  {featureStats.remaining <= 1 && featureStats.remaining > 0 && (
-                    <div className="mt-2 text-xs bg-red-100 border border-red-300 text-red-800 rounded p-2">
-                      ⚠️ Only {featureStats.remaining} session{featureStats.remaining !== 1 ? 's' : ''} remaining this month!
-                    </div>
-                  )}
-                  
-                  {featureStats.remaining === 0 && (
-                    <div className="mt-2 text-xs bg-red-100 border border-red-300 text-red-800 rounded p-2">
-                      🚫 You've reached your limit. {userTier === 'free' ? 'Upgrade to continue!' : 'Resets next month.'}
-                    </div>
-                  )}
+              {/* Unlimited Badge */}
+              {isUnlimited && (
+                <div className="bg-white/50 rounded-md px-3 py-2 text-center">
+                  <span className="text-sm font-medium text-gray-700">
+                    ✨ You've used {used} times this month - keep going!
+                  </span>
                 </div>
               )}
             </div>
@@ -215,31 +197,50 @@ export default function UsageDashboard({ user, supabase, userTier = 'free', onUp
         })}
       </div>
 
-      {/* Upgrade CTA for free users */}
-      {userTier === 'free' && (
+      {/* Upgrade CTA for Free Users */}
+      {!isPro && (
         <div className="mt-6 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg p-6 text-white">
           <div className="flex items-start justify-between">
             <div>
-              <h3 className="text-xl font-bold mb-2">Need More Sessions?</h3>
+              <h3 className="text-xl font-bold mb-2">Ready for Unlimited?</h3>
               <p className="text-sm text-indigo-100 mb-4">
-                Upgrade to Pro and get 50 AI Interviewer sessions, unlimited Practice Mode, and 15 Answer Assistant sessions every month.
+                Upgrade to Pro and never worry about running out of practice sessions again.
               </p>
-              <button
-                onClick={onUpgrade}
-                className="px-6 py-3 bg-white text-indigo-600 rounded-lg font-bold hover:bg-indigo-50 transition"
-              >
-                Upgrade to Pro - $29.99/month
-              </button>
+              <ul className="space-y-1 text-sm text-indigo-100 mb-4">
+                <li>✨ Unlimited AI Interviewer</li>
+                <li>✨ Unlimited Practice Mode</li>
+                <li>✨ Unlimited Answer Assistant</li>
+                <li>✨ Unlimited Question Generator</li>
+                <li>✨ Unlimited Live Prompter</li>
+              </ul>
             </div>
-            <Crown className="w-12 h-12 text-yellow-300" />
           </div>
+          <button
+            onClick={onUpgrade}
+            className="w-full bg-white text-indigo-600 hover:bg-gray-100 px-6 py-3 rounded-lg font-bold transition flex items-center justify-center gap-2"
+          >
+            Upgrade to Pro for $29.99/month
+            <ArrowRight className="w-5 h-5" />
+          </button>
         </div>
       )}
 
-      {/* Reset info */}
-      <div className="mt-4 text-center text-sm text-gray-500">
-        Usage resets on the 1st of each month
-      </div>
+      {/* Pro User Benefits Reminder */}
+      {isPro && (
+        <div className="mt-6 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-lg p-6">
+          <div className="flex items-start gap-3">
+            <Crown className="w-6 h-6 text-yellow-600 flex-shrink-0 mt-1" />
+            <div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">
+                You're all set! 🎉
+              </h3>
+              <p className="text-sm text-gray-700">
+                As a Pro member, you have unlimited access to everything. Practice as much as you need to crush your interviews!
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

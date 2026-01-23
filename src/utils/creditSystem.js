@@ -1,4 +1,4 @@
-// Credit System for ISL
+// Credit System for ISL - 2 TIER VERSION
 // This file contains all the logic for tracking usage and enforcing limits
 
 export const TIER_LIMITS = {
@@ -12,33 +12,13 @@ export const TIER_LIMITS = {
     livePrompterQuestions: 10,
     livePrompterUnlimited: false
   },
-  starter: {
-    name: 'Starter',
-    price: 14.99,
-    aiInterviewer: 20,
-    practiceMode: 30,
-    answerAssistant: 5,
-    questionGen: 999999, // unlimited
-    livePrompterQuestions: 999999,
-    livePrompterUnlimited: true
-  },
   pro: {
     name: 'Pro',
     price: 29.99,
     aiInterviewer: 50,
     practiceMode: 999999, // unlimited
     answerAssistant: 15,
-    questionGen: 999999,
-    livePrompterQuestions: 999999,
-    livePrompterUnlimited: true
-  },
-  premium: {
-    name: 'Premium',
-    price: 49.99,
-    aiInterviewer: 999999, // unlimited
-    practiceMode: 999999,
-    answerAssistant: 30,
-    questionGen: 999999,
+    questionGen: 999999, // unlimited
     livePrompterQuestions: 999999,
     livePrompterUnlimited: true
   }
@@ -169,7 +149,7 @@ export async function getUsageStats(supabase, userId, tier) {
     }
     
     const usage = data || initializeUsageTracking(userId, tier);
-    const limits = TIER_LIMITS[tier];
+    const limits = TIER_LIMITS[tier] || TIER_LIMITS.free; // Fallback to free if tier not found
     
     return {
       aiInterviewer: {
