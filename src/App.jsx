@@ -5442,15 +5442,104 @@ onClick={async () => {
                   </div>
                   {interviewDate && (
                     <div className="text-center bg-white/20 backdrop-blur rounded-xl p-5 min-w-[140px]">
-// ============================================
-// ENHANCED PROGRESS TAB - WORLD-CLASS GAMIFICATION
-// This replaces the Progress tab content only
-// Lines 5445-5897 in original file
-// ============================================
+                      <div className="text-5xl font-black mb-1">
+                        {Math.max(0, Math.ceil((new Date(interviewDate) - new Date()) / (1000 * 60 * 60 * 24)))}
+                      </div>
+                      <div className="text-sm text-white/90 font-bold">days left!</div>
+                      <div className="text-xs text-white/75 mt-1">⭐ You've got this!</div>
+                    </div>
+                  )}
+                </div>
+              </div>
 
+              {/* Daily Goal */}
+              <div className="bg-white rounded-xl shadow-md p-5 mb-6">
+                <h3 className="text-xl font-bold mb-4 text-gray-900">🎯 Daily Practice Goal</h3>
+                <div className="flex items-center gap-4 mb-4">
+                  <label className="text-gray-800 font-bold text-base">Sessions per day:</label>
+                  <input 
+                    type="number"
+                    min="1"
+                    max="20"
+                    value={dailyGoal}
+                    onChange={(e) => {
+                      setDailyGoal(parseInt(e.target.value));
+                      localStorage.setItem('isl_daily_goal', e.target.value);
+                    }}
+                    className="w-20 px-4 py-2 border-2 rounded-lg text-center font-bold text-base"
+                  />
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-bold text-gray-800">Today's Progress:</span>
+                    <span className="text-xl font-black text-indigo-600">
+                      {practiceHistory.filter(s => new Date(s.date).toDateString() === new Date().toDateString()).length} / {dailyGoal}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-4">
+                    <div 
+                      className="bg-gradient-to-r from-indigo-500 to-purple-500 h-4 rounded-full transition-all flex items-center justify-end pr-2"
+                      style={{ 
+                        width: `${Math.min(100, (practiceHistory.filter(s => new Date(s.date).toDateString() === new Date().toDateString()).length / dailyGoal) * 100)}%`
+                      }}
+                    >
+                      {practiceHistory.filter(s => new Date(s.date).toDateString() === new Date().toDateString()).length >= dailyGoal && (
+                        <span className="text-white text-xs font-bold">🎉 Goal reached!</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Category Coverage */}
+              <div className="bg-white rounded-xl shadow-md p-5">
+                <h3 className="text-xl font-bold mb-4 text-gray-900">📚 Category Mastery</h3>
+                <div className="space-y-4">
+                  {['Core Narrative', 'System-Level', 'Behavioral', 'Technical'].map(category => {
+                    const categoryQuestions = questions.filter(q => q.category === category);
+                    const total = categoryQuestions.length;
+                    
+                    // Calculate how many questions in this category have been practiced
+                    const practicedQuestionTexts = new Set(
+                      practiceHistory.map(s => s.question)
+                    );
+                    const practiced = categoryQuestions.filter(q => 
+                      practicedQuestionTexts.has(q.question)
+                    ).length;
+                    
+                    const percentage = total > 0 ? (practiced / total) * 100 : 0;
+                    
+                    return (
+                      <div key={category} className="p-4 bg-gray-50 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-bold text-gray-900 text-base">{category}</span>
+                          <span className="text-sm text-gray-700 font-bold">{practiced} / {total} practiced</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-3">
+                          <div 
+                            className={`h-3 rounded-full transition-all ${
+                              percentage === 100 ? 'bg-gradient-to-r from-green-500 to-emerald-500' :
+                              percentage >= 50 ? 'bg-gradient-to-r from-blue-500 to-indigo-500' :
+                              'bg-gradient-to-r from-yellow-500 to-orange-500'
+                            }`}
+                            style={{ width: `${percentage}%` }}
+                          ></div>
+                        </div>
+                        {percentage === 100 && (
+                          <p className="text-xs text-green-600 font-bold mt-1">✓ Mastered!</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+          
+         {/* ==================== PROGRESS TAB ==================== */}
 {commandCenterTab === 'progress' && (
   <div>
-    {/* Session Detail Modal - UNCHANGED */}
+    {/* Session Detail Modal */}
     {selectedSession && (
       <div 
         className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn"
@@ -5480,7 +5569,7 @@ onClick={async () => {
             </div>
           </div>
 
-          {/* Modal Content - UNCHANGED */}
+          {/* Modal Content */}
           <div className="p-6 space-y-6">
             {/* Your Answer */}
             <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border-2 border-blue-200">
@@ -5580,94 +5669,21 @@ onClick={async () => {
       </div>
     )}
 
-    {/* NEW: STREAK & ACHIEVEMENTS BANNER */}
-    {practiceHistory.length > 0 && (() => {
-      // Calculate streak (sessions in last 30 days)
-      const now = new Date();
-      const thirtyDaysAgo = new Date(now - 30 * 24 * 60 * 60 * 1000);
-      const recentSessions = practiceHistory.filter(s => new Date(s.date) >= thirtyDaysAgo);
-      const streak = recentSessions.length;
-      
-      // Calculate achievements
-      const totalSessions = practiceHistory.length;
-      const avgScore = practiceHistory.filter(s => s.feedback?.overall || s.feedback?.match_percentage).length > 0
-        ? practiceHistory.filter(s => s.feedback?.overall || s.feedback?.match_percentage)
-            .reduce((sum, s) => sum + (s.feedback?.overall || s.feedback?.match_percentage / 10), 0) / 
-          practiceHistory.filter(s => s.feedback?.overall || s.feedback?.match_percentage).length
-        : 0;
-      
-      const achievements = [];
-      if (totalSessions >= 10) achievements.push({ icon: '🎯', name: 'Practice Pro', desc: '10+ sessions' });
-      if (totalSessions >= 50) achievements.push({ icon: '🏆', name: 'Interview Master', desc: '50+ sessions' });
-      if (avgScore >= 8.5) achievements.push({ icon: '⭐', name: 'Excellence', desc: '8.5+ average' });
-      if (streak >= 7) achievements.push({ icon: '🔥', name: '7-Day Streak', desc: 'Weekly warrior' });
-      if (streak >= 30) achievements.push({ icon: '💎', name: '30-Day Streak', desc: 'Unstoppable' });
-      
-      return (
-        <div className="bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 rounded-2xl p-6 mb-6 text-white shadow-xl">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            {/* Streak Counter */}
-            <div className="text-center md:text-left">
-              <div className="flex items-center gap-3 justify-center md:justify-start mb-2">
-                <span className="text-5xl">🔥</span>
-                <div>
-                  <p className="text-4xl font-black">{streak}</p>
-                  <p className="text-sm opacity-90 font-bold">Day Streak</p>
-                </div>
-              </div>
-              <p className="text-xs opacity-75">Sessions in last 30 days</p>
-            </div>
-            
-            {/* Achievements */}
-            {achievements.length > 0 && (
-              <div className="flex-1">
-                <p className="text-sm font-bold mb-3 opacity-90">🏅 Achievements Unlocked</p>
-                <div className="flex flex-wrap gap-3 justify-center md:justify-start">
-                  {achievements.map((ach, idx) => (
-                    <div key={idx} className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2 hover:bg-white/30 transition-all hover:scale-105">
-                      <div className="flex items-center gap-2">
-                        <span className="text-2xl">{ach.icon}</span>
-                        <div>
-                          <p className="text-sm font-black">{ach.name}</p>
-                          <p className="text-xs opacity-75">{ach.desc}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      );
-    })()}
-
-    {/* ENHANCED: Overall Progress Timeline */}
+    {/* Overall Progress Timeline */}
     <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-2xl font-bold">📈 Overall Progress Timeline</h3>
-        {practiceHistory.length > 0 && (
-          <div className="text-right">
-            <p className="text-sm text-gray-600">Total Sessions</p>
-            <p className="text-3xl font-black text-indigo-600">{practiceHistory.length}</p>
-          </div>
-        )}
-      </div>
+      <h3 className="text-2xl font-bold mb-6">📈 Overall Progress Timeline</h3>
       
       {practiceHistory.length === 0 ? (
-        <div className="text-center py-16 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 rounded-2xl border-2 border-dashed border-indigo-300 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent animate-shimmer"></div>
-          <div className="relative">
-            <div className="text-6xl mb-4 animate-bounce">📊</div>
-            <h4 className="text-2xl font-bold text-gray-900 mb-2">Ready to Track Your Progress?</h4>
-            <p className="text-gray-600 mb-6 max-w-md mx-auto">Complete some practice sessions and watch your skills grow! Your journey to interview mastery starts here.</p>
-            <button 
-              onClick={() => setCurrentView('home')}
-              className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-8 py-4 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
-            >
-              Start Practicing Now →
-            </button>
-          </div>
+        <div className="text-center py-16 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl border-2 border-dashed border-indigo-200">
+          <div className="text-6xl mb-4">📊</div>
+          <h4 className="text-2xl font-bold text-gray-900 mb-2">No Practice Data Yet</h4>
+          <p className="text-gray-600 mb-6">Complete some practice sessions to see your progress!</p>
+          <button 
+            onClick={() => setCurrentView('home')}
+            className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-6 py-3 rounded-lg font-semibold"
+          >
+            Start Practicing →
+          </button>
         </div>
       ) : (
         <>
@@ -5687,13 +5703,6 @@ onClick={async () => {
                     <stop offset="50%" stopColor="#8b5cf6" />
                     <stop offset="100%" stopColor="#ec4899" />
                   </linearGradient>
-                  <filter id="glow">
-                    <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-                    <feMerge>
-                      <feMergeNode in="coloredBlur"/>
-                      <feMergeNode in="SourceGraphic"/>
-                    </feMerge>
-                  </filter>
                 </defs>
                 
                 {(() => {
@@ -5709,10 +5718,9 @@ onClick={async () => {
                       }).join(' ')}
                       fill="none"
                       stroke="url(#lineGradient)"
-                      strokeWidth="4"
+                      strokeWidth="3"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      filter="url(#glow)"
                     />
                   );
                 })()}
@@ -5723,17 +5731,13 @@ onClick={async () => {
                     const score = session.feedback?.overall || (session.feedback?.match_percentage / 10);
                     const x = 60 + (idx / Math.max(1, validSessions.length - 1)) * 790;
                     const y = 300 - (score * 27);
-                    const isHighScore = score >= 9;
                     return (
                       <g key={idx}>
-                        {isHighScore && (
-                          <circle cx={x} cy={y} r="15" fill="#fbbf24" opacity="0.3" className="animate-ping" />
-                        )}
                         <circle 
                           cx={x} 
                           cy={y} 
                           r="10" 
-                          fill={isHighScore ? "#fbbf24" : "#6366f1"} 
+                          fill="#6366f1" 
                           stroke="white" 
                           strokeWidth="3" 
                           className="cursor-pointer hover:r-12 transition-all" 
@@ -5742,9 +5746,6 @@ onClick={async () => {
                             setShowChartModal(true);
                           }} 
                         />
-                        {isHighScore && (
-                          <text x={x} y={y - 25} fontSize="16" fill="#fbbf24" textAnchor="middle">⭐</text>
-                        )}
                       </g>
                     );
                   });
@@ -5754,7 +5755,7 @@ onClick={async () => {
                 <text x="20" y="180" fontSize="14" fill="#6b7280" textAnchor="middle" transform="rotate(-90, 20, 180)" fontWeight="600">Score</text>
               </svg>
             </div>
-            <p className="text-xs text-gray-500 text-center mt-2">💡 Scroll horizontally to see all data points • ⭐ = High score (9+)</p>
+            <p className="text-xs text-gray-500 text-center mt-2">💡 Scroll horizontally to see all data points</p>
           </div>
 
           {(() => {
@@ -5774,40 +5775,29 @@ onClick={async () => {
             const bestScore = Math.max(...scores);
             const average = scores.reduce((a, b) => a + b, 0) / scores.length;
             
-            // Get encouraging message
-            const getMessage = () => {
-              if (improvement > 2) return "🚀 Amazing growth!";
-              if (improvement > 0) return "📈 Keep improving!";
-              if (improvement === 0) return "💪 Stay consistent!";
-              return "🎯 Practice more!";
-            };
-            
             return (
-              <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-6 mt-6 border-2 border-indigo-200">
-                <p className="text-center text-lg font-bold text-indigo-900 mb-4">{getMessage()}</p>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                  <div className="bg-white rounded-xl p-4 text-center shadow-sm">
-                    <p className="text-sm text-gray-600 mb-1 font-semibold">First</p>
-                    <p className="text-3xl font-black text-gray-900">{firstScore.toFixed(1)}</p>
-                  </div>
-                  <div className="bg-white rounded-xl p-4 text-center shadow-sm">
-                    <p className="text-sm text-gray-600 mb-1 font-semibold">Latest</p>
-                    <p className="text-3xl font-black text-indigo-600">{latestScore.toFixed(1)}</p>
-                  </div>
-                  <div className="bg-white rounded-xl p-4 text-center shadow-sm">
-                    <p className="text-sm text-gray-600 mb-1 font-semibold">Change</p>
-                    <p className={`text-3xl font-black ${improvement >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {improvement >= 0 ? '+' : ''}{improvement.toFixed(1)}
-                    </p>
-                  </div>
-                  <div className="bg-white rounded-xl p-4 text-center shadow-sm">
-                    <p className="text-sm text-gray-600 mb-1 font-semibold">Best</p>
-                    <p className="text-3xl font-black text-green-600">{bestScore.toFixed(1)}</p>
-                  </div>
-                  <div className="bg-white rounded-xl p-4 text-center shadow-sm">
-                    <p className="text-sm text-gray-600 mb-1 font-semibold">Average</p>
-                    <p className="text-3xl font-black text-purple-600">{average.toFixed(1)}</p>
-                  </div>
+              <div className="grid grid-cols-5 gap-4 pt-6 border-t-2">
+                <div className="text-center">
+                  <p className="text-sm text-gray-600 mb-1">First</p>
+                  <p className="text-3xl font-black text-gray-900">{firstScore.toFixed(1)}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm text-gray-600 mb-1">Latest</p>
+                  <p className="text-3xl font-black text-indigo-600">{latestScore.toFixed(1)}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm text-gray-600 mb-1">Change</p>
+                  <p className={`text-3xl font-black ${improvement >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {improvement >= 0 ? '+' : ''}{improvement.toFixed(1)}
+                  </p>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm text-gray-600 mb-1">Best</p>
+                  <p className="text-3xl font-black text-green-600">{bestScore.toFixed(1)}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm text-gray-600 mb-1">Average</p>
+                  <p className="text-3xl font-black text-purple-600">{average.toFixed(1)}</p>
                 </div>
               </div>
             );
@@ -5816,12 +5806,12 @@ onClick={async () => {
       )}
     </div>
 
-    {/* ENHANCED: Question-by-Question Progress */}
+    {/* Question-by-Question Progress */}
     <div className="bg-white rounded-2xl shadow-lg p-8">
       <h3 className="text-2xl font-bold mb-6">📊 Question-by-Question Progress</h3>
       
       {(() => {
-        // Build question stats from practice history - UNCHANGED LOGIC
+        // Build question stats from practice history
         const questionStats = {};
         practiceHistory.forEach(session => {
           if (!questionStats[session.question]) {
@@ -5842,9 +5832,8 @@ onClick={async () => {
         
         if (questionArray.length === 0) {
           return (
-            <div className="text-center py-12 bg-gradient-to-br from-gray-50 to-indigo-50 rounded-xl border-2 border-dashed border-gray-300">
-              <div className="text-5xl mb-4">🎯</div>
-              <p className="text-gray-600 font-semibold">Practice some questions to see detailed progress!</p>
+            <div className="text-center py-12 bg-gray-50 rounded-xl">
+              <p className="text-gray-600">Practice some questions to see progress!</p>
             </div>
           );
         }
@@ -5852,9 +5841,9 @@ onClick={async () => {
         return (
           <>
             {/* Show count and toggle */}
-            <div className="flex items-center justify-between mb-4 pb-4 border-b-2">
-              <p className="text-gray-700 font-bold text-lg">
-                📚 Tracking {questionArray.length} question{questionArray.length !== 1 ? 's' : ''}
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-gray-600">
+                Showing {questionArray.length} question{questionArray.length !== 1 ? 's' : ''}
               </p>
             </div>
             
@@ -5865,20 +5854,14 @@ onClick={async () => {
               const scores = qStat.sessions.map(getScore);
               const trend = scores.length > 1 ? scores[scores.length - 1] - scores[0] : 0;
               const average = scores.reduce((a, b) => a + b, 0) / scores.length;
-              const isTopPerformer = average >= 8.5;
               
               return (
-                <div key={idx} className={`border-2 rounded-xl p-4 md:p-6 transition-all ${isTopPerformer ? 'border-green-400 bg-green-50' : 'border-gray-200 hover:border-indigo-300'}`}>
-                  {isTopPerformer && (
-                    <div className="mb-3 inline-block bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold">
-                      ⭐ Top Performer
-                    </div>
-                  )}
+                <div key={idx} className="border-2 rounded-xl p-4 md:p-6 hover:border-indigo-300 transition">
                   <div className="flex flex-col md:flex-row md:items-start gap-4 md:gap-6 mb-4">
                     {/* Left: Question Info */}
                     <div className="flex-1">
                       <h4 className="font-bold text-base md:text-lg mb-2">{qStat.question}</h4>
-                      <div className="flex gap-4 text-sm text-gray-600 font-semibold">
+                      <div className="flex gap-4 text-sm text-gray-600">
                         <span>📊 {qStat.sessions.length} attempts</span>
                         <span>⭐ {average.toFixed(1)} avg</span>
                         {trend !== 0 && (
@@ -5912,103 +5895,6 @@ onClick={async () => {
                             <polyline
                               points={qStat.sessions.map((s, sIdx) => {
                                 const score = getScore(s);
-                                const x = 20 + (sIdx / Math.max(1, qStat.sessions.length - 1)) * 240;
-                                const y = 90 - (score * 8);
-                                return `${x},${y}`;
-                              }).join(' ')}
-                              fill="none"
-                              stroke={isTopPerformer ? "#10b981" : "#6366f1"}
-                              strokeWidth="3"
-                              strokeLinecap="round"
-                            />
-                          )}
-                          
-                          {/* Clickable dots - BIGGER */}
-                          {qStat.sessions.map((s, sIdx) => {
-                            const score = getScore(s);
-                            const x = 20 + (sIdx / Math.max(1, qStat.sessions.length - 1)) * 240;
-                            const y = 90 - (score * 8);
-                            return (
-                              <circle
-                                key={sIdx}
-                                cx={x}
-                                cy={y}
-                                r="8"
-                                fill={isTopPerformer ? "#10b981" : "#6366f1"}
-                                stroke="white"
-                                strokeWidth="3"
-                                className="cursor-pointer hover:scale-125 transition-all"
-                                onClick={() => {
-                                  setSelectedChartPoint({ 
-                                    session: s, 
-                                    score, 
-                                    idx: sIdx + 1, 
-                                    total: qStat.sessions.length,
-                                    question: qStat.question 
-                                  });
-                                  setShowChartModal(true);
-                                }}
-                              >
-                                <title>Attempt {sIdx + 1}: {score.toFixed(1)}/10</title>
-                              </circle>
-                            );
-                          })}
-                        </svg>
-                      </div>
-                      <p className="text-xs text-gray-500 font-semibold">Click dots for details</p>
-                    </div>
-                    
-                    {/* Right: Latest Score */}
-                    <div className={`text-center rounded-xl p-4 ${isTopPerformer ? 'bg-green-100' : 'bg-indigo-50'}`}>
-                      <p className="text-sm text-gray-600 mb-1 font-semibold">Latest</p>
-                      <p className={`text-4xl font-black ${isTopPerformer ? 'text-green-600' : 'text-indigo-600'}`}>
-                        {scores[scores.length - 1].toFixed(1)}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <details className="mt-4 pt-4 border-t">
-                    <summary className="cursor-pointer text-sm font-bold text-indigo-600 hover:text-indigo-800">
-                      📋 View {qStat.sessions.length} attempts →
-                    </summary>
-                    <div className="mt-4 space-y-2">
-                      {qStat.sessions.slice().reverse().map((session, sIdx) => {
-                        const score = getScore(session);
-                        const attemptNum = qStat.sessions.length - sIdx;
-                        return (
-                          <div 
-                            key={sIdx}
-                            className="flex justify-between bg-gray-50 p-4 rounded-lg cursor-pointer hover:bg-indigo-50 transition shadow-sm"
-                            onClick={() => {
-                              setSelectedChartPoint({ 
-                                session, 
-                                score, 
-                                idx: attemptNum, 
-                                total: qStat.sessions.length,
-                                question: qStat.question 
-                              });
-                              setShowChartModal(true);
-                            }}
-                          >
-                            <span className="text-sm font-semibold text-gray-700">
-                              Attempt {attemptNum} • {new Date(session.date).toLocaleDateString()} at {new Date(session.date).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}
-                            </span>
-                            <span className="text-xl font-black text-indigo-600">{score.toFixed(1)}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </details>
-                </div>
-              );
-            })}
-            </div>
-          </>
-        );
-      })()}
-    </div>
-  </div>
-)}
                                 const x = 20 + (sIdx / Math.max(1, qStat.sessions.length - 1)) * 240;
                                 const y = 90 - (score * 8);
                                 return `${x},${y}`;
