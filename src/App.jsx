@@ -2712,34 +2712,9 @@ const startPracticeMode = async () => {
       {(() => {
 
 // HOME
-// ============================================
-// WORLD-CLASS HOME PAGE REDESIGN
-// Lines 2715-3003 - Enhanced with Psychology
-// ============================================
-// REPLACE the home page section (lines 2715-3003) with this!
-
   if (currentView === 'home') {
     const categories = ['All', ...new Set(questions.map(q => q.category))];
     const priorities = ['All', ...new Set(questions.map(q => q.priority))];
-    
-    // Calculate user progress metrics
-    const totalSessions = practiceHistory.length;
-    const questionsCount = questions.length;
-    
-    // Calculate readiness score (0-100)
-    const readinessScore = Math.min(100, Math.round(
-      (questionsCount * 2) + (totalSessions * 3) + (questionsCount > 0 && totalSessions > 0 ? 20 : 0)
-    ));
-    
-    // Get encouraging message based on progress
-    const getEncouragingMessage = () => {
-      if (readinessScore >= 90) return "🔥 You're interview-ready! Time to dominate!";
-      if (readinessScore >= 70) return "💪 Almost there! You're crushing it!";
-      if (readinessScore >= 50) return "📈 Great progress! Keep the momentum going!";
-      if (readinessScore >= 25) return "🚀 Good start! Practice makes perfect!";
-      return "🌱 Just getting started! Let's build your confidence!";
-    };
-    
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
         <div className="container mx-auto px-4 py-8">
@@ -2758,7 +2733,7 @@ const startPracticeMode = async () => {
                 <span className={`transition-transform text-sm ${showProfileDropdown ? 'rotate-180' : ''}`}>▼</span>
               </button>
 
-              {/* Dropdown - UNCHANGED */}
+              {/* Dropdown */}
               {showProfileDropdown && (
                 <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-xl shadow-2xl overflow-hidden z-50">
                   <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 text-white">
@@ -2848,235 +2823,158 @@ const startPracticeMode = async () => {
           </div>
 
           {/* Clean Centered Title */}
-          <div className="text-center mb-8">
+          <div className="text-center mb-10">
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-3">InterviewAnswers.ai</h1>
             <p className="text-xl md:text-3xl text-indigo-200 mb-2">Master Your Interview Answers with AI</p>
           </div>
 
-          {/* NEW: READINESS SCORE - HERO WIDGET */}
-          {(questionsCount > 0 || totalSessions > 0) && (
-            <div className="bg-gradient-to-br from-white/20 to-white/10 backdrop-blur-xl rounded-2xl p-6 mb-6 border-2 border-white/30 shadow-2xl">
-              <div className="flex flex-col md:flex-row items-center gap-6">
-                {/* Circular Progress */}
-                <div className="relative flex-shrink-0">
-                  <svg className="w-32 h-32 transform -rotate-90">
-                    <circle
-                      cx="64"
-                      cy="64"
-                      r="56"
-                      stroke="rgba(255,255,255,0.2)"
-                      strokeWidth="8"
-                      fill="none"
-                    />
-                    <circle
-                      cx="64"
-                      cy="64"
-                      r="56"
-                      stroke="url(#gradient)"
-                      strokeWidth="8"
-                      fill="none"
-                      strokeLinecap="round"
-                      strokeDasharray={`${(readinessScore / 100) * 352} 352`}
-                      className="transition-all duration-1000"
-                    />
-                    <defs>
-                      <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#10b981" />
-                        <stop offset="100%" stopColor="#3b82f6" />
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="text-3xl font-black text-white">{readinessScore}</div>
-                      <div className="text-xs text-white/80 font-bold">READY</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Message & Stats */}
-                <div className="flex-1 text-center md:text-left">
-                  <h3 className="text-2xl md:text-3xl font-black text-white mb-2">
-                    {getEncouragingMessage()}
-                  </h3>
-                  <p className="text-white/90 text-sm md:text-base mb-4">
-                    Your Interview Readiness Score • Keep practicing to reach 100!
-                  </p>
-                  <div className="flex flex-wrap gap-3 justify-center md:justify-start">
-                    <div className="bg-white/20 rounded-lg px-4 py-2">
-                      <span className="text-white/80 text-xs font-bold">QUESTIONS</span>
-                      <div className="text-white font-black text-xl">{questionsCount}</div>
-                    </div>
-                    <div className="bg-white/20 rounded-lg px-4 py-2">
-                      <span className="text-white/80 text-xs font-bold">SESSIONS</span>
-                      <div className="text-white font-black text-xl">{totalSessions}</div>
-                    </div>
-                    {interviewDate && (
-                      <div className="bg-pink-500/30 rounded-lg px-4 py-2 border border-pink-300/50">
-                        <span className="text-white/90 text-xs font-bold">DAYS TO GO</span>
-                        <div className="text-white font-black text-xl flex items-center gap-1">
-                          {Math.max(0, Math.ceil((new Date(interviewDate) - new Date()) / (1000 * 60 * 60 * 24)))}
-                          {Math.ceil((new Date(interviewDate) - new Date()) / (1000 * 60 * 60 * 24)) <= 3 && (
-                            <span className="text-sm animate-pulse">🔥</span>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Compact Stats Row - Enhanced with Gradients */}
+          {/* Compact Stats Row - Professional */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-            <div className="bg-gradient-to-br from-indigo-500/20 to-blue-500/20 backdrop-blur-lg rounded-xl p-4 text-white hover:scale-105 transition-transform duration-200 border border-white/20">
+            <div className="bg-white/10 backdrop-blur-lg rounded-xl p-4 text-white hover:bg-white/15 transition-all duration-200">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-indigo-400 to-blue-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <Database className="w-6 h-6 text-white" />
-                </div>
+                <Database className="w-8 h-8 text-indigo-300 flex-shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-2xl font-black leading-tight">{questions.length}</p>
-                  <p className="text-xs text-white/90 leading-tight font-bold">Questions</p>
+                  <p className="text-2xl font-bold leading-tight">{questions.length}</p>
+                  <p className="text-sm text-white/90 leading-tight font-medium">Questions</p>
                 </div>
               </div>
             </div>
-            <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 backdrop-blur-lg rounded-xl p-4 text-white hover:scale-105 transition-transform duration-200 border border-white/20">
+            <div className="bg-white/10 backdrop-blur-lg rounded-xl p-4 text-white hover:bg-white/15 transition-all duration-200">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <TrendingUp className="w-6 h-6 text-white" />
-                </div>
+                <TrendingUp className="w-8 h-8 text-green-300 flex-shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-2xl font-black leading-tight">{practiceHistory.length}</p>
-                  <p className="text-xs text-white/90 leading-tight font-bold">Sessions</p>
+                  <p className="text-2xl font-bold leading-tight">{practiceHistory.length}</p>
+                  <p className="text-sm text-white/90 leading-tight font-medium">Sessions</p>
                 </div>
               </div>
             </div>
             {/* Usage Dashboard Link Card - Clickable */}
             <div 
-              className="bg-gradient-to-br from-yellow-500/20 to-orange-500/20 backdrop-blur-lg rounded-xl p-4 text-white hover:scale-105 transition-transform duration-200 cursor-pointer border border-white/20"
+              className="bg-white/10 backdrop-blur-lg rounded-xl p-4 text-white hover:bg-white/15 transition-all duration-200 cursor-pointer"
               onClick={() => setShowUsageDashboard(true)}
             >
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <Zap className="w-6 h-6 text-white" />
-                </div>
+                <Zap className="w-8 h-8 text-yellow-300 flex-shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-xl font-black leading-tight">
-                    {userTier === 'pro' ? '∞' : 'View'}
+                  <p className="text-2xl font-bold leading-tight">
+                    {userTier === 'pro' 
+                      ? '∞' 
+                      : 'View Usage'
+                    }
                   </p>
-                  <p className="text-xs text-white/90 leading-tight font-bold whitespace-nowrap">
-                    {userTier === 'pro' ? 'Unlimited' : 'Usage'}
+                  <p className="text-sm text-white/90 leading-tight whitespace-nowrap font-medium">
+                    {userTier === 'pro'
+                      ? '✨ Unlimited Access'
+                      : 'Track Your Limits'
+                    }
+                  </p>
+                  <p className="text-xs text-blue-300 mt-1 font-bold">
+                    👆 Click to see details
                   </p>
                 </div>
               </div>
             </div>
             {/* Days Until Interview Card */}
             <div 
-              className="bg-gradient-to-br from-pink-500/20 to-red-500/20 backdrop-blur-lg rounded-xl p-4 text-white hover:scale-105 transition-transform duration-200 cursor-pointer border border-white/20"
+              className="bg-white/10 backdrop-blur-lg rounded-xl p-4 text-white hover:bg-white/15 transition-all duration-200 cursor-pointer"
               onClick={() => {
                 setCurrentView('command-center');
                 setCommandCenterTab('prep');
               }}
             >
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-pink-400 to-red-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <Calendar className="w-6 h-6 text-white" />
-                </div>
+                <Calendar className="w-8 h-8 text-pink-300 flex-shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-2xl font-black leading-tight">
+                  <p className="text-2xl font-bold leading-tight">
                     {interviewDate 
                       ? Math.max(0, Math.ceil((new Date(interviewDate) - new Date()) / (1000 * 60 * 60 * 24)))
                       : '—'
                     }
                   </p>
-                  <p className="text-xs text-white/90 leading-tight font-bold whitespace-nowrap">
-                    {interviewDate ? 'Days' : 'Set Date'}
+                  <p className="text-sm text-white/90 leading-tight whitespace-nowrap font-medium">
+                    {interviewDate ? 'Days to Go!' : 'Set Date →'}
                   </p>
+                  {interviewDate && Math.ceil((new Date(interviewDate) - new Date()) / (1000 * 60 * 60 * 24)) <= 3 && (
+                    <p className="text-xs text-pink-300 mt-1 font-bold animate-pulse">
+                      🔥 Almost time!
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Quick Start Tip - Enhanced */}
+          {/* Quick Start Tip - Compact */}
           {questions.length === 0 && (
-            <div className="bg-gradient-to-r from-blue-500/30 to-indigo-500/30 backdrop-blur-xl border-2 border-blue-400/50 rounded-2xl p-6 text-white mb-6 shadow-xl">
-              <div className="flex items-start gap-4">
-                <div className="text-4xl">👋</div>
-                <div className="flex-1">
-                  <p className="text-xl font-black mb-2">Ready to start your interview journey?</p>
-                  <p className="text-base text-white/90 font-medium mb-4">Let's load some questions and start practicing!</p>
-                  <button
-                    onClick={() => setCurrentView('command-center')}
-                    className="bg-white text-indigo-600 px-6 py-3 rounded-lg font-bold hover:bg-indigo-50 transition-all shadow-lg"
-                  >
-                    Go to Command Center →
-                  </button>
-                </div>
-              </div>
+            <div className="bg-blue-500/20 backdrop-blur-lg border-2 border-blue-400/30 rounded-xl p-4 text-white mb-6">
+              <p className="text-base font-bold mb-1.5">👋 Ready to start your interview journey?</p>
+              <p className="text-sm text-white/90 font-medium">Head to Command Center → Question Bank → Import templates to load your first questions!</p>
             </div>
           )}
 
-          {/* Practice Modes - Enhanced with Psychology */}
+          {/* Practice Modes - Professional Grid */}
           <div className="mb-6">
-            <h2 className="text-2xl md:text-3xl font-black text-white mb-2">🎯 Practice Modes</h2>
-            <p className="text-white/80 text-sm md:text-base mb-4 font-medium">Choose your training method and level up your skills</p>
+            <h2 className="text-2xl font-bold text-white mb-4">🎯 Practice Modes</h2>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Live Prompter - Enhanced */}
-              <div className="bg-white rounded-2xl shadow-2xl p-6 transition-all duration-300 hover:shadow-green-500/50 hover:-translate-y-2 cursor-pointer group relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-green-400/0 to-emerald-500/0 group-hover:from-green-400/10 group-hover:to-emerald-500/10 transition-all duration-300"></div>
-                <div className="text-center flex flex-col h-full relative z-10">
-                  <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                    <Mic className="w-8 h-8 text-white" />
+              {/* Live Prompter */}
+              <div className="bg-white rounded-xl shadow-lg p-5 transition-all duration-200 hover:shadow-2xl hover:-translate-y-1 cursor-pointer group min-h-[200px] flex flex-col">
+                <div className="text-center flex-1 flex flex-col justify-between">
+                  <div>
+                    <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-200">
+                      <Mic className="w-7 h-7 text-white" />
+                    </div>
+                    <h3 className="text-lg font-bold mb-2 leading-tight text-gray-900">Live Prompter</h3>
+                    <p className="text-gray-700 text-sm mb-3 leading-snug font-medium">Real-time bullet prompts</p>
                   </div>
-                  <h3 className="text-xl font-black mb-2 text-gray-900">Live Prompter</h3>
-                  <p className="text-gray-600 text-sm mb-4 flex-1 font-semibold">Real-time bullet prompts</p>
-                  <button onClick={startPrompterMode} className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl">
+                  <button onClick={startPrompterMode} className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 rounded-lg transition-all duration-200 text-sm">
                     Start Practice
                   </button>
                 </div>
               </div>
 
-              {/* AI Interviewer - Enhanced */}
-              <div className="bg-white rounded-2xl shadow-2xl p-6 transition-all duration-300 hover:shadow-purple-500/50 hover:-translate-y-2 cursor-pointer group relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-400/0 to-pink-500/0 group-hover:from-purple-400/10 group-hover:to-pink-500/10 transition-all duration-300"></div>
-                <div className="text-center flex flex-col h-full relative z-10">
-                  <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                    <Bot className="w-8 h-8 text-white" />
+              {/* AI Interviewer */}
+              <div className="bg-white rounded-xl shadow-lg p-5 transition-all duration-200 hover:shadow-2xl hover:-translate-y-1 cursor-pointer group min-h-[200px] flex flex-col">
+                <div className="text-center flex-1 flex flex-col justify-between">
+                  <div>
+                    <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-200">
+                      <Bot className="w-7 h-7 text-white" />
+                    </div>
+                    <h3 className="text-lg font-bold mb-2 leading-tight text-gray-900">AI Interviewer</h3>
+                    <p className="text-gray-700 text-sm mb-3 leading-snug font-medium">Realistic interview practice</p>
                   </div>
-                  <h3 className="text-xl font-black mb-2 text-gray-900">AI Interviewer</h3>
-                  <p className="text-gray-600 text-sm mb-4 flex-1 font-semibold">Realistic interview practice</p>
-                  <button onClick={startAIInterviewer} className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold py-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl">
+                  <button onClick={startAIInterviewer} className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold py-3 rounded-lg transition-all duration-200 text-sm">
                     Start Interview
                   </button>
                 </div>
               </div>
 
-              {/* Practice Mode - Enhanced */}
-              <div className="bg-white rounded-2xl shadow-2xl p-6 transition-all duration-300 hover:shadow-blue-500/50 hover:-translate-y-2 cursor-pointer group relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-400/0 to-indigo-500/0 group-hover:from-blue-400/10 group-hover:to-indigo-500/10 transition-all duration-300"></div>
-                <div className="text-center flex flex-col h-full relative z-10">
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                    <Target className="w-8 h-8 text-white" />
+              {/* Practice Mode */}
+              <div className="bg-white rounded-xl shadow-lg p-5 transition-all duration-200 hover:shadow-2xl hover:-translate-y-1 cursor-pointer group min-h-[200px] flex flex-col">
+                <div className="text-center flex-1 flex flex-col justify-between">
+                  <div>
+                    <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-200">
+                      <Target className="w-7 h-7 text-white" />
+                    </div>
+                    <h3 className="text-lg font-bold mb-2 leading-tight text-gray-900">Practice</h3>
+                    <p className="text-gray-700 text-sm mb-3 leading-snug font-medium">AI-powered feedback</p>
                   </div>
-                  <h3 className="text-xl font-black mb-2 text-gray-900">Practice</h3>
-                  <p className="text-gray-600 text-sm mb-4 flex-1 font-semibold">AI-powered feedback</p>
-                  <button onClick={startPracticeMode} className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl">
+                  <button onClick={startPracticeMode} className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-3 rounded-lg transition-all duration-200 text-sm">
                     Start Session
                   </button>
                 </div>
               </div>
 
-              {/* Flashcard - Enhanced */}
-              <div className="bg-white rounded-2xl shadow-2xl p-6 transition-all duration-300 hover:shadow-orange-500/50 hover:-translate-y-2 cursor-pointer group relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-orange-400/0 to-red-500/0 group-hover:from-orange-400/10 group-hover:to-red-500/10 transition-all duration-300"></div>
-                <div className="text-center flex flex-col h-full relative z-10">
-                  <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                    <BookOpen className="w-8 h-8 text-white" />
+              {/* Flashcard */}
+              <div className="bg-white rounded-xl shadow-lg p-5 transition-all duration-200 hover:shadow-2xl hover:-translate-y-1 cursor-pointer group min-h-[200px] flex flex-col">
+                <div className="text-center flex-1 flex flex-col justify-between">
+                  <div>
+                    <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-200">
+                      <BookOpen className="w-7 h-7 text-white" />
+                    </div>
+                    <h3 className="text-lg font-bold mb-2 leading-tight text-gray-900">Flashcard</h3>
+                    <p className="text-gray-700 text-sm mb-3 leading-snug font-medium">Quick memory drill</p>
                   </div>
-                  <h3 className="text-xl font-black mb-2 text-gray-900">Flashcard</h3>
-                  <p className="text-gray-600 text-sm mb-4 flex-1 font-semibold">Quick memory drill</p>
-                  <button onClick={startFlashcardMode} className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-bold py-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl">
+                  <button onClick={startFlashcardMode} className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-bold py-3 rounded-lg transition-all duration-200 text-sm">
                     Start Review
                   </button>
                 </div>
@@ -3084,27 +2982,25 @@ const startPracticeMode = async () => {
             </div>
           </div>
 
-          {/* Command Center - Enhanced */}
-          <div data-tutorial="command-center" className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 rounded-2xl shadow-2xl p-6 hover:shadow-indigo-500/50 transition-all duration-300 hover:-translate-y-1 cursor-pointer border-2 border-white/20 relative overflow-hidden group" onClick={() => setCurrentView('command-center')}>
-            <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 transform translate-x-full group-hover:translate-x-[-100%] transition-transform duration-1000"></div>
-            <div className="flex items-center justify-between gap-4 relative z-10">
+          {/* Command Center - Professional Button */}
+          <div data-tutorial="command-center" className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl shadow-xl p-5 hover:shadow-2xl transition-all duration-200 hover:-translate-y-0.5 cursor-pointer border-2 border-white/20" onClick={() => setCurrentView('command-center')}>
+            <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-4 min-w-0 flex-1">
-                <div className="text-5xl flex-shrink-0 leading-none group-hover:scale-110 transition-transform duration-300">🎯</div>
+                <div className="text-4xl flex-shrink-0 leading-none">🎯</div>
                 <div className="text-white min-w-0 flex-1">
-                  <h3 className="text-2xl font-black mb-1">Command Center</h3>
-                  <p className="text-base text-white/90 font-semibold">Track progress, manage questions, prep interviews</p>
+                  <h3 className="text-xl font-bold mb-1 leading-tight">Command Center</h3>
+                  <p className="text-base text-white/90 leading-snug font-medium truncate">Track progress, manage questions, prep interviews</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-white font-black flex-shrink-0 group-hover:translate-x-1 transition-transform duration-300">
-                <span className="hidden md:inline text-lg">Open</span>
-                <span className="text-3xl">→</span>
+              <div className="flex items-center gap-2 text-white font-bold flex-shrink-0">
+                <span className="hidden md:inline text-base">Open</span>
+                <span className="text-2xl leading-none">→</span>
               </div>
             </div>
           </div>
         </div>
       </div>
     );
-  }
   }
 
   // LIVE PROMPTER
