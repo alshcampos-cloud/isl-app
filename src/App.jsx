@@ -2824,8 +2824,8 @@ const startPracticeMode = async () => {
 
           {/* Clean Centered Title */}
           <div className="text-center mb-10">
-            <h1 className="text-6xl font-bold text-white mb-3">InterviewAnswers.ai</h1>
-            <p className="text-3xl text-indigo-200 mb-2">Master Your Interview Answers with AI</p>
+            <h1 className="text-4xl md:text-6xl font-bold text-white mb-3">InterviewAnswers.ai</h1>
+            <p className="text-xl md:text-3xl text-indigo-200 mb-2">Master Your Interview Answers with AI</p>
           </div>
 
           {/* Compact Stats Row - Professional */}
@@ -5752,11 +5752,11 @@ onClick={async () => {
               const average = scores.reduce((a, b) => a + b, 0) / scores.length;
               
               return (
-                <div key={idx} className="border-2 rounded-xl p-6 hover:border-indigo-300 transition">
-                  <div className="flex items-start gap-6 mb-4">
+                <div key={idx} className="border-2 rounded-xl p-4 md:p-6 hover:border-indigo-300 transition">
+                  <div className="flex flex-col md:flex-row md:items-start gap-4 md:gap-6 mb-4">
                     {/* Left: Question Info */}
                     <div className="flex-1">
-                      <h4 className="font-bold text-lg mb-2">{qStat.question}</h4>
+                      <h4 className="font-bold text-base md:text-lg mb-2">{qStat.question}</h4>
                       <div className="flex gap-4 text-sm text-gray-600">
                         <span>📊 {qStat.sessions.length} attempts</span>
                         <span>⭐ {average.toFixed(1)} avg</span>
@@ -5768,10 +5768,10 @@ onClick={async () => {
                       </div>
                     </div>
                     
-                    {/* Middle: Sparkline Chart - Scrollable on Mobile */}
-                    <div className="flex flex-col items-center overflow-x-auto">
-                      <div className="min-w-[280px]">
-                        <svg width="280" height="100" className="mb-2">
+                    {/* Middle: Sparkline Chart - Full width on mobile */}
+                    <div className="flex flex-col items-center w-full md:w-auto overflow-x-auto">
+                      <div className="min-w-[280px] w-full max-w-[400px]">
+                        <svg width="100%" height="100" viewBox="0 0 280 100" className="mb-2" preserveAspectRatio="xMidYMid meet">
                           {/* Grid lines */}
                           {[0, 5, 10].map(score => (
                             <line 
@@ -5812,11 +5812,11 @@ onClick={async () => {
                                 key={sIdx}
                                 cx={x}
                                 cy={y}
-                                r="6"
+                                r="8"
                                 fill="#6366f1"
                                 stroke="white"
-                                strokeWidth="2"
-                                className="cursor-pointer hover:r-8 transition-all"
+                                strokeWidth="3"
+                                className="cursor-pointer hover:scale-125 transition-all"
                                 onClick={() => {
                                   setSelectedChartPoint({ 
                                     session: s, 
@@ -6210,13 +6210,13 @@ onClick={async () => {
       {showChartModal && selectedChartPoint && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowChartModal(false)}>
           <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-t-2xl">
+            <div className="sticky top-0 bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-4 md:p-6 rounded-t-2xl">
               <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="text-2xl font-bold mb-2">
+                <div className="flex-1 pr-2">
+                  <h3 className="text-xl md:text-2xl font-bold mb-2">
                     {selectedChartPoint.question ? '📊 Practice Session Details' : '📈 Session Details'}
                   </h3>
-                  <p className="text-indigo-100">
+                  <p className="text-indigo-100 text-sm md:text-base">
                     Attempt {selectedChartPoint.idx} of {selectedChartPoint.total}
                   </p>
                 </div>
@@ -6237,11 +6237,11 @@ onClick={async () => {
                 <p className="text-gray-500 text-sm">out of 10.0</p>
               </div>
               
-              {/* Question (if available) */}
+              {/* Question (if available) - PROMINENT */}
               {selectedChartPoint.question && (
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <p className="text-sm font-bold text-gray-700 mb-2">Question:</p>
-                  <p className="text-gray-900">{selectedChartPoint.question}</p>
+                <div className="bg-indigo-50 border-2 border-indigo-200 rounded-xl p-4">
+                  <p className="text-sm font-bold text-indigo-700 mb-2">📝 Question:</p>
+                  <p className="text-gray-900 font-semibold text-base md:text-lg">{selectedChartPoint.question}</p>
                 </div>
               )}
               
