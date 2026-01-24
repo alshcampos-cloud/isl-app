@@ -3099,9 +3099,6 @@ const startPracticeMode = async () => {
       </div>
     );
   }
-  }
-
-  // LIVE PROMPTER
   if (currentView === 'prompter') {
     // Check if user is locked out (7+ sessions without customization)
     const status = getCustomizationStatus();
