@@ -6361,7 +6361,6 @@ onClick={async () => {
           }}
         />
       )}
-      </>
     );
   }
   // SETTINGS
