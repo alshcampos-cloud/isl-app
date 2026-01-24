@@ -5744,7 +5744,16 @@ onClick={async () => {
         }
 
         return (
-          <div className="space-y-6">
+          <>
+            {/* Show count and toggle */}
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-gray-600">
+                Showing {questionArray.length} question{questionArray.length !== 1 ? 's' : ''}
+              </p>
+            </div>
+            
+            {/* Scrollable container with max height - Smooth scroll */}
+            <div className="space-y-6 max-h-[500px] md:max-h-[600px] overflow-y-auto pr-2 border-t-2 border-b-2 border-gray-100 py-4 scroll-smooth">
             {questionArray.sort((a, b) => b.sessions.length - a.sessions.length).map((qStat, idx) => {
               const getScore = (s) => s.feedback?.overall || (s.feedback?.match_percentage / 10);
               const scores = qStat.sessions.map(getScore);
@@ -5879,7 +5888,8 @@ onClick={async () => {
                 </div>
               );
             })}
-          </div>
+            </div>
+          </>
         );
       })()}
     </div>
@@ -6206,10 +6216,18 @@ onClick={async () => {
         </div>
       </div>
       
-      {/* Chart Detail Modal */}
+      {/* Chart Detail Modal - STABLE POSITIONING */}
       {showChartModal && selectedChartPoint && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowChartModal(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto" 
+          onClick={() => setShowChartModal(false)}
+          style={{ paddingTop: '5vh', paddingBottom: '5vh' }}
+        >
+          <div className="min-h-full flex items-start justify-center p-4">
+            <div 
+              className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full my-auto" 
+              onClick={(e) => e.stopPropagation()}
+            >
             <div className="sticky top-0 bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-4 md:p-6 rounded-t-2xl">
               <div className="flex justify-between items-start">
                 <div className="flex-1 pr-2">
@@ -6262,7 +6280,7 @@ onClick={async () => {
               </div>
               
               {/* Feedback Details */}
-              {selectedChartPoint.session.feedback && (
+              {selectedChartPoint.session.feedback ? (
                 <>
                   {selectedChartPoint.session.feedback.strengths && selectedChartPoint.session.feedback.strengths.length > 0 && (
                     <div className="bg-green-50 rounded-xl p-4 border-2 border-green-200">
@@ -6297,7 +6315,23 @@ onClick={async () => {
                       </ul>
                     </div>
                   )}
+                  
+                  {/* Show message if no detailed feedback available */}
+                  {(!selectedChartPoint.session.feedback.strengths || selectedChartPoint.session.feedback.strengths.length === 0) &&
+                   (!selectedChartPoint.session.feedback.gaps || selectedChartPoint.session.feedback.gaps.length === 0) && (
+                    <div className="bg-gray-50 rounded-xl p-6 text-center border-2 border-gray-200">
+                      <p className="text-gray-600">
+                        📊 Score recorded, but detailed feedback not available for this session.
+                      </p>
+                    </div>
+                  )}
                 </>
+              ) : (
+                <div className="bg-gray-50 rounded-xl p-6 text-center border-2 border-gray-200">
+                  <p className="text-gray-600">
+                    📊 This session has a score of {selectedChartPoint.score.toFixed(1)}/10, but detailed feedback is not available.
+                  </p>
+                </div>
               )}
               
               <button 
