@@ -5442,12 +5442,6 @@ onClick={async () => {
                   </div>
                   {interviewDate && (
                     <div className="text-center bg-white/20 backdrop-blur rounded-xl p-5 min-w-[140px]">
-// ============================================
-// ENHANCED PROGRESS TAB - WORLD-CLASS GAMIFICATION
-// This replaces the Progress tab content only
-// Lines 5445-5897 in original file
-// ============================================
-
 {commandCenterTab === 'progress' && (
   <div>
     {/* Session Detail Modal - UNCHANGED */}
@@ -5895,6 +5889,120 @@ onClick={async () => {
                         <svg width="100%" height="100" viewBox="0 0 280 100" className="mb-2" preserveAspectRatio="xMidYMid meet">
                           {/* Grid lines */}
                           {[0, 5, 10].map(score => (
+                            <line 
+                              key={score}
+                              x1="0" 
+                              y1={90 - (score * 8)} 
+                              x2="280" 
+                              y2={90 - (score * 8)} 
+                              stroke="#e5e7eb" 
+                              strokeWidth="1"
+                              strokeDasharray="2,2"
+                            />
+                          ))}
+                          
+                          {/* Line connecting points */}
+                          {qStat.sessions.length > 1 && (
+                            <polyline
+                              points={qStat.sessions.map((s, sIdx) => {
+                                const score = getScore(s);
+                                const x = 20 + (sIdx / Math.max(1, qStat.sessions.length - 1)) * 240;
+                                const y = 90 - (score * 8);
+                                return `${x},${y}`;
+                              }).join(' ')}
+                              fill="none"
+                              stroke={isTopPerformer ? "#10b981" : "#6366f1"}
+                              strokeWidth="3"
+                              strokeLinecap="round"
+                            />
+                          )}
+                          
+                          {/* Clickable dots - BIGGER */}
+                          {qStat.sessions.map((s, sIdx) => {
+                            const score = getScore(s);
+                            const x = 20 + (sIdx / Math.max(1, qStat.sessions.length - 1)) * 240;
+                            const y = 90 - (score * 8);
+                            return (
+                              <circle
+                                key={sIdx}
+                                cx={x}
+                                cy={y}
+                                r="8"
+                                fill={isTopPerformer ? "#10b981" : "#6366f1"}
+                                stroke="white"
+                                strokeWidth="3"
+                                className="cursor-pointer hover:scale-125 transition-all"
+                                onClick={() => {
+                                  setSelectedChartPoint({ 
+                                    session: s, 
+                                    score, 
+                                    idx: sIdx + 1, 
+                                    total: qStat.sessions.length,
+                                    question: qStat.question 
+                                  });
+                                  setShowChartModal(true);
+                                }}
+                              >
+                                <title>Attempt {sIdx + 1}: {score.toFixed(1)}/10</title>
+                              </circle>
+                            );
+                          })}
+                        </svg>
+                      </div>
+                      <p className="text-xs text-gray-500 font-semibold">Click dots for details</p>
+                    </div>
+                    
+                    {/* Right: Latest Score */}
+                    <div className={`text-center rounded-xl p-4 ${isTopPerformer ? 'bg-green-100' : 'bg-indigo-50'}`}>
+                      <p className="text-sm text-gray-600 mb-1 font-semibold">Latest</p>
+                      <p className={`text-4xl font-black ${isTopPerformer ? 'text-green-600' : 'text-indigo-600'}`}>
+                        {scores[scores.length - 1].toFixed(1)}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <details className="mt-4 pt-4 border-t">
+                    <summary className="cursor-pointer text-sm font-bold text-indigo-600 hover:text-indigo-800">
+                      📋 View {qStat.sessions.length} attempts →
+                    </summary>
+                    <div className="mt-4 space-y-2">
+                      {qStat.sessions.slice().reverse().map((session, sIdx) => {
+                        const score = getScore(session);
+                        const attemptNum = qStat.sessions.length - sIdx;
+                        return (
+                          <div 
+                            key={sIdx}
+                            className="flex justify-between bg-gray-50 p-4 rounded-lg cursor-pointer hover:bg-indigo-50 transition shadow-sm"
+                            onClick={() => {
+                              setSelectedChartPoint({ 
+                                session, 
+                                score, 
+                                idx: attemptNum, 
+                                total: qStat.sessions.length,
+                                question: qStat.question 
+                              });
+                              setShowChartModal(true);
+                            }}
+                          >
+                            <span className="text-sm font-semibold text-gray-700">
+                              Attempt {attemptNum} • {new Date(session.date).toLocaleDateString()} at {new Date(session.date).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}
+                            </span>
+                            <span className="text-xl font-black text-indigo-600">{score.toFixed(1)}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </details>
+                </div>
+              );
+            })}
+            </div>
+          </>
+        );
+      })()}
+    </div>
+  </div>
+)}
                             <line 
                               key={score}
                               x1="0" 
