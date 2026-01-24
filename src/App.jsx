@@ -6343,6 +6343,7 @@ onClick={async () => {
             </div>
           </div>
         </div>
+      </div>
       )}
       
       {/* Answer Assistant Modal */}
@@ -6361,6 +6362,7 @@ onClick={async () => {
           }}
         />
       )}
+      </>
     );
   }
   // SETTINGS
