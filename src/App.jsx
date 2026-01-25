@@ -20,7 +20,7 @@ import { canUseFeature, incrementUsage, getUsageStats, TIER_LIMITS } from './uti
 import UsageDashboard from './Components/UsageDashboard';
 import PricingPage from './Components/PricingPage';
 import ResetPassword from './Components/ResetPassword';
-import RetentionDashboard from './Components/RetentionDashboard';
+import ConsentDialog from './Components/ConsentDialog';
 import SessionDetailsModal from './Components/SessionDetailsModal';
 
 // CSS string is OK at top-level
@@ -2541,91 +2541,33 @@ const startPracticeMode = async () => {
       )}
 
       {/* CONSENT DIALOG - First-time recording consent */}
-      {showConsentDialog && !hasConsented && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 overflow-y-auto">
-          <div 
-            className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-auto shadow-2xl my-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-xl font-bold text-gray-900">Recording Consent Required</h2>
-                <button
-                  onClick={() => {
-                    console.log('❌ Consent canceled via X');
-                    setShowConsentDialog(false);
-                    setPendingMode(null);
-                  }}
-                  className="text-gray-400 hover:text-gray-600 transition"
-                  aria-label="Close"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              
-              <p className="text-gray-700 mb-3 text-sm">
-                InterviewAnswers.ai uses your microphone to record practice responses for AI feedback.
-              </p>
+      <ConsentDialog 
+        show={showConsentDialog && !hasConsented}
+        pendingMode={pendingMode}
+        onCancel={() => {
+          console.log('❌ Consent canceled');
+          setShowConsentDialog(false);
+          setPendingMode(null);
+        }}
+        onAgree={() => {
+          console.log('✅ User agreed to consent');
+          localStorage.setItem('isl_recording_consent', 'true');
+          setHasConsented(true);
+          setShowConsentDialog(false);
+          if (pendingMode === 'prompter') {
+            setShowLivePrompterWarning(true);
+          } else if (pendingMode === 'ai-interviewer') {
+            actuallyStartAIInterviewer();
+          } else if (pendingMode === 'practice') {
+            actuallyStartPractice();
+          }
+        }}
+        onNavigate={(view) => {
+          setShowConsentDialog(false);
+          setCurrentView(view);
+        }}
+      />
 
-              <div className="bg-blue-50 border-l-4 border-blue-400 rounded p-3 mb-3 text-xs">
-                <p className="text-blue-900 mb-1">✓ Recordings for feedback only</p>
-                <p className="text-blue-900 mb-1">✓ Delete anytime in Settings</p>
-                <p className="text-blue-900">✓ Data stored securely</p>
-              </div>
-
-              <div className="bg-orange-50 border-l-4 border-orange-400 rounded p-3 mb-3">
-                <p className="font-bold text-orange-900 text-sm mb-1">⚠️ Live Prompter Use</p>
-                <p className="text-orange-800 text-xs">
-                  If using during actual interviews, <strong>YOU must obtain consent from all parties</strong>. 
-                  Recording without consent may be illegal.
-                </p>
-              </div>
-
-              <p className="text-xs text-gray-600 mb-4">
-                By clicking "I Agree," you consent to our{' '}
-                <button onClick={() => {setShowConsentDialog(false); setCurrentView('privacy');}} className="text-indigo-600 underline">
-                  Privacy Policy
-                </button>
-                {' '}and{' '}
-                <button onClick={() => {setShowConsentDialog(false); setCurrentView('terms');}} className="text-indigo-600 underline">
-                  Terms
-                </button>.
-              </p>
-
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    console.log('❌ Consent canceled');
-                    setShowConsentDialog(false);
-                    setPendingMode(null);
-                  }}
-                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded-lg text-sm"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    console.log('✅ User agreed to consent');
-                    localStorage.setItem('isl_recording_consent', 'true');
-                    setHasConsented(true);
-                    setShowConsentDialog(false);
-                    if (pendingMode === 'prompter') {
-                      setShowLivePrompterWarning(true);
-                    } else if (pendingMode === 'ai-interviewer') {
-                      actuallyStartAIInterviewer();
-                    } else if (pendingMode === 'practice') {
-                      actuallyStartPractice();
-                    }
-                  }}
-                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg text-sm"
-                >
-                  I Agree
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* LIVE PROMPTER WARNING - Shows before activating prompter */}
       {showLivePrompterWarning && (
@@ -2834,15 +2776,6 @@ const startPracticeMode = async () => {
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-3">InterviewAnswers.ai</h1>
             <p className="text-xl md:text-3xl text-indigo-200 mb-2">Master Your Interview Answers with AI</p>
           </div>
-
-          {/* RETENTION DASHBOARD */}
-          <RetentionDashboard 
-            practiceHistory={practiceHistory}
-            questions={questions}
-            interviewDate={interviewDate}
-            setCurrentView={setCurrentView}
-            setCommandCenterTab={setCommandCenterTab}
-          />
 
           {/* Compact Stats Row - Enhanced with Gradients */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
@@ -6244,8 +6177,8 @@ onClick={async () => {
       
       {/* Chart Detail Modal - Using Component */}
       <SessionDetailsModal 
-        show={showChartModal}
-        selectedPoint={selectedChartPoint}
+        selectedChartPoint={selectedChartPoint}
+        showChartModal={showChartModal}
         onClose={() => setShowChartModal(false)}
       />
       
