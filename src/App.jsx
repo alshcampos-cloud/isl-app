@@ -1048,8 +1048,7 @@ question_id: (questionData.id && questionData.id !== "0" && typeof questionData.
     
     if (!check.allowed) {
       // Show upgrade modal with specific message
-      const tierLimits = TIER_LIMITS[userTier];
-      alert(`You've used all ${tierLimits[feature]} ${featureName} sessions this month!
+      alert(`You've used all ${check.limit} ${featureName} sessions this month!
 
 Upgrade to Pro for UNLIMITED:
 • Unlimited AI Interviewer
@@ -5209,12 +5208,9 @@ onClick={async () => {
                           </div>
                           <button 
                             onClick={async () => {
-                              const usageCheck = await checkAndIncrementUsage();
-                              if (!usageCheck.allowed) {
-                                const limit = usageCheck.tier === 'free' ? '25' : '100';
-                                alert(`⚠️ Monthly Limit Reached\n\nYou've used all ${limit} sessions this month.\n\nUpgrade to Pro for 100 sessions/month!`);
-                                return;
-                              }
+                              const canUse = await checkAndIncrementUsage('practiceMode', 'Practice Mode');
+                              if (!canUse) return;
+                              
                               accumulatedTranscript.current = '';
                               setCurrentQuestion(q);
                               setCurrentMode('practice');
@@ -5255,12 +5251,9 @@ onClick={async () => {
                           </div>
                           <button 
                             onClick={async () => {
-                              const usageCheck = await checkAndIncrementUsage();
-                              if (!usageCheck.allowed) {
-                                const limit = usageCheck.tier === 'free' ? '25' : '100';
-                                alert(`⚠️ Monthly Limit Reached\n\nYou've used all ${limit} sessions this month.\n\nUpgrade to Pro for 100 sessions/month!`);
-                                return;
-                              }
+                              const canUse = await checkAndIncrementUsage('practiceMode', 'Practice Mode');
+                              if (!canUse) return;
+                              
                               accumulatedTranscript.current = '';
                               setCurrentQuestion(q);
                               setCurrentMode('practice');
