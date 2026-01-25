@@ -1,45 +1,25 @@
-// Credit System for ISL - EMERGENCY HOTFIX
-// Temporarily removes usage limits for debugging
+// Credit System for ISL - PRODUCTION VERSION
+// Proper limits with upgrade incentives
 
 export const TIER_LIMITS = {
   free: {
     name: 'Free',
     price: 0,
-    ai_interviewer: 999999, // TEMPORARILY UNLIMITED
-    practice_mode: 999999, // TEMPORARILY UNLIMITED
-    answer_assistant: 999999, // TEMPORARILY UNLIMITED
-    question_gen: 999999, // TEMPORARILY UNLIMITED
-    live_prompter_questions: 999999, // TEMPORARILY UNLIMITED
-    live_prompter_unlimited: true
-  },
-  starter: {
-    name: 'Starter',
-    price: 14.99,
-    ai_interviewer: 999999,
-    practice_mode: 999999,
-    answer_assistant: 999999,
-    question_gen: 999999,
-    live_prompter_questions: 999999,
-    live_prompter_unlimited: true
+    ai_interviewer: 3,           // 3 full AI practice sessions (high value)
+    practice_mode: 10,            // 10 quick practices (daily use for 2 weeks)
+    answer_assistant: 5,          // 5 STAR coaching sessions
+    question_gen: 5,              // 5 AI question generations
+    live_prompter_questions: 10,  // 10 real-time prompt questions
+    live_prompter_unlimited: false
   },
   pro: {
     name: 'Pro',
     price: 29.99,
-    ai_interviewer: 999999,
-    practice_mode: 999999,
-    answer_assistant: 999999,
-    question_gen: 999999,
-    live_prompter_questions: 999999,
-    live_prompter_unlimited: true
-  },
-  premium: {
-    name: 'Premium',
-    price: 49.99,
-    ai_interviewer: 999999,
-    practice_mode: 999999,
-    answer_assistant: 999999,
-    question_gen: 999999,
-    live_prompter_questions: 999999,
+    ai_interviewer: 50,           // 50 AI sessions (plenty for job search)
+    practice_mode: 999999,        // UNLIMITED (most used feature)
+    answer_assistant: 15,         // 15 coaching sessions
+    question_gen: 999999,         // UNLIMITED question generation
+    live_prompter_questions: 999999, // UNLIMITED real-time prompts
     live_prompter_unlimited: true
   }
 };
@@ -67,16 +47,48 @@ function getCurrentPeriod() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 }
 
-// Check if user can use a feature - ALWAYS RETURNS TRUE FOR DEBUGGING
+// Check if user can use a feature
 export function canUseFeature(usage, tier, feature) {
-  console.log('🔍 canUseFeature called:', { usage, tier, feature });
+  const limits = TIER_LIMITS[tier] || TIER_LIMITS.free;
   
-  // TEMPORARILY ALWAYS ALLOW FOR DEBUGGING
+  // Convert camelCase feature name to snake_case for database lookup
+  const dbFeatureName = featureNameToDb(feature);
+  
+  const currentUsage = usage[dbFeatureName] || 0;
+  const limit = limits[dbFeatureName];
+  
+  if (!limit) {
+    console.warn(`Unknown feature: ${feature}`);
+    return { allowed: false, remaining: 0, limit: 0, exceeded: true };
+  }
+  
+  // Unlimited features
+  if (limit >= 999999) {
+    return { 
+      allowed: true, 
+      remaining: 999999, 
+      limit: limit,
+      unlimited: true
+    };
+  }
+  
+  // Check if under limit
+  if (currentUsage < limit) {
+    return {
+      allowed: true,
+      remaining: limit - currentUsage,
+      limit: limit,
+      unlimited: false
+    };
+  }
+  
+  // Over limit
   return {
-    allowed: true,
-    remaining: 999999,
-    limit: 999999,
-    unlimited: true
+    allowed: false,
+    remaining: 0,
+    limit: limit,
+    exceeded: true,
+    unlimited: false
   };
 }
 
@@ -94,12 +106,9 @@ function featureNameToDb(camelCaseName) {
 
 // Increment usage for a feature
 export async function incrementUsage(supabase, userId, feature) {
-  console.log('📊 incrementUsage called:', { userId, feature });
-  
   try {
     // Convert camelCase feature name to snake_case
     const dbFeatureName = featureNameToDb(feature);
-    console.log('📊 Converted feature name:', dbFeatureName);
     
     // Get current usage
     const { data: usageData, error: fetchError } = await supabase
@@ -110,15 +119,13 @@ export async function incrementUsage(supabase, userId, feature) {
       .single();
     
     if (fetchError && fetchError.code !== 'PGRST116') {
-      console.error('❌ Error fetching usage:', fetchError);
-      // Don't block - just log and continue
-      return { success: true };
+      console.error('Error fetching usage:', fetchError);
+      return null;
     }
     
     let newCount = 1;
     
     if (usageData) {
-      console.log('📊 Existing usage data:', usageData);
       newCount = (usageData[dbFeatureName] || 0) + 1;
       
       // Update existing record
@@ -131,15 +138,12 @@ export async function incrementUsage(supabase, userId, feature) {
         .single();
       
       if (error) {
-        console.error('❌ Error updating usage:', error);
-        // Don't block - just log and continue
-        return { success: true };
+        console.error('Error updating usage:', error);
+        return null;
       }
       
-      console.log('✅ Updated usage:', data);
       return data;
     } else {
-      console.log('📊 Creating new usage record');
       // Create new record for this period
       const newUsage = initializeUsageTracking(userId);
       newUsage[dbFeatureName] = 1;
@@ -151,25 +155,20 @@ export async function incrementUsage(supabase, userId, feature) {
         .single();
       
       if (error) {
-        console.error('❌ Error creating usage record:', error);
-        // Don't block - just log and continue
-        return { success: true };
+        console.error('Error creating usage record:', error);
+        return null;
       }
       
-      console.log('✅ Created usage:', data);
       return data;
     }
   } catch (err) {
-    console.error('❌ Error in incrementUsage:', err);
-    // Don't block - just log and continue
-    return { success: true };
+    console.error('Error in incrementUsage:', err);
+    return null;
   }
 }
 
 // Get usage stats for display
 export async function getUsageStats(supabase, userId, tier) {
-  console.log('📊 getUsageStats called:', { userId, tier });
-  
   try {
     const { data, error } = await supabase
       .from('usage_tracking')
@@ -179,62 +178,51 @@ export async function getUsageStats(supabase, userId, tier) {
       .single();
     
     if (error && error.code !== 'PGRST116') {
-      console.error('❌ Error fetching usage stats:', error);
+      console.error('Error fetching usage stats:', error);
     }
     
-    console.log('📊 Usage data from DB:', data);
-    
     const usage = data || initializeUsageTracking(userId, tier);
-    const limits = TIER_LIMITS[tier];
+    const limits = TIER_LIMITS[tier] || TIER_LIMITS.free;
     
-    // Return stats with UNLIMITED for everything (debugging)
     return {
       aiInterviewer: {
         used: usage.ai_interviewer || 0,
-        limit: 999999,
-        remaining: 999999,
-        unlimited: true
+        limit: limits.ai_interviewer,
+        remaining: Math.max(0, limits.ai_interviewer - (usage.ai_interviewer || 0)),
+        unlimited: limits.ai_interviewer >= 999999
       },
       practiceMode: {
         used: usage.practice_mode || 0,
-        limit: 999999,
-        remaining: 999999,
-        unlimited: true
+        limit: limits.practice_mode,
+        remaining: Math.max(0, limits.practice_mode - (usage.practice_mode || 0)),
+        unlimited: limits.practice_mode >= 999999
       },
       answerAssistant: {
         used: usage.answer_assistant || 0,
-        limit: 999999,
-        remaining: 999999,
-        unlimited: true
+        limit: limits.answer_assistant,
+        remaining: Math.max(0, limits.answer_assistant - (usage.answer_assistant || 0)),
+        unlimited: limits.answer_assistant >= 999999
       },
       questionGen: {
         used: usage.question_gen || 0,
-        limit: 999999,
-        remaining: 999999,
-        unlimited: true
+        limit: limits.question_gen,
+        remaining: Math.max(0, limits.question_gen - (usage.question_gen || 0)),
+        unlimited: limits.question_gen >= 999999
       },
       livePrompterQuestions: {
         used: usage.live_prompter_questions || 0,
-        limit: 999999,
-        remaining: 999999,
-        unlimited: true
+        limit: limits.live_prompter_questions,
+        remaining: Math.max(0, limits.live_prompter_questions - (usage.live_prompter_questions || 0)),
+        unlimited: limits.live_prompter_unlimited
       }
     };
   } catch (err) {
-    console.error('❌ Error in getUsageStats:', err);
-    
-    // Return default unlimited stats
-    return {
-      aiInterviewer: { used: 0, limit: 999999, remaining: 999999, unlimited: true },
-      practiceMode: { used: 0, limit: 999999, remaining: 999999, unlimited: true },
-      answerAssistant: { used: 0, limit: 999999, remaining: 999999, unlimited: true },
-      questionGen: { used: 0, limit: 999999, remaining: 999999, unlimited: true },
-      livePrompterQuestions: { used: 0, limit: 999999, remaining: 999999, unlimited: true }
-    };
+    console.error('Error in getUsageStats:', err);
+    return null;
   }
 }
 
-// Reset usage at the start of a new billing period (run this monthly)
+// Reset usage at the start of a new billing period
 export async function resetMonthlyUsage(supabase, userId) {
   const newUsage = initializeUsageTracking(userId);
   
@@ -250,4 +238,42 @@ export async function resetMonthlyUsage(supabase, userId) {
   }
   
   return data;
+}
+
+// Get user-friendly feature names for display
+export function getFeatureDisplayInfo(feature) {
+  const info = {
+    aiInterviewer: {
+      name: 'AI Interviewer',
+      description: 'Realistic practice with AI feedback',
+      icon: '🤖',
+      value: 'Full AI practice sessions with personalized feedback'
+    },
+    practiceMode: {
+      name: 'Practice Mode',
+      description: 'Quick scoring and analysis',
+      icon: '🎯',
+      value: 'Fast practice with instant AI scoring'
+    },
+    answerAssistant: {
+      name: 'Answer Assistant',
+      description: 'STAR method coaching',
+      icon: '✨',
+      value: 'Expert coaching on structuring your answers'
+    },
+    questionGen: {
+      name: 'Question Generator',
+      description: 'AI-powered personalized questions',
+      icon: '💡',
+      value: 'Custom questions tailored to your experience'
+    },
+    livePrompterQuestions: {
+      name: 'Live Prompter',
+      description: 'Real-time interview support',
+      icon: '🎤',
+      value: 'Live bullet points during actual interviews'
+    }
+  };
+  
+  return info[feature] || { name: feature, description: '', icon: '📊', value: '' };
 }
