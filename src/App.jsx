@@ -5603,7 +5603,9 @@ onClick={async () => {
                           fill="#6366f1" 
                           stroke="white" 
                           strokeWidth="3" 
-                          className="cursor-pointer hover:r-12 transition-all" 
+                          className="cursor-pointer" 
+                          onMouseEnter={(e) => e.currentTarget.setAttribute("r", "12")}
+                          onMouseLeave={(e) => e.currentTarget.setAttribute("r", "10")}
                           onClick={() => {
                             setSelectedChartPoint({ session, score, idx: idx + 1, total: validSessions.length });
                             setShowChartModal(true);

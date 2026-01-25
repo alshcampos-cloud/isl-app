@@ -1,60 +1,314 @@
-import { useState, useEffect } from 'react'
-import { supabase } from './lib/supabase'
-import { BookOpen, Plus, ChevronRight, AlertCircle, CheckCircle, X, Lightbulb, Sparkles } from 'lucide-react'
+import { useState } from 'react';
+import { BookOpen, Plus, ChevronRight, CheckCircle, X, Lightbulb, Sparkles } from 'lucide-react';
+
+// Hardcoded templates - no database needed!
+const TEMPLATES = [
+  {
+    id: 'product-manager',
+    name: 'Product Manager',
+    description: 'Core PM questions covering strategy, metrics, and execution',
+    industry: 'Product',
+    is_free: true,
+    questions: [
+      {
+        id: 'pm-1',
+        question_text: 'Tell me about a time you launched a product feature that failed',
+        category: 'Product Strategy',
+        priority: 'High',
+        structure_prompts: [
+          'What was the feature and why did you build it?',
+          'What went wrong and how did you discover it?',
+          'How did you respond and what did you learn?',
+          'What would you do differently next time?'
+        ],
+        timing_guidance: 'Aim for 2-3 minutes. Show humility and learning.',
+        authenticity_tips: [
+          'Pick a real failure, not a humble-brag',
+          'Be specific about metrics that showed failure',
+          'Show genuine reflection on what you learned'
+        ]
+      },
+      {
+        id: 'pm-2',
+        question_text: 'How do you prioritize features on your roadmap?',
+        category: 'Product Strategy',
+        priority: 'High',
+        structure_prompts: [
+          'Describe your prioritization framework (RICE, value vs effort, etc.)',
+          'How do you gather input from stakeholders?',
+          'Give a specific example of a tough prioritization decision',
+          'How do you communicate priorities to the team?'
+        ],
+        timing_guidance: 'Aim for 2-3 minutes. Show systematic thinking.',
+        authenticity_tips: [
+          'Name the actual framework you use',
+          'Mention specific tools (Jira, ProductBoard, etc.)',
+          'Share a real tradeoff you made'
+        ]
+      },
+      {
+        id: 'pm-3',
+        question_text: 'Tell me about a time you had to influence without authority',
+        category: 'Leadership',
+        priority: 'High',
+        structure_prompts: [
+          'What was the situation and who did you need to influence?',
+          'What tactics did you use to build buy-in?',
+          'What obstacles did you face?',
+          'What was the outcome?'
+        ],
+        timing_guidance: 'Aim for 2-3 minutes.',
+        authenticity_tips: [
+          'Show empathy for the other person\'s perspective',
+          'Mention specific persuasion techniques you used',
+          'Don\'t make yourself sound manipulative'
+        ]
+      }
+    ]
+  },
+  {
+    id: 'software-engineer',
+    name: 'Software Engineer',
+    description: 'Technical and behavioral questions for engineering roles',
+    industry: 'Engineering',
+    is_free: true,
+    questions: [
+      {
+        id: 'swe-1',
+        question_text: 'Tell me about a time you had to debug a difficult production issue',
+        category: 'Technical Problem Solving',
+        priority: 'High',
+        structure_prompts: [
+          'What was the issue and how did it manifest?',
+          'What was your debugging process?',
+          'What tools and techniques did you use?',
+          'What was the root cause and how did you fix it?',
+          'What did you do to prevent it in the future?'
+        ],
+        timing_guidance: 'Aim for 2-3 minutes. Show systematic debugging approach.',
+        authenticity_tips: [
+          'Mention specific tools (logs, metrics, debuggers)',
+          'Share actual commands or techniques you used',
+          'Don\'t skip over false starts or wrong hypotheses'
+        ]
+      },
+      {
+        id: 'swe-2',
+        question_text: 'Describe a time you had to make a technical tradeoff',
+        category: 'System Design',
+        priority: 'High',
+        structure_prompts: [
+          'What was the technical decision you faced?',
+          'What were the options and their tradeoffs?',
+          'How did you evaluate the options?',
+          'What did you decide and why?',
+          'What was the outcome?'
+        ],
+        timing_guidance: 'Aim for 2-3 minutes.',
+        authenticity_tips: [
+          'Be specific about technical constraints',
+          'Mention actual technologies/frameworks',
+          'Show you considered multiple perspectives'
+        ]
+      },
+      {
+        id: 'swe-3',
+        question_text: 'Tell me about a time you improved code quality or system performance',
+        category: 'Technical Excellence',
+        priority: 'Medium',
+        structure_prompts: [
+          'What was the problem with the existing code/system?',
+          'How did you identify the opportunity?',
+          'What changes did you make?',
+          'What was the measurable impact?'
+        ],
+        timing_guidance: 'Aim for 2 minutes. Focus on impact.',
+        authenticity_tips: [
+          'Include actual metrics (latency reduced by X%, etc.)',
+          'Mention specific patterns or techniques',
+          'Show you balanced perfection vs. pragmatism'
+        ]
+      }
+    ]
+  },
+  {
+    id: 'general-behavioral',
+    name: 'General Behavioral',
+    description: 'Common behavioral questions for any role',
+    industry: 'All Industries',
+    is_free: true,
+    questions: [
+      {
+        id: 'gen-1',
+        question_text: 'Tell me about yourself',
+        category: 'Introduction',
+        priority: 'Critical',
+        structure_prompts: [
+          'Brief personal background (30 seconds)',
+          'Key professional experiences (1 minute)',
+          'Why you\'re interested in this role (30 seconds)'
+        ],
+        timing_guidance: 'Keep to 2 minutes total. This sets the tone.',
+        authenticity_tips: [
+          'Don\'t just recite your resume',
+          'Connect your experiences to the role you\'re applying for',
+          'Show passion for your work'
+        ]
+      },
+      {
+        id: 'gen-2',
+        question_text: 'What is your greatest weakness?',
+        category: 'Self-Awareness',
+        priority: 'High',
+        structure_prompts: [
+          'Name a real weakness (not a humble-brag)',
+          'Explain how it has affected your work',
+          'Describe what you\'re doing to improve',
+          'Show progress you\'ve made'
+        ],
+        timing_guidance: 'Aim for 1-2 minutes.',
+        authenticity_tips: [
+          'Pick a real weakness, not "I work too hard"',
+          'Show genuine self-awareness',
+          'Demonstrate growth mindset'
+        ]
+      },
+      {
+        id: 'gen-3',
+        question_text: 'Why do you want to work here?',
+        category: 'Motivation',
+        priority: 'High',
+        structure_prompts: [
+          'What specifically excites you about the company?',
+          'How does this role align with your career goals?',
+          'What unique value can you bring?'
+        ],
+        timing_guidance: 'Aim for 1-2 minutes.',
+        authenticity_tips: [
+          'Reference specific company initiatives or values',
+          'Connect to your personal career narrative',
+          'Avoid generic answers about "learning" or "growth"'
+        ]
+      },
+      {
+        id: 'gen-4',
+        question_text: 'Tell me about a time you received critical feedback',
+        category: 'Growth Mindset',
+        priority: 'Medium',
+        structure_prompts: [
+          'What was the feedback and who gave it?',
+          'How did you initially react?',
+          'What actions did you take?',
+          'What was the result?'
+        ],
+        timing_guidance: 'Aim for 2 minutes.',
+        authenticity_tips: [
+          'Share a substantive piece of feedback, not something minor',
+          'Show emotional maturity in how you received it',
+          'Demonstrate concrete behavior change'
+        ]
+      },
+      {
+        id: 'gen-5',
+        question_text: 'Describe a time you disagreed with your manager',
+        category: 'Conflict Resolution',
+        priority: 'Medium',
+        structure_prompts: [
+          'What was the disagreement about?',
+          'How did you approach the conversation?',
+          'What was the outcome?',
+          'What did you learn about handling disagreements?'
+        ],
+        timing_guidance: 'Aim for 2 minutes.',
+        authenticity_tips: [
+          'Show respect even when disagreeing',
+          'Focus on ideas, not personalities',
+          'Demonstrate professional maturity'
+        ]
+      }
+    ]
+  },
+  {
+    id: 'marketing',
+    name: 'Marketing & Business',
+    description: 'Questions for marketing, sales, and business roles',
+    industry: 'Marketing',
+    is_free: true,
+    questions: [
+      {
+        id: 'mkt-1',
+        question_text: 'Tell me about a successful campaign you ran',
+        category: 'Campaign Management',
+        priority: 'High',
+        structure_prompts: [
+          'What was the campaign goal and target audience?',
+          'What was your strategy and execution plan?',
+          'What channels did you use and why?',
+          'What were the measurable results?',
+          'What did you learn?'
+        ],
+        timing_guidance: 'Aim for 2-3 minutes. Focus on metrics.',
+        authenticity_tips: [
+          'Include specific numbers (CTR, conversion rate, ROI)',
+          'Mention actual tools and platforms you used',
+          'Be honest about what worked and what didn\'t'
+        ]
+      },
+      {
+        id: 'mkt-2',
+        question_text: 'How do you measure marketing success?',
+        category: 'Analytics',
+        priority: 'High',
+        structure_prompts: [
+          'What metrics matter most for your campaigns?',
+          'How do you set targets and benchmarks?',
+          'How do you tie marketing to business outcomes?',
+          'Give an example of optimizing based on data'
+        ],
+        timing_guidance: 'Aim for 2 minutes.',
+        authenticity_tips: [
+          'Name specific metrics and tools',
+          'Show you understand funnel metrics',
+          'Connect marketing metrics to revenue'
+        ]
+      },
+      {
+        id: 'mkt-3',
+        question_text: 'Tell me about a time you had to work with a tight budget',
+        category: 'Resource Management',
+        priority: 'Medium',
+        structure_prompts: [
+          'What was the constraint and what were you trying to achieve?',
+          'How did you prioritize and make tradeoffs?',
+          'What creative solutions did you find?',
+          'What was the outcome?'
+        ],
+        timing_guidance: 'Aim for 2 minutes.',
+        authenticity_tips: [
+          'Show resourcefulness and creativity',
+          'Mention specific budget numbers if possible',
+          'Demonstrate ROI thinking'
+        ]
+      }
+    ]
+  }
+];
 
 function TemplateLibrary({ onImport, onClose, onOpenAICoach, checkUsageLimit }) {
-  const [templates, setTemplates] = useState([])
-  const [selectedTemplate, setSelectedTemplate] = useState(null)
-  const [templateQuestions, setTemplateQuestions] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [importing, setImporting] = useState(false)
-  const [error, setError] = useState(null)
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [importing, setImporting] = useState(false);
 
-  useEffect(() => {
-    fetchTemplates()
-  }, [])
-
-  const fetchTemplates = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('question_templates')
-        .select('*')
-        .order('created_at', { ascending: true })
-
-      if (error) throw error
-      setTemplates(data)
-    } catch (err) {
-      console.error('Error fetching templates:', err)
-      setError('Failed to load templates')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const fetchTemplateQuestions = async (templateId) => {
-    try {
-      const { data, error } = await supabase
-        .from('template_questions')
-        .select('*')
-        .eq('template_id', templateId)
-        .order('sort_order', { ascending: true })
-
-      if (error) throw error
-      setTemplateQuestions(data)
-      setSelectedTemplate(templates.find(t => t.id === templateId))
-    } catch (err) {
-      console.error('Error fetching questions:', err)
-      setError('Failed to load questions')
-    }
-  }
+  const handleSelectTemplate = (template) => {
+    setSelectedTemplate(template);
+  };
 
   const handleImport = async () => {
-    if (!selectedTemplate) return
+    if (!selectedTemplate) return;
 
-    setImporting(true)
+    setImporting(true);
     try {
       // Convert template questions to user's question format
-      const questionsToImport = templateQuestions.map(tq => ({
+      const questionsToImport = selectedTemplate.questions.map(tq => ({
         question: tq.question_text,
         category: tq.category,
         priority: tq.priority,
@@ -62,25 +316,24 @@ function TemplateLibrary({ onImport, onClose, onOpenAICoach, checkUsageLimit }) 
         narrative: '',
         keywords: [],
         followups: [],
-        // Add authenticity tips as a special field
         authenticityTips: tq.authenticity_tips || [],
         timingGuidance: tq.timing_guidance || ''
-      }))
+      }));
 
       // Pass to parent component to add to user's questions
       if (onImport) {
-        onImport(questionsToImport)
+        onImport(questionsToImport);
       }
 
-      alert(`✅ Successfully imported ${questionsToImport.length} questions!`)
-      if (onClose) onClose()
+      alert(`✅ Successfully imported ${questionsToImport.length} questions from ${selectedTemplate.name}!`);
+      if (onClose) onClose();
     } catch (err) {
-      console.error('Error importing:', err)
-      setError('Failed to import questions')
+      console.error('Error importing:', err);
+      alert('Failed to import questions. Please try again.');
     } finally {
-      setImporting(false)
+      setImporting(false);
     }
-  }
+  };
 
   const handleImportSingle = async (templateQuestion) => {
     try {
@@ -94,24 +347,24 @@ function TemplateLibrary({ onImport, onClose, onOpenAICoach, checkUsageLimit }) 
         followups: [],
         authenticityTips: templateQuestion.authenticity_tips || [],
         timingGuidance: templateQuestion.timing_guidance || ''
-      }
+      };
 
       if (onImport) {
-        onImport([questionToImport])
+        onImport([questionToImport]);
       }
 
-      alert(`✅ Added "${templateQuestion.question_text}" to your Question Bank!`)
+      alert(`✅ Added "${templateQuestion.question_text}" to your Question Bank!`);
     } catch (err) {
-      console.error('Error importing single question:', err)
-      setError('Failed to import question')
+      console.error('Error importing single question:', err);
+      alert('Failed to import question. Please try again.');
     }
-  }
+  };
 
   const handleAICoach = async (templateQuestion) => {
     // Check usage limit first
     if (checkUsageLimit) {
-      const canUse = await checkUsageLimit()
-      if (!canUse) return // Limit reached, modal shown by parent
+      const canUse = await checkUsageLimit();
+      if (!canUse) return; // Limit reached, modal shown by parent
     }
 
     // Create question object for AI Coach
@@ -124,22 +377,14 @@ function TemplateLibrary({ onImport, onClose, onOpenAICoach, checkUsageLimit }) 
       keywords: [],
       followups: [],
       id: `template-${templateQuestion.id}` // Temporary ID
-    }
+    };
 
     if (onOpenAICoach) {
-      onOpenAICoach(questionForCoach)
+      onOpenAICoach(questionForCoach);
     }
-  }
+  };
 
-  if (loading) {
-    return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-2xl p-8">
-          <p className="text-gray-600">Loading templates...</p>
-        </div>
-      </div>
-    )
-  }
+  const templateQuestions = selectedTemplate?.questions || [];
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -163,17 +408,11 @@ function TemplateLibrary({ onImport, onClose, onOpenAICoach, checkUsageLimit }) 
           {/* Template List */}
           <div className="md:w-1/3 border-b md:border-b-0 md:border-r overflow-y-auto p-4 md:p-6 max-h-[30vh] md:max-h-none">
             <h3 className="font-bold text-base md:text-lg mb-3 md:mb-4">Available Templates</h3>
-            {error && (
-              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                <p className="text-red-800 text-sm">{error}</p>
-              </div>
-            )}
             <div className="space-y-3">
-              {templates.map(template => (
+              {TEMPLATES.map(template => (
                 <button
                   key={template.id}
-                  onClick={() => fetchTemplateQuestions(template.id)}
+                  onClick={() => handleSelectTemplate(template)}
                   className={`w-full text-left p-4 rounded-lg border-2 transition ${
                     selectedTemplate?.id === template.id
                       ? 'border-indigo-600 bg-indigo-50'
@@ -266,14 +505,16 @@ function TemplateLibrary({ onImport, onClose, onOpenAICoach, checkUsageLimit }) 
 
                       {/* ACTION BUTTONS */}
                       <div className="flex flex-col sm:flex-row gap-2 mt-4 pt-4 border-t border-gray-200">
-                        <button
-                          onClick={() => handleAICoach(q)}
-                          className="flex-1 bg-gradient-to-r from-purple-100 to-indigo-100 hover:from-purple-200 hover:to-indigo-200 text-purple-700 font-bold py-3 px-4 rounded-lg transition flex items-center justify-center gap-2 text-sm"
-                        >
-                          <Lightbulb className="w-4 h-4" />
-                          <span className="hidden sm:inline">Can't Think of Answer?</span>
-                          <span>AI Coach</span>
-                        </button>
+                        {onOpenAICoach && (
+                          <button
+                            onClick={() => handleAICoach(q)}
+                            className="flex-1 bg-gradient-to-r from-purple-100 to-indigo-100 hover:from-purple-200 hover:to-indigo-200 text-purple-700 font-bold py-3 px-4 rounded-lg transition flex items-center justify-center gap-2 text-sm"
+                          >
+                            <Lightbulb className="w-4 h-4" />
+                            <span className="hidden sm:inline">Can't Think of Answer?</span>
+                            <span>AI Coach</span>
+                          </button>
+                        )}
                         <button
                           onClick={() => handleImportSingle(q)}
                           className="flex-1 bg-green-100 hover:bg-green-200 text-green-700 font-bold py-3 px-4 rounded-lg transition flex items-center justify-center gap-2 text-sm"
@@ -314,7 +555,7 @@ function TemplateLibrary({ onImport, onClose, onOpenAICoach, checkUsageLimit }) 
         )}
       </div>
     </div>
-  )
+  );
 }
 
-export default TemplateLibrary
+export default TemplateLibrary;
