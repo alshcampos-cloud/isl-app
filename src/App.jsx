@@ -2716,23 +2716,92 @@ const startPracticeMode = async () => {
     const categories = ['All', ...new Set(questions.map(q => q.category))];
     const priorities = ['All', ...new Set(questions.map(q => q.priority))];
     
-    // Calculate user progress metrics
+    // ==========================================
+    // RETENTION-FOCUSED METRICS
+    // ==========================================
+    
     const totalSessions = practiceHistory.length;
     const questionsCount = questions.length;
     
-    // Calculate readiness score (0-100)
-    const readinessScore = Math.min(100, Math.round(
-      (questionsCount * 2) + (totalSessions * 3) + (questionsCount > 0 && totalSessions > 0 ? 20 : 0)
-    ));
-    
-    // Get encouraging message based on progress
-    const getEncouragingMessage = () => {
-      if (readinessScore >= 90) return "🔥 You're interview-ready! Time to dominate!";
-      if (readinessScore >= 70) return "💪 Almost there! You're crushing it!";
-      if (readinessScore >= 50) return "📈 Great progress! Keep the momentum going!";
-      if (readinessScore >= 25) return "🚀 Good start! Practice makes perfect!";
-      return "🌱 Just getting started! Let's build your confidence!";
+    // Calculate streak (consecutive days of practice)
+    const calculateStreak = () => {
+      if (practiceHistory.length === 0) return 0;
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const sortedDates = practiceHistory
+        .map(session => {
+          const date = new Date(session.date || session.created_at);
+          date.setHours(0, 0, 0, 0);
+          return date.getTime();
+        })
+        .filter((date, index, self) => self.indexOf(date) === index) // unique dates
+        .sort((a, b) => b - a); // newest first
+      
+      let streak = 0;
+      let currentDate = today.getTime();
+      
+      for (const date of sortedDates) {
+        if (date === currentDate || date === currentDate - 86400000) {
+          streak++;
+          currentDate = date - 86400000; // move to previous day
+        } else {
+          break;
+        }
+      }
+      
+      return streak;
     };
+    
+    // Calculate unique questions practiced
+    const getUniqueQuestionsPracticed = () => {
+      const uniqueQuestions = new Set(
+        practiceHistory.map(session => session.question_id).filter(Boolean)
+      );
+      return uniqueQuestions.size;
+    };
+    
+    // Calculate weekly improvement
+    const calculateWeeklyImprovement = () => {
+      if (practiceHistory.length < 2) return 0;
+      
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+      
+      const recentSessions = practiceHistory
+        .filter(s => new Date(s.date || s.created_at) > oneWeekAgo)
+        .map(s => s.ai_feedback?.overall || s.score || 0)
+        .filter(score => score > 0);
+      
+      const olderSessions = practiceHistory
+        .filter(s => new Date(s.date || s.created_at) <= oneWeekAgo)
+        .map(s => s.ai_feedback?.overall || s.score || 0)
+        .filter(score => score > 0);
+      
+      if (recentSessions.length === 0 || olderSessions.length === 0) return 0;
+      
+      const recentAvg = recentSessions.reduce((a, b) => a + b, 0) / recentSessions.length;
+      const olderAvg = olderSessions.reduce((a, b) => a + b, 0) / olderSessions.length;
+      
+      return Math.round(((recentAvg - olderAvg) / olderAvg) * 100);
+    };
+    
+    // Get next achievement
+    const getNextAchievement = () => {
+      if (totalSessions < 10) return { name: "Practice Pro", emoji: "🎯", need: 10 - totalSessions };
+      if (totalSessions < 50) return { name: "Master", emoji: "🏆", need: 50 - totalSessions };
+      return { name: "Legend", emoji: "👑", need: 100 - totalSessions };
+    };
+    
+    // Calculate all metrics
+    const streak = calculateStreak();
+    const questionsCompleted = getUniqueQuestionsPracticed();
+    const weeklyImprovement = calculateWeeklyImprovement();
+    const nextAchievement = getNextAchievement();
+    const daysUntilInterview = interviewDate 
+      ? Math.max(0, Math.ceil((new Date(interviewDate).setHours(0,0,0,0) - new Date().setHours(0,0,0,0)) / (1000 * 60 * 60 * 24)))
+      : null;
     
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
@@ -2847,79 +2916,129 @@ const startPracticeMode = async () => {
             <p className="text-xl md:text-3xl text-indigo-200 mb-2">Master Your Interview Answers with AI</p>
           </div>
 
-          {/* NEW: READINESS SCORE - HERO WIDGET */}
+          {/* RETENTION DASHBOARD - Replaces "100 READY" Widget */}
           {(questionsCount > 0 || totalSessions > 0) && (
             <div className="bg-gradient-to-br from-white/20 to-white/10 backdrop-blur-xl rounded-2xl p-6 mb-6 border-2 border-white/30 shadow-2xl">
-              <div className="flex flex-col md:flex-row items-center gap-6">
-                {/* Circular Progress */}
-                <div className="relative flex-shrink-0">
-                  <svg className="w-32 h-32 transform -rotate-90">
-                    <circle
-                      cx="64"
-                      cy="64"
-                      r="56"
-                      stroke="rgba(255,255,255,0.2)"
-                      strokeWidth="8"
-                      fill="none"
-                    />
-                    <circle
-                      cx="64"
-                      cy="64"
-                      r="56"
-                      stroke="url(#gradient)"
-                      strokeWidth="8"
-                      fill="none"
-                      strokeLinecap="round"
-                      strokeDasharray={`${(readinessScore / 100) * 352} 352`}
-                      className="transition-all duration-1000"
-                    />
-                    <defs>
-                      <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#10b981" />
-                        <stop offset="100%" stopColor="#3b82f6" />
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="text-3xl font-black text-white">{readinessScore}</div>
-                      <div className="text-xs text-white/80 font-bold">READY</div>
+              
+              {/* Streak Counter (if exists) */}
+              {streak > 0 && (
+                <div className="mb-6 text-center">
+                  <div className="inline-flex items-center gap-3 bg-gradient-to-r from-orange-500/30 to-red-500/30 border-2 border-orange-400/50 rounded-2xl px-6 py-4">
+                    <span className="text-4xl">🔥</span>
+                    <div className="text-left">
+                      <div className="text-3xl font-black text-white">{streak} Day Streak</div>
+                      <div className="text-sm text-white/90 font-bold">Don't break it! Practice today!</div>
                     </div>
                   </div>
                 </div>
-
-                {/* Message & Stats */}
-                <div className="flex-1 text-center md:text-left">
-                  <h3 className="text-2xl md:text-3xl font-black text-white mb-2">
-                    {getEncouragingMessage()}
-                  </h3>
-                  <p className="text-white/90 text-sm md:text-base mb-4">
-                    Your Interview Readiness Score • Keep practicing to reach 100!
-                  </p>
-                  <div className="flex flex-wrap gap-3 justify-center md:justify-start">
-                    <div className="bg-white/20 rounded-lg px-4 py-2">
-                      <span className="text-white/80 text-xs font-bold">QUESTIONS</span>
-                      <div className="text-white font-black text-xl">{questionsCount}</div>
-                    </div>
-                    <div className="bg-white/20 rounded-lg px-4 py-2">
-                      <span className="text-white/80 text-xs font-bold">SESSIONS</span>
-                      <div className="text-white font-black text-xl">{totalSessions}</div>
-                    </div>
-                    {interviewDate && (
-                      <div className="bg-pink-500/30 rounded-lg px-4 py-2 border border-pink-300/50">
-                        <span className="text-white/90 text-xs font-bold">DAYS TO GO</span>
-                        <div className="text-white font-black text-xl flex items-center gap-1">
-                          {Math.max(0, Math.ceil((new Date(interviewDate) - new Date()) / (1000 * 60 * 60 * 24)))}
-                          {Math.ceil((new Date(interviewDate) - new Date()) / (1000 * 60 * 60 * 24)) <= 3 && (
-                            <span className="text-sm animate-pulse">🔥</span>
-                          )}
-                        </div>
-                      </div>
-                    )}
+              )}
+              
+              {/* Main Stats Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                {/* Question Progress */}
+                <div className="bg-white/10 backdrop-blur rounded-xl p-4 border border-white/20">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-2xl">📚</span>
+                    <h4 className="text-white font-bold text-sm">Question Bank</h4>
                   </div>
+                  <div className="text-3xl font-black text-white mb-2">
+                    {questionsCompleted}/{questionsCount}
+                  </div>
+                  <div className="w-full bg-white/20 rounded-full h-2 mb-2">
+                    <div 
+                      className="bg-gradient-to-r from-blue-400 to-blue-600 h-2 rounded-full transition-all duration-500"
+                      style={{ width: `${Math.min(100, (questionsCompleted / Math.max(1, questionsCount)) * 100)}%` }}
+                    />
+                  </div>
+                  <p className="text-white/80 text-xs font-semibold">
+                    {questionsCount - questionsCompleted > 0 
+                      ? `Practice ${questionsCount - questionsCompleted} more to master all!`
+                      : `All questions practiced! 🎉`
+                    }
+                  </p>
+                </div>
+                
+                {/* Interview Countdown */}
+                <div className="bg-white/10 backdrop-blur rounded-xl p-4 border border-white/20">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-2xl">📅</span>
+                    <h4 className="text-white font-bold text-sm">Interview</h4>
+                  </div>
+                  {daysUntilInterview !== null ? (
+                    <>
+                      <div className="text-3xl font-black text-white mb-2 flex items-center gap-2">
+                        {daysUntilInterview}
+                        {daysUntilInterview <= 3 && <span className="text-2xl animate-pulse">🔥</span>}
+                      </div>
+                      <p className="text-white/80 text-xs font-semibold">
+                        {daysUntilInterview === 0 ? "Today's the day! You got this!" :
+                         daysUntilInterview === 1 ? "Tomorrow! Final practice today!" :
+                         daysUntilInterview <= 3 ? "Days left - time to shine!" :
+                         "Days away - keep practicing!"}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-3xl font-black text-white mb-2">—</div>
+                      <button
+                        onClick={() => {
+                          setCurrentView('command-center');
+                          setCommandCenterTab('prep');
+                        }}
+                        className="text-blue-300 hover:text-blue-200 text-xs font-bold underline"
+                      >
+                        Set your date →
+                      </button>
+                    </>
+                  )}
+                </div>
+                
+                {/* Weekly Improvement */}
+                <div className="bg-white/10 backdrop-blur rounded-xl p-4 border border-white/20">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-2xl">📈</span>
+                    <h4 className="text-white font-bold text-sm">This Week</h4>
+                  </div>
+                  {weeklyImprovement !== 0 ? (
+                    <>
+                      <div className={`text-3xl font-black mb-2 ${weeklyImprovement > 0 ? 'text-green-300' : 'text-orange-300'}`}>
+                        {weeklyImprovement > 0 ? '+' : ''}{weeklyImprovement}%
+                      </div>
+                      <p className="text-white/80 text-xs font-semibold">
+                        {weeklyImprovement > 0 
+                          ? "Score improvement - great work!"
+                          : "Focus on quality practice!"
+                        }
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-3xl font-black text-white mb-2">{totalSessions}</div>
+                      <p className="text-white/80 text-xs font-semibold">
+                        Total practice sessions
+                      </p>
+                    </>
+                  )}
                 </div>
               </div>
+              
+              {/* Achievement Progress */}
+              {nextAchievement && nextAchievement.need > 0 && (
+                <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 border-2 border-purple-400/30 rounded-xl p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-3xl">{nextAchievement.emoji}</span>
+                      <div>
+                        <div className="text-white font-black text-base">Almost unlocked: {nextAchievement.name}</div>
+                        <div className="text-white/80 text-sm font-semibold">{nextAchievement.need} more sessions to go!</div>
+                      </div>
+                    </div>
+                    <div className="text-3xl font-black text-white/50">{totalSessions}/{totalSessions + nextAchievement.need}</div>
+                  </div>
+                </div>
+              )}
             </div>
+          </div>
           )}
 
           {/* Compact Stats Row - Enhanced with Gradients */}
@@ -2980,7 +3099,7 @@ const startPracticeMode = async () => {
                 <div className="min-w-0">
                   <p className="text-2xl font-black leading-tight">
                     {interviewDate 
-                      ? Math.max(0, Math.ceil((new Date(interviewDate) - new Date()) / (1000 * 60 * 60 * 24)))
+                      ? Math.max(0, Math.ceil((new Date(interviewDate).setHours(0,0,0,0) - new Date().setHours(0,0,0,0)) / (1000 * 60 * 60 * 24)))
                       : '—'
                     }
                   </p>
@@ -5044,7 +5163,12 @@ onClick={async () => {
             {/* Show Bullets/Narrative Buttons */}
             <div className="mt-6 flex gap-3">
               <button
-                onClick={() => setShowBullets(!showBullets)}
+                onClick={() => {
+                  if (flashcardSide === 'question') {
+                    flipCard();
+                  }
+                  setShowBullets(!showBullets);
+                }}
                 className="flex-1 bg-white/20 hover:bg-white/30 backdrop-blur text-white font-bold py-3 rounded-xl transition text-sm"
               >
                 {showBullets ? '👁️ Hide' : '👁️ Show'} Bullets
@@ -5426,7 +5550,7 @@ onClick={async () => {
             <div>
               {/* Interview Countdown */}
               <div className="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl p-6 text-white mb-6">
-                <h3 className="text-2xl font-bold mb-4">🗓️ {interviewDate ? `${Math.max(0, Math.ceil((new Date(interviewDate) - new Date()) / (1000 * 60 * 60 * 24)))} Days to Shine!` : 'Set Your Interview Date'}</h3>
+                <h3 className="text-2xl font-bold mb-4">🗓️ {interviewDate ? `${Math.max(0, Math.ceil((new Date(interviewDate).setHours(0,0,0,0) - new Date().setHours(0,0,0,0)) / (1000 * 60 * 60 * 24)))} Days to Shine!` : 'Set Your Interview Date'}</h3>
                 <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-4">
                   <div className="flex-1 w-full">
                     <label className="block text-sm text-white/90 font-medium mb-2">Interview Date:</label>
@@ -5443,7 +5567,7 @@ onClick={async () => {
                   {interviewDate && (
                     <div className="text-center bg-white/20 backdrop-blur rounded-xl p-5 min-w-[140px]">
                       <div className="text-5xl font-black mb-1">
-                        {Math.max(0, Math.ceil((new Date(interviewDate) - new Date()) / (1000 * 60 * 60 * 24)))}
+                        {Math.max(0, Math.ceil((new Date(interviewDate).setHours(0,0,0,0) - new Date().setHours(0,0,0,0)) / (1000 * 60 * 60 * 24)))}
                       </div>
                       <div className="text-sm text-white/90 font-bold">days left!</div>
                       <div className="text-xs text-white/75 mt-1">⭐ You've got this!</div>
@@ -5463,8 +5587,11 @@ onClick={async () => {
                     max="20"
                     value={dailyGoal}
                     onChange={(e) => {
-                      setDailyGoal(parseInt(e.target.value));
-                      localStorage.setItem('isl_daily_goal', e.target.value);
+                      const value = parseInt(e.target.value);
+                      if (!isNaN(value) && value > 0) {
+                        setDailyGoal(value);
+                        localStorage.setItem('isl_daily_goal', e.target.value);
+                      }
                     }}
                     className="w-20 px-4 py-2 border-2 rounded-lg text-center font-bold text-base"
                   />
