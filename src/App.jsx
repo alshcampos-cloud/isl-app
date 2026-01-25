@@ -2909,8 +2909,8 @@ const startPracticeMode = async () => {
                       <div className="bg-pink-500/30 rounded-lg px-4 py-2 border border-pink-300/50">
                         <span className="text-white/90 text-xs font-bold">DAYS TO GO</span>
                         <div className="text-white font-black text-xl flex items-center gap-1">
-                          {Math.max(0, Math.ceil((new Date(interviewDate) - new Date()) / (1000 * 60 * 60 * 24)))}
-                          {Math.ceil((new Date(interviewDate) - new Date()) / (1000 * 60 * 60 * 24)) <= 3 && (
+                          {Math.max(0, Math.ceil((new Date(interviewDate).setHours(0,0,0,0) - new Date().setHours(0,0,0,0)) / (1000 * 60 * 60 * 24)))}
+                          {Math.ceil((new Date(interviewDate).setHours(0,0,0,0) - new Date().setHours(0,0,0,0)) / (1000 * 60 * 60 * 24)) <= 3 && (
                             <span className="text-sm animate-pulse">🔥</span>
                           )}
                         </div>
@@ -2980,7 +2980,7 @@ const startPracticeMode = async () => {
                 <div className="min-w-0">
                   <p className="text-2xl font-black leading-tight">
                     {interviewDate 
-                      ? Math.max(0, Math.ceil((new Date(interviewDate) - new Date()) / (1000 * 60 * 60 * 24)))
+                      ? Math.max(0, Math.ceil((new Date(interviewDate).setHours(0,0,0,0) - new Date().setHours(0,0,0,0)) / (1000 * 60 * 60 * 24)))
                       : '—'
                     }
                   </p>
@@ -5044,7 +5044,12 @@ onClick={async () => {
             {/* Show Bullets/Narrative Buttons */}
             <div className="mt-6 flex gap-3">
               <button
-                onClick={() => setShowBullets(!showBullets)}
+                onClick={() => {
+                  if (flashcardSide === 'question') {
+                    flipCard();
+                  }
+                  setShowBullets(!showBullets);
+                }}
                 className="flex-1 bg-white/20 hover:bg-white/30 backdrop-blur text-white font-bold py-3 rounded-xl transition text-sm"
               >
                 {showBullets ? '👁️ Hide' : '👁️ Show'} Bullets
@@ -5426,7 +5431,7 @@ onClick={async () => {
             <div>
               {/* Interview Countdown */}
               <div className="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl p-6 text-white mb-6">
-                <h3 className="text-2xl font-bold mb-4">🗓️ {interviewDate ? `${Math.max(0, Math.ceil((new Date(interviewDate) - new Date()) / (1000 * 60 * 60 * 24)))} Days to Shine!` : 'Set Your Interview Date'}</h3>
+                <h3 className="text-2xl font-bold mb-4">🗓️ {interviewDate ? `${Math.max(0, Math.ceil((new Date(interviewDate).setHours(0,0,0,0) - new Date().setHours(0,0,0,0)) / (1000 * 60 * 60 * 24)))} Days to Shine!` : 'Set Your Interview Date'}</h3>
                 <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-4">
                   <div className="flex-1 w-full">
                     <label className="block text-sm text-white/90 font-medium mb-2">Interview Date:</label>
@@ -5443,7 +5448,7 @@ onClick={async () => {
                   {interviewDate && (
                     <div className="text-center bg-white/20 backdrop-blur rounded-xl p-5 min-w-[140px]">
                       <div className="text-5xl font-black mb-1">
-                        {Math.max(0, Math.ceil((new Date(interviewDate) - new Date()) / (1000 * 60 * 60 * 24)))}
+                        {Math.max(0, Math.ceil((new Date(interviewDate).setHours(0,0,0,0) - new Date().setHours(0,0,0,0)) / (1000 * 60 * 60 * 24)))}
                       </div>
                       <div className="text-sm text-white/90 font-bold">days left!</div>
                       <div className="text-xs text-white/75 mt-1">⭐ You've got this!</div>
@@ -5463,8 +5468,11 @@ onClick={async () => {
                     max="20"
                     value={dailyGoal}
                     onChange={(e) => {
-                      setDailyGoal(parseInt(e.target.value));
-                      localStorage.setItem('isl_daily_goal', e.target.value);
+                      const value = parseInt(e.target.value);
+                      if (!isNaN(value) && value > 0) {
+                        setDailyGoal(value);
+                        localStorage.setItem('isl_daily_goal', e.target.value);
+                      }
                     }}
                     className="w-20 px-4 py-2 border-2 rounded-lg text-center font-bold text-base"
                   />
