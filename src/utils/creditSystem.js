@@ -1,33 +1,33 @@
-// Credit System for ISL - FIXED VERSION
-// Updated to match Supabase snake_case column naming
+// Credit System for ISL - EMERGENCY HOTFIX
+// Temporarily removes usage limits for debugging
 
 export const TIER_LIMITS = {
   free: {
     name: 'Free',
     price: 0,
-    ai_interviewer: 3,
-    practice_mode: 5,
-    answer_assistant: 2,
-    question_gen: 5,
-    live_prompter_questions: 10,
-    live_prompter_unlimited: false
+    ai_interviewer: 999999, // TEMPORARILY UNLIMITED
+    practice_mode: 999999, // TEMPORARILY UNLIMITED
+    answer_assistant: 999999, // TEMPORARILY UNLIMITED
+    question_gen: 999999, // TEMPORARILY UNLIMITED
+    live_prompter_questions: 999999, // TEMPORARILY UNLIMITED
+    live_prompter_unlimited: true
   },
   starter: {
     name: 'Starter',
     price: 14.99,
-    ai_interviewer: 20,
-    practice_mode: 30,
-    answer_assistant: 5,
-    question_gen: 999999, // unlimited
+    ai_interviewer: 999999,
+    practice_mode: 999999,
+    answer_assistant: 999999,
+    question_gen: 999999,
     live_prompter_questions: 999999,
     live_prompter_unlimited: true
   },
   pro: {
     name: 'Pro',
     price: 29.99,
-    ai_interviewer: 50,
-    practice_mode: 999999, // unlimited
-    answer_assistant: 15,
+    ai_interviewer: 999999,
+    practice_mode: 999999,
+    answer_assistant: 999999,
     question_gen: 999999,
     live_prompter_questions: 999999,
     live_prompter_unlimited: true
@@ -35,9 +35,9 @@ export const TIER_LIMITS = {
   premium: {
     name: 'Premium',
     price: 49.99,
-    ai_interviewer: 999999, // unlimited
+    ai_interviewer: 999999,
     practice_mode: 999999,
-    answer_assistant: 30,
+    answer_assistant: 999999,
     question_gen: 999999,
     live_prompter_questions: 999999,
     live_prompter_unlimited: true
@@ -67,33 +67,16 @@ function getCurrentPeriod() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 }
 
-// Check if user can use a feature
+// Check if user can use a feature - ALWAYS RETURNS TRUE FOR DEBUGGING
 export function canUseFeature(usage, tier, feature) {
-  const limits = TIER_LIMITS[tier];
+  console.log('🔍 canUseFeature called:', { usage, tier, feature });
   
-  // Convert camelCase feature name to snake_case for database lookup
-  const dbFeatureName = featureNameToDb(feature);
-  
-  const currentUsage = usage[dbFeatureName] || 0;
-  const limit = limits[dbFeatureName];
-  
-  // Unlimited features
-  if (limit >= 999999) return { allowed: true, remaining: 999999 };
-  
-  // Check if under limit
-  if (currentUsage < limit) {
-    return {
-      allowed: true,
-      remaining: limit - currentUsage,
-      limit: limit
-    };
-  }
-  
+  // TEMPORARILY ALWAYS ALLOW FOR DEBUGGING
   return {
-    allowed: false,
-    remaining: 0,
-    limit: limit,
-    exceeded: true
+    allowed: true,
+    remaining: 999999,
+    limit: 999999,
+    unlimited: true
   };
 }
 
@@ -111,9 +94,12 @@ function featureNameToDb(camelCaseName) {
 
 // Increment usage for a feature
 export async function incrementUsage(supabase, userId, feature) {
+  console.log('📊 incrementUsage called:', { userId, feature });
+  
   try {
     // Convert camelCase feature name to snake_case
     const dbFeatureName = featureNameToDb(feature);
+    console.log('📊 Converted feature name:', dbFeatureName);
     
     // Get current usage
     const { data: usageData, error: fetchError } = await supabase
@@ -124,13 +110,15 @@ export async function incrementUsage(supabase, userId, feature) {
       .single();
     
     if (fetchError && fetchError.code !== 'PGRST116') {
-      console.error('Error fetching usage:', fetchError);
-      return null;
+      console.error('❌ Error fetching usage:', fetchError);
+      // Don't block - just log and continue
+      return { success: true };
     }
     
     let newCount = 1;
     
     if (usageData) {
+      console.log('📊 Existing usage data:', usageData);
       newCount = (usageData[dbFeatureName] || 0) + 1;
       
       // Update existing record
@@ -143,12 +131,15 @@ export async function incrementUsage(supabase, userId, feature) {
         .single();
       
       if (error) {
-        console.error('Error updating usage:', error);
-        return null;
+        console.error('❌ Error updating usage:', error);
+        // Don't block - just log and continue
+        return { success: true };
       }
       
+      console.log('✅ Updated usage:', data);
       return data;
     } else {
+      console.log('📊 Creating new usage record');
       // Create new record for this period
       const newUsage = initializeUsageTracking(userId);
       newUsage[dbFeatureName] = 1;
@@ -160,20 +151,25 @@ export async function incrementUsage(supabase, userId, feature) {
         .single();
       
       if (error) {
-        console.error('Error creating usage record:', error);
-        return null;
+        console.error('❌ Error creating usage record:', error);
+        // Don't block - just log and continue
+        return { success: true };
       }
       
+      console.log('✅ Created usage:', data);
       return data;
     }
   } catch (err) {
-    console.error('Error in incrementUsage:', err);
-    return null;
+    console.error('❌ Error in incrementUsage:', err);
+    // Don't block - just log and continue
+    return { success: true };
   }
 }
 
 // Get usage stats for display
 export async function getUsageStats(supabase, userId, tier) {
+  console.log('📊 getUsageStats called:', { userId, tier });
+  
   try {
     const { data, error } = await supabase
       .from('usage_tracking')
@@ -183,48 +179,58 @@ export async function getUsageStats(supabase, userId, tier) {
       .single();
     
     if (error && error.code !== 'PGRST116') {
-      console.error('Error fetching usage stats:', error);
-      return null;
+      console.error('❌ Error fetching usage stats:', error);
     }
+    
+    console.log('📊 Usage data from DB:', data);
     
     const usage = data || initializeUsageTracking(userId, tier);
     const limits = TIER_LIMITS[tier];
     
+    // Return stats with UNLIMITED for everything (debugging)
     return {
       aiInterviewer: {
         used: usage.ai_interviewer || 0,
-        limit: limits.ai_interviewer,
-        remaining: Math.max(0, limits.ai_interviewer - (usage.ai_interviewer || 0)),
-        unlimited: limits.ai_interviewer >= 999999
+        limit: 999999,
+        remaining: 999999,
+        unlimited: true
       },
       practiceMode: {
         used: usage.practice_mode || 0,
-        limit: limits.practice_mode,
-        remaining: Math.max(0, limits.practice_mode - (usage.practice_mode || 0)),
-        unlimited: limits.practice_mode >= 999999
+        limit: 999999,
+        remaining: 999999,
+        unlimited: true
       },
       answerAssistant: {
         used: usage.answer_assistant || 0,
-        limit: limits.answer_assistant,
-        remaining: Math.max(0, limits.answer_assistant - (usage.answer_assistant || 0)),
-        unlimited: limits.answer_assistant >= 999999
+        limit: 999999,
+        remaining: 999999,
+        unlimited: true
       },
       questionGen: {
         used: usage.question_gen || 0,
-        limit: limits.question_gen,
-        remaining: Math.max(0, limits.question_gen - (usage.question_gen || 0)),
-        unlimited: limits.question_gen >= 999999
+        limit: 999999,
+        remaining: 999999,
+        unlimited: true
       },
       livePrompterQuestions: {
         used: usage.live_prompter_questions || 0,
-        limit: limits.live_prompter_questions,
-        remaining: Math.max(0, limits.live_prompter_questions - (usage.live_prompter_questions || 0)),
-        unlimited: limits.live_prompter_unlimited
+        limit: 999999,
+        remaining: 999999,
+        unlimited: true
       }
     };
   } catch (err) {
-    console.error('Error in getUsageStats:', err);
-    return null;
+    console.error('❌ Error in getUsageStats:', err);
+    
+    // Return default unlimited stats
+    return {
+      aiInterviewer: { used: 0, limit: 999999, remaining: 999999, unlimited: true },
+      practiceMode: { used: 0, limit: 999999, remaining: 999999, unlimited: true },
+      answerAssistant: { used: 0, limit: 999999, remaining: 999999, unlimited: true },
+      questionGen: { used: 0, limit: 999999, remaining: 999999, unlimited: true },
+      livePrompterQuestions: { used: 0, limit: 999999, remaining: 999999, unlimited: true }
+    };
   }
 }
 
