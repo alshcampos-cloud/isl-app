@@ -180,7 +180,17 @@ const ISL = () => {
   
   // Legal Protection States
   const [showConsentDialog, setShowConsentDialog] = useState(false);
-  const [hasConsented, setHasConsented] = useState(false);
+  const [hasConsented, setHasConsented] = useState(() => {
+    try {
+      const consent = localStorage.getItem('isl_recording_consent');
+      const hasConsent = consent === 'true';
+      console.log(hasConsent ? '✅ User has already consented' : '⚠️ User needs to consent');
+      return hasConsent;
+    } catch (err) {
+      console.error('Error reading consent from localStorage:', err);
+      return false; // Default to false if localStorage unavailable
+    }
+  });
   const [showLivePrompterWarning, setShowLivePrompterWarning] = useState(false);
   const [pendingMode, setPendingMode] = useState(null);
   
@@ -242,16 +252,8 @@ const ISL = () => {
     };
   }, []);
 
-  // Check if user has already consented
-  useEffect(() => {
-    const consent = localStorage.getItem('isl_recording_consent');
-    if (consent === 'true') {
-      setHasConsented(true);
-      console.log('✅ User has already consented');
-    } else {
-      console.log('⚠️ User needs to consent');
-    }
-  }, []);
+  // E-008 FIX: Consent now read during state initialization above (line 183)
+  // This useEffect is no longer needed and has been removed to prevent race conditions
 
   // CLEANUP 2: Stop mic when leaving mic-using modes
   useEffect(() => {
