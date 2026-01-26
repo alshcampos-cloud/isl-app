@@ -17,7 +17,7 @@ import TemplateLibrary from './TemplateLibrary';
 import Tutorial from './Components/Tutorial';
 import { DEFAULT_QUESTIONS } from './default_questions';
 import { canUseFeature, incrementUsage, getUsageStats, TIER_LIMITS } from './utils/creditSystem';
-import UsageDashboard from './Components/UsageDashboard';
+import UsageLimitModal from './Components/UsageLimitModal';
 import PricingPage from './Components/PricingPage';
 import ResetPassword from './Components/ResetPassword';
 import ConsentDialog from './Components/ConsentDialog';
@@ -6648,7 +6648,7 @@ onClick={async () => {
             >
               <X className="w-6 h-6" />
             </button>
-            <UsageDashboard 
+            <UsageLimitModal 
               user={currentUser}
               supabase={supabase}
               userTier={userTier}
