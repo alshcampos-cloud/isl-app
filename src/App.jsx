@@ -1122,10 +1122,12 @@ Just $29.99/month - practice as much as you need!`);
       setMicPermission(true);
       initSpeechRecognition();
       console.log('Mic granted');
+      return true; // E-009 FIX: Return success status
     } catch (err) {
       console.error('Mic error:', err);
       alert('Microphone permission denied.');
       setMicPermission(false);
+      return false; // E-009 FIX: Return failure status
     }
   };
 
@@ -1189,7 +1191,6 @@ const stopSystemAudioCapture = () => {
   }
   setUseSystemAudio(false);
 };
-
 // SESSION-BASED MICROPHONE CONTROL
 const startInterviewSession = () => {
   console.log('🎬 Starting interview session');
@@ -1219,42 +1220,54 @@ const startInterviewSession = () => {
   // Give browser a moment to initialize
   setTimeout(() => {
     if (!micPermission) { 
-      requestMicPermission(); 
+      console.log('⚠️ No mic permission - requesting...');
+      requestMicPermission().then(granted => {
+        if (granted) {
+          // E-009 FIX: Auto-continue session start after permission granted
+          console.log('✅ Permission granted, continuing session start...');
+          actuallyStartSession();
+        }
+      });
       return; 
     }
     
-    if (interviewSessionActiveRef.current) {
-      console.log('Session already active');
-      return;
-    }
-    
-    // Clear everything for fresh session
-    accumulatedTranscript.current = '';
-    currentInterimRef.current = '';
-    setTranscript('');
-    setSpokenAnswer('');
-    setMatchedQuestion(null);
-    setLiveTranscript('');
-    
-    // Start mic ONCE - it will stay active throughout session
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.start();
-        setInterviewSessionActive(true);
-        interviewSessionActiveRef.current = true; // Update ref immediately
-        setSessionReady(true);
-        setIsListening(true);
-        isListeningRef.current = true; // Update ref immediately
-        console.log('✅ Session started - mic will stay active');
-      } catch (err) {
-        console.error('Session start failed:', err);
-        alert('Failed to start microphone. Please refresh the page and try again.');
-      }
-    } else {
-      console.error('Recognition not initialized after init call');
-      alert('Microphone initialization failed. Please refresh the page.');
-    }
+    actuallyStartSession();
   }, 100); // Small delay ensures recognition is ready
+};
+
+// E-009 FIX: Extracted session start logic so it can be called after permission
+const actuallyStartSession = () => {
+  if (interviewSessionActiveRef.current) {
+    console.log('Session already active');
+    return;
+  }
+  
+  // Clear everything for fresh session
+  accumulatedTranscript.current = '';
+  currentInterimRef.current = '';
+  setTranscript('');
+  setSpokenAnswer('');
+  setMatchedQuestion(null);
+  setLiveTranscript('');
+  
+  // Start mic ONCE - it will stay active throughout session
+  if (recognitionRef.current) {
+    try {
+      recognitionRef.current.start();
+      setInterviewSessionActive(true);
+      interviewSessionActiveRef.current = true; // Update ref immediately
+      setSessionReady(true);
+      setIsListening(true);
+      isListeningRef.current = true; // Update ref immediately
+      console.log('✅ Session started - mic will stay active');
+    } catch (err) {
+      console.error('Session start failed:', err);
+      alert('Failed to start microphone. Please refresh the page and try again.');
+    }
+  } else {
+    console.error('Recognition not initialized after init call');
+    alert('Microphone initialization failed. Please refresh the page.');
+  }
 };
 
 const endInterviewSession = () => {
@@ -4911,15 +4924,43 @@ onClick={async () => {
               </div>
             )}
 
-            {/* Show Narrative Button */}
-            {currentQuestion.narrative && (
-              <div className="mt-6">
+            {/* Show Bullets/Narrative Buttons */}
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={() => {
+                  if (flashcardSide === 'question') {
+                    flipCard();
+                  }
+                  setShowBullets(!showBullets);
+                }}
+                className="flex-1 bg-white/20 hover:bg-white/30 backdrop-blur text-white font-bold py-3 rounded-xl transition text-sm"
+              >
+                {showBullets ? '👁️ Hide' : '👁️ Show'} Bullets
+              </button>
+              {currentQuestion.narrative && (
                 <button
                   onClick={() => setShowNarrative(!showNarrative)}
-                  className="w-full bg-white/20 hover:bg-white/30 backdrop-blur text-white font-bold py-3 rounded-xl transition text-sm"
+                  className="flex-1 bg-white/20 hover:bg-white/30 backdrop-blur text-white font-bold py-3 rounded-xl transition text-sm"
                 >
                   {showNarrative ? '📖 Hide' : '📖 Show'} Narrative
                 </button>
+              )}
+            </div>
+
+            {/* Bullets Overlay */}
+            {showBullets && (
+              <div className="mt-4 bg-white rounded-xl p-6 shadow-xl">
+                <h4 className="text-xl font-bold mb-3 text-gray-900">Key Points:</h4>
+                <ul className="space-y-2">
+                  {currentQuestion.bullets.filter(b => b).map((bullet, idx) => (
+                    <li key={idx} className="flex items-start gap-3">
+                      <span className="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-xs">
+                        {idx + 1}
+                      </span>
+                      <span className="text-base text-gray-800">{bullet}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
 
