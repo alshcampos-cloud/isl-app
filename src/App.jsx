@@ -4911,43 +4911,15 @@ onClick={async () => {
               </div>
             )}
 
-            {/* Show Bullets/Narrative Buttons */}
-            <div className="mt-6 flex gap-3">
-              <button
-                onClick={() => {
-                  if (flashcardSide === 'question') {
-                    flipCard();
-                  }
-                  setShowBullets(!showBullets);
-                }}
-                className="flex-1 bg-white/20 hover:bg-white/30 backdrop-blur text-white font-bold py-3 rounded-xl transition text-sm"
-              >
-                {showBullets ? '👁️ Hide' : '👁️ Show'} Bullets
-              </button>
-              {currentQuestion.narrative && (
+            {/* Show Narrative Button */}
+            {currentQuestion.narrative && (
+              <div className="mt-6">
                 <button
                   onClick={() => setShowNarrative(!showNarrative)}
-                  className="flex-1 bg-white/20 hover:bg-white/30 backdrop-blur text-white font-bold py-3 rounded-xl transition text-sm"
+                  className="w-full bg-white/20 hover:bg-white/30 backdrop-blur text-white font-bold py-3 rounded-xl transition text-sm"
                 >
                   {showNarrative ? '📖 Hide' : '📖 Show'} Narrative
                 </button>
-              )}
-            </div>
-
-            {/* Bullets Overlay */}
-            {showBullets && (
-              <div className="mt-4 bg-white rounded-xl p-6 shadow-xl">
-                <h4 className="text-xl font-bold mb-3 text-gray-900">Key Points:</h4>
-                <ul className="space-y-2">
-                  {currentQuestion.bullets.filter(b => b).map((bullet, idx) => (
-                    <li key={idx} className="flex items-start gap-3">
-                      <span className="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-xs">
-                        {idx + 1}
-                      </span>
-                      <span className="text-base text-gray-800">{bullet}</span>
-                    </li>
-                  ))}
-                </ul>
               </div>
             )}
 
