@@ -92,7 +92,15 @@ const RetentionDashboard = ({
   const weeklyImprovement = calculateWeeklyImprovement();
   const nextAchievement = getNextAchievement();
   const daysUntilInterview = interviewDate 
-    ? Math.max(0, Math.ceil((new Date(interviewDate).setHours(0,0,0,0) - new Date().setHours(0,0,0,0)) / (1000 * 60 * 60 * 24)))
+    ? (() => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const interview = new Date(interviewDate);
+        interview.setHours(0, 0, 0, 0);
+        const diffTime = interview.getTime() - today.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return Math.max(0, diffDays);
+      })()
     : null;
   
   // Don't show if no data

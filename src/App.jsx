@@ -2778,7 +2778,10 @@ const startPracticeMode = async () => {
 
           {/* Compact Stats Row - Enhanced with Gradients */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-            <div className="bg-gradient-to-br from-indigo-500/20 to-blue-500/20 backdrop-blur-lg rounded-xl p-4 text-white hover:scale-105 transition-transform duration-200 border border-white/20">
+            <div className="bg-gradient-to-br from-indigo-500/20 to-blue-500/20 backdrop-blur-lg rounded-xl p-4 text-white hover:scale-105 transition-transform duration-200 border border-white/20 cursor-pointer" onClick={() => {
+              setCurrentView('command-center');
+              setCommandCenterTab('bank');
+            }}>
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-gradient-to-br from-indigo-400 to-blue-500 rounded-xl flex items-center justify-center flex-shrink-0">
                   <Database className="w-6 h-6 text-white" />
@@ -2789,7 +2792,10 @@ const startPracticeMode = async () => {
                 </div>
               </div>
             </div>
-            <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 backdrop-blur-lg rounded-xl p-4 text-white hover:scale-105 transition-transform duration-200 border border-white/20">
+            <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 backdrop-blur-lg rounded-xl p-4 text-white hover:scale-105 transition-transform duration-200 border border-white/20 cursor-pointer" onClick={() => {
+              setCurrentView('command-center');
+              setCommandCenterTab('progress');
+            }}>
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0">
                   <TrendingUp className="w-6 h-6 text-white" />
@@ -2834,7 +2840,15 @@ const startPracticeMode = async () => {
                 <div className="min-w-0">
                   <p className="text-2xl font-black leading-tight">
                     {interviewDate 
-                      ? Math.max(0, Math.ceil((new Date(interviewDate).setHours(0,0,0,0) - new Date().setHours(0,0,0,0)) / (1000 * 60 * 60 * 24)))
+                      ? (() => {
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          const interview = new Date(interviewDate);
+                          interview.setHours(0, 0, 0, 0);
+                          const diffTime = interview.getTime() - today.getTime();
+                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                          return Math.max(0, diffDays);
+                        })()
                       : '—'
                     }
                   </p>
@@ -5046,12 +5060,12 @@ onClick={async () => {
             <div>
               {/* Stats Overview */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl p-5 text-white">
+                <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl p-5 text-white cursor-pointer hover:scale-105 transition-transform" onClick={() => setCommandCenterTab('progress')}>
                   <p className="text-sm text-white/90 font-medium mb-1">Total Sessions</p>
                   <p className="text-4xl font-black">{practiceHistory.length}</p>
                   <p className="text-xs text-white/75 mt-1">🎯 Keep it up!</p>
                 </div>
-                <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-5 text-white">
+                <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-5 text-white cursor-pointer hover:scale-105 transition-transform" onClick={() => setCommandCenterTab('progress')}>
                   <p className="text-sm text-white/90 font-medium mb-1">Average Score</p>
                   <p className="text-4xl font-black">
                     {practiceHistory.length > 0 
@@ -5060,12 +5074,12 @@ onClick={async () => {
                   </p>
                   <p className="text-xs text-white/75 mt-1">📈 Improving</p>
                 </div>
-                <div className="bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl p-5 text-white">
+                <div className="bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl p-5 text-white cursor-pointer hover:scale-105 transition-transform" onClick={() => setCommandCenterTab('bank')}>
                   <p className="text-sm text-white/90 font-medium mb-1">Practiced</p>
                   <p className="text-4xl font-black">{questions.filter(q => q.practiceCount > 0).length}</p>
                   <p className="text-xs text-white/75 mt-1">of {questions.length} total</p>
                 </div>
-                <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-xl p-5 text-white">
+                <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-xl p-5 text-white cursor-pointer hover:scale-105 transition-transform" onClick={() => setCommandCenterTab('prep')}>
                   <p className="text-sm text-white/90 font-medium mb-1">This Month</p>
                   <p className="text-4xl font-black">
                     {practiceHistory.filter(s => {
@@ -5081,7 +5095,7 @@ onClick={async () => {
 
               {/* Most Practiced Questions */}
               <div className="bg-white rounded-xl shadow-md p-5 mb-6">
-                <h3 className="text-xl font-bold mb-4 text-gray-900">🔥 You're Crushing These!</h3>
+                <h3 className="text-xl font-bold mb-4 text-gray-900">🔥 Most practiced</h3>
                 {(() => {
                   // Calculate practice counts and averages from history
                   const questionStats = {};
@@ -5279,7 +5293,15 @@ onClick={async () => {
             <div>
               {/* Interview Countdown */}
               <div className="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl p-6 text-white mb-6">
-                <h3 className="text-2xl font-bold mb-4">🗓️ {interviewDate ? `${Math.max(0, Math.ceil((new Date(interviewDate).setHours(0,0,0,0) - new Date().setHours(0,0,0,0)) / (1000 * 60 * 60 * 24)))} Days to Shine!` : 'Set Your Interview Date'}</h3>
+                <h3 className="text-2xl font-bold mb-4">🗓️ {interviewDate ? `${(() => {
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  const interview = new Date(interviewDate);
+                  interview.setHours(0, 0, 0, 0);
+                  const diffTime = interview.getTime() - today.getTime();
+                  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                  return Math.max(0, diffDays);
+                })()} Days to Shine!` : 'Set Your Interview Date'}</h3>
                 <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-4">
                   <div className="flex-1 w-full">
                     <label className="block text-sm text-white/90 font-medium mb-2">Interview Date:</label>
@@ -5588,7 +5610,9 @@ onClick={async () => {
                     const x = 60 + (idx / Math.max(1, validSessions.length - 1)) * 790;
                     const y = 300 - (score * 27);
                     return (
-                      <g key={idx}>
+                      <g key={idx} style={{ cursor: 'pointer' }} onClick={() => {
+                        setSelectedSession(session);
+                      }}>
                         <circle 
                           cx={x} 
                           cy={y} 
@@ -5596,11 +5620,7 @@ onClick={async () => {
                           fill="#6366f1" 
                           stroke="white" 
                           strokeWidth="3" 
-                          className="cursor-pointer hover:r-12 transition-all" 
-                          onClick={() => {
-                            setSelectedChartPoint({ session, score, idx: idx + 1, total: validSessions.length });
-                            setShowChartModal(true);
-                          }} 
+                          className="hover:opacity-80 transition-opacity" 
                         />
                       </g>
                     );
@@ -6286,14 +6306,11 @@ onClick={async () => {
             <h2 className="text-lg font-semibold mb-3 text-gray-800">Support</h2>
             <p className="text-gray-600 mb-2 text-sm">Questions or feedback?</p>
             <a 
-              href="mailto:YOUR_EMAIL@example.com" 
+              href="mailto:support@interviewanswers.ai" 
               className="text-indigo-600 hover:text-indigo-700 font-medium text-sm"
             >
-              YOUR_EMAIL@example.com
+              support@interviewanswers.ai
             </a>
-            <p className="text-xs text-orange-600 mt-2 font-medium">
-              ⚠️ Replace with your actual email
-            </p>
           </div>
         </div>
       </div>
