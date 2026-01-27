@@ -5796,22 +5796,15 @@ onClick={async () => {
                             />
                           )}
                           
-                          {/* Clickable dots - BIGGER */}
+                          {/* Clickable dots - iOS Safari Compatible */}
                           {qStat.sessions.map((s, sIdx) => {
                             const score = getScore(s);
                             const x = 20 + (sIdx / Math.max(1, qStat.sessions.length - 1)) * 240;
                             const y = 90 - (score * 8);
                             return (
-                              <circle
+                              <g 
                                 key={sIdx}
-                                cx={x}
-                                cy={y}
-                                r="8"
-                                fill="#6366f1"
-                                stroke="white"
-                                strokeWidth="3"
-                                className="cursor-pointer hover:scale-125 transition-transform duration-200"
-                                style={{ willChange: 'transform' }}
+                                style={{ cursor: 'pointer' }}
                                 onClick={() => {
                                   setSelectedChartPoint({ 
                                     session: s, 
@@ -5823,8 +5816,31 @@ onClick={async () => {
                                   setShowChartModal(true);
                                 }}
                               >
-                                <title>Attempt {sIdx + 1}: {score.toFixed(1)}/10</title>
-                              </circle>
+                                {/* Larger invisible hit target for touch */}
+                                <circle
+                                  cx={x}
+                                  cy={y}
+                                  r="16"
+                                  fill="transparent"
+                                  style={{ pointerEvents: 'all' }}
+                                />
+                                {/* Visible dot */}
+                                <circle
+                                  cx={x}
+                                  cy={y}
+                                  r="8"
+                                  fill="#6366f1"
+                                  stroke="white"
+                                  strokeWidth="3"
+                                  className="hover:scale-125 transition-transform duration-200"
+                                  style={{ 
+                                    willChange: 'transform',
+                                    pointerEvents: 'none' 
+                                  }}
+                                >
+                                  <title>Attempt {sIdx + 1}: {score.toFixed(1)}/10</title>
+                                </circle>
+                              </g>
                             );
                           })}
                         </svg>
