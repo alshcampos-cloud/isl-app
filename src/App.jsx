@@ -163,6 +163,7 @@ const ISL = () => {
   const [showPricingPage, setShowPricingPage] = useState(false);
   const [showUsageDashboard, setShowUsageDashboard] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
+  const [isPasswordResetRequired, setIsPasswordResetRequired] = useState(false); // ADDED: Track if password reset is required before app access
   const [usageStatsData, setUsageStatsData] = useState(null);
   const [comparisonMode, setComparisonMode] = useState(false);
   const [showAnswerAssistant, setShowAnswerAssistant] = useState(false);
@@ -720,6 +721,7 @@ loadPracticeHistory();
     if (type === 'recovery' && accessToken) {
       console.log('🔑 Password reset token detected');
       setShowResetPassword(true);
+      setIsPasswordResetRequired(true); // FIXED: Require password reset before app access
     }
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -6782,13 +6784,19 @@ onClick={async () => {
         <ResetPassword
           supabase={supabase}
           onClose={() => {
-            setShowResetPassword(false);
-            window.location.hash = ''; // Clear the hash
+            if (!isPasswordResetRequired) {
+              // FIXED: Only allow close if not coming from recovery link
+              setShowResetPassword(false);
+              window.location.hash = '';
+            }
           }}
-          onSuccess={() => {
-            alert('✅ Password reset successful! Please sign in with your new password.');
+          onSuccess={async () => {
+            // FIXED: Force sign out and clear recovery flag
+            setIsPasswordResetRequired(false);
             setShowResetPassword(false);
             window.location.hash = '';
+            await supabase.auth.signOut();
+            alert('✅ Password reset successful! Please sign in with your new password.');
           }}
         />
       )}

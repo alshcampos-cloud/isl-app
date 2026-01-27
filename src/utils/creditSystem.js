@@ -213,7 +213,7 @@ export async function getUsageStats(supabase, userId, tier) {
         used: usage.live_prompter_questions || 0,
         limit: limits.live_prompter_questions,
         remaining: Math.max(0, limits.live_prompter_questions - (usage.live_prompter_questions || 0)),
-        unlimited: limits.live_prompter_unlimited
+        unlimited: limits.live_prompter_questions >= 999999 // FIXED: Consistent unlimited check with other features
       }
     };
   } catch (err) {
