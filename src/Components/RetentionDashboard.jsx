@@ -98,7 +98,7 @@ const RetentionDashboard = ({
         const interview = new Date(interviewDate);
         interview.setHours(0, 0, 0, 0);
         const diffTime = interview.getTime() - today.getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24)); // FIXED: Math.ceil → Math.round for accurate day count
         return Math.max(0, diffDays);
       })()
     : null;
