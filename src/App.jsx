@@ -162,8 +162,7 @@ const ISL = () => {
   const [userTier, setUserTier] = useState('free');
   const [showPricingPage, setShowPricingPage] = useState(false);
   const [showUsageDashboard, setShowUsageDashboard] = useState(false);
-  const [showResetPassword, setShowResetPassword] = useState(false);
-  const [isPasswordResetRequired, setIsPasswordResetRequired] = useState(false); // ADDED: Track if password reset is required before app access
+  // REMOVED: showResetPassword and isPasswordResetRequired - now handled in ProtectedRoute.jsx
   const [usageStatsData, setUsageStatsData] = useState(null);
   const [comparisonMode, setComparisonMode] = useState(false);
   const [showAnswerAssistant, setShowAnswerAssistant] = useState(false);
@@ -713,16 +712,8 @@ loadPracticeHistory();
   }, [interviewType]);
 
   useEffect(() => {
-    // Check for password reset token in URL hash
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const accessToken = hashParams.get('access_token');
-    const type = hashParams.get('type');
-    
-    if (type === 'recovery' && accessToken) {
-      console.log('🔑 Password reset token detected');
-      setShowResetPassword(true);
-      setIsPasswordResetRequired(true); // FIXED: Require password reset before app access
-    }
+    // REMOVED: Password reset token detection moved to ProtectedRoute.jsx
+    // (needs to run BEFORE auth check, not after)
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       const user = session?.user ?? null;
@@ -6780,26 +6771,7 @@ onClick={async () => {
       {/* ==========================================
           PASSWORD RESET MODAL
           ========================================== */}
-      {showResetPassword && (
-        <ResetPassword
-          supabase={supabase}
-          onClose={() => {
-            if (!isPasswordResetRequired) {
-              // FIXED: Only allow close if not coming from recovery link
-              setShowResetPassword(false);
-              window.location.hash = '';
-            }
-          }}
-          onSuccess={async () => {
-            // FIXED: Force sign out and clear recovery flag
-            setIsPasswordResetRequired(false);
-            setShowResetPassword(false);
-            window.location.hash = '';
-            await supabase.auth.signOut();
-            alert('✅ Password reset successful! Please sign in with your new password.');
-          }}
-        />
-      )}
+      {/* REMOVED: PASSWORD RESET MODAL - Now handled in ProtectedRoute.jsx */}
     </>
   ); {/* Close fragment that contains dialogs + views */}
 }; // Close ISL component

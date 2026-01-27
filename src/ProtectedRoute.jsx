@@ -1,12 +1,29 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
 import Auth from './Auth'
+import ResetPassword from './Components/ResetPassword' // ADDED: For password recovery flow
+import { Mail } from 'lucide-react' // ADDED: For email verification UI
 
 function ProtectedRoute({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [showResetPassword, setShowResetPassword] = useState(false) // ADDED: Track recovery modal
+  const [isRecovery, setIsRecovery] = useState(false) // ADDED: Flag recovery flow
 
   useEffect(() => {
+    // FIXED: Check for password recovery token FIRST (before auth redirect)
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const type = hashParams.get('type');
+    const accessToken = hashParams.get('access_token');
+    
+    if (type === 'recovery' && accessToken) {
+      console.log('🔑 Password reset token detected in ProtectedRoute');
+      setShowResetPassword(true);
+      setIsRecovery(true);
+      setLoading(false);
+      return; // Don't check session yet - show reset modal immediately
+    }
+
     // Check current session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
@@ -30,6 +47,27 @@ function ProtectedRoute({ children }) {
       </div>
     )
   }
+
+  // FIXED: Show reset modal if recovery token detected (before auth check)
+  if (showResetPassword && isRecovery) {
+    return (
+      <ResetPassword
+        supabase={supabase}
+        onClose={() => {
+          // SECURITY: Can't close modal during required password reset
+        }}
+        onSuccess={async () => {
+          // Force sign-out and redirect to login after successful reset
+          await supabase.auth.signOut();
+          window.location.hash = '';
+          setShowResetPassword(false);
+          setIsRecovery(false);
+          alert('✅ Password reset successful! Please sign in with your new password.');
+        }}
+      />
+    );
+  }
+
 
   if (!user) {
     return <Auth onAuthSuccess={setUser} />
