@@ -127,7 +127,8 @@ export default function QuestionAssistant({ onQuestionGenerated, existingQuestio
       <div className="flex items-center gap-2 mb-4">
         <span className="text-2xl">✨</span>
         <h3 className="text-lg font-semibold text-gray-900">AI Question Generator</h3>
-        <span className="ml-2 px-2 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded">MI-POWERED</span>
+        <span className="ml-2 px-2 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded">AI-POWERED</span>
+        {/* FIXED: Removed confusing usage counter badge - proper usage tracking will be added in future update */}
       </div>
 
       <div className="space-y-4">

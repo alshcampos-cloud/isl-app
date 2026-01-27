@@ -864,6 +864,12 @@ loadPracticeHistory();
       });
     }
   }, [currentView]);
+
+  // FIXED: Reset scroll position when navigating between views (iOS Safari mid-scroll fix)
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [currentView]);
+
   useEffect(() => { if (currentMode === 'prompter' && transcript && !isListening) { console.log('Auto-match:', transcript); matchQuestion(transcript); } }, [transcript, isListening, currentMode]);
   
   // Auto-scroll to question when AI asks a new question
