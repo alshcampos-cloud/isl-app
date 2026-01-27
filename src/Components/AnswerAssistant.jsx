@@ -88,12 +88,27 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
       });
 
       const data = await response.json();
-      const aiQuestion = cleanAIResponse(data.content[0].text);
+      
+      // FIXED: Safe response parsing with fallbacks
+      let aiQuestion;
+      if (data?.content?.[0]?.text) {
+        aiQuestion = cleanAIResponse(data.content[0].text);
+      } else if (data?.message) {
+        aiQuestion = data.message;
+      } else if (data?.error) {
+        throw new Error(data.error);
+      } else {
+        throw new Error('No response content received');
+      }
       
       setConversation([{ role: 'assistant', text: aiQuestion }]);
     } catch (error) {
       console.error('Error:', error);
-      alert('Failed to start assistant.');
+      // FIXED: Show error in conversation instead of just alert
+      setConversation([{ 
+        role: 'assistant', 
+        text: `⚠️ Sorry, I couldn't start the session: ${error.message || 'Unknown error'}. Please try again.` 
+      }]);
     } finally {
       setIsLoading(false);
     }
@@ -132,7 +147,18 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
       });
 
       const data = await response.json();
-      const aiResponse = cleanAIResponse(data.content[0].text);
+      
+      // FIXED: Safe response parsing with fallbacks
+      let aiResponse;
+      if (data?.content?.[0]?.text) {
+        aiResponse = cleanAIResponse(data.content[0].text);
+      } else if (data?.message) {
+        aiResponse = data.message;
+      } else if (data?.error) {
+        throw new Error(data.error);
+      } else {
+        throw new Error('No response content received');
+      }
       
       // DEBUG: Log AI response
       console.log('🔍 AI RESPONSE:', aiResponse);
@@ -140,7 +166,11 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
       setConversation([...newConversation, { role: 'assistant', text: aiResponse }]);
     } catch (error) {
       console.error('Error:', error);
-      alert('Failed to get response');
+      // FIXED: Show error in conversation instead of just alert
+      setConversation([...newConversation, { 
+        role: 'assistant', 
+        text: `⚠️ Sorry, I encountered an error: ${error.message || 'Unknown error'}. Please try again.` 
+      }]);
     } finally {
       setIsLoading(false);
     }
@@ -180,16 +210,26 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
       
       // DEBUG: Log what backend returned
       console.log('🔍 BACKEND RESPONSE:', data);
-      console.log('🔍 RAW TEXT:', data.content[0].text);
       
-      const synthesizedAnswer = cleanAIResponse(data.content[0].text);
+      // FIXED: Safe response parsing with fallbacks
+      let synthesizedAnswer;
+      if (data?.content?.[0]?.text) {
+        console.log('🔍 RAW TEXT:', data.content[0].text);
+        synthesizedAnswer = cleanAIResponse(data.content[0].text);
+      } else if (data?.message) {
+        synthesizedAnswer = data.message;
+      } else if (data?.error) {
+        throw new Error(data.error);
+      } else {
+        throw new Error('No response content received');
+      }
       
       // DEBUG: Log cleaned result
       console.log('🔍 CLEANED ANSWER:', synthesizedAnswer);
       
       // Check if we got an empty response (backend returned metadata/error)
       if (!synthesizedAnswer || synthesizedAnswer.length < 10) {
-        console.error('❌ Backend returned invalid response:', data.content[0].text);
+        console.error('❌ Backend returned invalid response');
         alert('⚠️ Not enough information to create an answer yet.\n\nPlease continue the conversation and answer a few more questions, then try again!');
         setStage('probing');
         setIsLoading(false);
@@ -226,7 +266,18 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
       });
 
       const data = await response.json();
-      const bulletsText = cleanAIResponse(data.content[0].text);
+      
+      // FIXED: Safe response parsing with fallbacks
+      let bulletsText;
+      if (data?.content?.[0]?.text) {
+        bulletsText = cleanAIResponse(data.content[0].text);
+      } else if (data?.message) {
+        bulletsText = data.message;
+      } else {
+        console.error('No bullets received from API');
+        return; // Silently fail - bullets are optional
+      }
+      
       const bullets = bulletsText
         .split('\n')
         .filter(line => {

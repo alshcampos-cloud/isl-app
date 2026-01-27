@@ -50,6 +50,10 @@ export default function QuestionAssistant({ onQuestionGenerated, existingQuestio
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
+      // FIXED: Add 30-second timeout wrapper for iOS Safari compatibility
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      
       const response = await fetch(
         'https://tzrlpwtkrtvjpdhcaayu.supabase.co/functions/v1/generate-question',
         {
@@ -68,21 +72,42 @@ export default function QuestionAssistant({ onQuestionGenerated, existingQuestio
             existingQuestions: existingQuestions.slice(0, 10),
             keepSimple: true,
             maxWords: 20
-          })
+          }),
+          signal: controller.signal // FIXED: Add abort signal
         }
       );
+
+      clearTimeout(timeoutId); // FIXED: Clear timeout if request completes
 
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`);
       }
 
       const data = await response.json();
-      const question = data.question;
+      
+      // FIXED: Safe response parsing with fallbacks
+      let question;
+      if (data?.question) {
+        question = data.question;
+      } else if (data?.content?.[0]?.text) {
+        question = data.content[0].text;
+      } else if (data?.message) {
+        question = data.message;
+      } else {
+        throw new Error('No question received from API');
+      }
       
       setGeneratedQuestion(question);
     } catch (err) {
       console.error('Generation error:', err);
-      setError('Failed to generate question. Please try again.');
+      // FIXED: Better error messages for different failure types
+      if (err.name === 'AbortError') {
+        setError('Request timed out after 30 seconds. Please try again with fewer details or simpler requirements.');
+      } else if (err.message.includes('401') || err.message.includes('403')) {
+        setError('Authentication error. Please sign out and sign in again.');
+      } else {
+        setError(`Failed to generate question: ${err.message || 'Unknown error'}. Please try again.`);
+      }
     } finally {
       setIsGenerating(false);
     }

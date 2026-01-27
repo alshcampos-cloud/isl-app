@@ -83,7 +83,11 @@ const ISL = () => {
     return <SupabaseTest />;
   }
 
-  const [currentView, setCurrentView] = useState('home');
+  // FIXED: Restore last view from localStorage to survive page refresh/screen lock (IA-006, IA-007)
+  const [currentView, setCurrentView] = useState(() => {
+    const saved = localStorage.getItem('isl_current_view');
+    return saved || 'home';
+  });
   const [showIdealAnswer, setShowIdealAnswer] = useState(false);
   const [currentMode, setCurrentMode] = useState(null);
   const [questions, setQuestions] = useState([]);
@@ -710,6 +714,11 @@ loadPracticeHistory();
   useEffect(() => {
     if (interviewType) localStorage.setItem('isl_interview_type', interviewType);
   }, [interviewType]);
+
+  // FIXED: Save current view to survive page refresh/screen lock (IA-006, IA-007)
+  useEffect(() => {
+    localStorage.setItem('isl_current_view', currentView);
+  }, [currentView]);
 
   useEffect(() => {
     // REMOVED: Password reset token detection moved to ProtectedRoute.jsx
