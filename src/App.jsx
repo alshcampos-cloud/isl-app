@@ -6059,8 +6059,24 @@ onClick={async () => {
                           return;
                         }
                         
+                        // FIXED: Filter out duplicates (IA-001, IA-001b, IA-008)
+                        const existingQuestionTexts = questions.map(q => q.question.toLowerCase().trim());
+                        const newQuestions = importedQuestions.filter(q => 
+                          !existingQuestionTexts.includes(q.question.toLowerCase().trim())
+                        );
+                        
+                        if (newQuestions.length === 0) {
+                          alert('⚠️ All questions from this template are already in your Question Bank!');
+                          setShowTemplateLibrary(false);
+                          return;
+                        }
+                        
+                        if (newQuestions.length < importedQuestions.length) {
+                          console.log(`Skipped ${importedQuestions.length - newQuestions.length} duplicate(s)`);
+                        }
+                        
                         // Save to Supabase
-                        const questionsToImport = importedQuestions.map(q => ({
+                        const questionsToImport = newQuestions.map(q => ({
                           user_id: user.id,
                           question: q.question,
                           category: q.category || 'Template',
@@ -6079,7 +6095,14 @@ onClick={async () => {
                         // Reload questions
                         await loadQuestions();
                         setShowTemplateLibrary(false);
-                        alert(`✅ Imported ${importedQuestions.length} template questions!`);
+                        
+                        // FIXED: Show accurate count with duplicate info
+                        const skipped = importedQuestions.length - newQuestions.length;
+                        if (skipped > 0) {
+                          alert(`✅ Imported ${newQuestions.length} new question(s)!\n\n(${skipped} duplicate(s) skipped)`);
+                        } else {
+                          alert(`✅ Imported ${newQuestions.length} template question(s)!`);
+                        }
                       } catch (error) {
                         console.error('Error importing:', error);
                         alert('Import failed: ' + error.message);
@@ -6762,8 +6785,24 @@ onClick={async () => {
                     return;
                   }
                   
+                  // FIXED: Filter out duplicates (IA-001, IA-001b, IA-008)
+                  const existingQuestionTexts = questions.map(q => q.question.toLowerCase().trim());
+                  const newQuestions = importedQuestions.filter(q => 
+                    !existingQuestionTexts.includes(q.question.toLowerCase().trim())
+                  );
+                  
+                  if (newQuestions.length === 0) {
+                    alert('⚠️ All questions from this template are already in your Question Bank!');
+                    setShowTemplateLibrary(false);
+                    return;
+                  }
+                  
+                  if (newQuestions.length < importedQuestions.length) {
+                    console.log(`Skipped ${importedQuestions.length - newQuestions.length} duplicate(s)`);
+                  }
+                  
                   // Save to Supabase
-                  const questionsToImport = importedQuestions.map(q => ({
+                  const questionsToImport = newQuestions.map(q => ({
                     user_id: user.id,
                     question: q.question,
                     category: q.category || 'Template',
@@ -6782,7 +6821,14 @@ onClick={async () => {
                   // Reload questions
                   await loadQuestions();
                   setShowTemplateLibrary(false);
-                  alert(`✅ Imported ${importedQuestions.length} template questions!`);
+                  
+                  // FIXED: Show accurate count with duplicate info
+                  const skipped = importedQuestions.length - newQuestions.length;
+                  if (skipped > 0) {
+                    alert(`✅ Imported ${newQuestions.length} new question(s)!\n\n(${skipped} duplicate(s) skipped)`);
+                  } else {
+                    alert(`✅ Imported ${newQuestions.length} template question(s)!`);
+                  }
                 } catch (error) {
                   console.error('Error importing:', error);
                   alert('Import failed: ' + error.message);
