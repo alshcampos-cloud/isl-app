@@ -36,6 +36,20 @@ const UltimateCompetitiveDashboard = ({ user, supabase, userTier, onUpgrade }) =
     loadAdvancedStats();
   }, [user]);
 
+  // ✅ FIX: Reload stats when page returns from background (Focus-Loss Cascade Bug)
+  // This fixes: Dashboard stuck showing "Analyzing..." after tab switch
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && user) {
+        console.log('🔄 Dashboard: Reloading stats after page return');
+        loadAdvancedStats();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [user]); // Only depends on user to prevent infinite loops
+
   const loadAdvancedStats = async () => {
     setLoading(true);
     try {
@@ -43,20 +57,21 @@ const UltimateCompetitiveDashboard = ({ user, supabase, userTier, onUpgrade }) =
 
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-
-      // Get AI Coach usage
-      const { data: aiCoachData } = await supabase
-        .from('ai_interactions')
+      
+      // BUG 6 FIX: Query usage_tracking table (same table creditSystem uses)
+      // This ensures displayed usage matches actual tracking
+      const currentPeriod = new Date().toISOString().slice(0, 7); // YYYY-MM
+      
+      const { data: usageData } = await supabase
+        .from('usage_tracking')
         .select('*')
         .eq('user_id', user.id)
-        .gte('created_at', today.toISOString());
+        .eq('period', currentPeriod)
+        .single();
 
-      // Get Live Prompter usage
-      const { data: prompterData } = await supabase
-        .from('live_prompter_sessions')
-        .select('*')
-        .eq('user_id', user.id)
-        .gte('created_at', today.toISOString());
+      // Extract usage from correct columns
+      const aiCoachUsed = usageData?.answer_assistant || 0;
+      const livePrompterUsed = usageData?.live_prompter_questions || 0;
 
       // Get all practice history for advanced metrics
       const { data: allSessions, count: totalCount } = await supabase
@@ -97,11 +112,11 @@ const UltimateCompetitiveDashboard = ({ user, supabase, userTier, onUpgrade }) =
 
       setStats({
         aiCoach: { 
-          used: aiCoachData?.length || 0, 
+          used: aiCoachUsed, 
           limit: isProUser ? 999 : 5 
         },
         livePrompter: { 
-          used: prompterData?.length || 0, 
+          used: livePrompterUsed, 
           limit: isProUser ? 999 : 5 
         },
         totalSessions: totalCount || 0,

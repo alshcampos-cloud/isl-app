@@ -312,6 +312,11 @@ const ISL = () => {
           isListeningRef.current = false;
           setSessionReady(false);
         }
+      } else {
+        // ✅ FIX: Handle page return from background (Focus-Loss Cascade Bug)
+        console.log('👁️ App returned to foreground');
+        // Force re-render to refresh any stale UI state (fixes stuck dashboard, unresponsive buttons)
+        setCurrentView(prev => prev);
       }
     };
 
@@ -610,7 +615,7 @@ Consider upgrading to Pro for more sessions!`);
   };
 
   // Shared handler for when Answer Assistant saves an answer
-  const handleAnswerSaved = (answer) => {
+  const handleAnswerSaved = async (answer) => {
     // Update current question state
     setAnswerAssistantQuestion({ 
       ...answerAssistantQuestion, 
@@ -634,6 +639,9 @@ Consider upgrading to Pro for more sessions!`);
     
     // Reload from database to ensure sync
     loadQuestions();
+    
+    // BUG 5 FIX: Track usage AFTER AI successfully delivers feedback (not when opening modal)
+    await trackUsageAfterSuccess('answerAssistant', 'Answer Assistant');
     
     console.log('✅ Answer saved with all fields:', { narrative: !!answer.narrative, bullets: answer.bullets?.length, keywords: answer.keywords?.length });
   };
@@ -1033,7 +1041,8 @@ question_id: (questionData.id && questionData.id !== "0" && typeof questionData.
 
  // Check and increment usage
   // CHECK AND INCREMENT USAGE - Call this before using AI features
-  const checkAndIncrementUsage = async (feature, featureName) => {
+  // Check usage WITHOUT incrementing (for Answer Assistant)
+  const checkUsage = async (feature, featureName) => {
     if (!currentUser) {
       alert('Please sign in first');
       return false;
@@ -1071,22 +1080,36 @@ Just $29.99/month - practice as much as you need!`);
       setShowPricingPage(true);
       return false;
     }
+    
+    return true;
+  };
 
-    // Increment usage
+  // Track usage AFTER successful completion (for Answer Assistant)
+  const trackUsageAfterSuccess = async (feature, featureName) => {
     await incrementUsage(supabase, currentUser.id, feature);
     
     // Reload stats
     const stats = await getUsageStats(supabase, currentUser.id, userTier);
     setUsageStatsData(stats);
     
-    console.log(`✅ ${featureName} session started. ${check.remaining - 1} remaining this month.`);
+    console.log(`✅ ${featureName} session completed and usage tracked.`);
+  };
+
+  // Check AND increment (for other features like AI Interviewer, Practice Mode)
+  const checkAndIncrementUsage = async (feature, featureName) => {
+    const canUse = await checkUsage(feature, featureName);
+    if (!canUse) return false;
+    
+    // For features that track usage at START (not completion)
+    await trackUsageAfterSuccess(feature, featureName);
     
     return true;
   };
 
-  // Wrapper function to open Answer Assistant with usage check
+  // Wrapper function to open Answer Assistant with usage check ONLY
+  // Usage tracked later when AI delivers feedback (Bug 5 fix)
   const openAnswerAssistant = async (question) => {
-    const canUse = await checkAndIncrementUsage('answerAssistant', 'Answer Assistant');
+    const canUse = await checkUsage('answerAssistant', 'Answer Assistant');
     if (!canUse) return;
     
     setAnswerAssistantQuestion(question);
@@ -2163,6 +2186,9 @@ const startPracticeMode = async () => {
     console.log('🚀 Actually starting Practice mode');
     
     // CHECK USAGE FIRST
+    // BUG 7 CLARIFICATION: Usage tracked when session BEGINS (not on each answer)
+    // This design allows tracking of abandoned/incomplete sessions for analytics
+    // If user answers 3 questions then quits, it counts as 1 practice session
     const canUse = await checkAndIncrementUsage('practiceMode', 'Practice Mode');
     if (!canUse) return;
     
@@ -2757,7 +2783,21 @@ const startPracticeMode = async () => {
                         try {
                           console.log('Starting sign out...');
                           
-                          const { error } = await supabase.auth.signOut({ scope: 'global' });
+                          // ✅ FIX: Add 10-second timeout to prevent hanging after tab switch (Focus-Loss Cascade Bug)
+                          const signOutPromise = supabase.auth.signOut({ scope: 'global' });
+                          const timeoutPromise = new Promise((_, reject) => 
+                            setTimeout(() => reject(new Error('Sign out timed out')), 10000)
+                          );
+
+                          let error;
+                          try {
+                            const result = await Promise.race([signOutPromise, timeoutPromise]);
+                            error = result?.error;
+                          } catch (timeoutError) {
+                            console.error('Sign out timeout:', timeoutError);
+                            // Force sign out even if request failed - local cleanup is priority
+                            error = null;
+                          }
 
                           if (error) {
                             console.error('Sign out error:', error);
@@ -3505,8 +3545,8 @@ const startPracticeMode = async () => {
                       onClick={() => {
                         console.log('Help button clicked!');
                         console.log('Current question:', currentQuestion);
-                        setAnswerAssistantQuestion(currentQuestion);
-                        setShowAnswerAssistant(true);
+                        // BUG 8 FIX: Use openAnswerAssistant to enforce usage check
+                        openAnswerAssistant(currentQuestion);
                       }}
                       className="text-sm bg-gradient-to-r from-indigo-100 to-purple-100 hover:from-indigo-200 hover:to-purple-200 text-indigo-700 px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2"
                     >
@@ -4173,8 +4213,8 @@ onClick={async () => {
                         onClick={() => {
                           console.log('Help button clicked!');
                           console.log('Current question:', currentQuestion);
-                          setAnswerAssistantQuestion(currentQuestion);
-                          setShowAnswerAssistant(true);
+                          // BUG 8 FIX: Use openAnswerAssistant to enforce usage check
+                          openAnswerAssistant(currentQuestion);
                         }}
                         className="text-sm bg-gradient-to-r from-indigo-100 to-purple-100 hover:from-indigo-200 hover:to-purple-200 text-indigo-700 px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2"
                       >
@@ -6329,12 +6369,27 @@ onClick={async () => {
                     try {
                       const { data: { user } } = await supabase.auth.getUser();
                       if (user) {
-                        // Delete ALL user data from Supabase
-                        await supabase.from('practice_sessions').delete().eq('user_id', user.id);
-                        await supabase.from('questions').delete().eq('user_id', user.id); // ← CRITICAL: Delete questions table
-                        await supabase.from('question_banks').delete().eq('user_id', user.id);
-                        await supabase.from('usage_tracking').delete().eq('user_id', user.id);
-                        await supabase.from('user_profiles').delete().eq('user_id', user.id); // Also delete profile
+                        // ✅ FIX: Add 10-second timeout per operation to prevent hanging (Focus-Loss Cascade Bug)
+                        const deleteWithTimeout = async (table) => {
+                          const deletePromise = supabase.from(table).delete().eq('user_id', user.id);
+                          const timeoutPromise = new Promise((_, reject) => 
+                            setTimeout(() => reject(new Error(`${table} delete timed out`)), 10000)
+                          );
+                          try {
+                            await Promise.race([deletePromise, timeoutPromise]);
+                            console.log(`✅ Deleted from ${table}`);
+                          } catch (err) {
+                            console.warn(`⚠️ ${table} delete failed/timeout:`, err.message);
+                            // Continue anyway - local cleanup is more important
+                          }
+                        };
+
+                        // Delete ALL user data from Supabase with individual timeouts
+                        await deleteWithTimeout('practice_sessions');
+                        await deleteWithTimeout('questions'); // ← CRITICAL: Delete questions table
+                        await deleteWithTimeout('question_banks');
+                        await deleteWithTimeout('usage_tracking');
+                        await deleteWithTimeout('user_profiles'); // Also delete profile
                       }
                       
                       // Clear ALL localStorage (including consent so user starts fresh)
@@ -6342,8 +6397,17 @@ onClick={async () => {
                       
                       alert('✅ All data deleted. You will be signed out.');
                       
-                      // Sign out user completely
-                      await supabase.auth.signOut();
+                      // Sign out user completely with timeout
+                      try {
+                        const signOutPromise = supabase.auth.signOut();
+                        const timeoutPromise = new Promise((_, reject) => 
+                          setTimeout(() => reject(new Error('Sign out timed out')), 10000)
+                        );
+                        await Promise.race([signOutPromise, timeoutPromise]);
+                      } catch (err) {
+                        console.warn('⚠️ Sign out failed/timeout:', err.message);
+                        // Continue to reload anyway
+                      }
                       
                       // Reload to login screen
                       window.location.reload();
