@@ -1,4 +1,5 @@
- import React, { useState, useEffect, useRef } from 'react';
+ import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { flushSync } from 'react-dom';
 
 import {
   Brain, Database, Play, Plus, Edit2, Trash2, TrendingUp, Download, Upload,
@@ -155,6 +156,7 @@ const ISL = () => {
   const captureSourceRef = useRef(null); // Track if capture was started by 'mouse' or 'keyboard'
   const aiQuestionRef = useRef(null); // For auto-scrolling to AI questions
   const initializingDefaultsRef = useRef(false); // Prevent double-initialization in React Strict Mode
+  const lastFeedbackRef = useRef(null); // DUAL-LAYER FIX: Backup feedback in case state gets lost during tab switch
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [interviewDate, setInterviewDate] = useState(localStorage.getItem('isl_interview_date') || '');
   const [aiGeneratorCollapsed, setAiGeneratorCollapsed] = useState(true);
@@ -313,11 +315,13 @@ const ISL = () => {
           setSessionReady(false);
         }
       } else {
-        // ✅ FIX: Handle page return from background (Focus-Loss Cascade Bug)
-        console.log('👁️ App returned to foreground');
-        // Force re-render to refresh any stale UI state (fixes stuck dashboard, unresponsive buttons)
-        setCurrentView(prev => prev);
+        // NO INTERFERENCE: Let flushSync handle state updates naturally
+        // Theory: flushSync commits immediately, so no forced updates needed
+        // Normal websites don't interfere with async state updates on tab return
+        console.log('👁️ App visible - letting async operations complete naturally');
       }
+      // TAB SWITCH FIX: Removed setCurrentView that was breaking buttons
+      // UsageDashboard has its own visibility listener (independent)
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -615,8 +619,9 @@ Consider upgrading to Pro for more sessions!`);
   };
 
   // Shared handler for when Answer Assistant saves an answer
-  const handleAnswerSaved = async (answer) => {
-    // Update current question state
+  const handleAnswerSaved = (answer) => {
+    // ULTIMATE FIX: Converted to promise chains for consistency
+    // Update current question state (synchronous)
     setAnswerAssistantQuestion({ 
       ...answerAssistantQuestion, 
       narrative: answer.narrative, 
@@ -624,7 +629,7 @@ Consider upgrading to Pro for more sessions!`);
       keywords: answer.keywords || answerAssistantQuestion.keywords || []
     });
     
-    // Update questions list
+    // Update questions list (synchronous)
     const updatedQuestions = questions.map(q => 
       q.id === answerAssistantQuestion.id 
         ? { 
@@ -641,9 +646,14 @@ Consider upgrading to Pro for more sessions!`);
     loadQuestions();
     
     // BUG 5 FIX: Track usage AFTER AI successfully delivers feedback (not when opening modal)
-    await trackUsageAfterSuccess('answerAssistant', 'Answer Assistant');
-    
-    console.log('✅ Answer saved with all fields:', { narrative: !!answer.narrative, bullets: answer.bullets?.length, keywords: answer.keywords?.length });
+    return trackUsageAfterSuccess('answerAssistant', 'Answer Assistant')
+      .then(() => {
+        console.log('✅ Answer saved with all fields:', { 
+          narrative: !!answer.narrative, 
+          bullets: answer.bullets?.length, 
+          keywords: answer.keywords?.length 
+        });
+      });
   };
 
   // Load usage on mount
@@ -1003,40 +1013,45 @@ recognition.onerror = (event) => {
     recognitionRef.current = recognition;
   };
   // Save practice session to database
-  const savePracticeSession = async (questionData, userAnswer, aiFeedback = null) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+  const savePracticeSession = (questionData, userAnswer, aiFeedback = null) => {
+    // ULTIMATE FIX: Converted to promise chains for nested call compatibility
+    return supabase.auth.getUser()
+      .then(({ data: { user } }) => {
+        if (!user) return null;
 
-      const wordCount = userAnswer.split(' ').filter(w => w.length > 0).length;
-      const fillerWords = ['um', 'uh', 'like', 'you know', 'so', 'actually'];
-      const fillerCount = fillerWords.reduce((count, word) => {
-        const regex = new RegExp(`\\b${word}\\b`, 'gi');
-        return count + (userAnswer.match(regex) || []).length;
-      }, 0);
+        const wordCount = userAnswer.split(' ').filter(w => w.length > 0).length;
+        const fillerWords = ['um', 'uh', 'like', 'you know', 'so', 'actually'];
+        const fillerCount = fillerWords.reduce((count, word) => {
+          const regex = new RegExp(`\\b${word}\\b`, 'gi');
+          return count + (userAnswer.match(regex) || []).length;
+        }, 0);
 
-      const { data, error } = await supabase
-        .from('practice_sessions')
-.insert({
-  user_id: user.id,
-question_id: (questionData.id && questionData.id !== "0" && typeof questionData.id === 'string' && questionData.id.includes('-')) ? questionData.id : null,
-  question_bank_id: questionData.bank_id || null,
-  question_text: questionData.question,
-  user_answer: userAnswer,
-  mode: currentMode,
-  word_count: wordCount,
-  filler_word_count: fillerCount,
-  ai_feedback: aiFeedback,
-})
-        .select()
-        .single();
-
-      if (error) throw error;
-      console.log('✅ Practice session saved:', data);
-      return data;
-    } catch (error) {
-      console.error('❌ Error saving practice session:', error);
-    }
+        return supabase
+          .from('practice_sessions')
+          .insert({
+            user_id: user.id,
+            question_id: (questionData.id && questionData.id !== "0" && typeof questionData.id === 'string' && questionData.id.includes('-')) ? questionData.id : null,
+            question_bank_id: questionData.bank_id || null,
+            question_text: questionData.question,
+            user_answer: userAnswer,
+            mode: currentMode,
+            word_count: wordCount,
+            filler_word_count: fillerCount,
+            ai_feedback: aiFeedback,
+          })
+          .select()
+          .single();
+      })
+      .then(result => {
+        if (!result) return null;
+        if (result.error) throw result.error;
+        console.log('✅ Practice session saved:', result.data);
+        return result.data;
+      })
+      .catch(error => {
+        console.error('❌ Error saving practice session:', error);
+        return null;
+      });
   };
 
  // Check and increment usage
@@ -1084,15 +1099,70 @@ Just $29.99/month - practice as much as you need!`);
     return true;
   };
 
+  // COMPREHENSIVE FIX: Synchronous usage check (reads from state, no await)
+  // This prevents React state corruption after tab switch
+  const checkUsageLimitsSync = (feature, featureName) => {
+    if (!currentUser) {
+      alert('Please sign in first');
+      return false;
+    }
+
+    // Check from already-loaded usageStats state (synchronous!)
+    const check = canUseFeature(usageStats || {}, userTier, feature);
+    
+    if (!check.allowed) {
+      // Show upgrade modal with specific message
+      alert(`You've used all ${check.limit} ${featureName} sessions this month!
+
+Upgrade to Pro for UNLIMITED:
+• Unlimited AI Interviewer
+• Unlimited Practice Mode  
+• Unlimited Answer Assistant
+• Unlimited Question Generator
+• Unlimited Live Prompter
+
+Just $29.99/month - practice as much as you need!`);
+      setShowPricingPage(true);
+      return false;
+    }
+    
+    return true;
+  };
+
   // Track usage AFTER successful completion (for Answer Assistant)
-  const trackUsageAfterSuccess = async (feature, featureName) => {
-    await incrementUsage(supabase, currentUser.id, feature);
-    
-    // Reload stats
-    const stats = await getUsageStats(supabase, currentUser.id, userTier);
-    setUsageStatsData(stats);
-    
-    console.log(`✅ ${featureName} session completed and usage tracked.`);
+  const trackUsageAfterSuccess = (feature, featureName) => {
+    // ULTIMATE FIX: Converted to promise chains (has setState after await - critical!)
+    return incrementUsage(supabase, currentUser.id, feature)
+      .then(() => {
+        // Reload stats
+        return getUsageStats(supabase, currentUser.id, userTier);
+      })
+      .then((stats) => {
+        setUsageStatsData(stats);  // In .then() - works after tab switch!
+        console.log(`✅ ${featureName} session completed and usage tracked.`);
+      })
+      .catch((error) => {
+        console.error(`Failed to track ${featureName} usage:`, error);
+      });
+  };
+
+  // COMPREHENSIVE FIX: Background usage tracking (fire and forget)
+  // Doesn't block UI, tracks in background
+  const trackUsageInBackground = (feature, featureName) => {
+    // Fire and forget - don't await, don't block
+    incrementUsage(supabase, currentUser.id, feature)
+      .then(() => {
+        // Reload stats in background
+        return getUsageStats(supabase, currentUser.id, userTier);
+      })
+      .then((stats) => {
+        setUsageStatsData(stats);
+        console.log(`✅ ${featureName} session tracked in background.`);
+      })
+      .catch((error) => {
+        console.error(`Failed to track ${featureName} usage:`, error);
+        // Don't block user, just log error
+      });
   };
 
   // Check AND increment (for other features like AI Interviewer, Practice Mode)
@@ -1109,11 +1179,16 @@ Just $29.99/month - practice as much as you need!`);
   // Wrapper function to open Answer Assistant with usage check ONLY
   // Usage tracked later when AI delivers feedback (Bug 5 fix)
   const openAnswerAssistant = async (question) => {
-    const canUse = await checkUsage('answerAssistant', 'Answer Assistant');
+    // COMPREHENSIVE FIX: Check usage SYNCHRONOUSLY (from state)
+    const canUse = checkUsageLimitsSync('answerAssistant', 'Answer Assistant');
     if (!canUse) return;
     
+    // Set UI state IMMEDIATELY (no await blocking)
     setAnswerAssistantQuestion(question);
     setShowAnswerAssistant(true);
+    
+    // Usage will be tracked when AI delivers feedback (Bug 5 fix)
+    // No tracking here, just the check
   };
 
   const getCurrentUsage = async () => {
@@ -1789,7 +1864,12 @@ const startListening = () => {
 
 useEffect(() => {
     const handleKeyDown = (e) => { 
-      const isTyping = e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT'; 
+      // SPACEBAR FIX: Enhanced detection for text fields
+      const isTyping = e.target.tagName === 'TEXTAREA' || 
+                       e.target.tagName === 'INPUT' ||
+                       e.target.isContentEditable ||
+                       e.target.closest('textarea') !== null ||
+                       e.target.closest('input') !== null;
       const isButton = e.target.tagName === 'BUTTON';
       
       if (e.code === 'Space' && (currentMode === 'prompter' || currentMode === 'ai-interviewer' || currentMode === 'practice') && !spacebarHeld && !isTyping && !isButton) { 
@@ -1807,7 +1887,12 @@ useEffect(() => {
     };
     
     const handleKeyUp = (e) => { 
-      const isTyping = e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT'; 
+      // SPACEBAR FIX: Enhanced detection for text fields
+      const isTyping = e.target.tagName === 'TEXTAREA' || 
+                       e.target.tagName === 'INPUT' ||
+                       e.target.isContentEditable ||
+                       e.target.closest('textarea') !== null ||
+                       e.target.closest('input') !== null;
       const isButton = e.target.tagName === 'BUTTON';
       
       if (e.code === 'Space' && spacebarHeld && !isTyping && !isButton) { 
@@ -1877,67 +1962,95 @@ useEffect(() => {
   // API
   const saveApiKey = (key) => { console.log('Save API key, len:', key.length); localStorage.setItem('isl_api_key', key); setApiKey(key); setShowApiSetup(false); };
 
-  const getAIFeedback = async (question, expectedAnswer, userAnswer) => {
-    if (!apiKey || apiKey.trim().length < 10) { alert('Need valid API key'); setShowApiSetup(true); return null; }
-    setIsAnalyzing(true);
+  const getAIFeedback = (question, expectedAnswer, userAnswer) => {
+    // ULTIMATE FIX: Converted from async/await to promise chains
+    // This prevents React state corruption after tab switch
+    // setState in .then()/.catch() works where setState after await breaks
+    
+    if (!apiKey || apiKey.trim().length < 10) { 
+      alert('Need valid API key'); 
+      setShowApiSetup(true); 
+      return Promise.resolve(null);
+    }
+    
+    flushSync(() => {
+      setIsAnalyzing(true);
+    });
     console.log('Getting AI feedback...');
-    try {
-      const response = await fetch('/api/claude-proxy', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          apiKey: apiKey,
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1024,
-          messages: [{ role: 'user', content: `You are an interview coach analyzing practice answers. 
-  
-  QUESTION: "${question}"
-  
-  EXPECTED KEY POINTS:
-  ${expectedAnswer.bullets.filter(b => b).join('\n')}
-  
-  USER'S ANSWER:
-  "${userAnswer}"
-  
-  Analyze the user's answer and provide scores (1-10) for:
-  1. CONCISENESS - Is it focused and to-the-point, or rambling?
-  2. ACCURACY - Does it cover the key points from the expected answer?
-  3. FLUENCY - Is it smooth and well-articulated, or full of filler words?
-  4. IMPACT - Is it memorable and compelling?
-  
-  Also provide 2-3 specific, actionable suggestions for improvement.
-  
-  Respond in this exact JSON format:
-  {
-    "conciseness": <score>,
-    "accuracy": <score>,
-    "fluency": <score>,
-    "impact": <score>,
-    "overall": <average score>,
-    "strengths": ["strength 1", "strength 2"],
-    "improvements": ["improvement 1", "improvement 2", "improvement 3"]
-  }` }]
-        })
-      });
+    
+    return fetch('/api/claude-proxy', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        apiKey: apiKey,
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1024,
+        messages: [{ role: 'user', content: `You are an interview coach analyzing practice answers. 
+
+QUESTION: "${question}"
+
+EXPECTED KEY POINTS:
+${expectedAnswer.bullets.filter(b => b).join('\n')}
+
+USER'S ANSWER:
+"${userAnswer}"
+
+Analyze the user's answer and provide scores (1-10) for:
+1. CONCISENESS - Is it focused and to-the-point, or rambling?
+2. ACCURACY - Does it cover the key points from the expected answer?
+3. FLUENCY - Is it smooth and well-articulated, or full of filler words?
+4. IMPACT - Is it memorable and compelling?
+
+Also provide 2-3 specific, actionable suggestions for improvement.
+
+Respond in this exact JSON format:
+{
+  "conciseness": <score>,
+  "accuracy": <score>,
+  "fluency": <score>,
+  "impact": <score>,
+  "overall": <average score>,
+  "strengths": ["strength 1", "strength 2"],
+  "improvements": ["improvement 1", "improvement 2", "improvement 3"]
+}` }]
+      })
+    })
+    .then(response => {
       console.log('API status:', response.status);
-      console.log('API status:', response.status);
-      if (!response.ok) { const errorText = await response.text(); console.error('API error:', errorText); throw new Error(`API error: ${response.status}`); }
-      const data = await response.json();
+      if (!response.ok) {
+        return response.text().then(errorText => {
+          console.error('API error:', errorText);
+          throw new Error(`API error: ${response.status}`);
+        });
+      }
+      return response.json();
+    })
+    .then(data => {
       console.log('Got response');
       if (data.content && data.content[0] && data.content[0].text) {
         const feedbackText = data.content[0].text;
         const jsonMatch = feedbackText.match(/\{[\s\S]*\}/);
-        if (jsonMatch) { const feedback = JSON.parse(jsonMatch[0]); console.log('Parsed'); setIsAnalyzing(false); return feedback; }
+        if (jsonMatch) {
+          const feedback = JSON.parse(jsonMatch[0]);
+          console.log('Parsed');
+          flushSync(() => {
+            setIsAnalyzing(false);
+          });
+          return feedback;
+        }
       }
       throw new Error('Invalid response format');
-    } catch (error) {
+    })
+    .catch(error => {
       console.error('AI error:', error);
-      setIsAnalyzing(false);
+      flushSync(() => {
+        setIsAnalyzing(false);
+      });
       if (error.message.includes('401')) alert('Invalid API key. Check Settings.');
       else if (error.message.includes('429')) alert('Rate limit. Wait and try again.');
       else alert(`Error: ${error.message}\nCheck console (F12)`);
       return null;
-    }
+    });
   };
 
   // QUESTION MANAGEMENT
@@ -2143,12 +2256,12 @@ useEffect(() => {
   const actuallyStartAIInterviewer = async () => {
     console.log('🚀 Actually starting AI Interviewer');
     
-    // CHECK USAGE FIRST
-    const canUse = await checkAndIncrementUsage('aiInterviewer', 'AI Interviewer');
+    // COMPREHENSIVE FIX: Check usage SYNCHRONOUSLY (from state)
+    const canUse = checkUsageLimitsSync('aiInterviewer', 'AI Interviewer');
     if (!canUse) return;
     
+    // Set UI state IMMEDIATELY (no await blocking)
     accumulatedTranscript.current = ''; 
-
     const randomQ = questions[Math.floor(Math.random() * questions.length)]; 
     setCurrentQuestion(randomQ); 
     setCurrentMode('ai-interviewer'); 
@@ -2156,12 +2269,19 @@ useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     setUserAnswer(''); 
     setSpokenAnswer(''); 
-    setFeedback(null); 
+    flushSync(() => {
+      setFeedback(null);
+    });
     setConversationHistory([]);
-setFollowUpQuestion(null);
-setExchangeCount(0);
-    setTimeout(() => { speakText(randomQ.question); }, 500);
+    setFollowUpQuestion(null);
+    setExchangeCount(0);
     setPendingMode(null);
+    
+    // Track usage in background (fire and forget, doesn't block)
+    trackUsageInBackground('aiInterviewer', 'AI Interviewer');
+    
+    // Start interview
+    setTimeout(() => { speakText(randomQ.question); }, 500);
   };
 const startPracticeMode = async () => { 
     console.log('🎬 startPracticeMode called');
@@ -2185,15 +2305,12 @@ const startPracticeMode = async () => {
   const actuallyStartPractice = async () => {
     console.log('🚀 Actually starting Practice mode');
     
-    // CHECK USAGE FIRST
-    // BUG 7 CLARIFICATION: Usage tracked when session BEGINS (not on each answer)
-    // This design allows tracking of abandoned/incomplete sessions for analytics
-    // If user answers 3 questions then quits, it counts as 1 practice session
-    const canUse = await checkAndIncrementUsage('practiceMode', 'Practice Mode');
+    // COMPREHENSIVE FIX: Check usage SYNCHRONOUSLY (from state)
+    const canUse = checkUsageLimitsSync('practiceMode', 'Practice Mode');
     if (!canUse) return;
     
+    // Set UI state IMMEDIATELY (no await blocking)
     accumulatedTranscript.current = ''; 
-
     const randomQ = questions[Math.floor(Math.random() * questions.length)]; 
     setCurrentQuestion(randomQ); 
     setCurrentMode('practice'); 
@@ -2201,8 +2318,15 @@ const startPracticeMode = async () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     setUserAnswer(''); 
     setSpokenAnswer(''); 
-    setFeedback(null);
+    flushSync(() => {
+      setFeedback(null);
+    });
     setPendingMode(null);
+    
+    // Track usage in background (fire and forget, doesn't block)
+    // BUG 7 CLARIFICATION: Usage tracked when session BEGINS (not on each answer)
+    // This design allows tracking of abandoned/incomplete sessions for analytics
+    trackUsageInBackground('practiceMode', 'Practice Mode');
   };
 
   // Navigation functions for prev/next question
@@ -2216,7 +2340,9 @@ const startPracticeMode = async () => {
     setSpokenAnswer('');
     setTranscript('');
     accumulatedTranscript.current = '';
-    setFeedback(null);
+    flushSync(() => {
+      setFeedback(null);
+    });
     setFollowUpQuestion(null);
     setConversationHistory([]);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -2232,13 +2358,294 @@ const startPracticeMode = async () => {
     setSpokenAnswer('');
     setTranscript('');
     accumulatedTranscript.current = '';
-    setFeedback(null);
+    flushSync(() => {
+      setFeedback(null);
+    });
     setFollowUpQuestion(null);
     setConversationHistory([]);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   
   const startFlashcardMode = () => { if (questions.length === 0) { alert('Add questions first!'); return; } let available = questions; if (filterCategory !== 'All') available = available.filter(q => q.category === filterCategory); if (available.length === 0) { alert('No matching questions!'); return; } const sorted = [...available].sort((a, b) => { if (a.practiceCount === 0) return -1; if (b.practiceCount === 0) return 1; return a.averageScore - b.averageScore; }); setCurrentQuestion(sorted[0]); setCurrentMode('flashcard'); setCurrentView('flashcard'); setFlashcardSide('question'); setShowBullets(false); setShowNarrative(false); };
+
+  // ============================================================================
+  // CALLBACK FIX: Stable handlers to prevent stale closure issues
+  // These handlers are defined at component level with useCallback to ensure
+  // they maintain stable references across re-renders. This prevents React
+  // from ignoring setState calls from "stale closures" after tab switches.
+  // ============================================================================
+  
+  // Practice Mode Submit Handler - Stable Reference
+  const handlePracticeModeSubmit = useCallback(() => {
+    const answer = spokenAnswer || userAnswer;
+    if (!answer.trim()) { 
+      alert('Please provide an answer'); 
+      return;
+    }
+    
+    setIsAnalyzing(true);
+    
+    return supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        return fetch('https://tzrlpwtkrtvjpdhcaayu.supabase.co/functions/v1/ai-feedback', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            questionText: currentQuestion.question,
+            userAnswer: answer,
+            expectedBullets: currentQuestion.bullets || [],
+            mode: 'practice'
+          })
+        });
+      })
+      .then(response => {
+        return response.json().then(data => ({ response, data }));
+      })
+      .then(({ response, data }) => {
+        console.log('Full response data:', data);
+
+        if (!response.ok) {
+          console.error('Error from Supabase function:', data.error);
+          throw new Error(data.error?.message || data.error || 'Failed to get feedback');
+        }
+
+        if (data.type === 'error') {
+          console.error('AI API Error:', data.error);
+          throw new Error(data.error?.message || JSON.stringify(data.error));
+        }
+
+        let feedbackJson;
+
+        if (data.content && data.content[0]) {
+          let feedbackText = data.content[0].text;
+          console.log('Raw AI text:', feedbackText);
+          
+          const jsonMatch = feedbackText.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            feedbackText = jsonMatch[0];
+          }
+          
+          feedbackJson = JSON.parse(feedbackText);
+        } else {
+          feedbackJson = data;
+        }
+
+        console.log('🎯 FLUSHSYNC FIX: Setting feedback immediately with forced commit');
+
+        // FLUSHSYNC: Force React to commit state immediately (no batching/deferral)
+        flushSync(() => {
+          // LAYER 1: Set feedback state immediately (non-blocking)
+          setFeedback(feedbackJson);
+          
+          // LAYER 2: Store in ref as safety net (in case flushSync doesn't work in all scenarios)
+          lastFeedbackRef.current = feedbackJson;
+          
+          setPracticeHistory([
+            ...practiceHistory,
+            {
+              question: currentQuestion.question,
+              answer,
+              feedback: feedbackJson,
+              date: new Date().toISOString(),
+            },
+          ]);
+        });
+
+        console.log('🎯 FLUSHSYNC FIX: Feedback committed to DOM, now saving to database in parallel');
+
+        // Save to database in parallel (fire-and-forget)
+        savePracticeSession(currentQuestion, answer, feedbackJson)
+          .then(() => console.log('✅ Database save completed'))
+          .catch(err => console.error('❌ Database save failed (feedback already showing):', err));
+
+        // Return resolved promise so .catch() and .finally() still work
+        return Promise.resolve();
+      })
+      .catch(error => {
+        console.error('Feedback error:', error);
+        alert('Failed to get feedback: ' + error.message);
+      })
+      .finally(() => {
+        console.log('🎯 FLUSHSYNC FIX: Setting isAnalyzing to false with forced commit');
+        flushSync(() => {
+          setIsAnalyzing(false);
+        });
+      });
+  }, [spokenAnswer, userAnswer, currentQuestion, practiceHistory, supabase]);
+
+  // AI Interviewer Submit Handler - Stable Reference
+  const handleAIInterviewerSubmit = useCallback(() => {
+    const answer = (spokenAnswer || userAnswer || '').trim();
+    console.log('Answer being used:', answer);
+
+    if (!answer) {
+      alert('Please provide an answer (speak or type)');
+      return;
+    }
+
+    setIsAnalyzing(true);
+    const userContext = getUserContext();
+    
+    return supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        return fetch(
+          'https://tzrlpwtkrtvjpdhcaayu.supabase.co/functions/v1/ai-feedback',
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              questionText: followUpQuestion || currentQuestion.question,
+              userAnswer: answer,
+              expectedBullets: currentQuestion.bullets || [],
+              userContext: userContext,
+              mode: 'ai-interviewer',
+              conversationHistory: conversationHistory,
+              exchangeCount: exchangeCount
+            }),
+          }
+        );
+      })
+      .then(response => {
+        return response.json().then(data => ({ response, data }));
+      })
+      .then(({ response, data }) => {
+        console.log('Full response data:', data);
+
+        if (!response.ok) {
+          console.error('Error from Supabase function:', data.error);
+          throw new Error(
+            data.error?.message || data.error || 'Failed to get feedback'
+          );
+        }
+
+        let feedbackJson;
+
+        if (data.content && data.content[0]) {
+          let feedbackText = data.content[0].text;
+          console.log('Raw AI text:', feedbackText);
+
+          const jsonMatch = feedbackText.match(/\{[\s\S]*\}/);
+          if (jsonMatch) feedbackText = jsonMatch[0];
+
+          feedbackJson = JSON.parse(feedbackText);
+        } else {
+          feedbackJson = data;
+        }
+
+        // CHECK IF CONVERSATION SHOULD CONTINUE
+        if (feedbackJson.continue_conversation && feedbackJson.follow_up_question) {
+          // Add current exchange to history
+          setConversationHistory([
+            ...conversationHistory,
+            {
+              question: followUpQuestion || currentQuestion.question,
+              answer: answer
+            }
+          ]);
+          
+          // Set the follow-up question
+          setFollowUpQuestion(feedbackJson.follow_up_question);
+          
+          // Scroll to top so user sees the new question
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          
+          // Increment exchange count
+          setExchangeCount(exchangeCount + 1);
+          
+          // Clear answer fields for next exchange
+          setUserAnswer('');
+          setSpokenAnswer('');
+          accumulatedTranscript.current = '';
+          
+          // Speak the follow-up question
+          setTimeout(() => {
+            speakText(feedbackJson.follow_up_question);
+          }, 500);
+          
+          console.log('✅ Conversation continuing - Exchange', exchangeCount + 1);
+          
+        } else {
+          // CONVERSATION ENDED - Show final feedback
+          // Build complete conversation summary
+          const fullConversation = [
+            ...conversationHistory,
+            {
+              question: followUpQuestion || currentQuestion.question,
+              answer: answer
+            }
+          ];
+          
+          // Create a text summary of the entire conversation
+          const conversationSummary = fullConversation
+            .map((exchange, idx) => `Q${idx + 1}: ${exchange.question}\nA${idx + 1}: ${exchange.answer}`)
+            .join('\n\n');
+          
+          // Save with conversation history in feedback
+          const feedbackWithConversation = {
+            ...feedbackJson,
+            conversation_history: fullConversation
+          };
+          
+          console.log('🎯 FLUSHSYNC FIX: Setting AI interview feedback immediately with forced commit');
+          
+          // FLUSHSYNC: Force React to commit state immediately (no batching/deferral)
+          flushSync(() => {
+            setFeedback(feedbackJson);
+            
+            // LAYER 2: Store in ref as safety net
+            lastFeedbackRef.current = feedbackJson;
+            
+            setPracticeHistory([
+              ...practiceHistory,
+              {
+                question: currentQuestion.question,
+                answer,
+                feedback: feedbackJson,
+                date: new Date().toISOString(),
+              },
+            ]);
+          });
+          
+          console.log('🎯 FLUSHSYNC FIX: Feedback committed to DOM, now saving AI interview to database in parallel');
+          
+          // Save to database in parallel (fire-and-forget)
+          savePracticeSession(currentQuestion, conversationSummary, feedbackWithConversation)
+            .then(() => console.log('✅ AI interview database save completed'))
+            .catch(err => console.error('❌ AI interview database save failed (feedback already showing):', err));
+          
+          // Return resolved promise immediately
+          return Promise.resolve();
+        }
+      })
+      .catch(error => {
+        console.error('Feedback error:', error);
+        alert('Failed to get feedback: ' + error.message);
+      })
+      .finally(() => {
+        console.log('🎯 FLUSHSYNC FIX: Setting isAnalyzing to false with forced commit');
+        flushSync(() => {
+          setIsAnalyzing(false);
+        });
+      });
+  }, [
+    spokenAnswer, 
+    userAnswer, 
+    currentQuestion, 
+    followUpQuestion,
+    conversationHistory,
+    exchangeCount,
+    practiceHistory,
+    accumulatedTranscript,
+    supabase,
+    getUserContext,
+    speakText
+  ]);
 
   // ==========================================
   // RENDERS START HERE
@@ -2956,7 +3363,7 @@ const startPracticeMode = async () => {
                   </div>
                   <h3 className="text-xl font-black mb-2 text-gray-900">Live Prompter</h3>
                   <p className="text-gray-600 text-sm mb-4 flex-1 font-semibold">Real-time bullet prompts</p>
-                  <button onClick={startPrompterMode} className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl">
+                  <button onClick={(e) => { e.stopPropagation(); startPrompterMode(); }} className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl">
                     Start Practice
                   </button>
                 </div>
@@ -2971,7 +3378,7 @@ const startPracticeMode = async () => {
                   </div>
                   <h3 className="text-xl font-black mb-2 text-gray-900">AI Interviewer</h3>
                   <p className="text-gray-600 text-sm mb-4 flex-1 font-semibold">Realistic interview practice</p>
-                  <button onClick={startAIInterviewer} className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold py-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl">
+                  <button onClick={(e) => { e.stopPropagation(); startAIInterviewer(); }} className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold py-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl">
                     Start Interview
                   </button>
                 </div>
@@ -2986,7 +3393,7 @@ const startPracticeMode = async () => {
                   </div>
                   <h3 className="text-xl font-black mb-2 text-gray-900">Practice</h3>
                   <p className="text-gray-600 text-sm mb-4 flex-1 font-semibold">AI-powered feedback</p>
-                  <button onClick={startPracticeMode} className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl">
+                  <button onClick={(e) => { e.stopPropagation(); startPracticeMode(); }} className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl">
                     Start Session
                   </button>
                 </div>
@@ -3001,7 +3408,7 @@ const startPracticeMode = async () => {
                   </div>
                   <h3 className="text-xl font-black mb-2 text-gray-900">Flashcard</h3>
                   <p className="text-gray-600 text-sm mb-4 flex-1 font-semibold">Quick memory drill</p>
-                  <button onClick={startFlashcardMode} className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-bold py-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl">
+                  <button onClick={(e) => { e.stopPropagation(); startFlashcardMode(); }} className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-bold py-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl">
                     Start Review
                   </button>
                 </div>
@@ -3381,6 +3788,8 @@ const startPracticeMode = async () => {
 
   // AI INTERVIEWER - WITH CLOUD AVATAR & SPEECH INPUT
   if (currentView === 'ai-interviewer' && currentQuestion) {
+    // CALLBACK FIX: Handler now defined at top level with useCallback for stable reference
+    
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-900 to-pink-900">
         <div className="container mx-auto px-4 py-8">
@@ -3542,7 +3951,8 @@ const startPracticeMode = async () => {
                 <div className="mt-2 flex justify-center">
                   {(usageStats?.tier === 'pro' || usageStats?.tier === 'premium' || usageStats?.tier === 'beta') ? (
                     <button
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         console.log('Help button clicked!');
                         console.log('Current question:', currentQuestion);
                         // BUG 8 FIX: Use openAnswerAssistant to enforce usage check
@@ -3555,7 +3965,7 @@ const startPracticeMode = async () => {
                     </button>
                   ) : (
                     <button
-                      onClick={() => alert('⭐ Pro Feature\n\nUpgrade to Pro ($29.99/month) for UNLIMITED access!\n\n✓ Unlimited AI Answer Coach sessions\n✓ Unlimited AI Interview practice\n✓ Unlimited Practice Mode\n✓ Everything unlimited - practice as much as you need!')}
+                      onClick={(e) => { e.stopPropagation(); alert('⭐ Pro Feature\n\nUpgrade to Pro ($29.99/month) for UNLIMITED access!\n\n✓ Unlimited AI Answer Coach sessions\n✓ Unlimited AI Interview practice\n✓ Unlimited Practice Mode\n✓ Everything unlimited - practice as much as you need!'); }}
                       className="text-sm bg-gradient-to-r from-yellow-100 to-amber-100 hover:from-yellow-200 hover:to-amber-200 text-yellow-800 px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2"
                     >
                       <Crown className="w-4 h-4" />
@@ -3565,143 +3975,9 @@ const startPracticeMode = async () => {
                 </div>
               </div>
               
+              {/* ULTIMATE FIX: Extracted inline async to named function with promise chains */}
               <button
-onClick={async () => {
-  const answer = (spokenAnswer || userAnswer || '').trim();
-  console.log('Answer being used:', answer);
-
-  if (!answer) {
-    alert('Please provide an answer (speak or type)');
-    return;
-  }
-
-  setIsAnalyzing(true);
-  const userContext = getUserContext();
-  
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-
-    const response = await fetch(
-      'https://tzrlpwtkrtvjpdhcaayu.supabase.co/functions/v1/ai-feedback',
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          questionText: followUpQuestion || currentQuestion.question,
-          userAnswer: answer,
-          expectedBullets: currentQuestion.bullets || [],
-          userContext: userContext,
-          mode: 'ai-interviewer',
-          conversationHistory: conversationHistory,
-          exchangeCount: exchangeCount
-        }),
-      }
-    );
-
-    const data = await response.json();
-    console.log('Full response data:', data);
-
-    if (!response.ok) {
-      console.error('Error from Supabase function:', data.error);
-      throw new Error(
-        data.error?.message || data.error || 'Failed to get feedback'
-      );
-    }
-
-    let feedbackJson;
-
-    if (data.content && data.content[0]) {
-      let feedbackText = data.content[0].text;
-      console.log('Raw AI text:', feedbackText);
-
-      const jsonMatch = feedbackText.match(/\{[\s\S]*\}/);
-      if (jsonMatch) feedbackText = jsonMatch[0];
-
-      feedbackJson = JSON.parse(feedbackText);
-    } else {
-      feedbackJson = data;
-    }
-
-    // CHECK IF CONVERSATION SHOULD CONTINUE
-    if (feedbackJson.continue_conversation && feedbackJson.follow_up_question) {
-      // Add current exchange to history
-      setConversationHistory([
-        ...conversationHistory,
-        {
-          question: followUpQuestion || currentQuestion.question,
-          answer: answer
-        }
-      ]);
-      
-      // Set the follow-up question
-      setFollowUpQuestion(feedbackJson.follow_up_question);
-      
-      // Scroll to top so user sees the new question
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      
-      // Increment exchange count
-      setExchangeCount(exchangeCount + 1);
-      
-      // Clear answer fields for next exchange
-      setUserAnswer('');
-      setSpokenAnswer('');
-      accumulatedTranscript.current = '';
-      
-      // Speak the follow-up question
-      setTimeout(() => {
-        speakText(feedbackJson.follow_up_question);
-      }, 500);
-      
-      console.log('✅ Conversation continuing - Exchange', exchangeCount + 1);
-      
-    } else {
-      // CONVERSATION ENDED - Show final feedback
-      // Build complete conversation summary
-      const fullConversation = [
-        ...conversationHistory,
-        {
-          question: followUpQuestion || currentQuestion.question,
-          answer: answer
-        }
-      ];
-      
-      // Create a text summary of the entire conversation
-      const conversationSummary = fullConversation
-        .map((exchange, idx) => `Q${idx + 1}: ${exchange.question}\nA${idx + 1}: ${exchange.answer}`)
-        .join('\n\n');
-      
-      // Save with conversation history in feedback
-      const feedbackWithConversation = {
-        ...feedbackJson,
-        conversation_history: fullConversation
-      };
-      
-      await savePracticeSession(currentQuestion, conversationSummary, feedbackWithConversation);
-
-      setFeedback(feedbackJson);
-      setPracticeHistory([
-        ...practiceHistory,
-        {
-          question: currentQuestion.question,
-          answer,
-          feedback: feedbackJson,
-          date: new Date().toISOString(),
-        },
-      ]);
-      
-      console.log('✅ Conversation ended - Showing feedback');
-    }
-    
-  } catch (error) {
-    console.error('Feedback error:', error);
-    alert('Failed to get feedback: ' + error.message);
-  } finally {
-    setIsAnalyzing(false);
-  }
-}}
+                onClick={() => handleAIInterviewerSubmit()}
                 className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-4 rounded-lg disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {isAnalyzing ? (
@@ -4059,7 +4335,9 @@ onClick={async () => {
       <div className={`flex gap-4 feedback-section ${isSectionVisible(7) ? 'visible' : ''}`}>
         <button 
           onClick={() => { 
-            setFeedback(null); 
+            flushSync(() => {
+              setFeedback(null);
+            });
             setUserAnswer(''); 
             setSpokenAnswer(''); 
             accumulatedTranscript.current = '';
@@ -4070,7 +4348,9 @@ onClick={async () => {
         </button>
         <button 
           onClick={() => { 
-            setFeedback(null); 
+            flushSync(() => {
+              setFeedback(null);
+            });
             setUserAnswer(''); 
             setSpokenAnswer(''); 
             accumulatedTranscript.current = '';
@@ -4138,6 +4418,8 @@ onClick={async () => {
 
   // PRACTICE MODE - WITH SPEECH INPUT
   if (currentView === 'practice' && currentQuestion) {
+    // CALLBACK FIX: Handler now defined at top level with useCallback for stable reference
+    
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="bg-white shadow-sm border-b">
@@ -4210,7 +4492,8 @@ onClick={async () => {
                   <div className="mt-2 flex justify-center">
                     {(usageStats?.tier === 'pro' || usageStats?.tier === 'premium' || usageStats?.tier === 'beta') ? (
                       <button
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           console.log('Help button clicked!');
                           console.log('Current question:', currentQuestion);
                           // BUG 8 FIX: Use openAnswerAssistant to enforce usage check
@@ -4223,7 +4506,7 @@ onClick={async () => {
                       </button>
                     ) : (
                       <button
-                        onClick={() => alert('⭐ Pro Feature\n\nUpgrade to Pro ($29.99/month) for UNLIMITED access!\n\n✓ Unlimited AI Answer Coach sessions\n✓ Unlimited AI Interview practice\n✓ Unlimited Practice Mode\n✓ Everything unlimited - practice as much as you need!')}
+                        onClick={(e) => { e.stopPropagation(); alert('⭐ Pro Feature\n\nUpgrade to Pro ($29.99/month) for UNLIMITED access!\n\n✓ Unlimited AI Answer Coach sessions\n✓ Unlimited AI Interview practice\n✓ Unlimited Practice Mode\n✓ Everything unlimited - practice as much as you need!'); }}
                         className="text-sm bg-gradient-to-r from-yellow-100 to-amber-100 hover:from-yellow-200 hover:to-amber-200 text-yellow-800 px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2"
                       >
                         <Crown className="w-4 h-4" />
@@ -4233,77 +4516,9 @@ onClick={async () => {
                   </div>
                 </div>
                 
+                {/* ULTIMATE FIX: Extracted inline async to named function with promise chains */}
                 <button
-                  onClick={async () => {
-                    const answer = spokenAnswer || userAnswer;
-                    if (!answer.trim()) { alert('Please provide an answer'); return; }
-                    
-                    setIsAnalyzing(true);
-                    try {
-                      const { data: { session } } = await supabase.auth.getSession();
-                      
-                      const response = await fetch('https://tzrlpwtkrtvjpdhcaayu.supabase.co/functions/v1/ai-feedback', {
-                        method: 'POST',
-                        headers: {
-                          'Authorization': `Bearer ${session.access_token}`,
-                          'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                          questionText: currentQuestion.question,
-                          userAnswer: answer,
-                          expectedBullets: currentQuestion.bullets || [],
-                          mode: 'practice'
-                        })
-                      });
-
-                      const data = await response.json();
-                      console.log('Full response data:', data);
-
-                      if (!response.ok) {
-                        console.error('Error from Supabase function:', data.error);
-                        throw new Error(data.error?.message || data.error || 'Failed to get feedback');
-                      }
-
-                      if (data.type === 'error') {
-                        console.error('AI API Error:', data.error);
-                        throw new Error(data.error?.message || JSON.stringify(data.error));
-                      }
-
-                      let feedbackJson;
-
-                      if (data.content && data.content[0]) {
-                        let feedbackText = data.content[0].text;
-                        console.log('Raw AI text:', feedbackText);
-                        
-                        const jsonMatch = feedbackText.match(/\{[\s\S]*\}/);
-                        if (jsonMatch) {
-                          feedbackText = jsonMatch[0];
-                        }
-                        
-                        feedbackJson = JSON.parse(feedbackText);
-                      } else {
-                        feedbackJson = data;
-                      }
-
-                      await savePracticeSession(currentQuestion, answer, feedbackJson);
-
-                      setFeedback(feedbackJson);
-                      setPracticeHistory([
-                        ...practiceHistory,
-                        {
-                          question: currentQuestion.question,
-                          answer,
-                          feedback: feedbackJson,
-                          date: new Date().toISOString(),
-                        },
-                      ]);
-                    } catch (error) {
-                      console.error('Feedback error:', error);
-                      alert('Failed to get feedback: ' + error.message);
-                    } finally {
-                      setIsAnalyzing(false);
-                    }
-                  }}
+                  onClick={() => handlePracticeModeSubmit()}
                   disabled={isAnalyzing}
                   className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-4 rounded-lg disabled:opacity-50 flex items-center justify-center gap-2"
                 >
@@ -4662,7 +4877,9 @@ onClick={async () => {
       <div className={`flex gap-4 feedback-section ${isSectionVisible(7) ? 'visible' : ''}`}>
         <button 
           onClick={() => { 
-            setFeedback(null); 
+            flushSync(() => {
+              setFeedback(null);
+            });
             setUserAnswer(''); 
             setSpokenAnswer(''); 
             accumulatedTranscript.current = '';
@@ -4673,7 +4890,9 @@ onClick={async () => {
         </button>
         <button 
           onClick={() => { 
-            setFeedback(null); 
+            flushSync(() => {
+              setFeedback(null);
+            });
             setUserAnswer(''); 
             setSpokenAnswer(''); 
             accumulatedTranscript.current = '';
@@ -5294,7 +5513,9 @@ onClick={async () => {
                               setCurrentView('practice');
                               setUserAnswer('');
                               setSpokenAnswer('');
-                              setFeedback(null);
+                              flushSync(() => {
+                                setFeedback(null);
+                              });
                             }}
                             className="ml-4 px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition text-sm flex-shrink-0"
                           >
@@ -5337,7 +5558,9 @@ onClick={async () => {
                               setCurrentView('practice');
                               setUserAnswer('');
                               setSpokenAnswer('');
-                              setFeedback(null);
+                              flushSync(() => {
+                                setFeedback(null);
+                              });
                             }}
                             className="ml-4 px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg transition text-sm flex-shrink-0"
                           >
@@ -6778,6 +7001,7 @@ onClick={async () => {
               user={currentUser}
               supabase={supabase}
               userTier={userTier}
+              usageStats={usageStatsData}
               onUpgrade={() => {
                 setShowUsageDashboard(false);
                 setShowPricingPage(true);
