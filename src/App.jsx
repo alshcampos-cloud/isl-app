@@ -7143,8 +7143,8 @@ const startPracticeMode = async () => {
           >
             <PricingPage
               currentTier={userTier}
-              user={user}
-              userEmail={user?.email}
+              user={currentUser}
+              userEmail={currentUser?.email}
               onSelectTier={(tier) => {
                 if (tier === 'free') {
                   setShowPricingPage(false);
