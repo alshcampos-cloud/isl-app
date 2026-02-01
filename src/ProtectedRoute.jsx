@@ -11,17 +11,32 @@ function ProtectedRoute({ children }) {
   const [isRecovery, setIsRecovery] = useState(false) // ADDED: Flag recovery flow
 
   useEffect(() => {
-    // FIXED: Check for password recovery token FIRST (before auth redirect)
+    // Check for password recovery token in URL hash
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
     const type = hashParams.get('type');
     const accessToken = hashParams.get('access_token');
-    
+
     if (type === 'recovery' && accessToken) {
       console.log('🔑 Password reset token detected in ProtectedRoute');
-      setShowResetPassword(true);
-      setIsRecovery(true);
-      setLoading(false);
-      return; // Don't check session yet - show reset modal immediately
+      // Set the session from the URL hash first (required for updateUser to work)
+      supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: hashParams.get('refresh_token') || ''
+      }).then(({ data, error }) => {
+        if (error) {
+          console.error('Error setting recovery session:', error);
+          alert('Password reset link expired or invalid. Please request a new one.');
+          window.location.hash = '';
+          setLoading(false);
+          return;
+        }
+        console.log('✅ Recovery session established');
+        setUser(data.session?.user ?? null);
+        setShowResetPassword(true);
+        setIsRecovery(true);
+        setLoading(false);
+      });
+      return;
     }
 
     // Check current session
