@@ -277,3 +277,84 @@ export function getFeatureDisplayInfo(feature) {
   
   return info[feature] || { name: feature, description: '', icon: '📊', value: '' };
 }
+
+// ============================================================================
+// PHASE 2: Beta User Detection + Server-Side Verification
+// ============================================================================
+
+// Check if user is a beta tester (server-side verified)
+export async function isBetaUser(supabase, userId) {
+  try {
+    // Check beta_testers table first
+    const { data: betaUser } = await supabase
+      .from('beta_testers')
+      .select('unlimited_access')
+      .eq('user_id', userId)
+      .single();
+
+    if (betaUser?.unlimited_access) {
+      console.log('🎖️ Beta user detected (beta_testers table) - unlimited access');
+      return true;
+    }
+
+    // Check user_profiles.tier
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('tier')
+      .eq('user_id', userId)
+      .single();
+
+    if (profile?.tier === 'beta') {
+      console.log('🎖️ Beta user detected (user_profiles.tier) - unlimited access');
+      return true;
+    }
+
+    return false;
+  } catch (err) {
+    // Error checking beta status - fail open (allow access)
+    // This prevents blocking users if beta_testers table doesn't exist
+    console.warn('Beta check failed (allowing access):', err.message);
+    return false;
+  }
+}
+
+// Server-side verified feature check (prevents bypass via stale state or cache clearing)
+export async function canUseFeatureServerSide(supabase, userId, tier, feature) {
+  try {
+    // Beta users have unlimited access
+    const isBeta = await isBetaUser(supabase, userId);
+    if (isBeta) {
+      return {
+        allowed: true,
+        remaining: 999999,
+        limit: 999999,
+        unlimited: true,
+        isBeta: true
+      };
+    }
+
+    // Get FRESH usage from server (not cached state)
+    const now = new Date();
+    const currentPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+    const { data: usage, error } = await supabase
+      .from('usage_tracking')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('period', currentPeriod)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error fetching usage:', error);
+      // On error, allow access but log for monitoring
+      return { allowed: true, remaining: 1, limit: 1, error: true };
+    }
+
+    // Check against limits using existing function
+    return canUseFeature(usage || {}, tier, feature);
+  } catch (err) {
+    console.error('Error in canUseFeatureServerSide:', err);
+    // On error, allow access but log for monitoring
+    return { allowed: true, remaining: 1, limit: 1, error: true };
+  }
+}

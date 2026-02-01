@@ -17,7 +17,7 @@ import AnswerAssistant from './Components/AnswerAssistant';
 import TemplateLibrary from './TemplateLibrary';
 import Tutorial from './Components/Tutorial';
 import { DEFAULT_QUESTIONS } from './default_questions';
-import { canUseFeature, incrementUsage, getUsageStats, TIER_LIMITS } from './utils/creditSystem';
+import { canUseFeature, incrementUsage, getUsageStats, TIER_LIMITS, isBetaUser } from './utils/creditSystem';
 import { fetchWithRetry } from './utils/fetchWithRetry';
 import UsageLimitModal from './Components/UsageLimitModal';
 import PricingPage from './Components/PricingPage';
@@ -1117,9 +1117,16 @@ recognition.onerror = (event) => {
       return false;
     }
 
+    // PHASE 2: Check if beta user first (server-side verified)
+    const isBeta = await isBetaUser(supabase, currentUser.id);
+    if (isBeta) {
+      console.log('🎖️ Beta user - unlimited access for', featureName);
+      return true;
+    }
+
     // Get current usage for this month
     const currentPeriod = new Date().toISOString().slice(0, 7); // YYYY-MM
-    
+
     const { data: usage, error } = await supabase
       .from('usage_tracking')
       .select('*')
@@ -1133,14 +1140,14 @@ recognition.onerror = (event) => {
 
     // Check if allowed
     const check = canUseFeature(usage || {}, userTier, feature);
-    
+
     if (!check.allowed) {
       // Show upgrade modal with specific message
       alert(`You've used all ${check.limit} ${featureName} sessions this month!
 
 Upgrade to Pro for UNLIMITED:
 • Unlimited AI Interviewer
-• Unlimited Practice Mode  
+• Unlimited Practice Mode
 • Unlimited Answer Assistant
 • Unlimited Question Generator
 • Unlimited Live Prompter
@@ -1149,7 +1156,7 @@ Just $29.99/month - practice as much as you need!`);
       setShowPricingPage(true);
       return false;
     }
-    
+
     return true;
   };
 
@@ -1161,16 +1168,22 @@ Just $29.99/month - practice as much as you need!`);
       return false;
     }
 
+    // PHASE 2: Beta users bypass all limits (check userTier state)
+    if (userTier === 'beta') {
+      console.log('🎖️ Beta user - unlimited access for', featureName);
+      return true;
+    }
+
     // Check from already-loaded usageStats state (synchronous!)
     const check = canUseFeature(usageStats || {}, userTier, feature);
-    
+
     if (!check.allowed) {
       // Show upgrade modal with specific message
       alert(`You've used all ${check.limit} ${featureName} sessions this month!
 
 Upgrade to Pro for UNLIMITED:
 • Unlimited AI Interviewer
-• Unlimited Practice Mode  
+• Unlimited Practice Mode
 • Unlimited Answer Assistant
 • Unlimited Question Generator
 • Unlimited Live Prompter
@@ -1179,7 +1192,7 @@ Just $29.99/month - practice as much as you need!`);
       setShowPricingPage(true);
       return false;
     }
-    
+
     return true;
   };
 
