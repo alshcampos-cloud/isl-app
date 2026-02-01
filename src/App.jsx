@@ -6674,6 +6674,18 @@ const startPracticeMode = async () => {
           </div>
 
           <div className="bg-white rounded-xl shadow-sm p-5 mb-4">
+            <h2 className="text-lg font-semibold mb-3 text-gray-800">Support</h2>
+
+            <a
+              href="mailto:support@interviewanswers.ai"
+              className="w-full flex justify-between items-center py-3 px-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm"
+            >
+              <span className="font-medium text-gray-700">Need help? Contact us</span>
+              <Mail className="w-4 h-4 text-gray-400" />
+            </a>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm p-5 mb-4">
             <h2 className="text-lg font-semibold mb-3 text-gray-800">Data Management</h2>
             
             <button
