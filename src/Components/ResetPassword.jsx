@@ -31,7 +31,7 @@ export default function ResetPassword({ supabase, onClose, onSuccess }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validatePassword()) {
       return;
     }
@@ -40,14 +40,30 @@ export default function ResetPassword({ supabase, onClose, onSuccess }) {
     setError('');
 
     try {
-      const { data, error: updateError } = await supabase.auth.updateUser({
+      // First verify we have an active session
+      const { data: sessionData } = await supabase.auth.getSession();
+      console.log('Current session before update:', sessionData?.session?.user?.email);
+
+      if (!sessionData?.session) {
+        throw new Error('No active session. Your reset link may have expired. Please request a new one.');
+      }
+
+      // Add timeout to prevent infinite hang
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Request timed out. Please try again.')), 15000)
+      );
+
+      const updatePromise = supabase.auth.updateUser({
         password: newPassword
       });
 
+      const { data, error: updateError } = await Promise.race([updatePromise, timeoutPromise]);
+
       if (updateError) throw updateError;
 
+      console.log('Password updated successfully');
       setSuccess(true);
-      
+
       // Wait 1 second to show success message, then call onSuccess
       setTimeout(() => {
         if (onSuccess) {

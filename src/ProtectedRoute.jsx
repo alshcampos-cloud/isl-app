@@ -11,20 +11,14 @@ function ProtectedRoute({ children }) {
   const [isRecovery, setIsRecovery] = useState(false) // ADDED: Flag recovery flow
 
   useEffect(() => {
-    // Check for password recovery token in URL hash
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const type = hashParams.get('type');
-    const accessToken = hashParams.get('access_token');
-
-    // Listen for auth changes FIRST - this handles the recovery token automatically
+    // Listen for auth changes - Supabase fires PASSWORD_RECOVERY when processing reset link
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth event:', event);
+      console.log('Auth event:', event, session?.user?.email);
 
-      // Supabase fires PASSWORD_RECOVERY event when user clicks reset link
       if (event === 'PASSWORD_RECOVERY') {
-        console.log('🔑 PASSWORD_RECOVERY event detected');
+        console.log('🔑 PASSWORD_RECOVERY event - session established, showing reset modal');
         setUser(session?.user ?? null);
         setShowResetPassword(true);
         setIsRecovery(true);
@@ -32,23 +26,46 @@ function ProtectedRoute({ children }) {
         return;
       }
 
-      setUser(session?.user ?? null);
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        setUser(session?.user ?? null);
+      }
+
+      if (event === 'SIGNED_OUT') {
+        setUser(null);
+      }
     });
 
-    // Also check URL hash directly for recovery type (backup method)
-    if (type === 'recovery' && accessToken) {
-      console.log('🔑 Recovery token in URL hash detected');
-      setShowResetPassword(true);
-      setIsRecovery(true);
-      setLoading(false);
-      return;
-    }
-
-    // Check current session
+    // getSession() automatically processes any tokens in the URL hash
+    // This will trigger PASSWORD_RECOVERY event if there's a recovery token
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session check:', session?.user?.email ?? 'no session');
       setUser(session?.user ?? null);
-      setLoading(false);
+
+      // Only set loading false if we're NOT in recovery flow
+      // (recovery flow sets it in the event handler)
+      if (!window.location.hash.includes('type=recovery')) {
+        setLoading(false);
+      }
     });
+
+    // Fallback: If getSession doesn't trigger PASSWORD_RECOVERY within 3 seconds
+    // but we have a recovery token, show the modal anyway
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    if (hashParams.get('type') === 'recovery') {
+      console.log('🔑 Recovery token detected in URL');
+      const fallbackTimer = setTimeout(() => {
+        if (loading) {
+          console.log('⚠️ Fallback: showing reset modal after timeout');
+          setShowResetPassword(true);
+          setIsRecovery(true);
+          setLoading(false);
+        }
+      }, 3000);
+      return () => {
+        clearTimeout(fallbackTimer);
+        subscription.unsubscribe();
+      };
+    }
 
     return () => subscription.unsubscribe();
   }, [])
