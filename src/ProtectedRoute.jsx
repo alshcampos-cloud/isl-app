@@ -16,43 +16,41 @@ function ProtectedRoute({ children }) {
     const type = hashParams.get('type');
     const accessToken = hashParams.get('access_token');
 
-    if (type === 'recovery' && accessToken) {
-      console.log('🔑 Password reset token detected in ProtectedRoute');
-      // Set the session from the URL hash first (required for updateUser to work)
-      supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: hashParams.get('refresh_token') || ''
-      }).then(({ data, error }) => {
-        if (error) {
-          console.error('Error setting recovery session:', error);
-          alert('Password reset link expired or invalid. Please request a new one.');
-          window.location.hash = '';
-          setLoading(false);
-          return;
-        }
-        console.log('✅ Recovery session established');
-        setUser(data.session?.user ?? null);
+    // Listen for auth changes FIRST - this handles the recovery token automatically
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth event:', event);
+
+      // Supabase fires PASSWORD_RECOVERY event when user clicks reset link
+      if (event === 'PASSWORD_RECOVERY') {
+        console.log('🔑 PASSWORD_RECOVERY event detected');
+        setUser(session?.user ?? null);
         setShowResetPassword(true);
         setIsRecovery(true);
         setLoading(false);
-      });
+        return;
+      }
+
+      setUser(session?.user ?? null);
+    });
+
+    // Also check URL hash directly for recovery type (backup method)
+    if (type === 'recovery' && accessToken) {
+      console.log('🔑 Recovery token in URL hash detected');
+      setShowResetPassword(true);
+      setIsRecovery(true);
+      setLoading(false);
       return;
     }
 
     // Check current session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-      setLoading(false)
-    })
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
 
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-    })
-
-    return () => subscription.unsubscribe()
+    return () => subscription.unsubscribe();
   }, [])
 
   if (loading) {
