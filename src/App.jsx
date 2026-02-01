@@ -85,14 +85,49 @@ const ISL = () => {
   }
 
   // FIXED: Restore last view from localStorage to survive page refresh/screen lock (IA-006, IA-007)
+  // BUG 1 IMPROVEMENT: Restore session views if currentQuestion was also saved
   const [currentView, setCurrentView] = useState(() => {
     const saved = localStorage.getItem('isl_current_view');
+    const savedQuestion = localStorage.getItem('isl_current_question');
+    const viewsRequiringSession = ['practice', 'ai-interviewer', 'prompter', 'flashcard'];
+    // Only restore session views if we also have a saved question
+    if (saved && viewsRequiringSession.includes(saved)) {
+      if (savedQuestion) {
+        try {
+          JSON.parse(savedQuestion); // Validate it's parseable
+          return saved; // Restore the session view
+        } catch (e) {
+          return 'home'; // Invalid question data, reset to home
+        }
+      }
+      return 'home'; // No saved question, reset to home
+    }
     return saved || 'home';
   });
   const [showIdealAnswer, setShowIdealAnswer] = useState(false);
-  const [currentMode, setCurrentMode] = useState(null);
+  // BUG 1 IMPROVEMENT: Restore currentMode from localStorage for session persistence
+  const [currentMode, setCurrentMode] = useState(() => {
+    const saved = localStorage.getItem('isl_current_mode');
+    const viewsRequiringSession = ['practice', 'ai-interviewer', 'prompter', 'flashcard'];
+    // Only restore mode if it's a session view
+    if (saved && viewsRequiringSession.includes(saved)) {
+      return saved;
+    }
+    return null;
+  });
   const [questions, setQuestions] = useState([]);
-  const [currentQuestion, setCurrentQuestion] = useState(null);
+  // BUG 1 IMPROVEMENT: Restore currentQuestion from localStorage for session persistence
+  const [currentQuestion, setCurrentQuestion] = useState(() => {
+    const saved = localStorage.getItem('isl_current_question');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  });
   const [showTemplateLibrary, setShowTemplateLibrary] = useState(false);
   const [interviewType, setInterviewType] = useState('');
   const [apiKey, setApiKey] = useState('');
@@ -737,6 +772,24 @@ loadPracticeHistory();
   useEffect(() => {
     localStorage.setItem('isl_current_view', currentView);
   }, [currentView]);
+
+  // BUG 1 IMPROVEMENT: Save currentQuestion to localStorage for session persistence
+  useEffect(() => {
+    if (currentQuestion) {
+      localStorage.setItem('isl_current_question', JSON.stringify(currentQuestion));
+    } else {
+      localStorage.removeItem('isl_current_question');
+    }
+  }, [currentQuestion]);
+
+  // BUG 1 IMPROVEMENT: Save currentMode to localStorage for session persistence
+  useEffect(() => {
+    if (currentMode) {
+      localStorage.setItem('isl_current_mode', currentMode);
+    } else {
+      localStorage.removeItem('isl_current_mode');
+    }
+  }, [currentMode]);
 
   useEffect(() => {
     // REMOVED: Password reset token detection moved to ProtectedRoute.jsx
