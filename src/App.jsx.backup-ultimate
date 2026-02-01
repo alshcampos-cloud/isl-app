@@ -6848,6 +6848,7 @@ onClick={async () => {
               user={currentUser}
               supabase={supabase}
               userTier={userTier}
+              usageStats={usageStatsData}
               onUpgrade={() => {
                 setShowUsageDashboard(false);
                 setShowPricingPage(true);

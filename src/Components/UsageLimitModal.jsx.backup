@@ -5,23 +5,14 @@ import React, { useState, useEffect } from 'react';
 import { X, TrendingUp, Crown, AlertCircle } from 'lucide-react';
 import { getUsageStats, TIER_LIMITS } from '../utils/creditSystem';
 
-const UsageLimitModal = ({ user, supabase, userTier, onUpgrade, onClose, usageStats: propUsageStats }) => {
+const UsageLimitModal = ({ user, supabase, userTier, onUpgrade, onClose }) => {
   const [loading, setLoading] = useState(true);
   const [usageData, setUsageData] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // COMPREHENSIVE FIX: If usageStats provided as prop, use it directly (synchronous)
-    // This prevents async loading that breaks after tab switch
-    if (propUsageStats) {
-      setUsageData(propUsageStats);
-      setLoading(false);
-      return;
-    }
-    
-    // Otherwise load async (for backwards compatibility)
     loadUsageData();
-  }, [user, userTier, propUsageStats]);
+  }, [user, userTier]);
 
   const loadUsageData = async () => {
     if (!user || !supabase) {

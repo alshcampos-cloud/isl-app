@@ -15,41 +15,57 @@ export default function FirstTimeConsent({ user, onAccepted }) {
       return;
     }
 
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .select('accepted_terms')
-      .eq('user_id', user.id)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('accepted_terms')
+        .eq('user_id', user.id)
+        .maybeSingle(); // Use maybeSingle() instead of single() to handle missing rows gracefully
 
-    if (error || !data) {
-      console.error('Error checking terms:', error);
+      if (error) {
+        console.error('Error checking terms:', error);
+        setIsChecking(false);
+        return;
+      }
+
+      // If no profile exists yet, or accepted_terms is false/null, show the modal
+      if (!data || !data.accepted_terms) {
+        setShowModal(true);
+      }
+
       setIsChecking(false);
-      return;
+    } catch (err) {
+      console.error('FirstTimeConsent error:', err);
+      setIsChecking(false);
     }
-
-    if (!data.accepted_terms) {
-      setShowModal(true);
-    }
-    
-    setIsChecking(false);
   };
 
   const handleAccept = async () => {
-    const { error } = await supabase
-      .from('user_profiles')
-      .update({
-        accepted_terms: true,
-        accepted_terms_at: new Date().toISOString()
-      })
-      .eq('user_id', user.id);
+    try {
+      // Use upsert to create profile if it doesn't exist, or update if it does
+      const { error } = await supabase
+        .from('user_profiles')
+        .upsert({
+          user_id: user.id,
+          accepted_terms: true,
+          accepted_terms_at: new Date().toISOString(),
+          tier: 'free' // Default tier for new users
+        }, {
+          onConflict: 'user_id'
+        });
 
-    if (error) {
+      if (error) {
+        console.error('Error saving acceptance:', error);
+        alert('Error saving acceptance. Please try again.');
+        return;
+      }
+
+      setShowModal(false);
+      if (onAccepted) onAccepted();
+    } catch (err) {
+      console.error('FirstTimeConsent handleAccept error:', err);
       alert('Error saving acceptance. Please try again.');
-      return;
     }
-
-    setShowModal(false);
-    if (onAccepted) onAccepted();
   };
 
   const handleReject = async () => {

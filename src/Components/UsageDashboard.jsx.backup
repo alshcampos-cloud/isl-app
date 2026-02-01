@@ -36,9 +36,19 @@ const UltimateCompetitiveDashboard = ({ user, supabase, userTier, onUpgrade }) =
     loadAdvancedStats();
   }, [user]);
 
-  // COMPREHENSIVE FIX: Removed visibility handler that called async loadAdvancedStats()
-  // That was causing "Loading..." spinner to hang after tab switch
-  // Now component only loads once on mount (when user changes)
+  // ✅ FIX: Reload stats when page returns from background (Focus-Loss Cascade Bug)
+  // This fixes: Dashboard stuck showing "Analyzing..." after tab switch
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && user) {
+        console.log('🔄 Dashboard: Reloading stats after page return');
+        loadAdvancedStats();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [user]); // Only depends on user to prevent infinite loops
 
   const loadAdvancedStats = async () => {
     setLoading(true);
