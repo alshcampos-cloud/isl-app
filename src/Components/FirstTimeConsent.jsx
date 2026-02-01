@@ -85,7 +85,24 @@ export default function FirstTimeConsent({ user, onAccepted }) {
 
         <div className="space-y-3 mb-6">
           <p className="text-sm text-gray-600 text-center">
-            For full details, see our Privacy Policy and Terms of Service
+            For full details, see our{' '}
+            <a
+              href="https://interviewanswers.ai/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-700 underline"
+            >
+              Privacy Policy
+            </a>{' '}
+            and{' '}
+            <a
+              href="https://interviewanswers.ai/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-700 underline"
+            >
+              Terms of Service
+            </a>
           </p>
         </div>
 

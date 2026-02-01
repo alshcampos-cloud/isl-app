@@ -12,6 +12,7 @@ function Auth({ onAuthSuccess }) {
   const [error, setError] = useState(null)
 
   const [showPasswordReset, setShowPasswordReset] = useState(false)
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
   const handleAuth = async (e) => {
     e.preventDefault()
     setLoading(true)
@@ -159,9 +160,43 @@ function Auth({ onAuthSuccess }) {
             )}
           </div>
 
+          {isSignUp && (
+            <div className="space-y-3 pt-2">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={agreedToTerms}
+                  onChange={(e) => setAgreedToTerms(e.target.checked)}
+                  className="mt-1 w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                />
+                <span className="text-sm text-gray-600">
+                  I agree to the{' '}
+                  <a
+                    href="https://interviewanswers.ai/terms"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-indigo-600 hover:text-indigo-700 underline"
+                  >
+                    Terms of Service
+                  </a>{' '}
+                  and{' '}
+                  <a
+                    href="https://interviewanswers.ai/privacy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-indigo-600 hover:text-indigo-700 underline"
+                  >
+                    Privacy Policy
+                  </a>
+                  , and confirm I am 13 years or older.
+                </span>
+              </label>
+            </div>
+          )}
+
 <button
             type="submit"
-            disabled={loading}
+            disabled={loading || (isSignUp && !agreedToTerms)}
             className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-3 rounded-lg disabled:opacity-50 transition"
           >
             {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Log In'}
