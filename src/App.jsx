@@ -18,6 +18,7 @@ import TemplateLibrary from './TemplateLibrary';
 import Tutorial from './Components/Tutorial';
 import { DEFAULT_QUESTIONS } from './default_questions';
 import { canUseFeature, incrementUsage, getUsageStats, TIER_LIMITS } from './utils/creditSystem';
+import { fetchWithRetry } from './utils/fetchWithRetry';
 import UsageLimitModal from './Components/UsageLimitModal';
 import PricingPage from './Components/PricingPage';
 import ResetPassword from './Components/ResetPassword';
@@ -2190,21 +2191,35 @@ Respond in this exact JSON format:
         return;
       }
 
-      const { error } = await supabase
+      // BUG 5 FIX: Add 10-second timeout to prevent hanging after tab switch
+      const deletePromise = supabase
         .from('questions')
         .delete()
         .eq('user_id', user.id);
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Delete timed out')), 10000)
+      );
+
+      let error;
+      try {
+        const result = await Promise.race([deletePromise, timeoutPromise]);
+        error = result?.error;
+      } catch (timeoutError) {
+        console.error('Delete timeout:', timeoutError);
+        // Still clear local state - user wanted to delete
+        error = null;
+      }
 
       if (error) throw error;
 
       setQuestions([]);
       setShowDeleteAllConfirm(false);
-      
+
       // Clear the initialization flag so defaults CAN be reloaded if user wants
       localStorage.removeItem(`isl_defaults_initialized_${user.id}`);
-      
+
       console.log('✅ All questions deleted from Supabase');
-      
+
       // Show choice modal: Keep empty or load defaults
       setShowDeleteChoiceModal(true);
     } catch (error) {
@@ -2329,10 +2344,11 @@ Respond in this exact JSON format:
     setFollowUpQuestion(null);
     setExchangeCount(0);
     setPendingMode(null);
-    
-    // Track usage in background (fire and forget, doesn't block)
-    trackUsageInBackground('aiInterviewer', 'AI Interviewer');
-    
+
+    // BUG 7 FIX: Usage now tracked AFTER successful feedback (not at session start)
+    // Prevents charging users for failed API calls or abandoned sessions
+    // See handleAIInterviewerSubmit() for tracking location
+
     // Start interview
     setTimeout(() => { speakText(randomQ.question); }, 500);
   };
@@ -2375,11 +2391,10 @@ const startPracticeMode = async () => {
       setFeedback(null);
     });
     setPendingMode(null);
-    
-    // Track usage in background (fire and forget, doesn't block)
-    // BUG 7 CLARIFICATION: Usage tracked when session BEGINS (not on each answer)
-    // This design allows tracking of abandoned/incomplete sessions for analytics
-    trackUsageInBackground('practiceMode', 'Practice Mode');
+
+    // BUG 7 FIX: Usage now tracked AFTER successful feedback (not at session start)
+    // Prevents charging users for failed API calls or abandoned sessions
+    // See handlePracticeModeSubmit() for tracking location
   };
 
   // Navigation functions for prev/next question
@@ -2440,7 +2455,8 @@ const startPracticeMode = async () => {
     
     return supabase.auth.getSession()
       .then(({ data: { session } }) => {
-        return fetch('https://tzrlpwtkrtvjpdhcaayu.supabase.co/functions/v1/ai-feedback', {
+        // RELIABILITY FIX: Use retry wrapper (3 attempts)
+        return fetchWithRetry('https://tzrlpwtkrtvjpdhcaayu.supabase.co/functions/v1/ai-feedback', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
@@ -2452,7 +2468,7 @@ const startPracticeMode = async () => {
             expectedBullets: currentQuestion.bullets || [],
             mode: 'practice'
           })
-        });
+        }, 3);
       })
       .then(response => {
         return response.json().then(data => ({ response, data }));
@@ -2509,6 +2525,9 @@ const startPracticeMode = async () => {
 
         console.log('🎯 FLUSHSYNC FIX: Feedback committed to DOM, now saving to database in parallel');
 
+        // BUG 7 FIX: Track usage AFTER successful feedback (not at session start)
+        trackUsageInBackground('practiceMode', 'Practice Mode');
+
         // Save to database in parallel (fire-and-forget)
         savePracticeSession(currentQuestion, answer, feedbackJson)
           .then(() => console.log('✅ Database save completed'))
@@ -2544,7 +2563,8 @@ const startPracticeMode = async () => {
     
     return supabase.auth.getSession()
       .then(({ data: { session } }) => {
-        return fetch(
+        // RELIABILITY FIX: Use retry wrapper (3 attempts)
+        return fetchWithRetry(
           'https://tzrlpwtkrtvjpdhcaayu.supabase.co/functions/v1/ai-feedback',
           {
             method: 'POST',
@@ -2561,7 +2581,8 @@ const startPracticeMode = async () => {
               conversationHistory: conversationHistory,
               exchangeCount: exchangeCount
             }),
-          }
+          },
+          3 // maxAttempts
         );
       })
       .then(response => {
@@ -2666,12 +2687,15 @@ const startPracticeMode = async () => {
           });
           
           console.log('🎯 FLUSHSYNC FIX: Feedback committed to DOM, now saving AI interview to database in parallel');
-          
+
+          // BUG 7 FIX: Track usage AFTER successful feedback (not at session start)
+          trackUsageInBackground('aiInterviewer', 'AI Interviewer');
+
           // Save to database in parallel (fire-and-forget)
           savePracticeSession(currentQuestion, conversationSummary, feedbackWithConversation)
             .then(() => console.log('✅ AI interview database save completed'))
             .catch(err => console.error('❌ AI interview database save failed (feedback already showing):', err));
-          
+
           // Return resolved promise immediately
           return Promise.resolve();
         }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { fetchWithRetry } from '../utils/fetchWithRetry';
 
 export default function QuestionAssistant({ onQuestionGenerated, existingQuestions = [] }) {
   const [targetRole, setTargetRole] = useState('');
@@ -54,7 +55,8 @@ export default function QuestionAssistant({ onQuestionGenerated, existingQuestio
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000);
       
-      const response = await fetch(
+      // RELIABILITY FIX: Use retry wrapper (3 attempts)
+      const response = await fetchWithRetry(
         'https://tzrlpwtkrtvjpdhcaayu.supabase.co/functions/v1/generate-question',
         {
           method: 'POST',
@@ -73,8 +75,9 @@ export default function QuestionAssistant({ onQuestionGenerated, existingQuestio
             keepSimple: true,
             maxWords: 20
           }),
-          signal: controller.signal // FIXED: Add abort signal
-        }
+          signal: controller.signal
+        },
+        3 // maxAttempts
       );
 
       clearTimeout(timeoutId); // FIXED: Clear timeout if request completes
