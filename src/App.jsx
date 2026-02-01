@@ -368,17 +368,36 @@ const ISL = () => {
           setSessionReady(false);
         }
       } else {
-        // TAB SWITCH FIX: Refresh Supabase session to prevent stale token errors
+        // TAB SWITCH FIX: Refresh Supabase session with timeout to prevent hanging
         console.log('👁️ App visible - refreshing session to prevent 406 errors');
         try {
-          const { data: { session }, error } = await supabase.auth.refreshSession();
+          // Use timeout to prevent hanging - if refresh takes too long, just continue
+          const refreshPromise = supabase.auth.refreshSession();
+          const timeoutPromise = new Promise((resolve) =>
+            setTimeout(() => resolve({ data: { session: null }, error: { message: 'Refresh timeout' } }), 3000)
+          );
+
+          const { data: { session }, error } = await Promise.race([refreshPromise, timeoutPromise]);
           if (error) {
-            console.warn('⚠️ Session refresh failed:', error.message);
+            console.warn('⚠️ Session refresh issue:', error.message);
+            // If refresh failed, try getSession as fallback
+            const { data: { session: fallbackSession } } = await supabase.auth.getSession();
+            if (fallbackSession) {
+              console.log('✅ Fallback session check passed');
+            }
           } else if (session) {
             console.log('✅ Session refreshed successfully');
           }
         } catch (err) {
           console.warn('⚠️ Error refreshing session:', err);
+        }
+
+        // MICROPHONE FIX: If user was in a mic-using mode, show them how to restart
+        const micModes = ['prompter', 'ai-interviewer', 'practice'];
+        if (micModes.includes(currentModeRef.current) && !interviewSessionActiveRef.current) {
+          console.log('🎤 User returned to mic mode - session ended, can restart manually');
+          // Don't auto-restart (could be annoying) but ensure state is clean
+          setSessionReady(false);
         }
       }
       // TAB SWITCH FIX: Removed setCurrentView that was breaking buttons
@@ -881,46 +900,59 @@ loadPracticeHistory();
     if (!isSuccess || !sessionId || !currentUser) return;
 
     console.log('💳 Stripe checkout success detected, polling for tier update...');
+    console.log('📋 Session ID:', sessionId, 'User ID:', currentUser.id);
 
     let pollCount = 0;
-    const maxPolls = 10; // Poll for up to 10 seconds
+    const maxPolls = 30; // Poll for up to 30 seconds (webhook can be slow)
+    let alreadyHandled = false;
 
     const pollForTierUpdate = async () => {
+      if (alreadyHandled) return true;
       pollCount++;
       console.log(`🔄 Polling for tier update (${pollCount}/${maxPolls})...`);
 
-      const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('tier, subscription_status')
-        .eq('user_id', currentUser.id)
-        .single();
+      try {
+        // Force fresh data - bypass any caching
+        const { data: profile, error } = await supabase
+          .from('user_profiles')
+          .select('tier, subscription_status, stripe_customer_id')
+          .eq('user_id', currentUser.id)
+          .single();
 
-      if (profile?.tier === 'pro') {
-        console.log('🎉 Pro tier confirmed!');
-        setUserTier('pro');
-        const stats = await getUsageStats(supabase, currentUser.id, 'pro');
-        setUsageStatsData({ ...stats, tier: 'pro' });
+        console.log('📊 Profile data:', profile, 'Error:', error);
 
-        // Clean up URL parameters
-        window.history.replaceState({}, document.title, window.location.pathname);
+        if (profile?.tier === 'pro' || profile?.subscription_status === 'active') {
+          console.log('🎉 Pro tier confirmed!');
+          alreadyHandled = true;
+          setUserTier('pro');
+          const stats = await getUsageStats(supabase, currentUser.id, 'pro');
+          setUsageStatsData({ ...stats, tier: 'pro' });
 
-        // Show success message
-        alert('🎉 Welcome to Pro! Your subscription is now active.');
-        return true;
-      }
+          // Clean up URL parameters
+          window.history.replaceState({}, document.title, window.location.pathname);
 
-      if (pollCount >= maxPolls) {
-        console.log('⚠️ Tier update timeout - webhook may be delayed. Refreshing...');
-        // Clean up URL and tell user to refresh
-        window.history.replaceState({}, document.title, window.location.pathname);
-        alert('Payment successful! Your Pro features may take a moment to activate. Please refresh the page if you don\'t see Pro status.');
-        return true;
+          // Show success message
+          alert('🎉 Welcome to Pro! Your subscription is now active.');
+          return true;
+        }
+
+        if (pollCount >= maxPolls) {
+          console.log('⚠️ Tier update timeout - webhook may be delayed');
+          alreadyHandled = true;
+          // Clean up URL and tell user to refresh
+          window.history.replaceState({}, document.title, window.location.pathname);
+          alert('Payment received! Your Pro features should activate within a few minutes. If not, please refresh the page or contact support.');
+          return true;
+        }
+      } catch (err) {
+        console.error('Polling error:', err);
       }
 
       return false;
     };
 
-    // Start polling
+    // Start polling immediately, then every second
+    pollForTierUpdate();
     const pollInterval = setInterval(async () => {
       const done = await pollForTierUpdate();
       if (done) {
@@ -929,7 +961,10 @@ loadPracticeHistory();
     }, 1000);
 
     // Cleanup
-    return () => clearInterval(pollInterval);
+    return () => {
+      alreadyHandled = true;
+      clearInterval(pollInterval);
+    };
   }, [currentUser]);
 
   // NEW USER SETUP - Initialize default questions for first-time users
