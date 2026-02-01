@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Lightbulb, X, MessageCircle, Sparkles, Save, Crown, RefreshCw, HelpCircle, Zap, AlertTriangle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
-const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onClose, userTier, existingNarrative, existingBullets }) => {
+const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onClose, userTier, existingNarrative, existingBullets, onUsageTracked }) => {
   // Check if there's an existing answer
   const hasExistingAnswer = existingNarrative && existingNarrative.trim().length > 0;
   
@@ -238,7 +238,13 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
       
       setGeneratedAnswer(synthesizedAnswer);
       setStage('complete');
-      
+
+      // Track usage NOW that AI has delivered feedback successfully
+      if (onUsageTracked) {
+        console.log('📊 Tracking Answer Assistant usage (AI delivered feedback)');
+        onUsageTracked();
+      }
+
       // Auto-generate bullets from the synthesized answer
       await generateBullets(synthesizedAnswer);
     } catch (error) {

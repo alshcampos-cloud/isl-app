@@ -51,17 +51,23 @@ const UltimateCompetitiveDashboard = ({ user, supabase, userTier, onUpgrade }) =
       // BUG 6 FIX: Query usage_tracking table (same table creditSystem uses)
       // This ensures displayed usage matches actual tracking
       const currentPeriod = new Date().toISOString().slice(0, 7); // YYYY-MM
-      
-      const { data: usageData } = await supabase
+
+      // FIX: Use maybeSingle() to handle case where no row exists yet
+      const { data: usageData, error: usageError } = await supabase
         .from('usage_tracking')
         .select('*')
         .eq('user_id', user.id)
         .eq('period', currentPeriod)
-        .single();
+        .maybeSingle();
 
-      // Extract usage from correct columns
+      if (usageError) {
+        console.warn('Usage tracking query error:', usageError);
+      }
+
+      // Extract usage from correct columns (defaults to 0 if no data)
       const aiCoachUsed = usageData?.answer_assistant || 0;
       const livePrompterUsed = usageData?.live_prompter_questions || 0;
+      console.log('📊 Usage Dashboard loaded:', { aiCoachUsed, livePrompterUsed, usageData });
 
       // Get all practice history for advanced metrics
       const { data: allSessions, count: totalCount } = await supabase

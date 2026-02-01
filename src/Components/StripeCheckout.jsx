@@ -91,7 +91,42 @@ export default function StripeCheckout({
 
       if (fnError) {
         console.error('❌ Edge Function error:', fnError);
-        throw new Error(fnError.message || 'Failed to create checkout session');
+        console.error('❌ Edge Function error context:', fnError.context);
+        console.error('❌ Edge Function data:', data);
+
+        // Try to get the actual error message from the response
+        let errorDetail = 'Failed to create checkout session';
+
+        // The context is a Response object - try to read its body
+        if (fnError.context && typeof fnError.context.json === 'function') {
+          try {
+            const errorBody = await fnError.context.json();
+            errorDetail = errorBody.error || errorDetail;
+            console.error('❌ Parsed error from response:', errorBody);
+          } catch (e) {
+            console.error('❌ Could not parse error response:', e);
+            // Try text() as fallback
+            try {
+              const textBody = await fnError.context.text();
+              console.error('❌ Raw error text:', textBody);
+              const parsed = JSON.parse(textBody);
+              errorDetail = parsed.error || errorDetail;
+            } catch (e2) {
+              console.error('❌ Could not parse as text either:', e2);
+            }
+          }
+        }
+
+        // Fallback to data or message
+        errorDetail = data?.error || errorDetail || fnError.message;
+        console.error('❌ Final error detail:', errorDetail);
+        throw new Error(errorDetail);
+      }
+
+      // Check if data contains an error (Edge Function returned error in body)
+      if (data?.error) {
+        console.error('❌ Edge Function returned error:', data.error);
+        throw new Error(data.error);
       }
 
       if (!data?.url) {

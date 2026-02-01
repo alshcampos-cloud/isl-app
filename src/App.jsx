@@ -339,17 +339,28 @@ const ISL = () => {
   }, [currentMode]);
 
   // CLEANUP 3: Stop mic when app goes to background (Safari tab switch, app switch)
+  // ALSO: Refresh session token when returning to prevent 406 errors
   useEffect(() => {
-    const handleVisibilityChange = () => {
+    const handleVisibilityChange = async () => {
       if (document.hidden) {
-        console.log('🧹 App backgrounded - stopping mic');
+        console.log('🧹 App backgrounded - fully cleaning up mic session');
         if (recognitionRef.current && interviewSessionActiveRef.current) {
           try {
+            // FULL CLEANUP: Stop, abort, and null out recognition
             recognitionRef.current.stop();
+            try { recognitionRef.current.abort(); } catch (e) {}
+            // Remove all event listeners
+            recognitionRef.current.onresult = null;
+            recognitionRef.current.onerror = null;
+            recognitionRef.current.onend = null;
+            recognitionRef.current.onstart = null;
+            // Null the reference so startInterviewSession creates a fresh one
+            recognitionRef.current = null;
+            console.log('✅ Recognition fully cleaned up on background');
           } catch (err) {
-            // Ignore
+            console.log('Cleanup error (ignored):', err);
           }
-          // Mark session as ended so it doesn't auto-restart
+          // Mark session as ended
           setInterviewSessionActive(false);
           interviewSessionActiveRef.current = false;
           setIsListening(false);
@@ -357,10 +368,18 @@ const ISL = () => {
           setSessionReady(false);
         }
       } else {
-        // NO INTERFERENCE: Let flushSync handle state updates naturally
-        // Theory: flushSync commits immediately, so no forced updates needed
-        // Normal websites don't interfere with async state updates on tab return
-        console.log('👁️ App visible - letting async operations complete naturally');
+        // TAB SWITCH FIX: Refresh Supabase session to prevent stale token errors
+        console.log('👁️ App visible - refreshing session to prevent 406 errors');
+        try {
+          const { data: { session }, error } = await supabase.auth.refreshSession();
+          if (error) {
+            console.warn('⚠️ Session refresh failed:', error.message);
+          } else if (session) {
+            console.log('✅ Session refreshed successfully');
+          }
+        } catch (err) {
+          console.warn('⚠️ Error refreshing session:', err);
+        }
       }
       // TAB SWITCH FIX: Removed setCurrentView that was breaking buttons
       // UsageDashboard has its own visibility listener (independent)
@@ -685,16 +704,14 @@ Consider upgrading to Pro for more sessions!`);
     
     // Reload from database to ensure sync
     loadQuestions();
-    
-    // BUG 5 FIX: Track usage AFTER AI successfully delivers feedback (not when opening modal)
-    return trackUsageAfterSuccess('answerAssistant', 'Answer Assistant')
-      .then(() => {
-        console.log('✅ Answer saved with all fields:', { 
-          narrative: !!answer.narrative, 
-          bullets: answer.bullets?.length, 
-          keywords: answer.keywords?.length 
-        });
-      });
+
+    // NOTE: Usage is tracked via onUsageTracked callback in AnswerAssistant
+    // when AI delivers feedback - NOT here on save (to prevent double counting)
+    console.log('✅ Answer saved with all fields:', {
+      narrative: !!answer.narrative,
+      bullets: answer.bullets?.length,
+      keywords: answer.keywords?.length
+    });
   };
 
   // Load usage on mount
@@ -797,6 +814,35 @@ loadPracticeHistory();
     }
   }, [currentMode]);
 
+  // Helper function to load user tier and stats
+  const loadUserTierAndStats = async (user, forceRefresh = false) => {
+    if (!user) return;
+
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('tier, subscription_status')
+      .eq('user_id', user.id)
+      .single();
+
+    const tier = profile?.tier || 'free';
+    setUserTier(tier);
+
+    if (!profile) {
+      // Create profile if doesn't exist
+      await supabase
+        .from('user_profiles')
+        .insert([{ user_id: user.id, tier: 'free' }]);
+    }
+
+    // Load usage stats with the tier included
+    const stats = await getUsageStats(supabase, user.id, tier);
+    // CRITICAL: Include tier in stats object so it stays in sync
+    setUsageStatsData({ ...stats, tier });
+
+    console.log(`✅ Loaded user tier: ${tier}`);
+    return tier;
+  };
+
   useEffect(() => {
     // REMOVED: Password reset token detection moved to ProtectedRoute.jsx
     // (needs to run BEFORE auth check, not after)
@@ -804,50 +850,20 @@ loadPracticeHistory();
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       const user = session?.user ?? null;
       setCurrentUser(user);
-      
+
       // Load user tier from user_profiles
       if (user) {
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('tier, subscription_status')
-          .eq('user_id', user.id)
-          .single();
-        
-        if (profile) {
-          setUserTier(profile.tier || 'free');
-        } else {
-          // Create profile if doesn't exist
-          await supabase
-            .from('user_profiles')
-            .insert([{ user_id: user.id, tier: 'free' }]);
-          setUserTier('free');
-        }
-        
-        // Load usage stats
-        const stats = await getUsageStats(supabase, user.id, profile?.tier || 'free');
-        setUsageStatsData(stats);
+        await loadUserTierAndStats(user);
       }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       const user = session?.user ?? null;
       setCurrentUser(user);
-      
+
       // Load user tier on auth change
       if (user) {
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('tier, subscription_status')
-          .eq('user_id', user.id)
-          .single();
-        
-        if (profile) {
-          setUserTier(profile.tier || 'free');
-        }
-        
-        // Load usage stats
-        const stats = await getUsageStats(supabase, user.id, profile?.tier || 'free');
-        setUsageStatsData(stats);
+        await loadUserTierAndStats(user);
       }
     });
 
@@ -855,6 +871,66 @@ loadPracticeHistory();
       subscription.unsubscribe();
     };
   }, []);
+
+  // STRIPE SUCCESS HANDLER: Poll for tier update after returning from checkout
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const isSuccess = urlParams.get('success') === 'true';
+    const sessionId = urlParams.get('session_id');
+
+    if (!isSuccess || !sessionId || !currentUser) return;
+
+    console.log('💳 Stripe checkout success detected, polling for tier update...');
+
+    let pollCount = 0;
+    const maxPolls = 10; // Poll for up to 10 seconds
+
+    const pollForTierUpdate = async () => {
+      pollCount++;
+      console.log(`🔄 Polling for tier update (${pollCount}/${maxPolls})...`);
+
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('tier, subscription_status')
+        .eq('user_id', currentUser.id)
+        .single();
+
+      if (profile?.tier === 'pro') {
+        console.log('🎉 Pro tier confirmed!');
+        setUserTier('pro');
+        const stats = await getUsageStats(supabase, currentUser.id, 'pro');
+        setUsageStatsData({ ...stats, tier: 'pro' });
+
+        // Clean up URL parameters
+        window.history.replaceState({}, document.title, window.location.pathname);
+
+        // Show success message
+        alert('🎉 Welcome to Pro! Your subscription is now active.');
+        return true;
+      }
+
+      if (pollCount >= maxPolls) {
+        console.log('⚠️ Tier update timeout - webhook may be delayed. Refreshing...');
+        // Clean up URL and tell user to refresh
+        window.history.replaceState({}, document.title, window.location.pathname);
+        alert('Payment successful! Your Pro features may take a moment to activate. Please refresh the page if you don\'t see Pro status.');
+        return true;
+      }
+
+      return false;
+    };
+
+    // Start polling
+    const pollInterval = setInterval(async () => {
+      const done = await pollForTierUpdate();
+      if (done) {
+        clearInterval(pollInterval);
+      }
+    }, 1000);
+
+    // Cleanup
+    return () => clearInterval(pollInterval);
+  }, [currentUser]);
 
   // NEW USER SETUP - Initialize default questions for first-time users
   useEffect(() => {
@@ -1768,6 +1844,10 @@ const startListening = () => {
       // Auto-scroll to top when new question detected
       window.scrollTo({ top: 0, behavior: 'smooth' });
       console.log('✅ Perfect match used!');
+      // LIVE PROMPTER USAGE: Track when question is matched/displayed
+      if (currentModeRef.current === 'prompter') {
+        trackUsageInBackground('livePrompterQuestions', 'Live Prompter');
+      }
       return;
     }
     
@@ -1909,16 +1989,20 @@ const startListening = () => {
       threshold = 5; // Long input should have multiple matches
     }
     
-    if (bestMatch && highestScore >= threshold) { 
-      setMatchedQuestion(bestMatch); 
-      setShowNarrative(false); 
+    if (bestMatch && highestScore >= threshold) {
+      setMatchedQuestion(bestMatch);
+      setShowNarrative(false);
       setQuestionHistory(prev => {
         const newHistory = [bestMatch, ...prev.filter(q => q.id !== bestMatch.id)];
         return newHistory.slice(0, 3);
       });
       // Auto-scroll to top when new question detected
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      console.log(`✅ Matched! (threshold: ${threshold})`); 
+      console.log(`✅ Matched! (threshold: ${threshold})`);
+      // LIVE PROMPTER USAGE: Track when question is matched/displayed
+      if (currentModeRef.current === 'prompter') {
+        trackUsageInBackground('livePrompterQuestions', 'Live Prompter');
+      }
     } else { 
       console.log(`❌ No match - score ${highestScore} below threshold ${threshold}`); 
       const mode = currentModeRef.current;
@@ -3284,47 +3368,36 @@ const startPracticeMode = async () => {
                       e.stopPropagation();
                       if (confirm('Are you sure you want to sign out?')) {
                         setShowProfileDropdown(false);
-                        try {
-                          console.log('Starting sign out...');
-                          
-                          // ✅ FIX: Add 10-second timeout to prevent hanging after tab switch (Focus-Loss Cascade Bug)
-                          const signOutPromise = supabase.auth.signOut({ scope: 'global' });
-                          const timeoutPromise = new Promise((_, reject) => 
-                            setTimeout(() => reject(new Error('Sign out timed out')), 10000)
-                          );
+                        console.log('🚪 Starting sign out...');
 
-                          let error;
-                          try {
-                            const result = await Promise.race([signOutPromise, timeoutPromise]);
-                            error = result?.error;
-                          } catch (timeoutError) {
-                            console.error('Sign out timeout:', timeoutError);
-                            // Force sign out even if request failed - local cleanup is priority
-                            error = null;
-                          }
-
-                          if (error) {
-                            console.error('Sign out error:', error);
-                            alert('Failed to sign out: ' + error.message);
-                          } else {
-                            console.log('✅ Signed out successfully');
-                            
-                            // Clear only auth-related items, keep API key
-                            const keysToRemove = [];
-                            for (let i = 0; i < localStorage.length; i++) {
-                              const key = localStorage.key(i);
-                              if (key !== 'isl_api_key') {
-                                keysToRemove.push(key);
-                              }
+                        // Helper function to do local cleanup and redirect
+                        const forceLocalSignOut = () => {
+                          console.log('🧹 Forcing local sign out cleanup...');
+                          // Clear all localStorage except API key
+                          const keysToRemove = [];
+                          for (let i = 0; i < localStorage.length; i++) {
+                            const key = localStorage.key(i);
+                            if (key !== 'isl_api_key') {
+                              keysToRemove.push(key);
                             }
-                            keysToRemove.forEach(key => localStorage.removeItem(key));
-                            sessionStorage.clear();
-                            window.location.href = '/';
                           }
-                        } catch (err) {
-                          console.error('Sign out exception:', err);
-                          alert('Error signing out');
+                          keysToRemove.forEach(key => localStorage.removeItem(key));
+                          sessionStorage.clear();
+                          window.location.href = '/';
+                        };
+
+                        // SIGN OUT FIX: Don't await anything that might hang
+                        // Just do local cleanup FIRST, then fire-and-forget server signout
+                        try {
+                          // Fire and forget - don't await server-side signout
+                          supabase.auth.signOut({ scope: 'global' }).catch(() => {});
+                          console.log('🚀 Server sign out triggered (fire and forget)');
+                        } catch (e) {
+                          // Ignore any errors
                         }
+
+                        // Always do local cleanup immediately
+                        forceLocalSignOut();
                       }
                     }}
                     className="w-full px-4 py-3 text-left hover:bg-gray-50 transition flex items-center gap-3 text-gray-700"
@@ -3338,75 +3411,75 @@ const startPracticeMode = async () => {
           </div>
 
           {/* Clean Centered Title */}
-          <div className="text-center mb-8">
-            <h1 className="text-4xl md:text-6xl font-bold text-white mb-3">InterviewAnswers.ai</h1>
-            <p className="text-xl md:text-3xl text-indigo-200 mb-2">Master Your Interview Answers with AI</p>
+          <div className="text-center mb-6 sm:mb-8">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-2 sm:mb-3 tracking-tight">InterviewAnswers.ai</h1>
+            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-indigo-200/90 font-medium">Master Your Interview Answers with AI</p>
           </div>
 
           {/* Compact Stats Row - Enhanced with Gradients */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-            <div className="bg-gradient-to-br from-indigo-500/20 to-blue-500/20 backdrop-blur-lg rounded-xl p-4 text-white hover:scale-105 transition-transform duration-200 border border-white/20 cursor-pointer" onClick={() => {
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 mb-6 sm:mb-8">
+            <div className="bg-white/10 backdrop-blur-lg rounded-xl sm:rounded-2xl p-3 sm:p-4 text-white hover:bg-white/15 hover:scale-[1.02] transition-all duration-200 border border-white/20 cursor-pointer" onClick={() => {
               setCurrentView('command-center');
               setCommandCenterTab('bank');
             }}>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-indigo-400 to-blue-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <Database className="w-6 h-6 text-white" />
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-indigo-400 to-blue-500 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+                  <Database className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-2xl font-black leading-tight">{questions.length}</p>
-                  <p className="text-xs text-white/90 leading-tight font-bold">Questions</p>
+                  <p className="text-xl sm:text-2xl font-black leading-tight">{questions.length}</p>
+                  <p className="text-[10px] sm:text-xs text-white/80 leading-tight font-semibold">Questions</p>
                 </div>
               </div>
             </div>
-            <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 backdrop-blur-lg rounded-xl p-4 text-white hover:scale-105 transition-transform duration-200 border border-white/20 cursor-pointer" onClick={() => {
+            <div className="bg-white/10 backdrop-blur-lg rounded-xl sm:rounded-2xl p-3 sm:p-4 text-white hover:bg-white/15 hover:scale-[1.02] transition-all duration-200 border border-white/20 cursor-pointer" onClick={() => {
               setCurrentView('command-center');
               setCommandCenterTab('progress');
             }}>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <TrendingUp className="w-6 h-6 text-white" />
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+                  <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-2xl font-black leading-tight">{practiceHistory.length}</p>
-                  <p className="text-xs text-white/90 leading-tight font-bold">Sessions</p>
+                  <p className="text-xl sm:text-2xl font-black leading-tight">{practiceHistory.length}</p>
+                  <p className="text-[10px] sm:text-xs text-white/80 leading-tight font-semibold">Sessions</p>
                 </div>
               </div>
             </div>
             {/* Usage Dashboard Link Card - Clickable */}
-            <div 
-              className="bg-gradient-to-br from-yellow-500/20 to-orange-500/20 backdrop-blur-lg rounded-xl p-4 text-white hover:scale-105 transition-transform duration-200 cursor-pointer border border-white/20"
+            <div
+              className="bg-white/10 backdrop-blur-lg rounded-xl sm:rounded-2xl p-3 sm:p-4 text-white hover:bg-white/15 hover:scale-[1.02] transition-all duration-200 cursor-pointer border border-white/20"
               onClick={() => setShowUsageDashboard(true)}
             >
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <Zap className="w-6 h-6 text-white" />
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+                  <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xl font-black leading-tight">
+                  <p className="text-lg sm:text-xl font-black leading-tight">
                     {userTier === 'pro' ? '∞' : 'View'}
                   </p>
-                  <p className="text-xs text-white/90 leading-tight font-bold whitespace-nowrap">
+                  <p className="text-[10px] sm:text-xs text-white/80 leading-tight font-semibold whitespace-nowrap">
                     {userTier === 'pro' ? 'Unlimited' : 'Usage'}
                   </p>
                 </div>
               </div>
             </div>
             {/* Days Until Interview Card */}
-            <div 
-              className="bg-gradient-to-br from-pink-500/20 to-red-500/20 backdrop-blur-lg rounded-xl p-4 text-white hover:scale-105 transition-transform duration-200 cursor-pointer border border-white/20"
+            <div
+              className="bg-white/10 backdrop-blur-lg rounded-xl sm:rounded-2xl p-3 sm:p-4 text-white hover:bg-white/15 hover:scale-[1.02] transition-all duration-200 cursor-pointer border border-white/20"
               onClick={() => {
                 setCurrentView('command-center');
                 setCommandCenterTab('prep');
               }}
             >
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-pink-400 to-red-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <Calendar className="w-6 h-6 text-white" />
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-pink-400 to-rose-500 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+                  <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-2xl font-black leading-tight">
-                    {interviewDate 
+                  <p className="text-xl sm:text-2xl font-black leading-tight">
+                    {interviewDate
                       ? (() => {
                           const today = new Date();
                           today.setHours(0, 0, 0, 0);
@@ -3419,7 +3492,7 @@ const startPracticeMode = async () => {
                       : '—'
                     }
                   </p>
-                  <p className="text-xs text-white/90 leading-tight font-bold whitespace-nowrap">
+                  <p className="text-[10px] sm:text-xs text-white/80 leading-tight font-semibold whitespace-nowrap">
                     {interviewDate ? 'Days' : 'Set Date'}
                   </p>
                 </div>
@@ -3447,65 +3520,65 @@ const startPracticeMode = async () => {
           )}
 
           {/* Practice Modes - Enhanced with Psychology */}
-          <div className="mb-6">
-            <h2 className="text-2xl md:text-3xl font-black text-white mb-2">🎯 Practice Modes</h2>
-            <p className="text-white/80 text-sm md:text-base mb-4 font-medium">Choose your training method and level up your skills</p>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="mb-8">
+            <h2 className="text-2xl sm:text-3xl font-black text-white mb-2">🎯 Practice Modes</h2>
+            <p className="text-white/80 text-sm sm:text-base mb-5 font-medium">Choose your training method and level up your skills</p>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
               {/* Live Prompter - Enhanced */}
-              <div className="bg-white rounded-2xl shadow-2xl p-6 transition-all duration-300 hover:shadow-green-500/50 hover:-translate-y-2 cursor-pointer group relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-green-400/0 to-emerald-500/0 group-hover:from-green-400/10 group-hover:to-emerald-500/10 transition-all duration-300"></div>
+              <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:shadow-xl hover:shadow-pink-500/30 hover:-translate-y-1 cursor-pointer group relative overflow-hidden border border-slate-100">
+                <div className="absolute inset-0 bg-gradient-to-br from-pink-400/0 to-rose-500/0 group-hover:from-pink-400/10 group-hover:to-rose-500/10 transition-all duration-300"></div>
                 <div className="text-center flex flex-col h-full relative z-10">
-                  <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                    <Mic className="w-8 h-8 text-white" />
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-pink-500 to-rose-500 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300 shadow-md">
+                    <Mic className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-white" />
                   </div>
-                  <h3 className="text-xl font-black mb-2 text-gray-900">Live Prompter</h3>
-                  <p className="text-gray-600 text-sm mb-4 flex-1 font-semibold">Real-time bullet prompts</p>
-                  <button onClick={(e) => { e.stopPropagation(); startPrompterMode(); }} className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl">
+                  <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-1 sm:mb-2 text-slate-800">Live Prompter</h3>
+                  <p className="text-slate-500 text-xs sm:text-sm mb-3 sm:mb-4 flex-1 font-medium">Real-time bullet prompts</p>
+                  <button onClick={(e) => { e.stopPropagation(); startPrompterMode(); }} className="w-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg hover:brightness-110 active:scale-[0.98] text-sm sm:text-base">
                     Start Practice
                   </button>
                 </div>
               </div>
 
               {/* AI Interviewer - Enhanced */}
-              <div className="bg-white rounded-2xl shadow-2xl p-6 transition-all duration-300 hover:shadow-purple-500/50 hover:-translate-y-2 cursor-pointer group relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-400/0 to-pink-500/0 group-hover:from-purple-400/10 group-hover:to-pink-500/10 transition-all duration-300"></div>
+              <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/30 hover:-translate-y-1 cursor-pointer group relative overflow-hidden border border-slate-100">
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-400/0 to-indigo-500/0 group-hover:from-purple-400/10 group-hover:to-indigo-500/10 transition-all duration-300"></div>
                 <div className="text-center flex flex-col h-full relative z-10">
-                  <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                    <Bot className="w-8 h-8 text-white" />
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300 shadow-md">
+                    <Bot className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-white" />
                   </div>
-                  <h3 className="text-xl font-black mb-2 text-gray-900">AI Interviewer</h3>
-                  <p className="text-gray-600 text-sm mb-4 flex-1 font-semibold">Realistic interview practice</p>
-                  <button onClick={(e) => { e.stopPropagation(); startAIInterviewer(); }} className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold py-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl">
+                  <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-1 sm:mb-2 text-slate-800">AI Interviewer</h3>
+                  <p className="text-slate-500 text-xs sm:text-sm mb-3 sm:mb-4 flex-1 font-medium">Realistic interview practice</p>
+                  <button onClick={(e) => { e.stopPropagation(); startAIInterviewer(); }} className="w-full bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg hover:brightness-110 active:scale-[0.98] text-sm sm:text-base">
                     Start Interview
                   </button>
                 </div>
               </div>
 
               {/* Practice Mode - Enhanced */}
-              <div className="bg-white rounded-2xl shadow-2xl p-6 transition-all duration-300 hover:shadow-blue-500/50 hover:-translate-y-2 cursor-pointer group relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-400/0 to-indigo-500/0 group-hover:from-blue-400/10 group-hover:to-indigo-500/10 transition-all duration-300"></div>
+              <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/30 hover:-translate-y-1 cursor-pointer group relative overflow-hidden border border-slate-100">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-400/0 to-cyan-500/0 group-hover:from-blue-400/10 group-hover:to-cyan-500/10 transition-all duration-300"></div>
                 <div className="text-center flex flex-col h-full relative z-10">
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                    <Target className="w-8 h-8 text-white" />
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300 shadow-md">
+                    <Target className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-white" />
                   </div>
-                  <h3 className="text-xl font-black mb-2 text-gray-900">Practice</h3>
-                  <p className="text-gray-600 text-sm mb-4 flex-1 font-semibold">AI-powered feedback</p>
-                  <button onClick={(e) => { e.stopPropagation(); startPracticeMode(); }} className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl">
+                  <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-1 sm:mb-2 text-slate-800">Practice</h3>
+                  <p className="text-slate-500 text-xs sm:text-sm mb-3 sm:mb-4 flex-1 font-medium">AI-powered feedback</p>
+                  <button onClick={(e) => { e.stopPropagation(); startPracticeMode(); }} className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg hover:brightness-110 active:scale-[0.98] text-sm sm:text-base">
                     Start Session
                   </button>
                 </div>
               </div>
 
               {/* Flashcard - Enhanced */}
-              <div className="bg-white rounded-2xl shadow-2xl p-6 transition-all duration-300 hover:shadow-orange-500/50 hover:-translate-y-2 cursor-pointer group relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-orange-400/0 to-red-500/0 group-hover:from-orange-400/10 group-hover:to-red-500/10 transition-all duration-300"></div>
+              <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:shadow-xl hover:shadow-orange-500/30 hover:-translate-y-1 cursor-pointer group relative overflow-hidden border border-slate-100">
+                <div className="absolute inset-0 bg-gradient-to-br from-orange-400/0 to-amber-500/0 group-hover:from-orange-400/10 group-hover:to-amber-500/10 transition-all duration-300"></div>
                 <div className="text-center flex flex-col h-full relative z-10">
-                  <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                    <BookOpen className="w-8 h-8 text-white" />
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300 shadow-md">
+                    <BookOpen className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-white" />
                   </div>
-                  <h3 className="text-xl font-black mb-2 text-gray-900">Flashcard</h3>
-                  <p className="text-gray-600 text-sm mb-4 flex-1 font-semibold">Quick memory drill</p>
-                  <button onClick={(e) => { e.stopPropagation(); startFlashcardMode(); }} className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-bold py-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl">
+                  <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-1 sm:mb-2 text-slate-800">Flashcard</h3>
+                  <p className="text-slate-500 text-xs sm:text-sm mb-3 sm:mb-4 flex-1 font-medium">Quick memory drill</p>
+                  <button onClick={(e) => { e.stopPropagation(); startFlashcardMode(); }} className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg hover:brightness-110 active:scale-[0.98] text-sm sm:text-base">
                     Start Review
                   </button>
                 </div>
@@ -3514,19 +3587,19 @@ const startPracticeMode = async () => {
           </div>
 
           {/* Command Center - Enhanced */}
-          <div data-tutorial="command-center" className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 rounded-2xl shadow-2xl p-6 hover:shadow-indigo-500/50 transition-all duration-300 hover:-translate-y-1 cursor-pointer border-2 border-white/20 relative overflow-hidden group" onClick={() => setCurrentView('command-center')}>
+          <div data-tutorial="command-center" className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-xl hover:shadow-purple-500/30 p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:-translate-y-0.5 cursor-pointer border border-white/20 relative overflow-hidden group" onClick={() => setCurrentView('command-center')}>
             <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 transform translate-x-full group-hover:translate-x-[-100%] transition-transform duration-1000"></div>
-            <div className="flex items-center justify-between gap-4 relative z-10">
-              <div className="flex items-center gap-4 min-w-0 flex-1">
-                <div className="text-5xl flex-shrink-0 leading-none group-hover:scale-110 transition-transform duration-300">🎯</div>
+            <div className="flex items-center justify-between gap-3 sm:gap-4 relative z-10">
+              <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                <div className="text-3xl sm:text-4xl lg:text-5xl flex-shrink-0 leading-none group-hover:scale-110 transition-transform duration-300">🎯</div>
                 <div className="text-white min-w-0 flex-1">
-                  <h3 className="text-2xl font-black mb-1">Command Center</h3>
-                  <p className="text-base text-white/90 font-semibold">Track progress, manage questions, prep interviews</p>
+                  <h3 className="text-lg sm:text-xl lg:text-2xl font-bold mb-0.5 sm:mb-1">Command Center</h3>
+                  <p className="text-xs sm:text-sm lg:text-base text-white/80 font-medium">Track progress, manage questions, prep interviews</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-white font-black flex-shrink-0 group-hover:translate-x-1 transition-transform duration-300">
-                <span className="hidden md:inline text-lg">Open</span>
-                <span className="text-3xl">→</span>
+              <div className="flex items-center gap-1 sm:gap-2 text-white font-bold flex-shrink-0 group-hover:translate-x-1 transition-transform duration-300">
+                <span className="hidden sm:inline text-sm lg:text-lg">Open</span>
+                <span className="text-xl sm:text-2xl lg:text-3xl">→</span>
               </div>
             </div>
           </div>
@@ -4469,7 +4542,7 @@ const startPracticeMode = async () => {
             question={answerAssistantQuestion.question}
             questionId={answerAssistantQuestion.id}
             userContext={getUserContext()}
-            userTier={usageStats?.tier}
+            userTier={usageStatsData?.tier}
             existingNarrative={answerAssistantQuestion.narrative}
             existingBullets={answerAssistantQuestion.bullets}
             onAnswerSaved={handleAnswerSaved}
@@ -4477,6 +4550,7 @@ const startPracticeMode = async () => {
               setShowAnswerAssistant(false);
               setAnswerAssistantQuestion(null);
             }}
+            onUsageTracked={() => trackUsageInBackground('answerAssistant', 'Answer Assistant')}
           />
         )}
       </div>
@@ -5013,7 +5087,7 @@ const startPracticeMode = async () => {
             question={answerAssistantQuestion.question}
             questionId={answerAssistantQuestion.id}
             userContext={getUserContext()}
-            userTier={usageStats?.tier}
+            userTier={usageStatsData?.tier}
             existingNarrative={answerAssistantQuestion.narrative}
             existingBullets={answerAssistantQuestion.bullets}
             onAnswerSaved={handleAnswerSaved}
@@ -5021,6 +5095,7 @@ const startPracticeMode = async () => {
               setShowAnswerAssistant(false);
               setAnswerAssistantQuestion(null);
             }}
+            onUsageTracked={() => trackUsageInBackground('answerAssistant', 'Answer Assistant')}
           />
         )}
       </div>
@@ -5364,66 +5439,66 @@ const startPracticeMode = async () => {
       <>
       <div className="min-h-screen bg-gray-50">
         {/* Header - Compact */}
-        <div className="bg-white shadow-sm">
-          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <button onClick={() => setCurrentView('home')} className="text-gray-700 hover:text-gray-900 font-medium text-sm">
-              ← Back
+        <div className="bg-white shadow-sm border-b border-slate-100">
+          <div className="container mx-auto px-4 py-3 sm:py-4 flex items-center justify-between">
+            <button onClick={() => setCurrentView('home')} className="text-slate-600 hover:text-slate-900 font-semibold text-sm sm:text-base flex items-center gap-1 hover:gap-2 transition-all">
+              ← <span className="hidden sm:inline">Back</span>
             </button>
-            <h1 className="text-2xl font-bold text-gray-900">🎯 Command Center</h1>
-            <div className="w-16"></div>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-800">🎯 Command Center</h1>
+            <div className="w-12 sm:w-16"></div>
           </div>
         </div>
 
         {/* Swipeable Tabs - Sticky */}
-        <div className="sticky top-0 bg-white border-b shadow-sm z-40">
+        <div className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-slate-200 shadow-sm z-40">
           <div className="overflow-x-auto scrollbar-hide">
-            <div className="flex gap-2 px-4 py-3 min-w-max">
+            <div className="flex gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 sm:py-3 min-w-max">
               <button
                 onClick={() => setCommandCenterTab('analytics')}
-                className={`px-4 py-2.5 rounded-lg font-bold text-sm transition-all whitespace-nowrap ${
+                className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg font-semibold text-xs sm:text-sm transition-all whitespace-nowrap active:scale-[0.98] ${
                   commandCenterTab === 'analytics'
                     ? 'bg-indigo-600 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
                 📊 Analytics
               </button>
               <button
                 onClick={() => setCommandCenterTab('queue')}
-                className={`px-4 py-2.5 rounded-lg font-bold text-sm transition-all whitespace-nowrap ${
+                className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg font-semibold text-xs sm:text-sm transition-all whitespace-nowrap active:scale-[0.98] ${
                   commandCenterTab === 'queue'
                     ? 'bg-indigo-600 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
                 🎯 Queue
               </button>
               <button
                 onClick={() => setCommandCenterTab('prep')}
-                className={`px-4 py-2.5 rounded-lg font-bold text-sm transition-all whitespace-nowrap ${
+                className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg font-semibold text-xs sm:text-sm transition-all whitespace-nowrap active:scale-[0.98] ${
                   commandCenterTab === 'prep'
                     ? 'bg-indigo-600 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
                 🗓️ Prep
               </button>
               <button
                 onClick={() => setCommandCenterTab('bank')}
-                className={`px-4 py-2.5 rounded-lg font-bold text-sm transition-all whitespace-nowrap ${
+                className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg font-semibold text-xs sm:text-sm transition-all whitespace-nowrap active:scale-[0.98] ${
                   commandCenterTab === 'bank'
                     ? 'bg-indigo-600 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
                 📚 Bank
               </button>
               <button
                 onClick={() => setCommandCenterTab('progress')}
-                className={`px-4 py-2.5 rounded-lg font-bold text-sm transition-all whitespace-nowrap ${
+                className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg font-semibold text-xs sm:text-sm transition-all whitespace-nowrap active:scale-[0.98] ${
                   commandCenterTab === 'progress'
                     ? 'bg-indigo-600 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
                 📈 Progress
@@ -5433,48 +5508,48 @@ const startPracticeMode = async () => {
         </div>
 
         {/* Content Area */}
-        <div className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
           {/* ==================== ANALYTICS TAB ==================== */}
           {commandCenterTab === 'analytics' && (
             <div>
               {/* Stats Overview */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl p-5 text-white cursor-pointer hover:scale-105 transition-transform" onClick={() => setCommandCenterTab('progress')}>
-                  <p className="text-sm text-white/90 font-medium mb-1">Total Sessions</p>
-                  <p className="text-4xl font-black">{practiceHistory.length}</p>
-                  <p className="text-xs text-white/75 mt-1">🎯 Keep it up!</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 lg:gap-4 mb-5 sm:mb-6">
+                <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-5 text-white cursor-pointer hover:scale-[1.02] hover:shadow-lg transition-all" onClick={() => setCommandCenterTab('progress')}>
+                  <p className="text-xs sm:text-sm text-white/90 font-medium mb-0.5 sm:mb-1">Total Sessions</p>
+                  <p className="text-2xl sm:text-3xl lg:text-4xl font-black">{practiceHistory.length}</p>
+                  <p className="text-[10px] sm:text-xs text-white/75 mt-0.5 sm:mt-1">🎯 Keep it up!</p>
                 </div>
-                <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-5 text-white cursor-pointer hover:scale-105 transition-transform" onClick={() => setCommandCenterTab('progress')}>
-                  <p className="text-sm text-white/90 font-medium mb-1">Average Score</p>
-                  <p className="text-4xl font-black">
-                    {practiceHistory.length > 0 
+                <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-5 text-white cursor-pointer hover:scale-[1.02] hover:shadow-lg transition-all" onClick={() => setCommandCenterTab('progress')}>
+                  <p className="text-xs sm:text-sm text-white/90 font-medium mb-0.5 sm:mb-1">Average Score</p>
+                  <p className="text-2xl sm:text-3xl lg:text-4xl font-black">
+                    {practiceHistory.length > 0
                       ? (practiceHistory.reduce((sum, s) => sum + (s.feedback?.overall || 0), 0) / practiceHistory.length).toFixed(1)
                       : '0.0'}
                   </p>
-                  <p className="text-xs text-white/75 mt-1">📈 Improving</p>
+                  <p className="text-[10px] sm:text-xs text-white/75 mt-0.5 sm:mt-1">📈 Improving</p>
                 </div>
-                <div className="bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl p-5 text-white cursor-pointer hover:scale-105 transition-transform" onClick={() => setCommandCenterTab('bank')}>
-                  <p className="text-sm text-white/90 font-medium mb-1">Practiced</p>
-                  <p className="text-4xl font-black">{questions.filter(q => q.practiceCount > 0).length}</p>
-                  <p className="text-xs text-white/75 mt-1">of {questions.length} total</p>
+                <div className="bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-5 text-white cursor-pointer hover:scale-[1.02] hover:shadow-lg transition-all" onClick={() => setCommandCenterTab('bank')}>
+                  <p className="text-xs sm:text-sm text-white/90 font-medium mb-0.5 sm:mb-1">Practiced</p>
+                  <p className="text-2xl sm:text-3xl lg:text-4xl font-black">{questions.filter(q => q.practiceCount > 0).length}</p>
+                  <p className="text-[10px] sm:text-xs text-white/75 mt-0.5 sm:mt-1">of {questions.length} total</p>
                 </div>
-                <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-xl p-5 text-white cursor-pointer hover:scale-105 transition-transform" onClick={() => setCommandCenterTab('prep')}>
-                  <p className="text-sm text-white/90 font-medium mb-1">This Month</p>
-                  <p className="text-4xl font-black">
+                <div className="bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-5 text-white cursor-pointer hover:scale-[1.02] hover:shadow-lg transition-all" onClick={() => setCommandCenterTab('prep')}>
+                  <p className="text-xs sm:text-sm text-white/90 font-medium mb-0.5 sm:mb-1">This Month</p>
+                  <p className="text-2xl sm:text-3xl lg:text-4xl font-black">
                     {practiceHistory.filter(s => {
                       const sessionDate = new Date(s.date);
                       const now = new Date();
-                      return sessionDate.getMonth() === now.getMonth() && 
+                      return sessionDate.getMonth() === now.getMonth() &&
                              sessionDate.getFullYear() === now.getFullYear();
                     }).length}
                   </p>
-                  <p className="text-xs text-white/75 mt-1">🔥 On fire!</p>
+                  <p className="text-[10px] sm:text-xs text-white/75 mt-0.5 sm:mt-1">🔥 On fire!</p>
                 </div>
               </div>
 
               {/* Most Practiced Questions */}
-              <div className="bg-white rounded-xl shadow-md p-5 mb-6">
-                <h3 className="text-xl font-bold mb-4 text-gray-900">🔥 Most practiced</h3>
+              <div className="bg-white rounded-xl sm:rounded-2xl shadow-md border border-slate-100 p-4 sm:p-5 mb-5 sm:mb-6">
+                <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-slate-800">🔥 Most practiced</h3>
                 {(() => {
                   // Calculate practice counts and averages from history
                   const questionStats = {};
@@ -5675,8 +5750,8 @@ const startPracticeMode = async () => {
           {commandCenterTab === 'prep' && (
             <div>
               {/* Interview Countdown */}
-              <div className="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl p-6 text-white mb-6">
-                <h3 className="text-2xl font-bold mb-4">🗓️ {interviewDate ? `${(() => {
+              <div className="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl sm:rounded-2xl p-4 sm:p-5 lg:p-6 text-white mb-5 sm:mb-6">
+                <h3 className="text-lg sm:text-xl lg:text-2xl font-bold mb-3 sm:mb-4">🗓️ {interviewDate ? `${(() => {
                   const today = new Date();
                   today.setHours(0, 0, 0, 0);
                   const interview = new Date(interviewDate);
@@ -5685,37 +5760,37 @@ const startPracticeMode = async () => {
                   const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24)); // FIXED: Math.ceil → Math.round for accurate day count
                   return Math.max(0, diffDays);
                 })()} Days to Shine!` : 'Set Your Interview Date'}</h3>
-                <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-4">
+                <div className="flex flex-col md:flex-row items-start md:items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
                   <div className="flex-1 w-full">
-                    <label className="block text-sm text-white/90 font-medium mb-2">Interview Date:</label>
-                    <input 
+                    <label className="block text-xs sm:text-sm text-white/90 font-medium mb-1.5 sm:mb-2">Interview Date:</label>
+                    <input
                       type="date"
                       value={interviewDate}
                       onChange={(e) => {
                         setInterviewDate(e.target.value);
                         localStorage.setItem('isl_interview_date', e.target.value);
                       }}
-                      className="w-full px-4 py-3 rounded-lg text-gray-900 font-bold text-base"
+                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg text-slate-900 font-semibold text-sm sm:text-base"
                     />
                   </div>
                   {interviewDate && (
-                    <div className="text-center bg-white/20 backdrop-blur rounded-xl p-5 min-w-[140px]">
-                      <div className="text-5xl font-black mb-1">
+                    <div className="text-center bg-white/20 backdrop-blur rounded-xl p-3 sm:p-4 lg:p-5 min-w-[120px] sm:min-w-[140px]">
+                      <div className="text-3xl sm:text-4xl lg:text-5xl font-black mb-0.5 sm:mb-1">
                         {Math.max(0, Math.ceil((new Date(interviewDate).setHours(0,0,0,0) - new Date().setHours(0,0,0,0)) / (1000 * 60 * 60 * 24)))}
                       </div>
-                      <div className="text-sm text-white/90 font-bold">days left!</div>
-                      <div className="text-xs text-white/75 mt-1">⭐ You've got this!</div>
+                      <div className="text-xs sm:text-sm text-white/90 font-bold">days left!</div>
+                      <div className="text-[10px] sm:text-xs text-white/75 mt-0.5 sm:mt-1">⭐ You've got this!</div>
                     </div>
                   )}
                 </div>
               </div>
 
               {/* Daily Goal */}
-              <div className="bg-white rounded-xl shadow-md p-5 mb-6">
-                <h3 className="text-xl font-bold mb-4 text-gray-900">🎯 Daily Practice Goal</h3>
-                <div className="flex items-center gap-4 mb-4">
-                  <label className="text-gray-800 font-bold text-base">Sessions per day:</label>
-                  <input 
+              <div className="bg-white rounded-xl sm:rounded-2xl shadow-md border border-slate-100 p-4 sm:p-5 mb-5 sm:mb-6">
+                <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-slate-800">🎯 Daily Practice Goal</h3>
+                <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
+                  <label className="text-slate-700 font-semibold text-sm sm:text-base">Sessions per day:</label>
+                  <input
                     type="number"
                     min="1"
                     max="20"
@@ -5727,25 +5802,25 @@ const startPracticeMode = async () => {
                         localStorage.setItem('isl_daily_goal', e.target.value);
                       }
                     }}
-                    className="w-20 px-4 py-2 border-2 rounded-lg text-center font-bold text-base"
+                    className="w-16 sm:w-20 px-3 sm:px-4 py-2 border-2 border-slate-200 rounded-lg text-center font-bold text-sm sm:text-base focus:border-indigo-500 focus:outline-none transition-colors"
                   />
                 </div>
-                <div className="bg-gray-50 rounded-lg p-4">
+                <div className="bg-slate-50 rounded-lg sm:rounded-xl p-3 sm:p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-bold text-gray-800">Today's Progress:</span>
-                    <span className="text-xl font-black text-indigo-600">
+                    <span className="text-xs sm:text-sm font-semibold text-slate-700">Today's Progress:</span>
+                    <span className="text-lg sm:text-xl font-black text-indigo-600">
                       {practiceHistory.filter(s => new Date(s.date).toDateString() === new Date().toDateString()).length} / {dailyGoal}
                     </span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-4">
-                    <div 
-                      className="bg-gradient-to-r from-indigo-500 to-purple-500 h-4 rounded-full transition-all flex items-center justify-end pr-2"
-                      style={{ 
+                  <div className="w-full bg-slate-200 rounded-full h-3 sm:h-4">
+                    <div
+                      className="bg-gradient-to-r from-indigo-500 to-purple-500 h-3 sm:h-4 rounded-full transition-all flex items-center justify-end pr-2"
+                      style={{
                         width: `${Math.min(100, (practiceHistory.filter(s => new Date(s.date).toDateString() === new Date().toDateString()).length / dailyGoal) * 100)}%`
                       }}
                     >
                       {practiceHistory.filter(s => new Date(s.date).toDateString() === new Date().toDateString()).length >= dailyGoal && (
-                        <span className="text-white text-xs font-bold">🎉 Goal reached!</span>
+                        <span className="text-white text-[10px] sm:text-xs font-bold">🎉 Goal reached!</span>
                       )}
                     </div>
                   </div>
@@ -5948,77 +6023,117 @@ const startPracticeMode = async () => {
         </div>
       ) : (
         <>
-          <div className="overflow-x-auto pb-4">
-            <div className="relative min-w-[800px]" style={{ height: '400px' }}>
-              <svg viewBox="0 0 900 350" className="w-full h-full">
-                {[0, 2, 4, 6, 8, 10].map(score => (
-                  <g key={score}>
-                    <line x1="60" y1={300 - (score * 27)} x2="850" y2={300 - (score * 27)} stroke="#e5e7eb" strokeWidth="1" strokeDasharray={score === 0 ? "0" : "4,4"} />
-                    <text x="35" y={305 - (score * 27)} fontSize="14" fill="#6b7280" fontWeight="600">{score}</text>
-                  </g>
-                ))}
-                
-                <defs>
-                  <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#6366f1" />
-                    <stop offset="50%" stopColor="#8b5cf6" />
-                    <stop offset="100%" stopColor="#ec4899" />
-                  </linearGradient>
-                </defs>
-                
-                {(() => {
-                  const validSessions = practiceHistory.filter(s => s.feedback?.overall || s.feedback?.match_percentage);
-                  if (validSessions.length < 2) return null;
-                  return (
-                    <polyline
-                      points={validSessions.map((session, idx) => {
-                        const score = session.feedback?.overall || (session.feedback?.match_percentage / 10);
-                        const x = 60 + (idx / Math.max(1, validSessions.length - 1)) * 790;
-                        const y = 300 - (score * 27);
-                        return `${x},${y}`;
-                      }).join(' ')}
-                      fill="none"
-                      stroke="url(#lineGradient)"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  );
-                })()}
-                
-                {(() => {
-                  const validSessions = practiceHistory.filter(s => s.feedback?.overall || s.feedback?.match_percentage);
-                  return validSessions.map((session, idx) => {
-                    const score = session.feedback?.overall || (session.feedback?.match_percentage / 10);
-                    const x = 60 + (idx / Math.max(1, validSessions.length - 1)) * 790;
-                    const y = 300 - (score * 27);
-                    return (
-                      <g key={idx} style={{ cursor: 'pointer' }} onClick={() => {
-                        setSelectedSession(session);
-                      }}>
-                        <circle 
-                          cx={x} 
-                          cy={y} 
-                          r="10" 
-                          fill="#6366f1" 
-                          stroke="white" 
-                          strokeWidth="3" 
-                          className="hover:opacity-80 transition-opacity" 
-                        />
+          {(() => {
+            // Calculate dynamic width based on number of sessions
+            // Minimum 50px spacing between points for easy clicking
+            const validSessions = practiceHistory
+              .filter(s => s.feedback?.overall || s.feedback?.match_percentage)
+              .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            const pointSpacing = 60; // pixels between each point
+            const leftPadding = 70;  // space for Y-axis labels
+            const rightPadding = 50; // space on right side
+            const minWidth = 800;    // minimum width
+
+            // Calculate required width based on number of points
+            const chartWidth = Math.max(minWidth, leftPadding + (validSessions.length * pointSpacing) + rightPadding);
+            const svgWidth = chartWidth;
+            const plotWidth = chartWidth - leftPadding - rightPadding;
+
+            return (
+              <div className="overflow-x-auto pb-4">
+                <div className="relative" style={{ height: '400px', minWidth: `${chartWidth}px` }}>
+                  <svg viewBox={`0 0 ${svgWidth} 350`} className="w-full h-full" preserveAspectRatio="xMinYMid meet">
+                    {[0, 2, 4, 6, 8, 10].map(score => (
+                      <g key={score}>
+                        <line x1={leftPadding - 10} y1={300 - (score * 27)} x2={chartWidth - rightPadding} y2={300 - (score * 27)} stroke="#e5e7eb" strokeWidth="1" strokeDasharray={score === 0 ? "0" : "4,4"} />
+                        <text x="35" y={305 - (score * 27)} fontSize="14" fill="#6b7280" fontWeight="600">{score}</text>
                       </g>
-                    );
-                  });
-                })()}
-                
-                <text x="450" y="340" fontSize="14" fill="#6b7280" textAnchor="middle" fontWeight="600">Practice Sessions (click dots for details)</text>
-                <text x="20" y="180" fontSize="14" fill="#6b7280" textAnchor="middle" transform="rotate(-90, 20, 180)" fontWeight="600">Score</text>
-              </svg>
-            </div>
-            <p className="text-xs text-gray-500 text-center mt-2">💡 Scroll horizontally to see all data points</p>
-          </div>
+                    ))}
+
+                    <defs>
+                      <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#6366f1" />
+                        <stop offset="50%" stopColor="#8b5cf6" />
+                        <stop offset="100%" stopColor="#ec4899" />
+                      </linearGradient>
+                    </defs>
+
+                    {/* Line connecting all points */}
+                    {validSessions.length >= 2 && (
+                      <polyline
+                        points={validSessions.map((session, idx) => {
+                          const score = session.feedback?.overall || (session.feedback?.match_percentage / 10);
+                          const x = leftPadding + (idx * pointSpacing);
+                          const y = 300 - (score * 27);
+                          return `${x},${y}`;
+                        }).join(' ')}
+                        fill="none"
+                        stroke="url(#lineGradient)"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    )}
+
+                    {/* Clickable data points */}
+                    {validSessions.map((session, idx) => {
+                      const score = session.feedback?.overall || (session.feedback?.match_percentage / 10);
+                      const x = leftPadding + (idx * pointSpacing);
+                      const y = 300 - (score * 27);
+                      return (
+                        <g key={idx} style={{ cursor: 'pointer' }} onClick={() => {
+                          setSelectedSession(session);
+                        }}>
+                          {/* Larger invisible hit area for easier clicking */}
+                          <circle
+                            cx={x}
+                            cy={y}
+                            r="20"
+                            fill="transparent"
+                          />
+                          {/* Visible dot */}
+                          <circle
+                            cx={x}
+                            cy={y}
+                            r="12"
+                            fill="#6366f1"
+                            stroke="white"
+                            strokeWidth="3"
+                            className="hover:opacity-80 transition-opacity"
+                          />
+                          {/* Date label below each point */}
+                          <text
+                            x={x}
+                            y="325"
+                            fontSize="10"
+                            fill="#9ca3af"
+                            textAnchor="middle"
+                            transform={`rotate(-45, ${x}, 325)`}
+                          >
+                            {new Date(session.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          </text>
+                        </g>
+                      );
+                    })}
+
+                    <text x={chartWidth / 2} y="345" fontSize="14" fill="#6b7280" textAnchor="middle" fontWeight="600">Practice Sessions (click dots for details)</text>
+                    <text x="20" y="180" fontSize="14" fill="#6b7280" textAnchor="middle" transform="rotate(-90, 20, 180)" fontWeight="600">Score</text>
+                  </svg>
+                </div>
+                {validSessions.length > 10 && (
+                  <p className="text-xs text-gray-500 text-center mt-2">💡 Scroll horizontally to see all {validSessions.length} data points →</p>
+                )}
+              </div>
+            );
+          })()}
+
 
           {(() => {
-            const validSessions = practiceHistory.filter(s => s.feedback?.overall || s.feedback?.match_percentage);
+            // Sort by date ascending for accurate first/latest calculation
+            const validSessions = practiceHistory
+              .filter(s => s.feedback?.overall || s.feedback?.match_percentage)
+              .sort((a, b) => new Date(a.date) - new Date(b.date));
             if (validSessions.length === 0) {
               return (
                 <div className="text-center py-8 bg-yellow-50 rounded-xl border-2 border-yellow-200">
@@ -6026,7 +6141,7 @@ const startPracticeMode = async () => {
                 </div>
               );
             }
-            
+
             const scores = validSessions.map(s => s.feedback?.overall || (s.feedback?.match_percentage / 10));
             const firstScore = scores[0];
             const latestScore = scores[scores.length - 1];
@@ -6086,7 +6201,12 @@ const startPracticeMode = async () => {
             questionStats[session.question].sessions.push(session);
           }
         });
-        
+
+        // Sort each question's sessions by date ascending (oldest first for chronological display)
+        Object.values(questionStats).forEach(qStat => {
+          qStat.sessions.sort((a, b) => new Date(a.date) - new Date(b.date));
+        });
+
         const questionArray = Object.values(questionStats).filter(q => q.sessions.length > 0);
         
         if (questionArray.length === 0) {
@@ -6375,33 +6495,33 @@ const startPracticeMode = async () => {
                   </div>
                 )}
               </div>
-              <div className="flex items-center justify-between mb-6">
-                <button onClick={() => setEditingQuestion({ question: '', keywords: [], category: 'Core Narrative', priority: 'Must-Know', bullets: [''], narrative: '', followups: [] })} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-3 rounded-lg flex items-center gap-2">
-                  <Plus className="w-5 h-5" />
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 mb-5 sm:mb-6">
+                <button onClick={() => setEditingQuestion({ question: '', keywords: [], category: 'Core Narrative', priority: 'Must-Know', bullets: [''], narrative: '', followups: [] })} className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all active:scale-[0.98] text-sm sm:text-base">
+                  <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                   Add Question
                 </button>
                 
                 {questions.length > 0 && (
-                  <button 
-                    onClick={() => setShowDeleteAllConfirm(true)} 
-                    className="bg-red-100 hover:bg-red-200 text-red-700 font-bold px-6 py-3 rounded-lg flex items-center gap-2 border-2 border-red-300"
+                  <button
+                    onClick={() => setShowDeleteAllConfirm(true)}
+                    className="bg-red-50 hover:bg-red-100 text-red-600 font-semibold px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl flex items-center gap-2 border-2 border-red-200 hover:border-red-300 transition-all active:scale-[0.98] text-sm sm:text-base"
                   >
-                    <Trash2 className="w-5 h-5" />
+                    <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
                     Delete All ({questions.length})
                   </button>
                 )}
               </div>
-              
-              <div className="flex gap-2 mb-6">
-                <button onClick={() => { const input = document.createElement('input'); input.type = 'file'; input.accept = '.json'; input.onchange = (e) => { const file = e.target.files[0]; const reader = new FileReader(); reader.onload = (event) => importQuestions(event.target.result); reader.readAsText(file); }; input.click(); }} className="px-4 py-2 bg-gray-200 rounded-lg flex items-center gap-2">
+
+              <div className="flex flex-wrap gap-2 mb-5 sm:mb-6">
+                <button onClick={() => { const input = document.createElement('input'); input.type = 'file'; input.accept = '.json'; input.onchange = (e) => { const file = e.target.files[0]; const reader = new FileReader(); reader.onload = (event) => importQuestions(event.target.result); reader.readAsText(file); }; input.click(); }} className="px-3 sm:px-4 py-2 sm:py-2.5 bg-slate-100 hover:bg-slate-200 rounded-lg font-medium flex items-center gap-1.5 sm:gap-2 text-slate-700 transition-all active:scale-[0.98] text-sm">
                   <Upload className="w-4 h-4" />
                   Import
                 </button>
-                <button onClick={exportQuestions} className="px-4 py-2 bg-gray-200 rounded-lg flex items-center gap-2">
+                <button onClick={exportQuestions} className="px-3 sm:px-4 py-2 sm:py-2.5 bg-slate-100 hover:bg-slate-200 rounded-lg font-medium flex items-center gap-1.5 sm:gap-2 text-slate-700 transition-all active:scale-[0.98] text-sm">
                   <Download className="w-4 h-4" />
                   Export
                 </button>
-                <button onClick={() => setShowTemplateLibrary(true)} className="px-4 py-2 bg-indigo-600 text-white rounded-lg flex items-center gap-2">
+                <button onClick={() => setShowTemplateLibrary(true)} className="px-3 sm:px-4 py-2 sm:py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold flex items-center gap-1.5 sm:gap-2 shadow-sm hover:shadow-md transition-all active:scale-[0.98] text-sm">
                   <BookOpen className="w-4 h-4" />
                   Templates
                 </button>
@@ -6572,14 +6692,11 @@ const startPracticeMode = async () => {
                         {/* AI ANSWER COACH BUTTON */}
                         <button
                           onClick={async () => {
-                            // Check AI usage limit
-                            const canUse = await checkAIUsageLimit();
+                            // Check AI usage limit (no increment on click - will be tracked when AI delivers feedback)
+                            const canUse = checkUsageLimitsSync('answerAssistant', 'Answer Assistant');
                             if (!canUse) return;
-                            
-                            // Increment usage
-                            incrementAIUsage();
-                            
-                            // Open AI Answer Coach
+
+                            // Open AI Answer Coach (usage tracked via onUsageTracked callback when AI delivers)
                             setAnswerAssistantQuestion(q);
                             setShowAnswerAssistant(true);
                           }}
@@ -6624,7 +6741,7 @@ const startPracticeMode = async () => {
           question={answerAssistantQuestion.question}
           questionId={answerAssistantQuestion.id}
           userContext={getUserContext()}
-          userTier={usageStats?.tier}
+          userTier={usageStatsData?.tier}
           existingNarrative={answerAssistantQuestion.narrative}
           existingBullets={answerAssistantQuestion.bullets}
           onAnswerSaved={handleAnswerSaved}
@@ -6632,6 +6749,7 @@ const startPracticeMode = async () => {
             setShowAnswerAssistant(false);
             setAnswerAssistantQuestion(null);
           }}
+          onUsageTracked={() => trackUsageInBackground('answerAssistant', 'Answer Assistant')}
         />
       )}
       </>

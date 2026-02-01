@@ -1,12 +1,15 @@
 import React from 'react';
 import { X, CheckCircle, Target } from 'lucide-react';
 
-const SessionDetailsModal = ({ 
-  show,
-  selectedPoint,
-  onClose 
+const SessionDetailsModal = ({
+  showChartModal,
+  selectedChartPoint,
+  onClose
 }) => {
-  
+  // Support both old and new prop names for compatibility
+  const show = showChartModal;
+  const selectedPoint = selectedChartPoint;
+
   if (!show || !selectedPoint) return null;
   
   return (

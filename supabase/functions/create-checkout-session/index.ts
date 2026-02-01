@@ -102,11 +102,12 @@ serve(async (req: Request) => {
     console.log('🛒 Creating checkout session for:', customerEmail);
 
     // Check if user already has a Stripe customer ID
+    // Use maybeSingle() to handle users who don't have a profile row yet
     const { data: profile } = await supabase
       .from('user_profiles')
       .select('stripe_customer_id, tier')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
     // If user is already pro, don't let them subscribe again
     if (profile?.tier === 'pro') {
@@ -164,16 +165,26 @@ serve(async (req: Request) => {
   } catch (error) {
     console.error('❌ Checkout session error:', error);
 
-    // Handle Stripe-specific errors
+    // Get error message safely
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('❌ Error details:', errorMessage);
+
+    // Handle Stripe-specific errors - return actual error message for debugging
     if (error instanceof Stripe.errors.StripeError) {
+      console.error('❌ Stripe error type:', error.type);
+      console.error('❌ Stripe error code:', error.code);
       return new Response(
-        JSON.stringify({ error: error.message }),
+        JSON.stringify({
+          error: error.message,
+          type: error.type,
+          code: error.code
+        }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     return new Response(
-      JSON.stringify({ error: 'Failed to create checkout session' }),
+      JSON.stringify({ error: errorMessage || 'Failed to create checkout session' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
