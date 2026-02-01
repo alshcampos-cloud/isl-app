@@ -5,7 +5,7 @@ import {
   Brain, Database, Play, Plus, Edit2, Trash2, TrendingUp, Download, Upload,
   Mic, MicOff, Volume2, Eye, EyeOff, Settings, Sparkles, ChevronRight, ChevronDown, X,
   Zap, CheckCircle, Target, Bot, BookOpen, SkipForward, Pause, Award, Filter,
-  Crown, Lightbulb, Square, Calendar, AlertCircle
+  Crown, Lightbulb, Square, Calendar, AlertCircle, Mail
 } from 'lucide-react';
 
 import SupabaseTest from './SupabaseTest';
