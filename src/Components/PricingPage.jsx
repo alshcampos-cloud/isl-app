@@ -12,8 +12,8 @@ export default function PricingPage({ onSelectTier, currentTier = 'free' }) {
       badge: null,
       features: [
         { text: '3 AI Interviewer sessions/month', included: true },
-        { text: '5 Practice Mode sessions/month', included: true },
-        { text: '2 Answer Assistant sessions/month', included: true },
+        { text: '10 Practice Mode sessions/month', included: true },
+        { text: '5 Answer Assistant sessions/month', included: true },
         { text: '5 Question Generations/month', included: true },
         { text: '10 Live Prompter questions/month', included: true },
         { text: 'Unlimited question bank storage', included: true },
@@ -169,12 +169,12 @@ export default function PricingPage({ onSelectTier, currentTier = 'free' }) {
                 </tr>
                 <tr>
                   <td className="py-4 px-4 text-gray-700">Practice Mode sessions</td>
-                  <td className="py-4 px-4 text-center text-gray-600">5/month</td>
+                  <td className="py-4 px-4 text-center text-gray-600">10/month</td>
                   <td className="py-4 px-4 text-center font-bold text-indigo-600">Unlimited</td>
                 </tr>
                 <tr>
                   <td className="py-4 px-4 text-gray-700">Answer Assistant sessions</td>
-                  <td className="py-4 px-4 text-center text-gray-600">2/month</td>
+                  <td className="py-4 px-4 text-center text-gray-600">5/month</td>
                   <td className="py-4 px-4 text-center font-bold text-indigo-600">Unlimited</td>
                 </tr>
                 <tr>
@@ -224,7 +224,7 @@ export default function PricingPage({ onSelectTier, currentTier = 'free' }) {
             <div>
               <h3 className="font-bold text-gray-900 mb-2">What payment methods do you accept?</h3>
               <p className="text-gray-600">
-                We accept all major credit cards (Visa, Mastercard, American Express, Discover) through our secure payment processor Stripe.
+                We accept all major credit cards (Visa, Mastercard, American Express, Discover). Secure payment processing powered by Stripe.
               </p>
             </div>
 

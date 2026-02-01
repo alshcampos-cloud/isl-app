@@ -15,9 +15,9 @@ export const TIER_LIMITS = {
   pro: {
     name: 'Pro',
     price: 29.99,
-    ai_interviewer: 50,           // 50 AI sessions (plenty for job search)
+    ai_interviewer: 999999,       // UNLIMITED AI sessions (matches pricing page)
     practice_mode: 999999,        // UNLIMITED (most used feature)
-    answer_assistant: 15,         // 15 coaching sessions
+    answer_assistant: 999999,     // UNLIMITED coaching sessions
     question_gen: 999999,         // UNLIMITED question generation
     live_prompter_questions: 999999, // UNLIMITED real-time prompts
     live_prompter_unlimited: true

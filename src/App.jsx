@@ -560,11 +560,10 @@ const ISL = () => {
     const storageKey = `isl_usage_${currentMonth}`;
     const currentUsage = parseInt(localStorage.getItem(storageKey) || '0');
     
-    const isPro = usageStats?.tier === 'pro' || 
-                  usageStats?.tier === 'premium' || 
+    const isPro = usageStats?.tier === 'pro' ||
                   usageStats?.tier === 'beta';
-    
-    const limit = usageStats?.tier === 'premium' || usageStats?.tier === 'beta' ? 999999 :
+
+    const limit = usageStats?.tier === 'beta' ? 999999 :
                   usageStats?.tier === 'pro' ? 40 : 5;
     
     setUsageThisMonth(currentUsage);
@@ -698,9 +697,9 @@ Consider upgrading to Pro for more sessions!`);
     const storageKey = `isl_usage_${currentMonth}`;
     const currentUsage = parseInt(localStorage.getItem(storageKey) || '0');
     
-    const limit = usageStats?.tier === 'premium' || usageStats?.tier === 'beta' ? 999999 :
+    const limit = usageStats?.tier === 'beta' ? 999999 :
                   usageStats?.tier === 'pro' ? 40 : 5;
-    
+
     setUsageThisMonth(currentUsage);
     setUsageLimit(limit);
   }, [usageStats]);
@@ -4039,7 +4038,7 @@ const startPracticeMode = async () => {
                 
                 {/* Help Button - Below Textarea */}
                 <div className="mt-2 flex justify-center">
-                  {(usageStats?.tier === 'pro' || usageStats?.tier === 'premium' || usageStats?.tier === 'beta') ? (
+                  {(usageStats?.tier === 'pro' || usageStats?.tier === 'beta') ? (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -4580,7 +4579,7 @@ const startPracticeMode = async () => {
                   
                   {/* Help Button - Below Textarea */}
                   <div className="mt-2 flex justify-center">
-                    {(usageStats?.tier === 'pro' || usageStats?.tier === 'premium' || usageStats?.tier === 'beta') ? (
+                    {(usageStats?.tier === 'pro' || usageStats?.tier === 'beta') ? (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
