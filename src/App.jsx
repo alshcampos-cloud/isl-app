@@ -7123,13 +7123,14 @@ const startPracticeMode = async () => {
           >
             <PricingPage
               currentTier={userTier}
+              user={user}
+              userEmail={user?.email}
               onSelectTier={(tier) => {
                 if (tier === 'free') {
                   setShowPricingPage(false);
                   return;
                 }
-                // TODO: Stripe integration coming next!
-                alert(`You selected ${tier} tier!\n\nStripe payment integration coming in the next step. For now, you can test the UI!`);
+                // Stripe checkout is now handled by StripeCheckout component
                 console.log('User selected tier:', tier);
               }}
             />

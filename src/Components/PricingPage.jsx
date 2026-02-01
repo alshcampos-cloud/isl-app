@@ -1,6 +1,43 @@
-import { Check, Crown, X } from 'lucide-react';
+import { Check, Crown, X, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import StripeCheckout from './StripeCheckout';
 
-export default function PricingPage({ onSelectTier, currentTier = 'free' }) {
+export default function PricingPage({ onSelectTier, currentTier = 'free', user, userEmail }) {
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [checkoutError, setCheckoutError] = useState(null);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [showCanceledMessage, setShowCanceledMessage] = useState(false);
+
+  // Check URL params for return from Stripe
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const success = params.get('success') === 'true';
+    const canceled = params.get('canceled') === 'true';
+
+    if (success) {
+      setShowSuccessMessage(true);
+      // Clean up URL
+      window.history.replaceState({}, '', window.location.pathname);
+      // Auto-hide after 5 seconds
+      setTimeout(() => setShowSuccessMessage(false), 5000);
+    }
+
+    if (canceled) {
+      setShowCanceledMessage(true);
+      // Clean up URL
+      window.history.replaceState({}, '', window.location.pathname);
+      // Auto-hide after 5 seconds
+      setTimeout(() => setShowCanceledMessage(false), 5000);
+    }
+  }, []);
+
+  const handleSelectTier = (tierId) => {
+    if (tierId === 'free') {
+      // Handle downgrade (just call parent handler)
+      onSelectTier?.(tierId);
+    }
+    // For 'pro', the StripeCheckout component handles it
+  };
   
   const tiers = [
     {
@@ -61,6 +98,48 @@ export default function PricingPage({ onSelectTier, currentTier = 'free' }) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-indigo-50 py-12 px-4">
       <div className="max-w-6xl mx-auto">
+        {/* Success Message */}
+        {showSuccessMessage && (
+          <div className="mb-8 p-4 bg-green-50 border border-green-200 rounded-xl flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                <Check className="w-6 h-6 text-green-600" />
+              </div>
+              <div>
+                <h3 className="font-bold text-green-800">Welcome to Pro!</h3>
+                <p className="text-green-700 text-sm">Your subscription is now active. Enjoy unlimited access!</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowSuccessMessage(false)}
+              className="text-green-600 hover:text-green-800"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        )}
+
+        {/* Canceled Message */}
+        {showCanceledMessage && (
+          <div className="mb-8 p-4 bg-yellow-50 border border-yellow-200 rounded-xl flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+                <X className="w-6 h-6 text-yellow-600" />
+              </div>
+              <div>
+                <h3 className="font-bold text-yellow-800">Checkout Canceled</h3>
+                <p className="text-yellow-700 text-sm">No worries! You can upgrade anytime when you're ready.</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowCanceledMessage(false)}
+              className="text-yellow-600 hover:text-yellow-800"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        )}
+
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
@@ -99,19 +178,59 @@ export default function PricingPage({ onSelectTier, currentTier = 'free' }) {
                 </div>
 
                 {/* CTA Button */}
-                <button
-                  onClick={() => !tier.ctaDisabled && onSelectTier(tier.id)}
-                  disabled={tier.ctaDisabled}
-                  className={`w-full py-4 rounded-lg font-bold text-white mb-8 transition text-lg ${
-                    tier.ctaDisabled
-                      ? 'bg-gray-300 cursor-not-allowed'
-                      : tier.recommended
-                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg'
-                      : 'bg-gray-600 hover:bg-gray-700'
-                  }`}
-                >
-                  {tier.cta}
-                </button>
+                {tier.id === 'pro' && !tier.ctaDisabled ? (
+                  // Stripe Checkout button for Pro tier
+                  <div className="mb-8">
+                    <StripeCheckout
+                      user={user}
+                      userEmail={userEmail}
+                      onSuccess={() => {
+                        console.log('🚀 Redirecting to Stripe Checkout...');
+                        setIsProcessing(true);
+                      }}
+                      onError={(error) => {
+                        console.error('❌ Checkout error:', error);
+                        setCheckoutError(error);
+                        setIsProcessing(false);
+                      }}
+                      disabled={isProcessing || !user}
+                      className={`w-full py-4 rounded-lg font-bold text-white transition text-lg ${
+                        isProcessing || !user
+                          ? 'bg-gray-300 cursor-not-allowed'
+                          : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg'
+                      }`}
+                    >
+                      {isProcessing ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          Redirecting to checkout...
+                        </span>
+                      ) : !user ? (
+                        'Sign in to Upgrade'
+                      ) : (
+                        'Upgrade to Pro'
+                      )}
+                    </StripeCheckout>
+                    {checkoutError && (
+                      <p className="mt-2 text-sm text-red-600 text-center">{checkoutError}</p>
+                    )}
+                  </div>
+                ) : (
+                  // Regular button for Free tier or if already Pro
+                  <button
+                    onClick={() => !tier.ctaDisabled && handleSelectTier(tier.id)}
+                    disabled={tier.ctaDisabled}
+                    className={`w-full py-4 rounded-lg font-bold text-white mb-8 transition text-lg ${
+                      tier.ctaDisabled
+                        ? 'bg-gray-300 cursor-not-allowed'
+                        : tier.recommended
+                        ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg'
+                        : 'bg-gray-600 hover:bg-gray-700'
+                    }`}
+                  >
+                    {tier.cta}
+                  </button>
+                )}
 
                 {/* Features List */}
                 <div className="space-y-4">
