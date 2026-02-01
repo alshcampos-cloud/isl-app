@@ -3119,7 +3119,7 @@ const startPracticeMode = async () => {
       />
 
       {/* FIRST-TIME CONSENT - Terms & Privacy acceptance for new users */}
-      {user && <FirstTimeConsent user={user} onAccepted={() => console.log('✅ User accepted Terms & Privacy')} />}
+      {currentUser && <FirstTimeConsent user={currentUser} onAccepted={() => console.log('✅ User accepted Terms & Privacy')} />}
 
       {/* LIVE PROMPTER WARNING - Shows before activating prompter */}
       {showLivePrompterWarning && (
