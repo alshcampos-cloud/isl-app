@@ -78,6 +78,12 @@ const styles = `
 // ==========================================
 
 const ISL = () => {
+  // Console welcome message for developers
+  useEffect(() => {
+    console.log('%c InterviewAnswers.ai', 'font-size: 24px; font-weight: bold; color: #4F46E5;');
+    console.log('%cBuilding something? We\'re hiring! support@interviewanswers.ai', 'font-size: 12px; color: #666;');
+  }, []);
+
   // TEMPORARY: Test Supabase connection
   const TESTING_SUPABASE = false;
 
