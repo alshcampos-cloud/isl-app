@@ -196,6 +196,7 @@ const ISL = () => {
   const currentModeRef = useRef(null);
   const isListeningRef = useRef(false);
   const captureSourceRef = useRef(null); // Track if capture was started by 'mouse' or 'keyboard'
+  const micStreamRef = useRef(null); // MOBILE FIX: Store getUserMedia stream so we can release it
   const aiQuestionRef = useRef(null); // For auto-scrolling to AI questions
   const initializingDefaultsRef = useRef(false); // Prevent double-initialization in React Strict Mode
   const lastFeedbackRef = useRef(null); // DUAL-LAYER FIX: Backup feedback in case state gets lost during tab switch
@@ -846,19 +847,26 @@ loadPracticeHistory();
 
   // Helper function to load user tier and stats
   const loadUserTierAndStats = async (user, forceRefresh = false) => {
-    if (!user) return 'free';
+    console.log('🔍 loadUserTierAndStats called with user:', user?.id);
+    if (!user) {
+      console.log('⚠️ No user provided to loadUserTierAndStats');
+      return 'free';
+    }
 
     let tier = 'free';
 
     try {
+      console.log('🔍 Fetching profile for user:', user.id);
       const { data: profile, error: profileError } = await supabase
         .from('user_profiles')
         .select('tier, subscription_status, stripe_customer_id')
         .eq('user_id', user.id)
         .single();
 
+      console.log('🔍 Profile query result:', { profile, error: profileError?.message });
+
       if (profileError) {
-        console.error('❌ Profile fetch error:', profileError.message);
+        console.error('❌ Profile fetch error:', profileError.message, profileError.code);
         // Don't return - try to create profile or continue with defaults
       }
 
@@ -879,6 +887,8 @@ loadPracticeHistory();
 
         if (insertError) {
           console.error('❌ Profile creation error:', insertError.message);
+        } else {
+          console.log('✅ Profile created successfully');
         }
       }
     } catch (err) {
@@ -887,6 +897,7 @@ loadPracticeHistory();
     }
 
     // Set tier state
+    console.log('🔍 Setting userTier to:', tier);
     setUserTier(tier);
 
     // Load usage stats with the tier included
@@ -908,22 +919,31 @@ loadPracticeHistory();
     // REMOVED: Password reset token detection moved to ProtectedRoute.jsx
     // (needs to run BEFORE auth check, not after)
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    console.log('🔐 Auth initialization starting...');
+    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
+      console.log('🔐 getSession result:', { hasSession: !!session, error: error?.message });
       const user = session?.user ?? null;
       setCurrentUser(user);
 
       // Load user tier from user_profiles
       if (user) {
+        console.log('🔐 User found, loading tier and stats...');
         await loadUserTierAndStats(user);
+      } else {
+        console.log('🔐 No user session');
       }
+    }).catch(err => {
+      console.error('🔐 getSession error:', err);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('🔐 Auth state change:', event, { hasSession: !!session });
       const user = session?.user ?? null;
       setCurrentUser(user);
 
       // Load user tier on auth change
       if (user) {
+        console.log('🔐 Auth change - user found, loading tier...');
         await loadUserTierAndStats(user);
       }
     });
@@ -1143,39 +1163,49 @@ recognition.onresult = (event) => {
         if (event.results[i].isFinal) final += part + ' ';
         else interim += part;
       }
-      
+
       // USE REFS to avoid stale closure - refs always have current value
       const sessionActive = interviewSessionActiveRef.current;
       const capturing = isCapturingRef.current;
       const mode = currentModeRef.current;
-      
+
+      // DEBUG: Log every speech result to help diagnose issues
+      const heardText = final || interim;
+      if (heardText) {
+        console.log(`🎤 Speech detected: "${heardText.trim()}" | Session: ${sessionActive} | Capturing: ${capturing} | Mode: ${mode}`);
+      }
+
       // SESSION MODE: Only accumulate when capturing
       // NON-SESSION MODE: Always accumulate
       const shouldAccumulate = sessionActive ? capturing : true;
-      
+
       if (shouldAccumulate) {
         // Save FINAL results permanently
         if (final) {
           accumulatedTranscript.current = (accumulatedTranscript.current + ' ' + final).trim();
           currentInterimRef.current = ''; // Clear interim when we get final
-          console.log('Speech (final):', accumulatedTranscript.current);
+          console.log('✅ Speech captured (final):', accumulatedTranscript.current);
         }
-        
+
         // Track INTERIM separately (replaces previous interim, doesn't accumulate)
         if (interim) {
           currentInterimRef.current = interim;
         }
-        
+
         // Display combined: all finals + current interim
         const displayText = (accumulatedTranscript.current + ' ' + currentInterimRef.current).trim();
         setTranscript(displayText);
         setLiveTranscript(displayText);
-        
+
         if (mode === 'ai-interviewer' || mode === 'practice') {
           setSpokenAnswer(displayText);
         }
       } else if (sessionActive && !capturing) {
-        // Session active but not capturing - don't update (silent listening)
+        // Session active but not capturing - user needs to hold spacebar or button
+        // Only log once per speech segment to avoid spam
+        if (heardText && heardText.trim().length > 5) {
+          console.log('⚠️ Speech heard but NOT captured - hold SPACEBAR or the mic button to capture');
+        }
       }
     };
 recognition.onerror = (event) => {
@@ -1332,13 +1362,35 @@ Just $29.99/month - practice as much as you need!`);
       return true;
     }
 
-    // Check from already-loaded usageStatsData state (synchronous!)
-    // BUG FIX: Was using wrong variable 'usageStats' instead of 'usageStatsData'
-    const check = canUseFeature(usageStatsData || {}, userTier, feature);
+    // Pro users have unlimited access
+    if (userTier === 'pro') {
+      console.log('👑 Pro user - unlimited access for', featureName);
+      return true;
+    }
 
-    if (!check.allowed) {
-      // Show upgrade modal with specific message
-      alert(`You've used all ${check.limit} ${featureName} sessions this month!
+    // BUG FIX: usageStatsData structure is { answerAssistant: { used: 5, limit: 5, remaining: 0 } }
+    // NOT raw counts like { answer_assistant: 5 }
+    // So we need to check featureStats.used vs featureStats.limit directly
+    const featureStats = usageStatsData?.[feature];
+
+    if (!featureStats) {
+      // No stats loaded yet - allow but log warning
+      console.warn(`⚠️ No usage stats for ${feature}, allowing action`);
+      return true;
+    }
+
+    const { used, limit, unlimited } = featureStats;
+
+    // Unlimited features always allowed
+    if (unlimited) {
+      console.log(`♾️ Unlimited access for ${featureName}`);
+      return true;
+    }
+
+    // CRITICAL FIX: Block if used >= limit (no remaining uses)
+    if (used >= limit) {
+      console.log(`🚫 LIMIT REACHED for ${featureName}: ${used}/${limit}`);
+      alert(`You've used all ${limit} ${featureName} sessions this month!
 
 Upgrade to Pro for UNLIMITED:
 • Unlimited AI Interviewer
@@ -1352,6 +1404,7 @@ Just $29.99/month - practice as much as you need!`);
       return false;
     }
 
+    console.log(`✅ Usage OK for ${featureName}: ${used}/${limit} (${limit - used} remaining)`);
     return true;
   };
 
@@ -1532,9 +1585,11 @@ const startInterviewSession = async () => {
   if (!micPermission) {
     console.log('⚠️ No mic permission - requesting in user gesture context...');
     try {
-      await navigator.mediaDevices.getUserMedia({ audio: true });
+      // MOBILE FIX: Store the stream so we can release it later
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      micStreamRef.current = stream;
       setMicPermission(true);
-      console.log('✅ Mic permission granted');
+      console.log('✅ Mic permission granted, stream stored for cleanup');
     } catch (err) {
       console.error('❌ Mic permission denied:', err);
       alert('Microphone permission is required for this feature. Please allow microphone access and try again.');
@@ -1660,7 +1715,7 @@ const endInterviewSession = () => {
     try {
       systemAudioStream.getTracks().forEach(track => {
         track.stop();
-        console.log('🔇 Stopped audio track:', track.label);
+        console.log('🔇 Stopped system audio track:', track.label);
       });
       setSystemAudioStream(null);
       setUseSystemAudio(false);
@@ -1669,7 +1724,21 @@ const endInterviewSession = () => {
       console.error('Error stopping system audio:', err);
     }
   }
-  
+
+  // MOBILE FIX: Release the getUserMedia stream to free up microphone
+  if (micStreamRef.current) {
+    try {
+      micStreamRef.current.getTracks().forEach(track => {
+        track.stop();
+        console.log('🔇 Stopped mic track:', track.label || 'audio');
+      });
+      micStreamRef.current = null;
+      console.log('✅ Microphone stream released');
+    } catch (err) {
+      console.error('Error releasing mic stream:', err);
+    }
+  }
+
   // Reset all state
   setInterviewSessionActive(false);
   interviewSessionActiveRef.current = false;
@@ -2646,9 +2715,16 @@ const startPracticeMode = async () => {
     }
     
     setIsAnalyzing(true);
-    
+
     return supabase.auth.getSession()
-      .then(({ data: { session } }) => {
+      .then(({ data: { session }, error: sessionError }) => {
+        // SESSION FIX: Check if session is valid before making API call
+        if (sessionError || !session?.access_token) {
+          console.error('❌ No valid session for API call:', sessionError?.message || 'No session');
+          throw new Error('Your session has expired. Please sign in again.');
+        }
+        console.log('🔐 Using session token for API call (expires:', new Date(session.expires_at * 1000).toLocaleTimeString(), ')');
+
         // RELIABILITY FIX: Use retry wrapper (3 attempts)
         return fetchWithRetry('https://tzrlpwtkrtvjpdhcaayu.supabase.co/functions/v1/ai-feedback', {
           method: 'POST',
@@ -2754,9 +2830,16 @@ const startPracticeMode = async () => {
 
     setIsAnalyzing(true);
     const userContext = getUserContext();
-    
+
     return supabase.auth.getSession()
-      .then(({ data: { session } }) => {
+      .then(({ data: { session }, error: sessionError }) => {
+        // SESSION FIX: Check if session is valid before making API call
+        if (sessionError || !session?.access_token) {
+          console.error('❌ No valid session for API call:', sessionError?.message || 'No session');
+          throw new Error('Your session has expired. Please sign in again.');
+        }
+        console.log('🔐 Using session token for AI Interviewer API call');
+
         // RELIABILITY FIX: Use retry wrapper (3 attempts)
         return fetchWithRetry(
           'https://tzrlpwtkrtvjpdhcaayu.supabase.co/functions/v1/ai-feedback',
