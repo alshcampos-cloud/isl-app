@@ -2719,9 +2719,10 @@ const startPracticeMode = async () => {
   
   // Practice Mode Submit Handler - Stable Reference
   const handlePracticeModeSubmit = useCallback(() => {
-    const answer = spokenAnswer || userAnswer;
-    if (!answer.trim()) { 
-      alert('Please provide an answer'); 
+    // FIX: Use ref as primary source (always current), fall back to state
+    const answer = (accumulatedTranscript.current || spokenAnswer || userAnswer || '').trim();
+    if (!answer) {
+      alert('Please provide an answer');
       return;
     }
     
@@ -2831,8 +2832,10 @@ const startPracticeMode = async () => {
 
   // AI Interviewer Submit Handler - Stable Reference
   const handleAIInterviewerSubmit = useCallback(() => {
-    const answer = (spokenAnswer || userAnswer || '').trim();
-    console.log('Answer being used:', answer);
+    // FIX: Use ref as primary source (always current), fall back to state
+    // This fixes race condition where state hasn't updated yet after speech capture
+    const answer = (accumulatedTranscript.current || spokenAnswer || userAnswer || '').trim();
+    console.log('Answer being used:', answer, '| Ref:', accumulatedTranscript.current, '| State:', spokenAnswer);
 
     if (!answer) {
       alert('Please provide an answer (speak or type)');
