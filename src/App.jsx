@@ -368,28 +368,39 @@ const ISL = () => {
           setSessionReady(false);
         }
       } else {
-        // TAB SWITCH FIX: Refresh Supabase session with timeout to prevent hanging
-        console.log('👁️ App visible - refreshing session to prevent 406 errors');
+        // TAB SWITCH FIX: Check session validity when returning to app
+        console.log('👁️ App visible - checking session...');
         try {
-          // Use timeout to prevent hanging - if refresh takes too long, just continue
-          const refreshPromise = supabase.auth.refreshSession();
-          const timeoutPromise = new Promise((resolve) =>
-            setTimeout(() => resolve({ data: { session: null }, error: { message: 'Refresh timeout' } }), 3000)
-          );
+          // First, just check if we have a valid session (fast, no network call if cached)
+          const { data: { session: existingSession } } = await supabase.auth.getSession();
 
-          const { data: { session }, error } = await Promise.race([refreshPromise, timeoutPromise]);
-          if (error) {
-            console.warn('⚠️ Session refresh issue:', error.message);
-            // If refresh failed, try getSession as fallback
-            const { data: { session: fallbackSession } } = await supabase.auth.getSession();
-            if (fallbackSession) {
-              console.log('✅ Fallback session check passed');
+          if (existingSession) {
+            // Session exists - check if it needs refresh (token expiring soon)
+            const expiresAt = existingSession.expires_at;
+            const now = Math.floor(Date.now() / 1000);
+            const expiresIn = expiresAt - now;
+
+            if (expiresIn < 300) { // Less than 5 minutes left
+              console.log('🔄 Session expiring soon, refreshing...');
+              // Try to refresh, but don't block on failure
+              supabase.auth.refreshSession().then(({ data, error }) => {
+                if (error) {
+                  console.log('Session refresh deferred - will retry on next API call');
+                } else {
+                  console.log('✅ Session refreshed successfully');
+                }
+              }).catch(() => {
+                // Silently ignore - Supabase will auto-refresh on next API call
+              });
+            } else {
+              console.log('✅ Session valid (expires in', Math.floor(expiresIn / 60), 'min)');
             }
-          } else if (session) {
-            console.log('✅ Session refreshed successfully');
+          } else {
+            console.log('ℹ️ No active session');
           }
         } catch (err) {
-          console.warn('⚠️ Error refreshing session:', err);
+          // Don't log as error - just informational
+          console.log('Session check skipped:', err.message);
         }
 
         // MICROPHONE FIX: If user was in a mic-using mode, show them how to restart
@@ -835,30 +846,61 @@ loadPracticeHistory();
 
   // Helper function to load user tier and stats
   const loadUserTierAndStats = async (user, forceRefresh = false) => {
-    if (!user) return;
+    if (!user) return 'free';
 
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('tier, subscription_status')
-      .eq('user_id', user.id)
-      .single();
+    let tier = 'free';
 
-    const tier = profile?.tier || 'free';
-    setUserTier(tier);
-
-    if (!profile) {
-      // Create profile if doesn't exist
-      await supabase
+    try {
+      const { data: profile, error: profileError } = await supabase
         .from('user_profiles')
-        .insert([{ user_id: user.id, tier: 'free' }]);
+        .select('tier, subscription_status, stripe_customer_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profileError) {
+        console.error('❌ Profile fetch error:', profileError.message);
+        // Don't return - try to create profile or continue with defaults
+      }
+
+      if (profile) {
+        // CRITICAL: Only set tier if it's a valid non-null value
+        tier = profile.tier || 'free';
+        console.log('📋 Profile loaded:', {
+          tier: profile.tier,
+          subscription_status: profile.subscription_status,
+          stripe_customer_id: profile.stripe_customer_id
+        });
+      } else {
+        // Create profile if doesn't exist
+        console.log('📝 Creating new profile for user:', user.id);
+        const { error: insertError } = await supabase
+          .from('user_profiles')
+          .insert([{ user_id: user.id, tier: 'free' }]);
+
+        if (insertError) {
+          console.error('❌ Profile creation error:', insertError.message);
+        }
+      }
+    } catch (err) {
+      console.error('❌ Profile fetch exception:', err);
+      // Continue with default tier
     }
 
-    // Load usage stats with the tier included
-    const stats = await getUsageStats(supabase, user.id, tier);
-    // CRITICAL: Include tier in stats object so it stays in sync
-    setUsageStatsData({ ...stats, tier });
+    // Set tier state
+    setUserTier(tier);
 
-    console.log(`✅ Loaded user tier: ${tier}`);
+    // Load usage stats with the tier included
+    try {
+      const stats = await getUsageStats(supabase, user.id, tier);
+      // CRITICAL: Include tier in stats object so it stays in sync
+      setUsageStatsData({ ...stats, tier });
+      console.log(`✅ Loaded user tier: ${tier}, stats:`, stats);
+    } catch (statsErr) {
+      console.error('❌ Stats fetch error:', statsErr);
+      // Set minimal stats so limits work
+      setUsageStatsData({ tier });
+    }
+
     return tier;
   };
 
@@ -1290,8 +1332,9 @@ Just $29.99/month - practice as much as you need!`);
       return true;
     }
 
-    // Check from already-loaded usageStats state (synchronous!)
-    const check = canUseFeature(usageStats || {}, userTier, feature);
+    // Check from already-loaded usageStatsData state (synchronous!)
+    // BUG FIX: Was using wrong variable 'usageStats' instead of 'usageStatsData'
+    const check = canUseFeature(usageStatsData || {}, userTier, feature);
 
     if (!check.allowed) {
       // Show upgrade modal with specific message
@@ -1481,19 +1524,28 @@ const stopSystemAudioCapture = () => {
   setUseSystemAudio(false);
 };
 // SESSION-BASED MICROPHONE CONTROL
-const startInterviewSession = () => {
+const startInterviewSession = async () => {
   console.log('🎬 Starting interview session');
-  
-  // CRITICAL FIX: Always reinitialize recognition before starting new session
-  // This ensures we have a clean, working recognition object
-  if (!recognitionRef.current) {
-    console.log('🔄 Recognition null, initializing...');
-    initSpeechRecognition();
-  } else {
-    // Even if recognition exists, reinitialize to ensure clean state
-    console.log('🔄 Reinitializing recognition for new session...');
+
+  // iOS SAFARI FIX: Request mic permission FIRST in the same user gesture
+  // This is CRITICAL - iOS Safari requires getUserMedia before SpeechRecognition
+  if (!micPermission) {
+    console.log('⚠️ No mic permission - requesting in user gesture context...');
     try {
-      // Clean up existing recognition first
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+      setMicPermission(true);
+      console.log('✅ Mic permission granted');
+    } catch (err) {
+      console.error('❌ Mic permission denied:', err);
+      alert('Microphone permission is required for this feature. Please allow microphone access and try again.');
+      return;
+    }
+  }
+
+  // Clean up existing recognition if any
+  if (recognitionRef.current) {
+    console.log('🔄 Cleaning up existing recognition...');
+    try {
       recognitionRef.current.stop();
       recognitionRef.current.abort?.();
       recognitionRef.current.onresult = null;
@@ -1502,26 +1554,21 @@ const startInterviewSession = () => {
     } catch (err) {
       console.log('Cleanup during reinit:', err);
     }
-    // Create fresh recognition object
-    initSpeechRecognition();
   }
-  
-  // Give browser a moment to initialize
-  setTimeout(() => {
-    if (!micPermission) { 
-      console.log('⚠️ No mic permission - requesting...');
-      requestMicPermission().then(granted => {
-        if (granted) {
-          // E-009 FIX: Auto-continue session start after permission granted
-          console.log('✅ Permission granted, continuing session start...');
-          actuallyStartSession();
-        }
-      });
-      return; 
-    }
-    
-    actuallyStartSession();
-  }, 100); // Small delay ensures recognition is ready
+
+  // Initialize fresh recognition object
+  console.log('🔄 Initializing fresh recognition...');
+  initSpeechRecognition();
+
+  // CRITICAL: Start session immediately (same user gesture context for iOS)
+  // No setTimeout - iOS Safari needs this in the same gesture
+  if (!recognitionRef.current) {
+    console.error('❌ Recognition not initialized');
+    alert('Microphone initialization failed. Please refresh the page.');
+    return;
+  }
+
+  actuallyStartSession();
 };
 
 // E-009 FIX: Extracted session start logic so it can be called after permission
@@ -1530,7 +1577,7 @@ const actuallyStartSession = () => {
     console.log('Session already active');
     return;
   }
-  
+
   // Clear everything for fresh session
   accumulatedTranscript.current = '';
   currentInterimRef.current = '';
@@ -1538,7 +1585,7 @@ const actuallyStartSession = () => {
   setSpokenAnswer('');
   setMatchedQuestion(null);
   setLiveTranscript('');
-  
+
   // Start mic ONCE - it will stay active throughout session
   if (recognitionRef.current) {
     try {
@@ -1551,11 +1598,21 @@ const actuallyStartSession = () => {
       console.log('✅ Session started - mic will stay active');
     } catch (err) {
       console.error('Session start failed:', err);
-      alert('Failed to start microphone. Please refresh the page and try again.');
+      // Handle "already started" error gracefully
+      if (err.name === 'InvalidStateError') {
+        console.log('Recognition already running, continuing...');
+        setInterviewSessionActive(true);
+        interviewSessionActiveRef.current = true;
+        setSessionReady(true);
+        setIsListening(true);
+        isListeningRef.current = true;
+      } else {
+        alert('Failed to start microphone: ' + err.message + '\n\nPlease check your microphone permissions and try again.');
+      }
     }
   } else {
     console.error('Recognition not initialized after init call');
-    alert('Microphone initialization failed. Please refresh the page.');
+    alert('Microphone initialization failed. Please refresh the page and try again.');
   }
 };
 
