@@ -157,6 +157,62 @@ const UsageLimitModal = ({ user, supabase, userTier, onUpgrade, onClose, usageSt
   const isProOrBeta = userTier === 'pro' || userTier === 'beta';
   const tierName = isProOrBeta ? 'Pro' : 'Free';
 
+  // PRO/BETA USER VIEW - Show unlimited access clearly
+  if (isProOrBeta) {
+    return (
+      <div className="p-6 max-w-2xl mx-auto">
+        {/* Pro Header with Crown */}
+        <div className="text-center mb-8">
+          <div className="inline-block p-4 bg-gradient-to-br from-amber-100 to-yellow-100 rounded-full mb-4">
+            <Crown className="w-16 h-16 text-amber-500" />
+          </div>
+          <h2 className="text-3xl font-black text-gray-900 mb-2">
+            {userTier === 'beta' ? '🎖️ Beta Tester' : '👑 Pro Member'}
+          </h2>
+          <p className="text-lg text-gray-600">
+            You have unlimited access to everything!
+          </p>
+        </div>
+
+        {/* Unlimited Features Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+          {features.map((feature) => (
+            <div
+              key={feature.key}
+              className={`${feature.bgColor} rounded-xl p-4 border-2 ${feature.borderColor} transition-all hover:shadow-lg`}
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-3xl">{feature.icon}</span>
+                <div>
+                  <h3 className="font-bold text-gray-900">{feature.name}</h3>
+                  <p className="text-gray-600 text-xs">{feature.description}</p>
+                </div>
+              </div>
+              <div className="flex items-center justify-center py-2 bg-gradient-to-r from-amber-400 to-yellow-500 rounded-lg">
+                <span className="text-white font-black text-lg tracking-wide">
+                  ∞ UNLIMITED
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Thank you message */}
+        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-6 border-2 border-indigo-200 text-center">
+          <p className="text-lg font-semibold text-gray-800 mb-2">
+            {userTier === 'beta'
+              ? '🙏 Thank you for being a beta tester!'
+              : '🙏 Thank you for being a Pro member!'}
+          </p>
+          <p className="text-gray-600 text-sm">
+            Practice as much as you want - no limits, no restrictions!
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // FREE USER VIEW - Show usage with limits
   return (
     <div className="p-6 max-w-2xl mx-auto">
       {/* Header */}
@@ -166,15 +222,13 @@ const UsageLimitModal = ({ user, supabase, userTier, onUpgrade, onClose, usageSt
             <TrendingUp className="w-6 h-6 text-indigo-600" />
             <h2 className="text-2xl font-bold text-gray-900">Usage This Month</h2>
           </div>
-          {!isProOrBeta && (
-            <button
-              onClick={onUpgrade}
-              className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg font-semibold text-sm flex items-center gap-2 transition"
-            >
-              <Crown className="w-4 h-4" />
-              Upgrade
-            </button>
-          )}
+          <button
+            onClick={onUpgrade}
+            className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg font-semibold text-sm flex items-center gap-2 transition"
+          >
+            <Crown className="w-4 h-4" />
+            Upgrade
+          </button>
         </div>
         <p className="text-gray-600 text-sm">
           Your {tierName} tier usage for {getCurrentMonth()}
@@ -185,13 +239,13 @@ const UsageLimitModal = ({ user, supabase, userTier, onUpgrade, onClose, usageSt
       <div className="space-y-4 mb-6">
         {features.map((feature) => {
           const data = usageData[feature.key];
-          
+
           // E-004 FIX: Provide fallbacks for undefined values
           const used = data?.used ?? 0;
           const limit = data?.limit ?? 0;
           const unlimited = data?.unlimited ?? false;
           const remaining = unlimited ? 999999 : Math.max(0, limit - used);
-          
+
           const percentage = calculatePercentage(used, limit, unlimited);
           const limitDisplay = formatLimit(limit, unlimited);
           const isLimitReached = !unlimited && used >= limit;
@@ -255,30 +309,28 @@ const UsageLimitModal = ({ user, supabase, userTier, onUpgrade, onClose, usageSt
       </div>
 
       {/* Upgrade CTA for Free Users */}
-      {!isProOrBeta && (
-        <div className="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl p-6 text-white mb-6">
-          <h3 className="text-xl font-bold mb-2 flex items-center gap-2">
-            <Crown className="w-6 h-6" />
-            Need More Sessions?
-          </h3>
-          <p className="text-indigo-100 text-sm mb-4">
-            Upgrade to Pro and get unlimited access to all features. Practice as much as you need!
-          </p>
-          <ul className="space-y-1 text-sm mb-4">
-            <li>• Unlimited AI Interviewer</li>
-            <li>• Unlimited Practice Mode</li>
-            <li>• Unlimited Answer Assistant</li>
-            <li>• Unlimited Question Generator</li>
-            <li>• Unlimited Live Prompter</li>
-          </ul>
-          <button
-            onClick={onUpgrade}
-            className="w-full bg-white text-indigo-600 font-bold py-3 rounded-xl hover:bg-indigo-50 transition"
-          >
-            Upgrade to Pro - $29.99/month
-          </button>
-        </div>
-      )}
+      <div className="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl p-6 text-white mb-6">
+        <h3 className="text-xl font-bold mb-2 flex items-center gap-2">
+          <Crown className="w-6 h-6" />
+          Need More Sessions?
+        </h3>
+        <p className="text-indigo-100 text-sm mb-4">
+          Upgrade to Pro and get unlimited access to all features. Practice as much as you need!
+        </p>
+        <ul className="space-y-1 text-sm mb-4">
+          <li>• Unlimited AI Interviewer</li>
+          <li>• Unlimited Practice Mode</li>
+          <li>• Unlimited Answer Assistant</li>
+          <li>• Unlimited Question Generator</li>
+          <li>• Unlimited Live Prompter</li>
+        </ul>
+        <button
+          onClick={onUpgrade}
+          className="w-full bg-white text-indigo-600 font-bold py-3 rounded-xl hover:bg-indigo-50 transition"
+        >
+          Upgrade to Pro - $29.99/month
+        </button>
+      </div>
 
       {/* E-013 FIX: Clear monthly reset message */}
       <div className="text-center">
