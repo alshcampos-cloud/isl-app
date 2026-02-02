@@ -83,7 +83,8 @@ const UltimateCompetitiveDashboard = ({ user, supabase, userTier, onUpgrade }) =
         .eq('user_id', user.id)
         .single();
 
-      const isProUser = userTier === 'pro';
+      // BETA FIX: Beta users should be treated as Pro (unlimited access)
+      const isProUser = userTier === 'pro' || userTier === 'beta';
 
       // CALCULATE ADVANCED METRICS
       const { 
@@ -293,7 +294,8 @@ const UltimateCompetitiveDashboard = ({ user, supabase, userTier, onUpgrade }) =
     );
   }
 
-  if (userTier === 'pro') {
+  // BETA FIX: Beta users should see Pro dashboard (unlimited access)
+  if (userTier === 'pro' || userTier === 'beta') {
     return (
       <div className="p-6 md:p-8 max-h-[85vh] overflow-y-auto">
         {/* Pro Header */}
@@ -410,6 +412,40 @@ const UltimateCompetitiveDashboard = ({ user, supabase, userTier, onUpgrade }) =
           </div>
         </div>
 
+        {/* PRO UNLIMITED ACCESS - Clear Feature Display */}
+        <div className="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-xl p-6 border-2 border-amber-300 mb-8">
+          <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+            <Crown className="w-6 h-6 text-amber-600" />
+            Your Unlimited Pro Features
+          </h3>
+          <div className="grid md:grid-cols-2 gap-4">
+            <UnlimitedFeatureCard
+              icon={<Sparkles className="w-6 h-6" />}
+              title="AI Coach Sessions"
+              description="Unlimited AI-powered interview coaching"
+              color="indigo"
+            />
+            <UnlimitedFeatureCard
+              icon={<Zap className="w-6 h-6" />}
+              title="Live Prompter"
+              description="Unlimited real-time interview support"
+              color="green"
+            />
+            <UnlimitedFeatureCard
+              icon={<Target className="w-6 h-6" />}
+              title="Practice Mode"
+              description="Unlimited quick practice sessions"
+              color="blue"
+            />
+            <UnlimitedFeatureCard
+              icon={<Brain className="w-6 h-6" />}
+              title="Question Generator"
+              description="Unlimited custom questions"
+              color="purple"
+            />
+          </div>
+        </div>
+
         {/* Achievements */}
         {stats.achievements.length > 0 && (
           <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border-2 border-purple-200">
@@ -419,7 +455,7 @@ const UltimateCompetitiveDashboard = ({ user, supabase, userTier, onUpgrade }) =
             </h3>
             <div className="flex flex-wrap gap-3">
               {stats.achievements.map((achievement) => (
-                <div 
+                <div
                   key={achievement.id}
                   className="bg-white rounded-lg px-4 py-2 border-2 border-purple-200 flex items-center gap-2 hover:scale-105 transition-transform"
                 >
@@ -710,6 +746,37 @@ const InsightCard = ({ icon, title, message, color }) => {
           <h4 className="font-bold text-gray-900 mb-1">{title}</h4>
           <p className="text-sm text-gray-700">{message}</p>
         </div>
+      </div>
+    </div>
+  );
+};
+
+// PRO USER UNLIMITED FEATURE CARD - Shows "UNLIMITED" clearly
+const UnlimitedFeatureCard = ({ icon, title, description, color }) => {
+  const colorClasses = {
+    indigo: { bg: 'bg-indigo-100', text: 'text-indigo-600', border: 'border-indigo-200' },
+    green: { bg: 'bg-green-100', text: 'text-green-600', border: 'border-green-200' },
+    blue: { bg: 'bg-blue-100', text: 'text-blue-600', border: 'border-blue-200' },
+    purple: { bg: 'bg-purple-100', text: 'text-purple-600', border: 'border-purple-200' }
+  };
+
+  const colors = colorClasses[color] || colorClasses.indigo;
+
+  return (
+    <div className={`bg-white rounded-xl p-4 border-2 ${colors.border} hover:shadow-lg transition-all`}>
+      <div className="flex items-center gap-3 mb-2">
+        <div className={`p-2 ${colors.bg} rounded-lg`}>
+          {React.cloneElement(icon, { className: `w-6 h-6 ${colors.text}` })}
+        </div>
+        <div className="flex-1">
+          <h4 className="font-bold text-gray-900">{title}</h4>
+          <p className="text-xs text-gray-500">{description}</p>
+        </div>
+      </div>
+      <div className="flex items-center justify-center mt-3 py-2 bg-gradient-to-r from-amber-400 to-yellow-500 rounded-lg">
+        <span className="text-white font-black text-lg tracking-wide flex items-center gap-2">
+          ∞ UNLIMITED
+        </span>
       </div>
     </div>
   );

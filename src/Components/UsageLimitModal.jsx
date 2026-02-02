@@ -153,7 +153,9 @@ const UsageLimitModal = ({ user, supabase, userTier, onUpgrade, onClose, usageSt
   }
 
   const features = getFeatureConfig();
-  const tierName = userTier === 'pro' ? 'Pro' : 'Free';
+  // BETA FIX: Beta users should see Pro UI (they have unlimited access)
+  const isProOrBeta = userTier === 'pro' || userTier === 'beta';
+  const tierName = isProOrBeta ? 'Pro' : 'Free';
 
   return (
     <div className="p-6 max-w-2xl mx-auto">
@@ -164,7 +166,7 @@ const UsageLimitModal = ({ user, supabase, userTier, onUpgrade, onClose, usageSt
             <TrendingUp className="w-6 h-6 text-indigo-600" />
             <h2 className="text-2xl font-bold text-gray-900">Usage This Month</h2>
           </div>
-          {userTier === 'free' && (
+          {!isProOrBeta && (
             <button
               onClick={onUpgrade}
               className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg font-semibold text-sm flex items-center gap-2 transition"
@@ -253,7 +255,7 @@ const UsageLimitModal = ({ user, supabase, userTier, onUpgrade, onClose, usageSt
       </div>
 
       {/* Upgrade CTA for Free Users */}
-      {userTier === 'free' && (
+      {!isProOrBeta && (
         <div className="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl p-6 text-white mb-6">
           <h3 className="text-xl font-bold mb-2 flex items-center gap-2">
             <Crown className="w-6 h-6" />
