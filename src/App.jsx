@@ -2929,9 +2929,12 @@ const startPracticeMode = async () => {
           setTimeout(() => {
             speakText(feedbackJson.follow_up_question);
           }, 500);
-          
+
           console.log('✅ Conversation continuing - Exchange', exchangeCount + 1);
-          
+
+          // CRITICAL: Return resolved promise so .finally() is called properly
+          return Promise.resolve();
+
         } else {
           // CONVERSATION ENDED - Show final feedback
           // Build complete conversation summary
