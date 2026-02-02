@@ -2017,12 +2017,17 @@ const startListening = () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       console.log('✅ Perfect match used!');
       // LIVE PROMPTER USAGE: Track when question is matched/displayed
+      // SECURITY FIX: Check limits before tracking (prevents bypass)
       if (currentModeRef.current === 'prompter') {
-        trackUsageInBackground('livePrompterQuestions', 'Live Prompter');
+        if (checkUsageLimitsSync('livePrompterQuestions', 'Live Prompter')) {
+          trackUsageInBackground('livePrompterQuestions', 'Live Prompter');
+        } else {
+          console.log('🚫 Live Prompter action blocked - over limit');
+        }
       }
       return;
     }
-    
+
     // SECOND PASS: Fuzzy matching for non-perfect matches
     questions.forEach(q => {
       let score = 0;
@@ -2172,8 +2177,13 @@ const startListening = () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       console.log(`✅ Matched! (threshold: ${threshold})`);
       // LIVE PROMPTER USAGE: Track when question is matched/displayed
+      // SECURITY FIX: Check limits before tracking (prevents bypass)
       if (currentModeRef.current === 'prompter') {
-        trackUsageInBackground('livePrompterQuestions', 'Live Prompter');
+        if (checkUsageLimitsSync('livePrompterQuestions', 'Live Prompter')) {
+          trackUsageInBackground('livePrompterQuestions', 'Live Prompter');
+        } else {
+          console.log('🚫 Live Prompter action blocked - over limit');
+        }
       }
     } else { 
       console.log(`❌ No match - score ${highestScore} below threshold ${threshold}`); 
@@ -2719,13 +2729,20 @@ const startPracticeMode = async () => {
   
   // Practice Mode Submit Handler - Stable Reference
   const handlePracticeModeSubmit = useCallback(() => {
+    // SECURITY FIX: Check usage limits BEFORE action (not just at entry)
+    // This prevents bypass by staying in feature after dismissing upgrade modal
+    if (!checkUsageLimitsSync('practiceMode', 'Practice Mode')) {
+      console.log('🚫 Practice Mode action blocked - over limit');
+      return;
+    }
+
     // FIX: Use ref as primary source (always current), fall back to state
     const answer = (accumulatedTranscript.current || spokenAnswer || userAnswer || '').trim();
     if (!answer) {
       alert('Please provide an answer');
       return;
     }
-    
+
     setIsAnalyzing(true);
 
     return supabase.auth.getSession()
@@ -2832,6 +2849,13 @@ const startPracticeMode = async () => {
 
   // AI Interviewer Submit Handler - Stable Reference
   const handleAIInterviewerSubmit = useCallback(() => {
+    // SECURITY FIX: Check usage limits BEFORE action (not just at entry)
+    // This prevents bypass by staying in feature after dismissing upgrade modal
+    if (!checkUsageLimitsSync('aiInterviewer', 'AI Interviewer')) {
+      console.log('🚫 AI Interviewer action blocked - over limit');
+      return;
+    }
+
     // FIX: Use ref as primary source (always current), fall back to state
     // This fixes race condition where state hasn't updated yet after speech capture
     const answer = (accumulatedTranscript.current || spokenAnswer || userAnswer || '').trim();
@@ -4742,7 +4766,14 @@ const startPracticeMode = async () => {
               setShowAnswerAssistant(false);
               setAnswerAssistantQuestion(null);
             }}
-            onUsageTracked={() => trackUsageInBackground('answerAssistant', 'Answer Assistant')}
+            onUsageTracked={() => {
+              // SECURITY FIX: Check limits before tracking (prevents bypass)
+              if (checkUsageLimitsSync('answerAssistant', 'Answer Assistant')) {
+                trackUsageInBackground('answerAssistant', 'Answer Assistant');
+              } else {
+                console.log('🚫 Answer Assistant tracking blocked - over limit');
+              }
+            }}
           />
         )}
       </div>
@@ -5287,7 +5318,14 @@ const startPracticeMode = async () => {
               setShowAnswerAssistant(false);
               setAnswerAssistantQuestion(null);
             }}
-            onUsageTracked={() => trackUsageInBackground('answerAssistant', 'Answer Assistant')}
+            onUsageTracked={() => {
+              // SECURITY FIX: Check limits before tracking (prevents bypass)
+              if (checkUsageLimitsSync('answerAssistant', 'Answer Assistant')) {
+                trackUsageInBackground('answerAssistant', 'Answer Assistant');
+              } else {
+                console.log('🚫 Answer Assistant tracking blocked - over limit');
+              }
+            }}
           />
         )}
       </div>
@@ -6617,7 +6655,14 @@ const startPracticeMode = async () => {
                     {(usageStatsData?.questionGen?.unlimited || usageStatsData?.questionGen?.remaining > 0) ? (
                       <QuestionAssistant
                         onQuestionGenerated={async (generatedQuestion) => {
-                          // Increment usage first
+                          // SECURITY FIX: Check limits BEFORE action (prevents bypass)
+                          // This sync check is faster and prevents race conditions
+                          if (!checkUsageLimitsSync('questionGen', 'Question Generator')) {
+                            console.log('🚫 Question Generator action blocked - over limit');
+                            return;
+                          }
+
+                          // Increment usage after check passes
                           if (!usageStatsData?.questionGen?.unlimited) {
                             const canUse = await checkAndIncrementUsage('questionGen', 'Question Generator');
                             if (!canUse) {
@@ -6941,7 +6986,14 @@ const startPracticeMode = async () => {
             setShowAnswerAssistant(false);
             setAnswerAssistantQuestion(null);
           }}
-          onUsageTracked={() => trackUsageInBackground('answerAssistant', 'Answer Assistant')}
+          onUsageTracked={() => {
+              // SECURITY FIX: Check limits before tracking (prevents bypass)
+              if (checkUsageLimitsSync('answerAssistant', 'Answer Assistant')) {
+                trackUsageInBackground('answerAssistant', 'Answer Assistant');
+              } else {
+                console.log('🚫 Answer Assistant tracking blocked - over limit');
+              }
+            }}
         />
       )}
       </>
