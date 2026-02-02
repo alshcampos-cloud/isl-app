@@ -891,6 +891,17 @@ loadPracticeHistory();
           console.log('✅ Profile created successfully');
         }
       }
+
+      // BETA FIX: Check beta_testers table to override tier for beta users
+      // This ensures beta users see the Pro dashboard even if user_profiles.tier is 'free'
+      if (tier !== 'pro') {
+        console.log('🔍 Checking beta_testers table for user:', user.id);
+        const isBeta = await isBetaUser(supabase, user.id);
+        if (isBeta) {
+          tier = 'beta';
+          console.log('🎖️ Beta user detected! Setting tier to beta');
+        }
+      }
     } catch (err) {
       console.error('❌ Profile fetch exception:', err);
       // Continue with default tier
