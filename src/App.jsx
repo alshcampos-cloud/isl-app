@@ -1150,6 +1150,34 @@ loadPracticeHistory();
     return showAllFeedback || revealStage >= stage;
   };
 
+  // BROWSER DETECTION - For speech recognition compatibility warnings
+  const getBrowserInfo = () => {
+    const ua = navigator.userAgent;
+    const isOpera = ua.includes('OPR/') || ua.includes('Opera');
+    const isOperaGX = isOpera && ua.includes('GX');
+    const isFirefox = ua.includes('Firefox');
+    const isChrome = ua.includes('Chrome') && !ua.includes('OPR/') && !ua.includes('Edg/');
+    const isSafari = ua.includes('Safari') && !ua.includes('Chrome');
+    const isEdge = ua.includes('Edg/');
+
+    // Web Speech API works best in Chrome, Edge, Safari
+    // Limited/broken in: Opera, Opera GX, Firefox
+    const hasSpeechSupport = 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window;
+    const hasReliableSpeech = hasSpeechSupport && (isChrome || isEdge || isSafari);
+
+    return {
+      isOpera,
+      isOperaGX,
+      isFirefox,
+      isChrome,
+      isSafari,
+      isEdge,
+      hasSpeechSupport,
+      hasReliableSpeech,
+      name: isOperaGX ? 'Opera GX' : isOpera ? 'Opera' : isFirefox ? 'Firefox' : isChrome ? 'Chrome' : isSafari ? 'Safari' : isEdge ? 'Edge' : 'Unknown'
+    };
+  };
+
   // SPEECH RECOGNITION
   const initSpeechRecognition = () => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -3987,6 +4015,31 @@ const startPracticeMode = async () => {
             
             {matchedQuestion && <button onClick={() => { setMatchedQuestion(null); setTranscript(''); }} className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg">Clear</button>}
           </div>
+
+          {/* Browser compatibility warning for unsupported browsers */}
+          {(() => {
+            const browser = getBrowserInfo();
+            if (!browser.hasReliableSpeech) {
+              return (
+                <div className="bg-amber-500/20 border-2 border-amber-500 rounded-xl p-4 mb-6">
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl flex-shrink-0">⚠️</span>
+                    <div>
+                      <h4 className="font-bold text-amber-300 mb-1">Speech Recognition May Not Work in {browser.name}</h4>
+                      <p className="text-sm text-amber-200/80 mb-2">
+                        For the best experience with voice features, we recommend using <strong>Google Chrome</strong>, <strong>Microsoft Edge</strong>, or <strong>Safari</strong>.
+                      </p>
+                      <p className="text-xs text-amber-200/60">
+                        You can still use the text search below to find questions manually.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+            return null;
+          })()}
+
           {!matchedQuestion ? (
             <div className="text-center py-20">
               <div className="w-32 h-32 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-8">
@@ -4035,6 +4088,40 @@ const startPracticeMode = async () => {
                       <li>4. Give your answer (mic paused, not recording you)</li>
                       <li>5. Repeat for next question</li>
                     </ol>
+                  </div>
+
+                  {/* Manual text input fallback - for browsers with broken speech recognition */}
+                  <div className="mt-8 max-w-2xl mx-auto">
+                    <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
+                      <label className="block text-sm text-gray-400 mb-2">
+                        🔍 Or type question keywords to search manually:
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="e.g., tell me about yourself, greatest weakness..."
+                          className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && e.target.value.trim()) {
+                              matchQuestion(e.target.value.trim());
+                              e.target.value = '';
+                            }
+                          }}
+                        />
+                        <button
+                          onClick={(e) => {
+                            const input = e.target.closest('.flex').querySelector('input');
+                            if (input && input.value.trim()) {
+                              matchQuestion(input.value.trim());
+                              input.value = '';
+                            }
+                          }}
+                          className="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg font-bold transition-colors flex-shrink-0"
+                        >
+                          Search
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </>
               )}
