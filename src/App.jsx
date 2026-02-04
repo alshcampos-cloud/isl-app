@@ -1593,8 +1593,10 @@ const startInterviewSession = async () => {
 
   // iOS SAFARI FIX: Request mic permission FIRST in the same user gesture
   // This is CRITICAL - iOS Safari requires getUserMedia before SpeechRecognition
-  if (!micPermission) {
-    console.log('⚠️ No mic permission - requesting in user gesture context...');
+  // FIX: Also re-acquire stream if it was released during endInterviewSession
+  if (!micPermission || !micStreamRef.current) {
+    const reason = !micPermission ? 'No mic permission' : 'Stream was released';
+    console.log(`⚠️ ${reason} - requesting in user gesture context...`);
     try {
       // MOBILE FIX: Store the stream so we can release it later
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
