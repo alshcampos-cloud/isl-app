@@ -24,6 +24,7 @@ import PricingPage from './Components/PricingPage';
 import ResetPassword from './Components/ResetPassword';
 import ConsentDialog from './Components/ConsentDialog';
 import SessionDetailsModal from './Components/SessionDetailsModal';
+import SubscriptionManagement from './Components/SubscriptionManagement';
 
 // CSS string is OK at top-level
 const styles = `
@@ -210,6 +211,8 @@ const ISL = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [userTier, setUserTier] = useState('free');
   const [showPricingPage, setShowPricingPage] = useState(false);
+  const [showSubscriptionManagement, setShowSubscriptionManagement] = useState(false);
+  const [subscriptionStatus, setSubscriptionStatus] = useState('inactive');
   const [showUsageDashboard, setShowUsageDashboard] = useState(false);
   // REMOVED: showResetPassword and isPasswordResetRequired - now handled in ProtectedRoute.jsx
   const [usageStatsData, setUsageStatsData] = useState(null);
@@ -873,6 +876,10 @@ loadPracticeHistory();
       if (profile) {
         // CRITICAL: Only set tier if it's a valid non-null value
         tier = profile.tier || 'free';
+        // Store subscription status for subscription management
+        if (profile.subscription_status) {
+          setSubscriptionStatus(profile.subscription_status);
+        }
         console.log('📋 Profile loaded:', {
           tier: profile.tier,
           subscription_status: profile.subscription_status,
@@ -972,6 +979,14 @@ loadPracticeHistory();
 
     if (!isSuccess || !sessionId || !currentUser) return;
 
+    // FIX: Prevent duplicate popups - check sessionStorage for this specific session
+    const handledKey = `stripe_success_handled_${sessionId}`;
+    if (sessionStorage.getItem(handledKey)) {
+      console.log('💳 Checkout success already handled for this session, skipping...');
+      window.history.replaceState({}, document.title, window.location.pathname);
+      return;
+    }
+
     console.log('💳 Stripe checkout success detected, polling for tier update...');
     console.log('📋 Session ID:', sessionId, 'User ID:', currentUser.id);
 
@@ -997,6 +1012,10 @@ loadPracticeHistory();
         if (profile?.tier === 'pro' || profile?.subscription_status === 'active') {
           console.log('🎉 Pro tier confirmed!');
           alreadyHandled = true;
+
+          // FIX: Mark this session as handled to prevent duplicate popups
+          sessionStorage.setItem(handledKey, 'true');
+
           setUserTier('pro');
           const stats = await getUsageStats(supabase, currentUser.id, 'pro');
           setUsageStatsData({ ...stats, tier: 'pro' });
@@ -1012,6 +1031,10 @@ loadPracticeHistory();
         if (pollCount >= maxPolls) {
           console.log('⚠️ Tier update timeout - webhook may be delayed');
           alreadyHandled = true;
+
+          // FIX: Mark this session as handled to prevent duplicate popups
+          sessionStorage.setItem(handledKey, 'true');
+
           // Clean up URL and tell user to refresh
           window.history.replaceState({}, document.title, window.location.pathname);
           alert('Payment received! Your Pro features should activate within a few minutes. If not, please refresh the page or contact support.');
@@ -1445,6 +1468,82 @@ Just $29.99/month - practice as much as you need!`);
 
     console.log(`✅ Usage OK for ${featureName}: ${used}/${limit} (${limit - used} remaining)`);
     return true;
+  };
+
+  // SERVER-SIDE USAGE ENFORCEMENT: Authoritative check that cannot be bypassed
+  // This calls the check-usage Edge Function to validate entitlement + quota
+  const checkUsageServerSide = async (feature, featureName) => {
+    if (!currentUser) {
+      alert('Please sign in first');
+      return false;
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        alert('Session expired. Please sign in again.');
+        return false;
+      }
+
+      const response = await fetch(
+        'https://tzrlpwtkrtvjpdhcaayu.supabase.co/functions/v1/check-usage',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ feature }),
+        }
+      );
+
+      if (!response.ok) {
+        console.error('check-usage HTTP error:', response.status);
+        // Fallback to client-side check on HTTP error
+        return checkUsageLimitsSync(feature === 'practice_mode' ? 'practiceMode' :
+                                    feature === 'ai_interviewer' ? 'aiInterviewer' :
+                                    feature === 'answer_assistant' ? 'answerAssistant' :
+                                    feature === 'question_gen' ? 'questionGen' :
+                                    feature === 'live_prompter_questions' ? 'livePrompterQuestions' : feature,
+                                    featureName);
+      }
+
+      const result = await response.json();
+
+      if (!result.allowed) {
+        console.log(`🚫 SERVER DENIED: ${featureName} - ${result.used}/${result.limit}`);
+        alert(`You've used all ${result.limit} ${featureName} sessions this month!
+
+Upgrade to Pro for UNLIMITED:
+• Unlimited AI Interviewer
+• Unlimited Practice Mode
+• Unlimited Answer Assistant
+• Unlimited Question Generator
+• Unlimited Live Prompter
+
+Just $29.99/month - practice as much as you need!`);
+        setShowPricingPage(true);
+        return false;
+      }
+
+      // Update local state with server-verified tier if different
+      if (result.tier && result.tier !== userTier) {
+        console.log(`🔄 Updating tier from server: ${userTier} -> ${result.tier}`);
+        setUserTier(result.tier);
+      }
+
+      console.log(`✅ SERVER APPROVED: ${featureName} - ${result.remaining} remaining`);
+      return true;
+    } catch (error) {
+      console.error('Server usage check failed:', error);
+      // Fallback to client-side check on network error (fail-open for UX)
+      const clientFeature = feature === 'practice_mode' ? 'practiceMode' :
+                           feature === 'ai_interviewer' ? 'aiInterviewer' :
+                           feature === 'answer_assistant' ? 'answerAssistant' :
+                           feature === 'question_gen' ? 'questionGen' :
+                           feature === 'live_prompter_questions' ? 'livePrompterQuestions' : feature;
+      return checkUsageLimitsSync(clientFeature, featureName);
+    }
   };
 
   // Track usage AFTER successful completion (for Answer Assistant)
@@ -2637,9 +2736,9 @@ Respond in this exact JSON format:
   
   const actuallyStartAIInterviewer = async () => {
     console.log('🚀 Actually starting AI Interviewer');
-    
-    // COMPREHENSIVE FIX: Check usage SYNCHRONOUSLY (from state)
-    const canUse = checkUsageLimitsSync('aiInterviewer', 'AI Interviewer');
+
+    // AUTHORITATIVE FIX: Server-side usage check (cannot be bypassed)
+    const canUse = await checkUsageServerSide('ai_interviewer', 'AI Interviewer');
     if (!canUse) return;
     
     // Set UI state IMMEDIATELY (no await blocking)
@@ -2687,9 +2786,9 @@ const startPracticeMode = async () => {
   
   const actuallyStartPractice = async () => {
     console.log('🚀 Actually starting Practice mode');
-    
-    // COMPREHENSIVE FIX: Check usage SYNCHRONOUSLY (from state)
-    const canUse = checkUsageLimitsSync('practiceMode', 'Practice Mode');
+
+    // AUTHORITATIVE FIX: Server-side usage check (cannot be bypassed)
+    const canUse = await checkUsageServerSide('practice_mode', 'Practice Mode');
     if (!canUse) return;
     
     // Set UI state IMMEDIATELY (no await blocking)
@@ -2759,13 +2858,6 @@ const startPracticeMode = async () => {
   
   // Practice Mode Submit Handler - Stable Reference
   const handlePracticeModeSubmit = useCallback(() => {
-    // SECURITY FIX: Check usage limits BEFORE action (not just at entry)
-    // This prevents bypass by staying in feature after dismissing upgrade modal
-    if (!checkUsageLimitsSync('practiceMode', 'Practice Mode')) {
-      console.log('🚫 Practice Mode action blocked - over limit');
-      return;
-    }
-
     // FIX: Use ref as primary source (always current), fall back to state
     const answer = (accumulatedTranscript.current || spokenAnswer || userAnswer || '').trim();
     if (!answer) {
@@ -2773,9 +2865,17 @@ const startPracticeMode = async () => {
       return;
     }
 
-    setIsAnalyzing(true);
-
-    return supabase.auth.getSession()
+    // AUTHORITATIVE FIX: Server-side usage check before submit (prevents in-session bypass)
+    // Wrapped in promise chain to maintain stable callback reference
+    return checkUsageServerSide('practice_mode', 'Practice Mode')
+      .then(canUse => {
+        if (!canUse) {
+          console.log('🚫 Practice Mode action blocked by server - over limit');
+          return Promise.reject(new Error('USAGE_LIMIT_EXCEEDED'));
+        }
+        setIsAnalyzing(true);
+        return supabase.auth.getSession();
+      })
       .then(({ data: { session }, error: sessionError }) => {
         // SESSION FIX: Check if session is valid before making API call
         if (sessionError || !session?.access_token) {
@@ -2866,6 +2966,11 @@ const startPracticeMode = async () => {
         return Promise.resolve();
       })
       .catch(error => {
+        // Don't show alert for usage limit errors (already handled by server check)
+        if (error.message === 'USAGE_LIMIT_EXCEEDED') {
+          console.log('🚫 Practice submit cancelled - usage limit');
+          return;
+        }
         console.error('Feedback error:', error);
         alert('Failed to get feedback: ' + error.message);
       })
@@ -2879,13 +2984,6 @@ const startPracticeMode = async () => {
 
   // AI Interviewer Submit Handler - Stable Reference
   const handleAIInterviewerSubmit = useCallback(() => {
-    // SECURITY FIX: Check usage limits BEFORE action (not just at entry)
-    // This prevents bypass by staying in feature after dismissing upgrade modal
-    if (!checkUsageLimitsSync('aiInterviewer', 'AI Interviewer')) {
-      console.log('🚫 AI Interviewer action blocked - over limit');
-      return;
-    }
-
     // FIX: Use ref as primary source (always current), fall back to state
     // This fixes race condition where state hasn't updated yet after speech capture
     const answer = (accumulatedTranscript.current || spokenAnswer || userAnswer || '').trim();
@@ -2896,10 +2994,16 @@ const startPracticeMode = async () => {
       return;
     }
 
-    setIsAnalyzing(true);
-    const userContext = getUserContext();
-
-    return supabase.auth.getSession()
+    // AUTHORITATIVE FIX: Server-side usage check before submit (prevents in-session bypass)
+    return checkUsageServerSide('ai_interviewer', 'AI Interviewer')
+      .then(canUse => {
+        if (!canUse) {
+          console.log('🚫 AI Interviewer action blocked by server - over limit');
+          return Promise.reject(new Error('USAGE_LIMIT_EXCEEDED'));
+        }
+        setIsAnalyzing(true);
+        return supabase.auth.getSession();
+      })
       .then(({ data: { session }, error: sessionError }) => {
         // SESSION FIX: Check if session is valid before making API call
         if (sessionError || !session?.access_token) {
@@ -3049,6 +3153,11 @@ const startPracticeMode = async () => {
         }
       })
       .catch(error => {
+        // Don't show alert for usage limit errors (already handled by server check)
+        if (error.message === 'USAGE_LIMIT_EXCEEDED') {
+          console.log('🚫 AI Interviewer submit cancelled - usage limit');
+          return;
+        }
         console.error('Feedback error:', error);
         alert('Failed to get feedback: ' + error.message);
       })
@@ -7119,6 +7228,30 @@ const startPracticeMode = async () => {
             </div>
           </div>
 
+          {/* Subscription Management */}
+          <div className="bg-white rounded-xl shadow-sm p-5 mb-4">
+            <h2 className="text-lg font-semibold mb-3 text-gray-800">Subscription</h2>
+            <div className="flex justify-between items-center py-2 mb-2">
+              <span className="text-gray-600 text-sm">Current Plan</span>
+              <span className={`font-medium text-sm px-2 py-1 rounded ${
+                userTier === 'pro' ? 'bg-indigo-100 text-indigo-700' :
+                userTier === 'beta' ? 'bg-amber-100 text-amber-700' :
+                'bg-gray-100 text-gray-700'
+              }`}>
+                {userTier === 'pro' ? '👑 Pro' : userTier === 'beta' ? '🎖️ Beta' : 'Free'}
+              </span>
+            </div>
+            <button
+              onClick={() => setShowSubscriptionManagement(true)}
+              className="w-full flex justify-between items-center py-3 px-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm"
+            >
+              <span className="font-medium text-gray-700">
+                {userTier === 'pro' ? 'Manage Subscription' : 'View Plan Details'}
+              </span>
+              <ChevronRight className="w-4 h-4 text-gray-400" />
+            </button>
+          </div>
+
           <div className="bg-white rounded-xl shadow-sm p-5 mb-4">
             <h2 className="text-lg font-semibold mb-3 text-gray-800">Legal</h2>
             
@@ -7223,14 +7356,26 @@ const startPracticeMode = async () => {
           <div className="bg-white rounded-xl shadow-sm p-5">
             <h2 className="text-lg font-semibold mb-3 text-gray-800">Support</h2>
             <p className="text-gray-600 mb-2 text-sm">Questions or feedback?</p>
-            <a 
-              href="mailto:support@interviewanswers.ai" 
+            <a
+              href="mailto:support@interviewanswers.ai"
               className="text-indigo-600 hover:text-indigo-700 font-medium text-sm"
             >
               support@interviewanswers.ai
             </a>
           </div>
         </div>
+
+        {/* Subscription Management Modal */}
+        {showSubscriptionManagement && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <SubscriptionManagement
+              user={currentUser}
+              userTier={userTier}
+              subscriptionStatus={subscriptionStatus}
+              onClose={() => setShowSubscriptionManagement(false)}
+            />
+          </div>
+        )}
       </div>
     );
   }
