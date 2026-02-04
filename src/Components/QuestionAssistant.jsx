@@ -50,7 +50,12 @@ export default function QuestionAssistant({ onQuestionGenerated, existingQuestio
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      
+
+      // BUG 1/6 FIX: Handle null session after tab switch
+      if (!session?.access_token) {
+        throw new Error('Session expired. Please refresh the page or sign in again.');
+      }
+
       // FIXED: Add 30-second timeout wrapper for iOS Safari compatibility
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000);

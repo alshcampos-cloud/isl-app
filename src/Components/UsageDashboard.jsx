@@ -100,11 +100,15 @@ const UltimateCompetitiveDashboard = ({ user, supabase, userTier, onUpgrade }) =
       } = calculateAdvancedMetrics(allSessions || []);
 
       // Calculate days until interview
+      // BUG 2 FIX: Normalize both dates to midnight to avoid timezone/partial-day off-by-one
       let daysUntil = null;
       if (userData?.interview_date) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
         const interviewDate = new Date(userData.interview_date);
-        const diffTime = interviewDate - new Date();
-        daysUntil = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        interviewDate.setHours(0, 0, 0, 0);
+        const diffTime = interviewDate.getTime() - today.getTime();
+        daysUntil = Math.round(diffTime / (1000 * 60 * 60 * 24));
       }
 
       setStats({

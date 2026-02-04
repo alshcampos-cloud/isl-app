@@ -344,11 +344,16 @@ const ISL = () => {
 
   // CLEANUP 3: Stop mic when app goes to background (Safari tab switch, app switch)
   // ALSO: Refresh session token when returning to prevent 406 errors
+  // BUG 3 FIX: True pause/resume for Live Prompter - don't end session on tab switch
+  const wasSessionPausedRef = useRef(false); // Track if we paused due to tab switch
+
   useEffect(() => {
     const handleVisibilityChange = async () => {
       if (document.hidden) {
-        console.log('🧹 App backgrounded - fully cleaning up mic session');
+        // BUG 3 FIX: Only PAUSE mic, don't end session (for Live Prompter resume)
         if (recognitionRef.current && interviewSessionActiveRef.current) {
+          console.log('🧹 App backgrounded - PAUSING mic session (not ending)');
+          wasSessionPausedRef.current = true; // Remember we need to resume
           try {
             // FULL CLEANUP: Stop, abort, and null out recognition
             recognitionRef.current.stop();
@@ -358,18 +363,18 @@ const ISL = () => {
             recognitionRef.current.onerror = null;
             recognitionRef.current.onend = null;
             recognitionRef.current.onstart = null;
-            // Null the reference so startInterviewSession creates a fresh one
+            // Null the reference so resume creates a fresh one
             recognitionRef.current = null;
-            console.log('✅ Recognition fully cleaned up on background');
+            console.log('✅ Recognition paused on background');
           } catch (err) {
             console.log('Cleanup error (ignored):', err);
           }
-          // Mark session as ended
-          setInterviewSessionActive(false);
-          interviewSessionActiveRef.current = false;
+          // BUG 3 FIX: Keep session active, only stop listening state
+          // Session persists so user sees "Session Active" when returning
           setIsListening(false);
           isListeningRef.current = false;
           setSessionReady(false);
+          // NOTE: NOT setting interviewSessionActive = false anymore!
         }
       } else {
         // TAB SWITCH FIX: Check session validity when returning to app
@@ -407,12 +412,26 @@ const ISL = () => {
           console.log('Session check skipped:', err.message);
         }
 
-        // MICROPHONE FIX: If user was in a mic-using mode, show them how to restart
-        const micModes = ['prompter', 'ai-interviewer', 'practice'];
-        if (micModes.includes(currentModeRef.current) && !interviewSessionActiveRef.current) {
-          console.log('🎤 User returned to mic mode - session ended, can restart manually');
-          // Don't auto-restart (could be annoying) but ensure state is clean
-          setSessionReady(false);
+        // BUG 3 FIX: Auto-resume Live Prompter session if it was paused
+        if (wasSessionPausedRef.current && interviewSessionActiveRef.current) {
+          console.log('🎤 Auto-resuming paused session...');
+          wasSessionPausedRef.current = false;
+
+          // Reinitialize recognition and restart
+          try {
+            initSpeechRecognition();
+            if (recognitionRef.current) {
+              recognitionRef.current.start();
+              setIsListening(true);
+              isListeningRef.current = true;
+              setSessionReady(true);
+              console.log('✅ Session auto-resumed after tab switch');
+            }
+          } catch (err) {
+            console.error('Auto-resume failed:', err);
+            // Session still active, user can manually restart
+            setSessionReady(false);
+          }
         }
       }
       // TAB SWITCH FIX: Removed setCurrentView that was breaking buttons
@@ -1573,8 +1592,13 @@ Just $29.99/month - practice as much as you need!`);
         return getUsageStats(supabase, currentUser.id, userTier);
       })
       .then((stats) => {
-        setUsageStatsData(stats);
-        console.log(`✅ ${featureName} session tracked in background.`);
+        // BUG 4 FIX: Only update if stats valid, and preserve tier
+        if (stats) {
+          setUsageStatsData(prev => ({ ...stats, tier: prev?.tier || userTier }));
+          console.log(`✅ ${featureName} session tracked in background.`);
+        } else {
+          console.warn(`⚠️ ${featureName} tracked but couldn't reload stats`);
+        }
       })
       .catch((error) => {
         console.error(`Failed to track ${featureName} usage:`, error);
@@ -2604,19 +2628,30 @@ Respond in this exact JSON format:
         return;
       }
 
-      // BUG 5 FIX: Add 10-second timeout to prevent hanging after tab switch
-      const deletePromise = supabase
+      // BUG 5 FIX: Delete questions AND practice_history (analytics/progress)
+      // BUT do NOT delete usage_tracking (keeps usage counters intact)
+      const deleteQuestionsPromise = supabase
         .from('questions')
         .delete()
         .eq('user_id', user.id);
+
+      const deletePracticeHistoryPromise = supabase
+        .from('practice_history')
+        .delete()
+        .eq('user_id', user.id);
+
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Delete timed out')), 10000)
       );
 
       let error;
       try {
-        const result = await Promise.race([deletePromise, timeoutPromise]);
-        error = result?.error;
+        // Delete both tables in parallel with timeout
+        const [questionsResult, historyResult] = await Promise.race([
+          Promise.all([deleteQuestionsPromise, deletePracticeHistoryPromise]),
+          timeoutPromise
+        ]);
+        error = questionsResult?.error || historyResult?.error;
       } catch (timeoutError) {
         console.error('Delete timeout:', timeoutError);
         // Still clear local state - user wanted to delete
@@ -2631,13 +2666,13 @@ Respond in this exact JSON format:
       // Clear the initialization flag so defaults CAN be reloaded if user wants
       localStorage.removeItem(`isl_defaults_initialized_${user.id}`);
 
-      console.log('✅ All questions deleted from Supabase');
+      console.log('✅ All questions AND practice history deleted from Supabase');
 
       // Show choice modal: Keep empty or load defaults
       setShowDeleteChoiceModal(true);
     } catch (error) {
-      console.error('❌ Error deleting all questions:', error);
-      alert('Failed to delete questions: ' + error.message);
+      console.error('❌ Error deleting all data:', error);
+      alert('Failed to delete data: ' + error.message);
     }
   };
 

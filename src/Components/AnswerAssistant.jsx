@@ -73,7 +73,12 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
     
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      
+
+      // BUG 1/6 FIX: Handle null session after tab switch
+      if (!session?.access_token) {
+        throw new Error('Session expired. Please refresh the page or sign in again.');
+      }
+
       const response = await fetch('https://tzrlpwtkrtvjpdhcaayu.supabase.co/functions/v1/ai-feedback', {
         method: 'POST',
         headers: {
@@ -124,6 +129,11 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
+
+      // BUG 1/6 FIX: Handle null session after tab switch
+      if (!session?.access_token) {
+        throw new Error('Session expired. Please refresh the page or sign in again.');
+      }
 
       // DEBUG: Log conversation state
       console.log('🔍 SENDING MESSAGE:', {
