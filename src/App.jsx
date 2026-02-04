@@ -1666,6 +1666,7 @@ Just $29.99/month - practice as much as you need!`);
 
       const currentMonth = new Date().toISOString().slice(0, 7);
 
+      // Check beta_testers first (highest priority)
       const { data: betaUser } = await supabase
         .from('beta_testers')
         .select('unlimited_access')
@@ -1676,6 +1677,16 @@ Just $29.99/month - practice as much as you need!`);
         return { session_count: 0, tier: 'beta', month: currentMonth };
       }
 
+      // FIX: Get tier from user_profiles (authoritative source for subscription status)
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('tier')
+        .eq('user_id', user.id)
+        .single();
+
+      const actualTier = profile?.tier || 'free';
+      console.log('📋 getCurrentUsage: tier from user_profiles =', actualTier);
+
       const { data: usage } = await supabase
         .from('usage_tracking')
         .select('*')
@@ -1683,7 +1694,10 @@ Just $29.99/month - practice as much as you need!`);
         .eq('month', currentMonth)
         .single();
 
-      return usage || { session_count: 0, tier: 'free', month: currentMonth };
+      // Return usage data with correct tier from user_profiles
+      return usage
+        ? { ...usage, tier: actualTier }
+        : { session_count: 0, tier: actualTier, month: currentMonth };
     } catch (error) {
       console.error('Get usage error:', error);
       return null;
