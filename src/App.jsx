@@ -3501,9 +3501,26 @@ const startPracticeMode = async () => {
                 </p>
               </div>
 
-              <div className="bg-green-50 rounded p-3 mb-4 text-center">
+              <div className="bg-green-50 rounded p-3 mb-3 text-center">
                 <p className="text-xs text-green-800">
                   <strong>Recommended:</strong> Use for practice only, not actual interviews.
+                </p>
+              </div>
+
+              {/* Browser compatibility notice */}
+              <div className="bg-blue-50 border-l-4 border-blue-400 rounded p-3 mb-4">
+                <p className="font-bold text-blue-900 text-xs mb-1">🌐 Browser Compatibility:</p>
+                <p className="text-blue-800 text-xs mb-2">
+                  Voice recognition works best in:
+                </p>
+                <div className="flex flex-wrap gap-1 mb-2">
+                  <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-medium">✓ Chrome</span>
+                  <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-medium">✓ Edge</span>
+                  <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-medium">✓ Safari</span>
+                </div>
+                <p className="text-blue-700 text-xs">
+                  <strong>Not recommended:</strong> Opera, Opera GX, Firefox (limited voice support).
+                  Text search fallback is available.
                 </p>
               </div>
 
@@ -4016,24 +4033,16 @@ const startPracticeMode = async () => {
             {matchedQuestion && <button onClick={() => { setMatchedQuestion(null); setTranscript(''); }} className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg">Clear</button>}
           </div>
 
-          {/* Browser compatibility warning for unsupported browsers */}
+          {/* Browser compatibility reminder for unsupported browsers */}
           {(() => {
             const browser = getBrowserInfo();
             if (!browser.hasReliableSpeech) {
               return (
-                <div className="bg-amber-500/20 border-2 border-amber-500 rounded-xl p-4 mb-6">
-                  <div className="flex items-start gap-3">
-                    <span className="text-2xl flex-shrink-0">⚠️</span>
-                    <div>
-                      <h4 className="font-bold text-amber-300 mb-1">Speech Recognition May Not Work in {browser.name}</h4>
-                      <p className="text-sm text-amber-200/80 mb-2">
-                        For the best experience with voice features, we recommend using <strong>Google Chrome</strong>, <strong>Microsoft Edge</strong>, or <strong>Safari</strong>.
-                      </p>
-                      <p className="text-xs text-amber-200/60">
-                        You can still use the text search below to find questions manually.
-                      </p>
-                    </div>
-                  </div>
+                <div className="bg-amber-900/30 border border-amber-500/50 rounded-lg px-4 py-2 mb-4 flex items-center gap-2">
+                  <span className="text-lg">💡</span>
+                  <p className="text-sm text-amber-200/80">
+                    <strong>{browser.name}</strong> has limited voice support. Use the text search below, or switch to <strong>Chrome/Edge/Safari</strong> for voice.
+                  </p>
                 </div>
               );
             }
