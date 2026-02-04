@@ -158,6 +158,11 @@ const ISL = () => {
   const [followUpQuestion, setFollowUpQuestion] = useState(null);
   const [exchangeCount, setExchangeCount] = useState(0);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  // P0 FIX: Track analyzing state for stale detection and late-response safety
+  const isAnalyzingRef = useRef(false); // Mirror of isAnalyzing for visibility handler (avoids stale closure)
+  const isAnalyzingTimestampRef = useRef(null); // When isAnalyzing was set true
+  const submitAttemptRef = useRef(0); // Incrementing ID to ignore late responses
+  const STALE_ANALYZING_THRESHOLD_MS = 12000; // 12 seconds - conservative for slow networks
   const [practiceHistory, setPracticeHistory] = useState([]);
   const [editingQuestion, setEditingQuestion] = useState(null);
   const [showNarrative, setShowNarrative] = useState(false);
@@ -342,6 +347,11 @@ const ISL = () => {
     }
   }, [currentMode]);
 
+  // P0 FIX: Keep isAnalyzingRef in sync with isAnalyzing state
+  useEffect(() => {
+    isAnalyzingRef.current = isAnalyzing;
+  }, [isAnalyzing]);
+
   // CLEANUP 3: Stop mic when app goes to background (Safari tab switch, app switch)
   // ALSO: Refresh session token when returning to prevent 406 errors
   // BUG 3 FIX: True pause/resume for Live Prompter - don't end session on tab switch
@@ -379,6 +389,23 @@ const ISL = () => {
       } else {
         // TAB SWITCH FIX: Check session validity when returning to app
         console.log('👁️ App visible - checking session...');
+
+        // P0 FIX: Reset STALE isAnalyzing state to unblock submit buttons
+        // Uses ref to avoid stale closure (this effect has empty dep array)
+        // Only reset if analyzing has been stuck for longer than threshold
+        if (isAnalyzingRef.current && isAnalyzingTimestampRef.current) {
+          const stuckDuration = Date.now() - isAnalyzingTimestampRef.current;
+          console.log(`👁️ [Visibility] isAnalyzing=${isAnalyzingRef.current} | stuckFor=${stuckDuration}ms | threshold=${STALE_ANALYZING_THRESHOLD_MS}ms`);
+          if (stuckDuration > STALE_ANALYZING_THRESHOLD_MS) {
+            // Increment attemptRef so any in-flight response is ignored
+            const invalidatedAttempt = submitAttemptRef.current;
+            submitAttemptRef.current++;
+            console.log(`🔓 [Visibility] Resetting STALE isAnalyzing | was stuck ${stuckDuration}ms | invalidated attemptId=${invalidatedAttempt} | new current=${submitAttemptRef.current}`);
+            isAnalyzingTimestampRef.current = null;
+            setIsAnalyzing(false);
+          }
+        }
+
         try {
           // First, just check if we have a valid session (fast, no network call if cached)
           const { data: { session: existingSession } } = await supabase.auth.getSession();
@@ -2893,6 +2920,10 @@ const startPracticeMode = async () => {
   
   // Practice Mode Submit Handler - Stable Reference
   const handlePracticeModeSubmit = useCallback(() => {
+    // P0 INSTRUMENTATION: Log entry + gate flags
+    const attemptId = ++submitAttemptRef.current;
+    console.log(`🔵 [Practice] Submit clicked | attemptId=${attemptId} | isAnalyzing=${isAnalyzingRef.current}`);
+
     // FIX: Use ref as primary source (always current), fall back to state
     const answer = (accumulatedTranscript.current || spokenAnswer || userAnswer || '').trim();
     if (!answer) {
@@ -2908,7 +2939,10 @@ const startPracticeMode = async () => {
           console.log('🚫 Practice Mode action blocked by server - over limit');
           return Promise.reject(new Error('USAGE_LIMIT_EXCEEDED'));
         }
+        // P0 FIX: Track when analyzing started (timestamp BEFORE state change)
+        isAnalyzingTimestampRef.current = Date.now();
         setIsAnalyzing(true);
+        console.log(`🔵 [Practice] setIsAnalyzing(true) | attemptId=${attemptId} | timestamp=${isAnalyzingTimestampRef.current}`);
         return supabase.auth.getSession();
       })
       .then(({ data: { session }, error: sessionError }) => {
@@ -2918,6 +2952,9 @@ const startPracticeMode = async () => {
           throw new Error('Your session has expired. Please sign in again.');
         }
         console.log('🔐 Using session token for API call (expires:', new Date(session.expires_at * 1000).toLocaleTimeString(), ')');
+
+        // P0 INSTRUMENTATION: Log before API call
+        console.log(`🔵 [Practice] Attempting API call | attemptId=${attemptId}`);
 
         // RELIABILITY FIX: Use retry wrapper (3 attempts)
         return fetchWithRetry('https://tzrlpwtkrtvjpdhcaayu.supabase.co/functions/v1/ai-feedback', {
@@ -2966,16 +3003,22 @@ const startPracticeMode = async () => {
           feedbackJson = data;
         }
 
+        // P0 FIX: Gate result application - ignore late responses from stale attempts
+        if (attemptId !== submitAttemptRef.current) {
+          console.log(`🟡 [Practice] Result SKIPPED (stale) | attemptId=${attemptId} | current=${submitAttemptRef.current}`);
+          return Promise.resolve();
+        }
+
         console.log('🎯 FLUSHSYNC FIX: Setting feedback immediately with forced commit');
 
         // FLUSHSYNC: Force React to commit state immediately (no batching/deferral)
         flushSync(() => {
           // LAYER 1: Set feedback state immediately (non-blocking)
           setFeedback(feedbackJson);
-          
+
           // LAYER 2: Store in ref as safety net (in case flushSync doesn't work in all scenarios)
           lastFeedbackRef.current = feedbackJson;
-          
+
           setPracticeHistory([
             ...practiceHistory,
             {
@@ -3001,6 +3044,8 @@ const startPracticeMode = async () => {
         return Promise.resolve();
       })
       .catch(error => {
+        // P0 INSTRUMENTATION: Log error
+        console.log(`🔴 [Practice] Catch error | attemptId=${attemptId} | error=${error.message}`);
         // Don't show alert for usage limit errors (already handled by server check)
         if (error.message === 'USAGE_LIMIT_EXCEEDED') {
           console.log('🚫 Practice submit cancelled - usage limit');
@@ -3010,7 +3055,13 @@ const startPracticeMode = async () => {
         alert('Failed to get feedback: ' + error.message);
       })
       .finally(() => {
-        console.log('🎯 FLUSHSYNC FIX: Setting isAnalyzing to false with forced commit');
+        // P0 FIX: Only reset if this is still the current attempt (ignore late responses)
+        if (attemptId !== submitAttemptRef.current) {
+          console.log(`🟡 [Practice] Finally SKIPPED (stale) | attemptId=${attemptId} | current=${submitAttemptRef.current}`);
+          return;
+        }
+        console.log(`🟢 [Practice] Finally | attemptId=${attemptId} | resetting isAnalyzing`);
+        isAnalyzingTimestampRef.current = null;
         flushSync(() => {
           setIsAnalyzing(false);
         });
@@ -3019,6 +3070,10 @@ const startPracticeMode = async () => {
 
   // AI Interviewer Submit Handler - Stable Reference
   const handleAIInterviewerSubmit = useCallback(() => {
+    // P0 INSTRUMENTATION: Log entry + gate flags
+    const attemptId = ++submitAttemptRef.current;
+    console.log(`🟣 [AI Interviewer] Submit clicked | attemptId=${attemptId} | isAnalyzing=${isAnalyzingRef.current}`);
+
     // FIX: Use ref as primary source (always current), fall back to state
     // This fixes race condition where state hasn't updated yet after speech capture
     const answer = (accumulatedTranscript.current || spokenAnswer || userAnswer || '').trim();
@@ -3036,7 +3091,10 @@ const startPracticeMode = async () => {
           console.log('🚫 AI Interviewer action blocked by server - over limit');
           return Promise.reject(new Error('USAGE_LIMIT_EXCEEDED'));
         }
+        // P0 FIX: Track when analyzing started (timestamp BEFORE state change)
+        isAnalyzingTimestampRef.current = Date.now();
         setIsAnalyzing(true);
+        console.log(`🟣 [AI Interviewer] setIsAnalyzing(true) | attemptId=${attemptId} | timestamp=${isAnalyzingTimestampRef.current}`);
         return supabase.auth.getSession();
       })
       .then(({ data: { session }, error: sessionError }) => {
@@ -3045,6 +3103,8 @@ const startPracticeMode = async () => {
           console.error('❌ No valid session for API call:', sessionError?.message || 'No session');
           throw new Error('Your session has expired. Please sign in again.');
         }
+        // P0 INSTRUMENTATION: Log before API call
+        console.log(`🟣 [AI Interviewer] Attempting API call | attemptId=${attemptId}`);
         console.log('🔐 Using session token for AI Interviewer API call');
 
         // RELIABILITY FIX: Use retry wrapper (3 attempts)
@@ -3060,7 +3120,7 @@ const startPracticeMode = async () => {
               questionText: followUpQuestion || currentQuestion.question,
               userAnswer: answer,
               expectedBullets: currentQuestion.bullets || [],
-              userContext: userContext,
+              userContext: getUserContext(),
               mode: 'ai-interviewer',
               conversationHistory: conversationHistory,
               exchangeCount: exchangeCount
@@ -3094,6 +3154,12 @@ const startPracticeMode = async () => {
           feedbackJson = JSON.parse(feedbackText);
         } else {
           feedbackJson = data;
+        }
+
+        // P0 FIX: Gate result application - ignore late responses from stale attempts
+        if (attemptId !== submitAttemptRef.current) {
+          console.log(`🟡 [AI Interviewer] Result SKIPPED (stale) | attemptId=${attemptId} | current=${submitAttemptRef.current}`);
+          return Promise.resolve();
         }
 
         // CHECK IF CONVERSATION SHOULD CONTINUE
@@ -3188,6 +3254,8 @@ const startPracticeMode = async () => {
         }
       })
       .catch(error => {
+        // P0 INSTRUMENTATION: Log error
+        console.log(`🔴 [AI Interviewer] Catch error | attemptId=${attemptId} | error=${error.message}`);
         // Don't show alert for usage limit errors (already handled by server check)
         if (error.message === 'USAGE_LIMIT_EXCEEDED') {
           console.log('🚫 AI Interviewer submit cancelled - usage limit');
@@ -3197,7 +3265,13 @@ const startPracticeMode = async () => {
         alert('Failed to get feedback: ' + error.message);
       })
       .finally(() => {
-        console.log('🎯 FLUSHSYNC FIX: Setting isAnalyzing to false with forced commit');
+        // P0 FIX: Only reset if this is still the current attempt (ignore late responses)
+        if (attemptId !== submitAttemptRef.current) {
+          console.log(`🟡 [AI Interviewer] Finally SKIPPED (stale) | attemptId=${attemptId} | current=${submitAttemptRef.current}`);
+          return;
+        }
+        console.log(`🟢 [AI Interviewer] Finally | attemptId=${attemptId} | resetting isAnalyzing`);
+        isAnalyzingTimestampRef.current = null;
         flushSync(() => {
           setIsAnalyzing(false);
         });
@@ -3482,6 +3556,9 @@ const startPracticeMode = async () => {
               <p className="text-sm text-red-800 font-medium mb-2">⚠️ This action cannot be undone!</p>
               <p className="text-xs text-red-700">
                 All questions, keywords, bullets, and practice history will be deleted.
+              </p>
+              <p className="text-xs text-red-600 mt-2 italic">
+                Note: Some analytics data may take up to 24 hours to fully reset.
               </p>
             </div>
 
@@ -3893,7 +3970,7 @@ const startPracticeMode = async () => {
                           const interview = new Date(interviewDate);
                           interview.setHours(0, 0, 0, 0);
                           const diffTime = interview.getTime() - today.getTime();
-                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                          const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
                           return Math.max(0, diffDays);
                         })()
                       : '—'
