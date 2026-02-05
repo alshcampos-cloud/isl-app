@@ -7461,10 +7461,11 @@ const startPracticeMode = async () => {
 
                         // Delete ALL user data from Supabase with individual timeouts
                         await deleteWithTimeout('practice_sessions');
-                        await deleteWithTimeout('questions'); // ← CRITICAL: Delete questions table
+                        await deleteWithTimeout('practice_history');
+                        await deleteWithTimeout('questions');
                         await deleteWithTimeout('question_banks');
                         await deleteWithTimeout('usage_tracking');
-                        await deleteWithTimeout('user_profiles'); // Also delete profile
+                        await deleteWithTimeout('user_profiles');
                       }
                       
                       // Clear ALL localStorage (including consent so user starts fresh)
