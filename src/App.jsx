@@ -360,6 +360,9 @@ const ISL = () => {
   useEffect(() => {
     const handleVisibilityChange = async () => {
       if (document.hidden) {
+        // Track when user leaves for auto-refresh timing
+        window._lastHiddenTime = Date.now();
+
         // BUG 3 FIX: Only PAUSE mic, don't end session (for Live Prompter resume)
         if (recognitionRef.current && interviewSessionActiveRef.current) {
           console.log('🧹 App backgrounded - PAUSING mic session (not ending)');
@@ -389,6 +392,19 @@ const ISL = () => {
       } else {
         // TAB SWITCH FIX: Check session validity when returning to app
         console.log('👁️ App visible - checking session...');
+
+        // P0 NUCLEAR FIX: Auto-refresh on tab return to clear ALL stale state
+        // This fixes buttons not working after switching tabs/apps on desktop AND mobile
+        // Only refresh if user has been away for more than 2 seconds (avoid false triggers)
+        const timeAway = Date.now() - (window._lastHiddenTime || 0);
+        if (timeAway > 2000) {
+          console.log(`🔄 [Tab Return] Away for ${timeAway}ms - refreshing to clear stale state...`);
+          // Small delay to ensure visibility state is stable
+          setTimeout(() => {
+            window.location.reload();
+          }, 100);
+          return; // Don't execute rest of handler, page is reloading
+        }
 
         // P0 FIX: Reset STALE isAnalyzing state to unblock submit buttons
         // Uses ref to avoid stale closure (this effect has empty dep array)
