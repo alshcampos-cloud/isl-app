@@ -21,6 +21,16 @@ export const TIER_LIMITS = {
     question_gen: 999999,         // UNLIMITED question generation
     live_prompter_questions: 999999, // UNLIMITED real-time prompts
     live_prompter_unlimited: true
+  },
+  beta: {
+    name: 'Beta Tester',
+    price: 0,
+    ai_interviewer: 999999,       // UNLIMITED - beta testers get full Pro access
+    practice_mode: 999999,        // UNLIMITED
+    answer_assistant: 999999,     // UNLIMITED
+    question_gen: 999999,         // UNLIMITED
+    live_prompter_questions: 999999, // UNLIMITED
+    live_prompter_unlimited: true
   }
 };
 
