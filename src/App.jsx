@@ -2723,6 +2723,7 @@ Respond in this exact JSON format:
       if (error) throw error;
 
       setQuestions([]);
+      setPracticeHistory([]);
       setShowDeleteAllConfirm(false);
 
       // Clear the initialization flag so defaults CAN be reloaded if user wants
