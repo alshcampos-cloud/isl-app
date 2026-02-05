@@ -11,13 +11,19 @@ serve(async (req) => {
   }
 
   try {
-    const { targetRole, targetCompany, background, interviewType, customPrompt, existingQuestions, jobDescription, keepSimple, maxWords } = await req.json()
+    const { targetRole, targetCompany, background, interviewType, customPrompt, existingQuestions, sessionGeneratedQuestions, jobDescription, keepSimple, maxWords } = await req.json()
 
-    // Build context from existing questions
+    // Build context from existing questions in bank
     const recentQuestions = existingQuestions?.slice(-10) || []
     const exampleQuestions = recentQuestions
       ?.map((q: any, i: number) => `${i + 1}. "${q.question}"`)
       ?.join('\n') || 'No existing questions yet'
+
+    // Build list of questions generated THIS SESSION (for "Try Another" variety)
+    const sessionQuestions = sessionGeneratedQuestions?.slice(-5) || []
+    const avoidTheseQuestions = sessionQuestions.length > 0
+      ? sessionQuestions.map((q: string, i: number) => `${i + 1}. "${q}"`).join('\n')
+      : null
 
     const wordLimit = maxWords || 15;
 
@@ -31,9 +37,14 @@ ${background ? `- Background: ${background}` : ''}
 ${jobDescription ? `- Job Requirements: ${jobDescription}` : ''}
 ${customPrompt ? `- Focus Area: ${customPrompt}` : ''}
 
-RECENTLY ASKED (create something DIFFERENT):
+QUESTIONS IN BANK (for context):
 ${exampleQuestions}
+${avoidTheseQuestions ? `
+🚫 JUST GENERATED THIS SESSION - DO NOT REPEAT OR REPHRASE THESE:
+${avoidTheseQuestions}
 
+⚠️ CRITICAL: The user clicked "Try Another" - they want a COMPLETELY DIFFERENT topic/skill, NOT a synonym or rephrasing. Ask about a different competency, scenario, or skill area entirely.
+` : ''}
 🚨 CRITICAL RULES - MUST FOLLOW:
 1. ✅ MAXIMUM ${wordLimit} WORDS TOTAL
 2. ✅ ONE simple, clear scenario only

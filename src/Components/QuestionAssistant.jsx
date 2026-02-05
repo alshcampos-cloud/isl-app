@@ -12,6 +12,7 @@ export default function QuestionAssistant({ onQuestionGenerated, existingQuestio
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedQuestion, setGeneratedQuestion] = useState('');
   const [error, setError] = useState('');
+  const [sessionGeneratedQuestions, setSessionGeneratedQuestions] = useState([]); // Track questions generated this session for variety
 
   // Load saved context from localStorage
   useEffect(() => {
@@ -77,6 +78,7 @@ export default function QuestionAssistant({ onQuestionGenerated, existingQuestio
             customPrompt,
             jobDescription,
             existingQuestions: existingQuestions.slice(0, 10),
+            sessionGeneratedQuestions: sessionGeneratedQuestions.slice(-5), // Include recently generated this session for variety
             keepSimple: true,
             maxWords: 20
           }),
@@ -106,6 +108,8 @@ export default function QuestionAssistant({ onQuestionGenerated, existingQuestio
       }
       
       setGeneratedQuestion(question);
+      // Track this question to avoid generating similar ones when "Try Another" is clicked
+      setSessionGeneratedQuestions(prev => [...prev, question]);
     } catch (err) {
       console.error('Generation error:', err);
       // FIXED: Better error messages for different failure types
