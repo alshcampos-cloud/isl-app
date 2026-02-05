@@ -2726,8 +2726,10 @@ Respond in this exact JSON format:
       setPracticeHistory([]);
       setShowDeleteAllConfirm(false);
 
-      // Clear the initialization flag so defaults CAN be reloaded if user wants
+      // Clear localStorage caches so data doesn't reload from fallback
       localStorage.removeItem(`isl_defaults_initialized_${user.id}`);
+      localStorage.removeItem('isl_history');
+      localStorage.removeItem('isl_questions');
 
       console.log('✅ All questions, practice history, AND practice sessions deleted from Supabase');
 
