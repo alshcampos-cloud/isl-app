@@ -842,12 +842,14 @@ const loadPracticeHistory = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     
-    const { data: sessions } = await supabase
+    const { data: sessions, error: sessionsError } = await supabase
       .from('practice_sessions')
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
-    
+
+    console.log('🔍 practice_sessions query:', { count: sessions?.length, error: sessionsError });
+
     if (sessions && sessions.length > 0) {
       const history = sessions.map(s => ({
         question: s.question_text,
@@ -7447,15 +7449,18 @@ const startPracticeMode = async () => {
                         // ✅ FIX: Add 10-second timeout per operation to prevent hanging (Focus-Loss Cascade Bug)
                         const deleteWithTimeout = async (table) => {
                           const deletePromise = supabase.from(table).delete().eq('user_id', user.id);
-                          const timeoutPromise = new Promise((_, reject) => 
+                          const timeoutPromise = new Promise((_, reject) =>
                             setTimeout(() => reject(new Error(`${table} delete timed out`)), 10000)
                           );
                           try {
-                            await Promise.race([deletePromise, timeoutPromise]);
-                            console.log(`✅ Deleted from ${table}`);
+                            const result = await Promise.race([deletePromise, timeoutPromise]);
+                            if (result?.error) {
+                              console.error(`❌ ${table} delete error:`, result.error);
+                            } else {
+                              console.log(`✅ Deleted from ${table}`, result?.status, result?.statusText);
+                            }
                           } catch (err) {
                             console.warn(`⚠️ ${table} delete failed/timeout:`, err.message);
-                            // Continue anyway - local cleanup is more important
                           }
                         };
 
