@@ -6336,8 +6336,8 @@ const startPracticeMode = async () => {
                   const interview = new Date(interviewDate);
                   interview.setHours(0, 0, 0, 0);
                   const diffTime = interview.getTime() - today.getTime();
-                  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24)); // FIXED: Math.ceil → Math.round for accurate day count
-                  return Math.max(0, diffDays);
+                  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+                  return Math.max(0, diffDays + 1); // +1 so interview day = 1, not 0
                 })()} Days to Shine!` : 'Set Your Interview Date'}</h3>
                 <div className="flex flex-col md:flex-row items-start md:items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
                   <div className="flex-1 w-full">
@@ -6355,7 +6355,7 @@ const startPracticeMode = async () => {
                   {interviewDate && (
                     <div className="text-center bg-white/20 backdrop-blur rounded-xl p-3 sm:p-4 lg:p-5 min-w-[120px] sm:min-w-[140px]">
                       <div className="text-3xl sm:text-4xl lg:text-5xl font-black mb-0.5 sm:mb-1">
-                        {Math.max(0, Math.ceil((new Date(interviewDate).setHours(0,0,0,0) - new Date().setHours(0,0,0,0)) / (1000 * 60 * 60 * 24)))}
+                        {Math.max(0, Math.ceil((new Date(interviewDate).setHours(0,0,0,0) - new Date().setHours(0,0,0,0)) / (1000 * 60 * 60 * 24)) + 1)}
                       </div>
                       <div className="text-xs sm:text-sm text-white/90 font-bold">days left!</div>
                       <div className="text-[10px] sm:text-xs text-white/75 mt-0.5 sm:mt-1">⭐ You've got this!</div>
