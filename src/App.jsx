@@ -2685,7 +2685,7 @@ Respond in this exact JSON format:
         return;
       }
 
-      // BUG 5 FIX: Delete questions AND practice_history (analytics/progress)
+      // BUG 5 FIX: Delete questions, practice_history, AND practice_sessions (scores/attempts)
       // BUT do NOT delete usage_tracking (keeps usage counters intact)
       const deleteQuestionsPromise = supabase
         .from('questions')
@@ -2697,18 +2697,23 @@ Respond in this exact JSON format:
         .delete()
         .eq('user_id', user.id);
 
+      const deletePracticeSessionsPromise = supabase
+        .from('practice_sessions')
+        .delete()
+        .eq('user_id', user.id);
+
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Delete timed out')), 10000)
       );
 
       let error;
       try {
-        // Delete both tables in parallel with timeout
-        const [questionsResult, historyResult] = await Promise.race([
-          Promise.all([deleteQuestionsPromise, deletePracticeHistoryPromise]),
+        // Delete all three tables in parallel with timeout
+        const [questionsResult, historyResult, sessionsResult] = await Promise.race([
+          Promise.all([deleteQuestionsPromise, deletePracticeHistoryPromise, deletePracticeSessionsPromise]),
           timeoutPromise
         ]);
-        error = questionsResult?.error || historyResult?.error;
+        error = questionsResult?.error || historyResult?.error || sessionsResult?.error;
       } catch (timeoutError) {
         console.error('Delete timeout:', timeoutError);
         // Still clear local state - user wanted to delete
@@ -2723,7 +2728,7 @@ Respond in this exact JSON format:
       // Clear the initialization flag so defaults CAN be reloaded if user wants
       localStorage.removeItem(`isl_defaults_initialized_${user.id}`);
 
-      console.log('✅ All questions AND practice history deleted from Supabase');
+      console.log('✅ All questions, practice history, AND practice sessions deleted from Supabase');
 
       // Show choice modal: Keep empty or load defaults
       setShowDeleteChoiceModal(true);
@@ -3585,10 +3590,10 @@ const startPracticeMode = async () => {
             <div className="bg-red-50 rounded-xl p-4 mb-6 border border-red-200">
               <p className="text-sm text-red-800 font-medium mb-2">⚠️ This action cannot be undone!</p>
               <p className="text-xs text-red-700">
-                All questions, keywords, bullets, and practice history will be deleted.
+                All questions, keywords, bullets, practice history, and practice session scores will be deleted.
               </p>
               <p className="text-xs text-red-600 mt-2 italic">
-                Note: Some analytics data may take up to 24 hours to fully reset.
+                Note: Your usage counts will be preserved.
               </p>
             </div>
 
