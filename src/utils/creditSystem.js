@@ -300,7 +300,7 @@ export async function isBetaUser(supabase, userId) {
       .from('beta_testers')
       .select('unlimited_access')
       .eq('user_id', userId)
-      .single();
+      .maybeSingle();
 
     if (betaUser?.unlimited_access) {
       console.log('🎖️ Beta user detected (beta_testers table) - unlimited access');
@@ -312,7 +312,7 @@ export async function isBetaUser(supabase, userId) {
       .from('user_profiles')
       .select('tier')
       .eq('user_id', userId)
-      .single();
+      .maybeSingle();
 
     if (profile?.tier === 'beta') {
       console.log('🎖️ Beta user detected (user_profiles.tier) - unlimited access');

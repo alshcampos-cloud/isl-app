@@ -1689,7 +1689,7 @@ Just $29.99/month - practice as much as you need!`);
         .from('beta_testers')
         .select('unlimited_access')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (betaUser?.unlimited_access) {
         return { session_count: 0, tier: 'beta', month: currentMonth };
@@ -1710,7 +1710,7 @@ Just $29.99/month - practice as much as you need!`);
         .select('*')
         .eq('user_id', user.id)
         .eq('month', currentMonth)
-        .single();
+        .maybeSingle();
 
       // Return usage data with correct tier from user_profiles
       return usage
