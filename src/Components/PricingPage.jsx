@@ -348,13 +348,6 @@ export default function PricingPage({ onSelectTier, currentTier = 'free', user, 
             </div>
 
             <div>
-              <h3 className="font-bold text-gray-900 mb-2">Is there a money-back guarantee?</h3>
-              <p className="text-gray-600">
-                Yes! We offer a 7-day money-back guarantee on all paid plans. If you're not satisfied, contact us within 7 days of your purchase for a full refund.
-              </p>
-            </div>
-
-            <div>
               <h3 className="font-bold text-gray-900 mb-2">What happens if I cancel?</h3>
               <p className="text-gray-600">
                 You'll retain access to your paid plan features until the end of your current billing period. After that, you'll be automatically moved to the free tier. Your data and question bank will be preserved.
