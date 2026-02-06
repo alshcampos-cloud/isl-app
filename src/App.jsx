@@ -2787,14 +2787,20 @@ Respond in this exact JSON format:
   };
 
   // MODE STARTERS
-  const startPrompterMode = () => { 
+  const startPrompterMode = () => {
     console.log('🎬 startPrompterMode called');
-    
-    if (questions.length === 0) { 
-      alert('Add questions first!'); 
-      return; 
+
+    if (questions.length === 0) {
+      alert('Add questions first!');
+      return;
     }
-    
+
+    // USAGE LIMIT GATE: Block before starting Live Prompter
+    if (!checkUsageLimitsSync('livePrompterQuestions', 'Live Prompter')) {
+      console.log('🚫 Live Prompter blocked - usage limit reached');
+      return;
+    }
+
     if (!hasConsented) {
       console.log('⚠️ No consent - showing dialog');
       setPendingMode('prompter');
