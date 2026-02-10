@@ -322,6 +322,7 @@ export default function NursingTrackApp() {
           onBack={handleBackToDashboard}
           userData={userData}
           refreshUsage={refreshUsage}
+          addSession={addSession}
         />
       );
 

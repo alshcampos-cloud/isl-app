@@ -28,6 +28,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import { fetchWithRetry } from '../../utils/fetchWithRetry';
 import { canUseFeature, incrementUsage } from '../../utils/creditSystem';
+import { createOfferCoachSession } from './nursingSessionStore';
 
 // ============================================================
 // NEGOTIATION SCENARIO LIBRARY — Hardcoded, NOT in nursingQuestions.js
@@ -261,7 +262,7 @@ function averageScore(scores) {
 // ============================================================
 // MAIN COMPONENT
 // ============================================================
-export default function NursingOfferCoach({ specialty, onBack, userData, refreshUsage }) {
+export default function NursingOfferCoach({ specialty, onBack, userData, refreshUsage, addSession }) {
   // State
   const [selectedScenario, setSelectedScenario] = useState(null);
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -378,6 +379,17 @@ export default function NursingOfferCoach({ specialty, onBack, userData, refresh
       };
       saveHistory([...history, historyEntry]);
 
+      // Persist session to Supabase via addSession (non-blocking)
+      if (addSession) {
+        const sessionRecord = createOfferCoachSession(
+          selectedScenario.id,
+          selectedScenario.title,
+          selectedScenario.category,
+          scores,
+        );
+        addSession(sessionRecord);
+      }
+
       // CHARGE AFTER SUCCESS (Battle Scar #8)
       if (userData?.user?.id) {
         try {
@@ -393,7 +405,7 @@ export default function NursingOfferCoach({ specialty, onBack, userData, refresh
     } finally {
       setIsLoading(false);
     }
-  }, [userAnswer, isLoading, selectedScenario, userData, refreshUsage, history, saveHistory]);
+  }, [userAnswer, isLoading, selectedScenario, userData, refreshUsage, history, saveHistory, addSession]);
 
   // Navigation helpers
   const selectScenario = useCallback((scenario) => {
