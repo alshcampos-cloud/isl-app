@@ -8,11 +8,11 @@ import {
   ChevronRight, Stethoscope, MessageSquare, Clock,
   BarChart3, Star, Sparkles, Layers, Shield, DollarSign
 } from 'lucide-react';
-import { getQuestionsForSpecialty, getCategories, CLINICAL_FRAMEWORKS } from './nursingQuestions';
+import { CLINICAL_FRAMEWORKS } from './nursingQuestions';
+import useNursingQuestions from './useNursingQuestions';
 
 export default function NursingDashboard({ specialty, onStartMode, onChangeSpecialty, onBack, userData }) {
-  const questions = getQuestionsForSpecialty(specialty.id);
-  const categories = getCategories(questions);
+  const { questions, categories } = useNursingQuestions(specialty.id);
 
   // Practice modes available in the nursing track
   const practiceModes = [
