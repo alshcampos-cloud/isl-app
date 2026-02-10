@@ -49,7 +49,18 @@ export default function NursingTrackApp() {
   const [sessionHistory, setSessionHistory] = useState([]);
   const [sessionsLoadedFromDb, setSessionsLoadedFromDb] = useState(false);
 
+  // User state — fetched on mount, passed as props (no Context needed yet)
+  const [userData, setUserData] = useState({
+    user: null,
+    tier: 'free',
+    isBeta: false,
+    usage: null,
+    displayName: '',
+    loading: true,
+  });
+
   // Add a session record: update in-memory state AND persist to Supabase (non-blocking)
+  // NOTE: Must be declared AFTER userData to avoid ReferenceError (const doesn't hoist)
   const addSession = useCallback((sessionRecord) => {
     // Always update in-memory immediately
     setSessionHistory(prev => [...prev, sessionRecord]);
@@ -64,16 +75,6 @@ export default function NursingTrackApp() {
         });
     }
   }, [userData?.user?.id, selectedSpecialty?.id]);
-
-  // User state — fetched on mount, passed as props (no Context needed yet)
-  const [userData, setUserData] = useState({
-    user: null,
-    tier: 'free',
-    isBeta: false,
-    usage: null,
-    displayName: '',
-    loading: true,
-  });
 
   // Fetch user session, profile, tier, beta status, usage on mount
   useEffect(() => {
