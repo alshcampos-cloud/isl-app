@@ -21,6 +21,7 @@ import NursingCommandCenter from './NursingCommandCenter';
 import NursingAICoach from './NursingAICoach';
 import NursingResources from './NursingResources';
 import NursingConfidenceBuilder from './NursingConfidenceBuilder';
+import NursingOfferCoach from './NursingOfferCoach';
 
 // Internal view states for the nursing track
 const VIEWS = {
@@ -34,6 +35,7 @@ const VIEWS = {
   AI_COACH: 'ai-coach',
   RESOURCES: 'resources',
   CONFIDENCE: 'confidence-builder',
+  NEGOTIATION: 'offer-coach',
 };
 
 export default function NursingTrackApp() {
@@ -191,6 +193,9 @@ export default function NursingTrackApp() {
       case 'confidence-builder':
         setCurrentView(VIEWS.CONFIDENCE);
         break;
+      case 'offer-coach':
+        setCurrentView(VIEWS.NEGOTIATION);
+        break;
       default:
         console.warn('Unknown mode:', modeId);
         break;
@@ -302,6 +307,16 @@ export default function NursingTrackApp() {
     case VIEWS.CONFIDENCE:
       return (
         <NursingConfidenceBuilder
+          specialty={selectedSpecialty}
+          onBack={handleBackToDashboard}
+          userData={userData}
+          refreshUsage={refreshUsage}
+        />
+      );
+
+    case VIEWS.NEGOTIATION:
+      return (
+        <NursingOfferCoach
           specialty={selectedSpecialty}
           onBack={handleBackToDashboard}
           userData={userData}
