@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import {
   ArrowLeft, Bot, Target, BookOpen, Award,
   ChevronRight, Stethoscope, MessageSquare, Clock,
-  BarChart3, Star, Sparkles, Layers, Shield
+  BarChart3, Star, Sparkles, Layers, Shield, DollarSign
 } from 'lucide-react';
 import { getQuestionsForSpecialty, getCategories, CLINICAL_FRAMEWORKS } from './nursingQuestions';
 
@@ -69,6 +69,15 @@ export default function NursingDashboard({ specialty, onStartMode, onChangeSpeci
       color: 'from-amber-500 to-orange-500',
       badge: 'New',
       detail: 'Background profile → Evidence file → AI confidence brief → Pre-interview reset',
+    },
+    {
+      id: 'offer-coach',
+      name: 'Offer Negotiation',
+      description: 'Practice negotiating salary, sign-on bonuses, and benefits with AI coaching',
+      icon: DollarSign,
+      color: 'from-emerald-500 to-green-500',
+      badge: 'New',
+      detail: 'Scenario-based practice → AI evaluates communication, not dollar amounts',
     },
   ];
 
