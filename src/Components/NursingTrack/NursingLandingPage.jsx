@@ -8,7 +8,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ArrowRight, Stethoscope, Bot, Target, MessageSquare,
-  CheckCircle, Shield, Clock, Sparkles, Heart
+  CheckCircle, Shield, Clock, Sparkles, Heart, DollarSign
 } from 'lucide-react';
 
 export default function NursingLandingPage() {
@@ -260,6 +260,12 @@ export default function NursingLandingPage() {
                 desc: 'Build an evidence file from your real experience, then get a personalized AI confidence brief with interview strategy and talking points.',
                 color: 'bg-rose-50 text-rose-600',
               },
+              {
+                icon: DollarSign,
+                title: 'Offer Negotiation Coach',
+                desc: 'Practice salary conversations that could earn you thousands more per year. AI coaches your communication — not specific dollar amounts.',
+                color: 'bg-emerald-50 text-emerald-600',
+              },
             ].map((feature, i) => (
               <motion.div
                 key={i}
@@ -364,6 +370,7 @@ export default function NursingLandingPage() {
                   'SBAR drills with per-component scoring',
                   'AI Interview Coach',
                   'Confidence Builder + AI brief',
+                  'Offer Negotiation Coach',
                   'Command Center analytics',
                 ].map(f => (
                   <li key={f} className="flex items-center gap-2 text-sm text-gray-600">
