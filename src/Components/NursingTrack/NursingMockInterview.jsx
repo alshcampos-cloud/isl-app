@@ -16,6 +16,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import { getFrameworkDetails, CLINICAL_FRAMEWORKS } from './nursingQuestions';
 import useNursingQuestions from './useNursingQuestions';
+import NursingLoadingSkeleton from './NursingLoadingSkeleton';
 import { fetchWithRetry } from '../../utils/fetchWithRetry';
 import { canUseFeature, incrementUsage } from '../../utils/creditSystem';
 import NursingSessionSummary from './NursingSessionSummary';
@@ -140,7 +141,7 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
   const inputRef = useRef(null);
 
   // Get questions for this specialty (Supabase → fallback to static)
-  const { questions } = useNursingQuestions(specialty.id);
+  const { questions, loading: questionsLoading } = useNursingQuestions(specialty.id);
 
   // Credit check on mount
   useEffect(() => {
@@ -444,6 +445,8 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
   // ============================================================
   // ACTIVE SESSION: Chat interface
   // ============================================================
+  if (questionsLoading) return <NursingLoadingSkeleton title="Mock Interview" onBack={onBack} />;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-sky-950 to-slate-900 flex flex-col">
       {/* Header */}

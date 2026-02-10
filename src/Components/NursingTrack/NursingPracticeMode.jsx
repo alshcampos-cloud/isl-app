@@ -17,6 +17,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import { getFrameworkDetails } from './nursingQuestions';
 import useNursingQuestions from './useNursingQuestions';
+import NursingLoadingSkeleton from './NursingLoadingSkeleton';
 import { fetchWithRetry } from '../../utils/fetchWithRetry';
 import { canUseFeature, incrementUsage } from '../../utils/creditSystem';
 import { parseScoreFromResponse, stripScoreTag, scoreColor5 } from './nursingUtils';
@@ -216,6 +217,8 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
   const creditInfo = userData?.usage?.practiceMode;
   const isUnlimited = userData?.isBeta || userData?.tier === 'pro';
   const avgScore = scoredCount > 0 ? (totalScore / scoredCount).toFixed(1) : null;
+
+  if (questionsLoading) return <NursingLoadingSkeleton title="Quick Practice" onBack={onBack} />;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-sky-950 to-slate-900 flex flex-col">

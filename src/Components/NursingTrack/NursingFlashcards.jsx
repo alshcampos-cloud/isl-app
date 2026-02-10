@@ -13,10 +13,13 @@ import {
 } from 'lucide-react';
 import { getFrameworkDetails } from './nursingQuestions';
 import useNursingQuestions from './useNursingQuestions';
+import NursingLoadingSkeleton from './NursingLoadingSkeleton';
 import { fetchFlashcardProgress, upsertFlashcardProgress } from './nursingSupabase';
 
 export default function NursingFlashcards({ specialty, onBack, userData }) {
-  const { questions: allQuestions, categories } = useNursingQuestions(specialty.id);
+  const { questions: allQuestions, categories, loading } = useNursingQuestions(specialty.id);
+
+  if (loading) return <NursingLoadingSkeleton title="Flashcards" onBack={onBack} />;
 
   // Filters
   const [filterCategory, setFilterCategory] = useState('all');

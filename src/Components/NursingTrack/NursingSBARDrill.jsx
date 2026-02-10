@@ -18,6 +18,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import { getFrameworkDetails } from './nursingQuestions';
 import useNursingQuestions from './useNursingQuestions';
+import NursingLoadingSkeleton from './NursingLoadingSkeleton';
 import { fetchWithRetry } from '../../utils/fetchWithRetry';
 import { canUseFeature, incrementUsage } from '../../utils/creditSystem';
 import { parseSBARScores, stripSBARScoreTags, scoreColor10, scoreBg10 } from './nursingUtils';
@@ -347,6 +348,8 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
   // ============================================================
   // ACTIVE DRILL
   // ============================================================
+  if (questionsLoading) return <NursingLoadingSkeleton title="SBAR Drill" onBack={onBack} />;
+
   if (!currentQuestion) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-sky-950 to-slate-900 flex items-center justify-center p-4">

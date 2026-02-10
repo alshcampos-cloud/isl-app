@@ -10,9 +10,12 @@ import {
 } from 'lucide-react';
 import { CLINICAL_FRAMEWORKS } from './nursingQuestions';
 import useNursingQuestions from './useNursingQuestions';
+import NursingLoadingSkeleton from './NursingLoadingSkeleton';
 
 export default function NursingDashboard({ specialty, onStartMode, onChangeSpecialty, onBack, userData }) {
-  const { questions, categories } = useNursingQuestions(specialty.id);
+  const { questions, categories, loading } = useNursingQuestions(specialty.id);
+
+  if (loading) return <NursingLoadingSkeleton title={`${specialty.name} Track`} onBack={onBack} />;
 
   // Practice modes available in the nursing track
   const practiceModes = [
