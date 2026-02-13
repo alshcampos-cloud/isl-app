@@ -2,12 +2,15 @@
 // After selecting a specialty, this is the nurse's home base.
 // Shows available practice modes tailored to their specialty.
 
+import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft, Bot, Target, BookOpen, Award,
   ChevronRight, Stethoscope, MessageSquare, Clock,
-  BarChart3, Star, Sparkles, Layers, Shield, DollarSign
+  BarChart3, Star, Sparkles, Layers, Shield, DollarSign,
+  LogOut, Settings, ChevronDown, User
 } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
 import { CLINICAL_FRAMEWORKS } from './nursingQuestions';
 import useNursingQuestions from './useNursingQuestions';
 import NursingLoadingSkeleton from './NursingLoadingSkeleton';
@@ -15,6 +18,72 @@ import {
   countByMode, averageScore, averageSBARScores, averageByFramework,
   uniqueQuestionsPracticed, scoreTrend, perQuestionStats,
 } from './nursingSessionStore';
+
+// Account dropdown menu — sign out, tier badge, settings link
+function AccountMenu({ userData }) {
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', handler);
+    document.addEventListener('touchstart', handler);
+    return () => { document.removeEventListener('mousedown', handler); document.removeEventListener('touchstart', handler); };
+  }, [open]);
+
+  const tierLabel = userData?.isBeta ? 'Beta' : userData?.tier === 'pro' ? 'Pro' : 'Free';
+  const tierClasses = userData?.isBeta
+    ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+    : userData?.tier === 'pro'
+      ? 'bg-purple-500/20 text-purple-300 border-purple-500/30'
+      : 'bg-white/10 text-slate-400 border-white/10';
+
+  return (
+    <div className="relative" ref={menuRef}>
+      <button
+        onClick={() => setOpen(!open)}
+        onTouchEnd={(e) => { e.preventDefault(); setOpen(!open); }}
+        className="flex items-center gap-1.5 text-slate-300 hover:text-white transition-colors"
+      >
+        <User className="w-4 h-4" />
+        <span className="text-xs hidden sm:inline">{userData?.displayName || ''}</span>
+        <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${tierClasses}`}>
+          {tierLabel}
+        </span>
+        <ChevronDown className={`w-3 h-3 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-full mt-2 w-48 bg-slate-800 border border-white/10 rounded-xl shadow-2xl shadow-black/40 py-1 z-50">
+          {/* User info */}
+          <div className="px-3 py-2 border-b border-white/10">
+            <p className="text-white text-xs font-medium truncate">{userData?.user?.email || ''}</p>
+            <p className="text-slate-500 text-[10px] mt-0.5">{tierLabel} Plan</p>
+          </div>
+
+          {/* Settings — goes to general app settings */}
+          <a
+            href="/app?view=settings"
+            className="flex items-center gap-2 px-3 py-2 text-slate-300 hover:text-white hover:bg-white/10 text-xs transition-colors no-underline"
+          >
+            <Settings className="w-3.5 h-3.5" /> Account Settings
+          </a>
+
+          {/* Sign out */}
+          <button
+            onClick={async () => { await supabase.auth.signOut(); window.location.href = '/'; }}
+            onTouchEnd={async (e) => { e.preventDefault(); await supabase.auth.signOut(); window.location.href = '/'; }}
+            className="flex items-center gap-2 w-full px-3 py-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 text-xs transition-colors"
+          >
+            <LogOut className="w-3.5 h-3.5" /> Sign Out
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function NursingDashboard({ specialty, onStartMode, onChangeSpecialty, onBack, userData, sessionHistory = [] }) {
   const { questions, categories, loading } = useNursingQuestions(specialty.id);
@@ -165,22 +234,7 @@ export default function NursingDashboard({ specialty, onStartMode, onChangeSpeci
             </button>
           </div>
 
-          <div className="flex items-center gap-2">
-            {userData && !userData.loading && (
-              <>
-                <span className="text-slate-300 text-xs hidden sm:inline">{userData.displayName}</span>
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                  userData.isBeta
-                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                    : userData.tier === 'pro'
-                      ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
-                      : 'bg-white/10 text-slate-400 border border-white/10'
-                }`}>
-                  {userData.isBeta ? 'Beta' : userData.tier === 'pro' ? 'Pro' : 'Free'}
-                </span>
-              </>
-            )}
-          </div>
+          <AccountMenu userData={userData} />
         </div>
       </div>
 

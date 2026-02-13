@@ -32,10 +32,15 @@ export default function AuthPage({ mode = 'login' }) {
     );
   }
 
+  // Back destination: nursing users go to /nurse landing, general users go to /
+  const backTo = from === 'nursing' ? '/nurse' : '/';
+
   return (
     <Auth
       onAuthSuccess={() => navigate(redirectTo, { replace: true })}
       defaultMode={mode}
+      onBack={() => navigate(backTo)}
+      fromNursing={from === 'nursing'}
     />
   );
 }

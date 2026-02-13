@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { supabase } from './lib/supabase'
 import { Mail, Lock, User, AlertCircle, CheckCircle } from 'lucide-react'
 
-function Auth({ onAuthSuccess, defaultMode = 'login' }) {
+function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing = false }) {
   const [loading, setLoading] = useState(false)
   const [isSignUp, setIsSignUp] = useState(defaultMode === 'signup')
   const [email, setEmail] = useState('')
@@ -60,7 +60,7 @@ function Auth({ onAuthSuccess, defaultMode = 'login' }) {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/app`,
+        redirectTo: `${window.location.origin}${fromNursing ? '/nursing' : '/app'}`,
       })
 
       if (error) throw error
@@ -77,12 +77,24 @@ function Auth({ onAuthSuccess, defaultMode = 'login' }) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
+        {/* Back link */}
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="text-sm text-gray-500 hover:text-indigo-600 mb-4 flex items-center gap-1 transition-colors"
+          >
+            ← Back
+          </button>
+        )}
+
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">
             {isSignUp ? 'Create Account' : 'Welcome Back'}
           </h1>
           <p className="text-gray-600">
-            {isSignUp ? 'Sign up for ISL' : 'Log in to continue'}
+            {isSignUp
+              ? (fromNursing ? 'Sign up for NurseInterviewPro' : 'Sign up for InterviewAnswers.ai')
+              : 'Log in to continue'}
           </p>
         </div>
 

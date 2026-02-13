@@ -468,6 +468,16 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
                       </div>
                     </div>
 
+                    {/* User's submitted answer */}
+                    {userAnswer && (
+                      <div className="bg-slate-800/50 border border-white/10 rounded-xl p-4 mb-3">
+                        <p className="text-slate-400 text-xs font-medium mb-2">Your Answer:</p>
+                        <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">
+                          {userAnswer}
+                        </p>
+                      </div>
+                    )}
+
                     {/* Walled garden warning */}
                     {validationFlags?.walledGardenFlag && (
                       <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-2 mb-3 flex items-start gap-2">

@@ -4,8 +4,9 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, ArrowLeft, Stethoscope, CheckCircle } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Stethoscope, CheckCircle, LogOut } from 'lucide-react';
 import { NURSING_SPECIALTIES } from './nursingQuestions';
+import { supabase } from '../../lib/supabase';
 
 export default function SpecialtySelection({ onSelectSpecialty, onBack }) {
   const [selected, setSelected] = useState(null);
@@ -35,7 +36,15 @@ export default function SpecialtySelection({ onSelectSpecialty, onBack }) {
             <Stethoscope className="w-4 h-4 text-sky-400" />
             <span className="text-white font-medium text-sm">Nursing Interview Track</span>
           </div>
-          <div className="w-16" />
+          <button
+            onClick={async () => { await supabase.auth.signOut(); window.location.href = '/'; }}
+            onTouchEnd={async (e) => { e.preventDefault(); await supabase.auth.signOut(); window.location.href = '/'; }}
+            className="flex items-center gap-1 text-slate-400 hover:text-red-400 text-xs transition-colors"
+            title="Sign out"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Sign Out</span>
+          </button>
         </div>
       </div>
 
