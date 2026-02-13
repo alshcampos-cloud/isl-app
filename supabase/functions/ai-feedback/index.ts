@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { questionText, userAnswer, expectedBullets, mode, userContext, conversationHistory, exchangeCount, question, conversation, answer } = await req.json()
+    const { questionText, userAnswer, expectedBullets, mode, userContext, conversationHistory, exchangeCount, question, conversation, answer, systemPrompt, userMessage, nursingFeature } = await req.json()
     
     // Build context section if user provided background info
     let contextSection = '';
@@ -154,6 +154,119 @@ Return ONLY the bullets in this format:
 - Third bullet point
 - Fourth bullet point
 - Fifth bullet point (if relevant)`;
+
+    } else if (mode === 'confidence-brief') {
+      // Nursing Confidence Builder — uses systemPrompt + userMessage from client
+      maxTokens = 1500;
+      promptContent = `${systemPrompt}\n\nUSER REQUEST: ${userMessage}`;
+
+    } else if (mode === 'nursing-coach') {
+      // Nursing Track — AI Coach, Mock Interview, Practice, SBAR Drill, Offer Coach
+      // Accepts { systemPrompt, conversationHistory, userMessage, nursingFeature }
+      // Uses Anthropic system parameter + multi-turn conversation format
+      // nursingPractice needs more tokens for 4-section structured feedback
+      maxTokens = nursingFeature === 'nursingPractice' ? 2000 : 1500;
+
+      // ============================================================
+      // SERVER-SIDE CREDIT VALIDATION for nursing modes
+      // Prevents bypass via DevTools, stale cache, or rapid clicks
+      // ============================================================
+      // nursingFeature is extracted from the initial req.json() destructuring
+
+      // Map nursing feature names to DB column names
+      const nursingFeatureMap: Record<string, string> = {
+        'nursingPractice': 'nursing_practice',
+        'nursingMock': 'nursing_mock',
+        'nursingSbar': 'nursing_sbar',
+      };
+
+      const dbColumn = nursingFeatureMap[nursingFeature];
+
+      // Only enforce credits for tracked features (not AI Coach which is Pro-gated at UI level)
+      if (dbColumn && !isBetaTester) {
+        // Check if user is Pro
+        const { data: profile } = await supabaseClient
+          .from('user_profiles')
+          .select('tier')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        const isPro = profile?.tier === 'pro';
+
+        if (!isPro) {
+          // Check beta_testers table
+          const { data: betaRow } = await supabaseClient
+            .from('beta_testers')
+            .select('unlimited_access')
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+          if (!betaRow?.unlimited_access) {
+            // Get FRESH usage from DB (not cached client state)
+            const now = new Date();
+            const currentPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+            const { data: usageRow } = await supabaseClient
+              .from('usage_tracking')
+              .select(dbColumn)
+              .eq('user_id', user.id)
+              .eq('period', currentPeriod)
+              .maybeSingle();
+
+            const currentUsage = usageRow?.[dbColumn] || 0;
+
+            // Limits: nursing_practice=5, nursing_mock=3, nursing_sbar=3
+            const featureLimits: Record<string, number> = {
+              'nursing_practice': 5,
+              'nursing_mock': 3,
+              'nursing_sbar': 3,
+            };
+            const limit = featureLimits[dbColumn] || 5;
+
+            if (currentUsage >= limit) {
+              return new Response(
+                JSON.stringify({ error: 'Monthly credit limit reached. Upgrade to Pro for unlimited access!' }),
+                { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+              );
+            }
+          }
+        }
+      }
+
+      // Build Anthropic messages array from conversation history
+      const messages: Array<{role: string, content: string}> = [];
+      if (conversationHistory && Array.isArray(conversationHistory) && conversationHistory.length > 0) {
+        for (const msg of conversationHistory) {
+          messages.push({
+            role: msg.role === 'assistant' ? 'assistant' : 'user',
+            content: msg.content || '',
+          });
+        }
+      }
+      // Append the current user message
+      messages.push({ role: 'user', content: userMessage || '' });
+
+      // Call Anthropic with system prompt as system parameter (not in messages)
+      const nursingResponse = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': Deno.env.get('ANTHROPIC_API_KEY') ?? '',
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: maxTokens,
+          system: systemPrompt || '',
+          messages,
+        })
+      });
+
+      const nursingData = await nursingResponse.json();
+      return new Response(
+        JSON.stringify(nursingData),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
 
     } else {
       // Original practice/ai-interviewer modes

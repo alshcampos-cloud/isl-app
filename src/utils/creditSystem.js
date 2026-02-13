@@ -10,7 +10,11 @@ export const TIER_LIMITS = {
     answer_assistant: 5,          // 5 STAR coaching sessions
     question_gen: 5,              // 5 AI question generations
     live_prompter_questions: 10,  // 10 real-time prompt questions
-    live_prompter_unlimited: false
+    live_prompter_unlimited: false,
+    // Nursing Track — separate pools from main app features
+    nursing_practice: 5,          // 5 nursing quick practice sessions/month
+    nursing_mock: 3,              // 3 nursing mock interview sessions/month
+    nursing_sbar: 3,              // 3 nursing SBAR drill sessions/month
   },
   pro: {
     name: 'Pro',
@@ -20,7 +24,11 @@ export const TIER_LIMITS = {
     answer_assistant: 999999,     // UNLIMITED coaching sessions
     question_gen: 999999,         // UNLIMITED question generation
     live_prompter_questions: 999999, // UNLIMITED real-time prompts
-    live_prompter_unlimited: true
+    live_prompter_unlimited: true,
+    // Nursing Track
+    nursing_practice: 999999,     // UNLIMITED
+    nursing_mock: 999999,         // UNLIMITED
+    nursing_sbar: 999999,         // UNLIMITED
   },
   beta: {
     name: 'Beta Tester',
@@ -30,7 +38,11 @@ export const TIER_LIMITS = {
     answer_assistant: 999999,     // UNLIMITED
     question_gen: 999999,         // UNLIMITED
     live_prompter_questions: 999999, // UNLIMITED
-    live_prompter_unlimited: true
+    live_prompter_unlimited: true,
+    // Nursing Track
+    nursing_practice: 999999,     // UNLIMITED
+    nursing_mock: 999999,         // UNLIMITED
+    nursing_sbar: 999999,         // UNLIMITED
   }
 };
 
@@ -109,7 +121,11 @@ function featureNameToDb(camelCaseName) {
     'practiceMode': 'practice_mode',
     'answerAssistant': 'answer_assistant',
     'questionGen': 'question_gen',
-    'livePrompterQuestions': 'live_prompter_questions'
+    'livePrompterQuestions': 'live_prompter_questions',
+    // Nursing Track — separate credit pools
+    'nursingPractice': 'nursing_practice',
+    'nursingMock': 'nursing_mock',
+    'nursingSbar': 'nursing_sbar',
   };
   return mapping[camelCaseName] || camelCaseName;
 }
@@ -224,7 +240,26 @@ export async function getUsageStats(supabase, userId, tier) {
         limit: limits.live_prompter_questions,
         remaining: Math.max(0, limits.live_prompter_questions - (usage.live_prompter_questions || 0)),
         unlimited: limits.live_prompter_questions >= 999999 // FIXED: Consistent unlimited check with other features
-      }
+      },
+      // Nursing Track — separate pools
+      nursingPractice: {
+        used: usage.nursing_practice || 0,
+        limit: limits.nursing_practice || 0,
+        remaining: Math.max(0, (limits.nursing_practice || 0) - (usage.nursing_practice || 0)),
+        unlimited: (limits.nursing_practice || 0) >= 999999
+      },
+      nursingMock: {
+        used: usage.nursing_mock || 0,
+        limit: limits.nursing_mock || 0,
+        remaining: Math.max(0, (limits.nursing_mock || 0) - (usage.nursing_mock || 0)),
+        unlimited: (limits.nursing_mock || 0) >= 999999
+      },
+      nursingSbar: {
+        used: usage.nursing_sbar || 0,
+        limit: limits.nursing_sbar || 0,
+        remaining: Math.max(0, (limits.nursing_sbar || 0) - (usage.nursing_sbar || 0)),
+        unlimited: (limits.nursing_sbar || 0) >= 999999
+      },
     };
   } catch (err) {
     console.error('Error in getUsageStats:', err);
@@ -282,9 +317,28 @@ export function getFeatureDisplayInfo(feature) {
       description: 'Real-time interview support',
       icon: '🎤',
       value: 'Live bullet points during actual interviews'
-    }
+    },
+    // Nursing Track
+    nursingPractice: {
+      name: 'Quick Practice',
+      description: 'Nursing interview practice with AI feedback',
+      icon: '🎯',
+      value: 'Practice nursing questions with instant scoring'
+    },
+    nursingMock: {
+      name: 'Mock Interview',
+      description: 'Full nursing mock interview sessions',
+      icon: '🤖',
+      value: 'Realistic nursing interview simulation'
+    },
+    nursingSbar: {
+      name: 'SBAR Drill',
+      description: 'Clinical communication practice',
+      icon: '📋',
+      value: 'SBAR communication drill with per-component scoring'
+    },
   };
-  
+
   return info[feature] || { name: feature, description: '', icon: '📊', value: '' };
 }
 

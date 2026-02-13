@@ -877,6 +877,31 @@ loadPracticeHistory();
     initSpeechRecognition();
   }, []);
 
+  // Native app: refresh data when returning from background
+  useEffect(() => {
+    const handleResume = async () => {
+      console.log('📱 App resumed from background — refreshing data');
+      // Refresh Supabase session so auth tokens are fresh
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          setCurrentUser(session.user);
+        }
+      } catch (e) {
+        console.warn('📱 Session refresh failed:', e);
+      }
+      loadQuestions();
+      loadPracticeHistory();
+      // Re-init speech in case WebView killed it
+      initSpeechRecognition();
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        synthRef.current = window.speechSynthesis;
+      }
+    };
+    window.addEventListener('capacitor-resume', handleResume);
+    return () => window.removeEventListener('capacitor-resume', handleResume);
+  }, []);
+
   useEffect(() => {
     if (questions.length > 0) localStorage.setItem('isl_questions', JSON.stringify(questions));
   }, [questions]);
@@ -1033,6 +1058,22 @@ loadPracticeHistory();
     return () => {
       subscription.unsubscribe();
     };
+  }, []);
+
+  // NURSING TRACK UPGRADE LINK: Auto-open pricing modal when arriving from /nursing with ?upgrade=true
+  // Stores returnTo so closing modal returns user to nursing track (not stranded on /app)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('upgrade') === 'true') {
+      setShowPricingPage(true);
+      // Remember where user came from so we can return them there
+      const returnTo = urlParams.get('returnTo');
+      if (returnTo) {
+        sessionStorage.setItem('upgradeReturnTo', returnTo);
+      }
+      // Clean up the URL param so refresh doesn't re-trigger
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
   }, []);
 
   // STRIPE SUCCESS HANDLER: Poll for tier update after returning from checkout
@@ -1247,10 +1288,14 @@ loadPracticeHistory();
     const isSafari = ua.includes('Safari') && !ua.includes('Chrome');
     const isEdge = ua.includes('Edg/');
 
-    // Web Speech API works best in Chrome, Edge, Safari
+    // Check if running inside native Capacitor app (iOS/Android)
+    // Native WebView uses Safari's engine (WKWebView) — speech works reliably
+    const isNative = document.documentElement.classList.contains('capacitor');
+
+    // Web Speech API works best in Chrome, Edge, Safari, and native app
     // Limited/broken in: Opera, Opera GX, Firefox
     const hasSpeechSupport = 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window;
-    const hasReliableSpeech = hasSpeechSupport && (isChrome || isEdge || isSafari);
+    const hasReliableSpeech = hasSpeechSupport && (isChrome || isEdge || isSafari || isNative);
 
     return {
       isOpera,
@@ -1259,9 +1304,10 @@ loadPracticeHistory();
       isChrome,
       isSafari,
       isEdge,
+      isNative,
       hasSpeechSupport,
       hasReliableSpeech,
-      name: isOperaGX ? 'Opera GX' : isOpera ? 'Opera' : isFirefox ? 'Firefox' : isChrome ? 'Chrome' : isSafari ? 'Safari' : isEdge ? 'Edge' : 'Unknown'
+      name: isNative ? 'App' : isOperaGX ? 'Opera GX' : isOpera ? 'Opera' : isFirefox ? 'Firefox' : isChrome ? 'Chrome' : isSafari ? 'Safari' : isEdge ? 'Edge' : 'Unknown'
     };
   };
 
@@ -3944,6 +3990,16 @@ const startPracticeMode = async () => {
           <div className="text-center mb-6 sm:mb-8">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-2 sm:mb-3 tracking-tight">InterviewAnswers.ai</h1>
             <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-indigo-200/90 font-medium">Master Your Interview Answers with AI</p>
+
+            {/* Track Switcher — toggle between General and Nursing */}
+            <div className="flex items-center justify-center gap-1 mt-4 bg-white/10 backdrop-blur-lg rounded-full p-1 max-w-xs mx-auto border border-white/20">
+              <span className="flex-1 text-center px-4 py-2 rounded-full text-sm font-semibold bg-white text-indigo-900 shadow-md">
+                General
+              </span>
+              <a href="/nursing" className="flex-1 text-center px-4 py-2 rounded-full text-sm font-semibold text-white/70 hover:text-white hover:bg-white/10 transition-all no-underline">
+                🩺 Nursing
+              </a>
+            </div>
           </div>
 
           {/* Compact Stats Row - Enhanced with Gradients */}
@@ -4133,6 +4189,7 @@ const startPracticeMode = async () => {
               </div>
             </div>
           </div>
+
         </div>
       </div>
     );
@@ -4247,8 +4304,8 @@ const startPracticeMode = async () => {
             
             {/* SESSION CONTROLS */}
             <div className="flex items-center gap-4">
-              {/* System Audio Toggle - for Teams/Zoom calls */}
-              {!interviewSessionActive && (
+              {/* System Audio Toggle - for Teams/Zoom calls (desktop only, not available in native app) */}
+              {!interviewSessionActive && !document.documentElement.classList.contains('capacitor') && (
                 <button
                   onClick={async () => {
                     if (useSystemAudio) {
@@ -4259,8 +4316,8 @@ const startPracticeMode = async () => {
                     }
                   }}
                   className={`px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 transition-all ${
-                    useSystemAudio 
-                      ? 'bg-orange-500 hover:bg-orange-600 text-white' 
+                    useSystemAudio
+                      ? 'bg-orange-500 hover:bg-orange-600 text-white'
                       : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
                   }`}
                   title="Enable to capture audio from Teams/Zoom (speaker output)"
@@ -4335,10 +4392,12 @@ const startPracticeMode = async () => {
                       <li>✅ Clean separation between questions</li>
                       <li>✅ Works with external keyboard on mobile</li>
                     </ul>
-                    <div className="mt-4 pt-4 border-t border-blue-500/30">
-                      <h5 className="font-bold mb-2 text-orange-300">🎧 For Teams/Zoom Calls:</h5>
-                      <p className="text-sm text-gray-300">Click "Tab Audio" before starting to capture audio from the browser tab where your Teams/Zoom call is running.</p>
-                    </div>
+                    {!document.documentElement.classList.contains('capacitor') && (
+                      <div className="mt-4 pt-4 border-t border-blue-500/30">
+                        <h5 className="font-bold mb-2 text-orange-300">🎧 For Teams/Zoom Calls:</h5>
+                        <p className="text-sm text-gray-300">Click "Tab Audio" before starting to capture audio from the browser tab where your Teams/Zoom call is running.</p>
+                      </div>
+                    )}
                   </div>
                 </>
               ) : (
@@ -6385,20 +6444,42 @@ const startPracticeMode = async () => {
                 <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-slate-800">🎯 Daily Practice Goal</h3>
                 <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
                   <label className="text-slate-700 font-semibold text-sm sm:text-base">Sessions per day:</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="20"
-                    value={dailyGoal}
-                    onChange={(e) => {
-                      const value = parseInt(e.target.value);
-                      if (!isNaN(value) && value > 0) {
-                        setDailyGoal(value);
-                        localStorage.setItem('isl_daily_goal', e.target.value);
-                      }
-                    }}
-                    className="w-16 sm:w-20 px-3 sm:px-4 py-2 border-2 border-slate-200 rounded-lg text-center font-bold text-sm sm:text-base focus:border-indigo-500 focus:outline-none transition-colors"
-                  />
+                  {document.documentElement.classList.contains('capacitor') ? (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          const newVal = Math.max(1, dailyGoal - 1);
+                          setDailyGoal(newVal);
+                          localStorage.setItem('isl_daily_goal', String(newVal));
+                        }}
+                        className="w-10 h-10 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xl flex items-center justify-center transition-colors"
+                      >−</button>
+                      <span className="w-12 text-center font-bold text-lg text-slate-800">{dailyGoal}</span>
+                      <button
+                        onClick={() => {
+                          const newVal = Math.min(20, dailyGoal + 1);
+                          setDailyGoal(newVal);
+                          localStorage.setItem('isl_daily_goal', String(newVal));
+                        }}
+                        className="w-10 h-10 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xl flex items-center justify-center transition-colors"
+                      >+</button>
+                    </div>
+                  ) : (
+                    <input
+                      type="number"
+                      min="1"
+                      max="20"
+                      value={dailyGoal}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value);
+                        if (!isNaN(value) && value > 0) {
+                          setDailyGoal(value);
+                          localStorage.setItem('isl_daily_goal', e.target.value);
+                        }
+                      }}
+                      className="w-16 sm:w-20 px-3 sm:px-4 py-2 border-2 border-slate-200 rounded-lg text-center font-bold text-sm sm:text-base focus:border-indigo-500 focus:outline-none transition-colors"
+                    />
+                  )}
                 </div>
                 <div className="bg-slate-50 rounded-lg sm:rounded-xl p-3 sm:p-4">
                   <div className="flex items-center justify-between mb-2">
@@ -7447,8 +7528,8 @@ const startPracticeMode = async () => {
             
             <button
               onClick={async () => {
-                if (window.confirm('⚠️ DELETE ALL DATA?\n\nThis will PERMANENTLY delete:\n• All practice sessions\n• All questions\n• All progress\n\nThis CANNOT be undone.\n\nClick OK to continue.')) {
-                  if (window.confirm('🛑 FINAL CONFIRMATION\n\nYou are about to DELETE EVERYTHING.\n\nThis is PERMANENT.\n\nClick OK to DELETE ALL DATA NOW.')) {
+                if (window.confirm('⚠️ DELETE ALL DATA?\n\nThis will PERMANENTLY delete:\n• All practice sessions\n• All questions\n• All progress\n• All usage history\n\nYour Pro subscription (if active) will NOT be canceled.\nManage your subscription in Settings or Stripe.\n\nThis CANNOT be undone.\n\nClick OK to continue.')) {
+                  if (window.confirm('🛑 FINAL CONFIRMATION\n\nYou are about to delete all practice data.\n\nThis is PERMANENT.\n\nClick OK to DELETE ALL DATA NOW.')) {
                     try {
                       const { data: { user } } = await supabase.auth.getUser();
                       if (user) {
@@ -7470,13 +7551,31 @@ const startPracticeMode = async () => {
                           }
                         };
 
-                        // Delete ALL user data from Supabase with individual timeouts
+                        // Delete ALL user practice data from Supabase with individual timeouts
                         await deleteWithTimeout('practice_sessions');
                         await deleteWithTimeout('practice_history');
                         await deleteWithTimeout('questions');
                         await deleteWithTimeout('question_banks');
                         await deleteWithTimeout('usage_tracking');
-                        await deleteWithTimeout('user_profiles');
+
+                        // ⚠️ STRIPE PROTECTION: Do NOT delete user_profiles — it contains
+                        // subscription_id, stripe_customer_id, and subscription_status.
+                        // Deleting this row orphans the Stripe subscription: user keeps paying
+                        // but the webhook can't find them to maintain Pro access.
+                        // Instead, reset non-billing fields to defaults.
+                        const resetProfilePromise = supabase
+                          .from('user_profiles')
+                          .update({ display_name: null, updated_at: new Date().toISOString() })
+                          .eq('user_id', user.id);
+                        const resetTimeout = new Promise((_, reject) =>
+                          setTimeout(() => reject(new Error('user_profiles reset timed out')), 10000)
+                        );
+                        try {
+                          await Promise.race([resetProfilePromise, resetTimeout]);
+                          console.log('✅ Reset user_profiles (Stripe subscription preserved)');
+                        } catch (err) {
+                          console.warn('⚠️ user_profiles reset failed/timeout:', err.message);
+                        }
                       }
                       
                       // Clear ALL localStorage (including consent so user starts fresh)
@@ -7891,13 +7990,13 @@ const startPracticeMode = async () => {
           PRICING PAGE MODAL - FIXED SCROLL
           ========================================== */}
       {showPricingPage && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9999] overflow-y-auto"
-          onClick={() => setShowPricingPage(false)}
+          onClick={() => { setShowPricingPage(false); const r = sessionStorage.getItem('upgradeReturnTo'); if (r) { sessionStorage.removeItem('upgradeReturnTo'); window.location.href = r; } }}
         >
           {/* Close button - FIXED to viewport, always visible */}
           <button
-            onClick={() => setShowPricingPage(false)}
+            onClick={() => { setShowPricingPage(false); const r = sessionStorage.getItem('upgradeReturnTo'); if (r) { sessionStorage.removeItem('upgradeReturnTo'); window.location.href = r; } }}
             className="fixed top-4 right-4 text-white hover:text-gray-300 z-[10000] bg-black/50 rounded-full p-2 backdrop-blur-sm"
           >
             <X className="w-8 h-8" />
@@ -7915,6 +8014,7 @@ const startPracticeMode = async () => {
               onSelectTier={(tier) => {
                 if (tier === 'free') {
                   setShowPricingPage(false);
+                  const r = sessionStorage.getItem('upgradeReturnTo'); if (r) { sessionStorage.removeItem('upgradeReturnTo'); window.location.href = r; }
                   return;
                 }
                 // Stripe checkout is now handled by StripeCheckout component
@@ -8012,12 +8112,38 @@ const startPracticeMode = async () => {
   ); {/* Close fragment that contains dialogs + views */}
 }; // Close ISL component
 
-// Wrap ISL with ProtectedRoute before exporting
+// Import routing
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
+import AuthPage from './Components/AuthPage';
+
+const LandingPage = lazy(() => import('./Components/Landing/LandingPage'));
+const TermsPage = lazy(() => import('./Components/Landing/TermsPage'));
+const PrivacyPage = lazy(() => import('./Components/Landing/PrivacyPage'));
+const NursingTrackApp = lazy(() => import('./Components/NursingTrack/NursingTrackApp'));
+const NursingLandingPage = lazy(() => import('./Components/NursingTrack/NursingLandingPage'));
+
+const LoadingFallback = () => (
+  <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex items-center justify-center">
+    <div className="text-white text-2xl">Loading...</div>
+  </div>
+);
+
 function App() {
   return (
-    <ProtectedRoute>
-      <ISL />
-    </ProtectedRoute>
+    <Suspense fallback={<LoadingFallback />}>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<AuthPage mode="login" />} />
+        <Route path="/signup" element={<AuthPage mode="signup" />} />
+        <Route path="/terms" element={<TermsPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/app" element={<ProtectedRoute><ISL /></ProtectedRoute>} />
+        <Route path="/nursing" element={<ProtectedRoute><NursingTrackApp /></ProtectedRoute>} />
+        <Route path="/nurse" element={<NursingLandingPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
   );
 }
 
