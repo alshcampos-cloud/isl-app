@@ -18,7 +18,7 @@ export default function NursingLandingPage() {
           NAVBAR
           ============================================================ */}
       <nav className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-lg border-b border-gray-100 z-50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <Stethoscope className="w-6 h-6 text-sky-700" />
@@ -57,7 +57,7 @@ export default function NursingLandingPage() {
           <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-cyan-500/15 rounded-full blur-3xl" />
         </div>
 
-        <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left: Copy */}
             <div>
@@ -169,7 +169,7 @@ export default function NursingLandingPage() {
           PROBLEM SECTION — Why nurses need this
           ============================================================ */}
       <section className="py-16 sm:py-24 bg-gray-50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
               You're a great nurse. But are you a great <span className="text-sky-700">interviewer</span>?
@@ -204,11 +204,11 @@ export default function NursingLandingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+                className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100"
               >
                 <item.icon className="w-8 h-8 text-sky-600 mb-4" />
                 <h3 className="text-gray-900 font-semibold text-lg mb-2">{item.problem}</h3>
-                <p className="text-gray-600 text-sm leading-relaxed">{item.solution}</p>
+                <p className="text-gray-600 text-sm sm:text-base leading-relaxed">{item.solution}</p>
               </motion.div>
             ))}
           </div>
@@ -219,14 +219,14 @@ export default function NursingLandingPage() {
           FEATURES SECTION
           ============================================================ */}
       <section id="features" className="py-16 sm:py-24">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
               Everything you need to ace your nursing interview
             </h2>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
+          <div className="grid md:grid-cols-2 gap-5">
             {[
               {
                 icon: Bot,
@@ -276,15 +276,15 @@ export default function NursingLandingPage() {
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="flex gap-4 p-6 rounded-2xl border border-gray-100 hover:shadow-md transition-shadow"
+                transition={{ delay: i * 0.05 }}
+                className="flex gap-3 sm:gap-4 p-4 sm:p-5 rounded-xl border border-gray-100 hover:shadow-md transition-shadow"
               >
                 <div className={`w-12 h-12 ${feature.color} rounded-xl flex items-center justify-center flex-shrink-0`}>
                   <feature.icon className="w-6 h-6" />
                 </div>
                 <div>
                   <h3 className="text-gray-900 font-semibold text-lg mb-1">{feature.title}</h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">{feature.desc}</p>
+                  <p className="text-gray-600 text-sm sm:text-base leading-relaxed">{feature.desc}</p>
                 </div>
               </motion.div>
             ))}
@@ -296,7 +296,7 @@ export default function NursingLandingPage() {
           BUILT FOR NURSES — Social proof without fake testimonials
           ============================================================ */}
       <section className="py-16 sm:py-24 bg-gray-50">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
             Built by nurses, for nurses
           </h2>
@@ -306,20 +306,20 @@ export default function NursingLandingPage() {
           </p>
 
           <div className="grid sm:grid-cols-3 gap-6">
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <div className="text-3xl mb-3">🩺</div>
-              <p className="text-gray-900 font-semibold mb-1">25+ Curated Questions</p>
-              <p className="text-gray-500 text-sm">Across 8 nursing specialties, grounded in NCSBN, SBAR, and Nursing Process frameworks</p>
+            <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
+              <div className="text-2xl sm:text-3xl mb-2 sm:mb-3">🩺</div>
+              <p className="text-gray-900 font-semibold text-lg mb-1">68 Clinically-Sourced Questions</p>
+              <p className="text-gray-500 text-sm sm:text-base">Across 8 nursing specialties, grounded in NCSBN, SBAR, and Nursing Process frameworks</p>
             </div>
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <div className="text-3xl mb-3">🛡️</div>
-              <p className="text-gray-900 font-semibold mb-1">Clinically Reviewed</p>
-              <p className="text-gray-500 text-sm">Every scenario vetted by practicing nurses and nurse educators before it reaches you</p>
+            <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
+              <div className="text-2xl sm:text-3xl mb-2 sm:mb-3">🛡️</div>
+              <p className="text-gray-900 font-semibold text-lg mb-1">Clinically Reviewed</p>
+              <p className="text-gray-500 text-sm sm:text-base">Every scenario vetted by practicing nurses and nurse educators before it reaches you</p>
             </div>
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <div className="text-3xl mb-3">🎯</div>
-              <p className="text-gray-900 font-semibold mb-1">Communication Coaching</p>
-              <p className="text-gray-500 text-sm">AI evaluates how you communicate — structure, specificity, confidence — not clinical accuracy</p>
+            <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
+              <div className="text-2xl sm:text-3xl mb-2 sm:mb-3">🎯</div>
+              <p className="text-gray-900 font-semibold text-lg mb-1">Communication Coaching</p>
+              <p className="text-gray-500 text-sm sm:text-base">AI evaluates how you communicate — structure, specificity, confidence — not clinical accuracy</p>
             </div>
           </div>
         </div>
@@ -329,7 +329,7 @@ export default function NursingLandingPage() {
           TRUST / WALLED GARDEN SECTION
           ============================================================ */}
       <section className="py-16 sm:py-24 bg-sky-50">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 text-center">
           <Shield className="w-12 h-12 text-sky-700 mx-auto mb-4" />
           <h2 className="text-3xl font-bold text-gray-900 mb-4">
             Clinical integrity is non-negotiable
@@ -340,22 +340,22 @@ export default function NursingLandingPage() {
           </p>
 
           <div className="grid sm:grid-cols-2 gap-4 text-left max-w-2xl mx-auto">
-            <div className="bg-white rounded-xl p-5 border border-gray-200">
-              <p className="text-green-600 font-semibold text-sm mb-2 flex items-center gap-1">
-                <CheckCircle className="w-4 h-4" /> AI Does
+            <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200">
+              <p className="text-green-600 font-semibold text-sm sm:text-base mb-2 sm:mb-3 flex items-center gap-1.5">
+                <CheckCircle className="w-5 h-5" /> AI Does
               </p>
-              <ul className="text-gray-600 text-sm space-y-1.5">
+              <ul className="text-gray-600 text-sm sm:text-base space-y-1.5 sm:space-y-2">
                 <li>• Coach your answer structure</li>
                 <li>• Give delivery feedback</li>
                 <li>• Draw out your real experiences</li>
                 <li>• Adapt to your responses</li>
               </ul>
             </div>
-            <div className="bg-white rounded-xl p-5 border border-gray-200">
-              <p className="text-red-600 font-semibold text-sm mb-2 flex items-center gap-1">
-                <Shield className="w-4 h-4" /> AI Never
+            <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-200">
+              <p className="text-red-600 font-semibold text-sm sm:text-base mb-2 sm:mb-3 flex items-center gap-1.5">
+                <Shield className="w-5 h-5" /> AI Never
               </p>
-              <ul className="text-gray-600 text-sm space-y-1.5">
+              <ul className="text-gray-600 text-sm sm:text-base space-y-1.5 sm:space-y-2">
                 <li>• Generates clinical scenarios</li>
                 <li>• Invents medical facts or dosages</li>
                 <li>• Evaluates clinical accuracy</li>
@@ -367,27 +367,70 @@ export default function NursingLandingPage() {
       </section>
 
       {/* ============================================================
-          PRICING (placeholder — TBD)
+          FAQ SECTION
+          ============================================================ */}
+      <section className="py-16 sm:py-24">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Frequently Asked Questions</h2>
+
+          <div className="space-y-4 sm:space-y-6">
+            {[
+              {
+                q: 'Is this a replacement for NCLEX prep?',
+                a: 'No. NurseInterviewPro focuses exclusively on interview communication skills — how you tell your clinical stories, not clinical knowledge itself. For NCLEX prep, please use dedicated review courses.',
+              },
+              {
+                q: 'Who writes the interview questions?',
+                a: 'Every question is written or reviewed by practicing nurses and nurse educators, grounded in published frameworks like NCSBN, SBAR, and the Nursing Process. The AI never generates clinical content.',
+              },
+              {
+                q: 'What specialties are covered?',
+                a: 'Eight specialties: Emergency Department, ICU, Operating Room, Labor & Delivery, Pediatrics, Psych/Behavioral Health, Med-Surg, and Travel Nursing. Each has tailored questions and scenarios.',
+              },
+              {
+                q: 'What does the AI actually do?',
+                a: 'The AI coaches how you communicate — answer structure (STAR/SBAR), specificity, confidence, and delivery. It draws out your real clinical experiences and helps you articulate them clearly. It never invents medical facts or evaluates clinical accuracy.',
+              },
+              {
+                q: 'Can I practice on my phone?',
+                a: 'Yes. NurseInterviewPro is fully responsive and works on any device with a web browser — phone, tablet, or desktop. Practice between shifts, on the bus, or wherever you have a few minutes.',
+              },
+              {
+                q: 'How is this different from practicing with a friend?',
+                a: 'A friend can listen, but our AI gives structured feedback on your answer format, identifies vague responses, coaches you to add specific clinical details, and is available 24/7 without scheduling.',
+              },
+            ].map((item, i) => (
+              <div key={i} className="border-b border-gray-200 pb-5">
+                <h3 className="text-gray-900 font-semibold text-lg mb-2">{item.q}</h3>
+                <p className="text-gray-600 text-sm sm:text-base leading-relaxed">{item.a}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================
+          PRICING
           ============================================================ */}
       <section id="pricing" className="py-16 sm:py-24">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 text-center">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">Simple pricing</h2>
-          <p className="text-gray-600 mb-8">Start free. Upgrade when you're ready.</p>
+          <p className="text-gray-600 text-lg mb-8">Start free. Upgrade when you're ready.</p>
 
           <div className="grid sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
             {/* Free */}
             <div className="border border-gray-200 rounded-2xl p-6 text-left">
               <h3 className="text-gray-900 font-bold text-xl mb-1">Free</h3>
-              <p className="text-gray-500 text-sm mb-4">Get started with basic practice</p>
+              <p className="text-gray-500 text-sm sm:text-base mb-4">Get started with basic practice</p>
               <p className="text-4xl font-bold text-gray-900 mb-6">$0 <span className="text-base font-normal text-gray-400">/month</span></p>
               <ul className="space-y-2 mb-6">
                 {['3 mock interview sessions/month', 'General nursing questions', 'STAR coaching', 'Flashcards'].map(f => (
-                  <li key={f} className="flex items-center gap-2 text-sm text-gray-600">
-                    <CheckCircle className="w-4 h-4 text-green-500" />{f}
+                  <li key={f} className="flex items-center gap-2 text-sm sm:text-base text-gray-600">
+                    <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />{f}
                   </li>
                 ))}
               </ul>
-              <Link to="/signup?from=nursing" className="block w-full text-center bg-gray-100 hover:bg-gray-200 text-gray-900 font-medium py-3 rounded-xl transition-colors">
+              <Link to="/signup?from=nursing" className="block w-full text-center bg-gray-100 hover:bg-gray-200 text-gray-900 font-semibold py-3 rounded-xl transition-colors text-base">
                 Start Free
               </Link>
             </div>
@@ -398,7 +441,7 @@ export default function NursingLandingPage() {
                 Most Popular
               </div>
               <h3 className="text-gray-900 font-bold text-xl mb-1">Pro</h3>
-              <p className="text-gray-500 text-sm mb-4">Full access to all specialties</p>
+              <p className="text-gray-500 text-sm sm:text-base mb-4">Full access to all specialties</p>
               <p className="text-4xl font-bold text-gray-900 mb-6">$29.99 <span className="text-base font-normal text-gray-400">/month</span></p>
               <ul className="space-y-2 mb-6">
                 {[
@@ -410,8 +453,8 @@ export default function NursingLandingPage() {
                   'Offer Negotiation Coach',
                   'Command Center analytics',
                 ].map(f => (
-                  <li key={f} className="flex items-center gap-2 text-sm text-gray-600">
-                    <CheckCircle className="w-4 h-4 text-sky-600" />{f}
+                  <li key={f} className="flex items-center gap-2 text-sm sm:text-base text-gray-600">
+                    <CheckCircle className="w-4 h-4 text-sky-600 flex-shrink-0" />{f}
                   </li>
                 ))}
               </ul>
@@ -427,7 +470,7 @@ export default function NursingLandingPage() {
           FINAL CTA
           ============================================================ */}
       <section className="py-16 sm:py-24 bg-gradient-to-br from-blue-950 via-sky-900 to-blue-950">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
             Your next interview starts here
           </h2>
@@ -448,7 +491,7 @@ export default function NursingLandingPage() {
           FOOTER
           ============================================================ */}
       <footer className="bg-gray-900 text-gray-400 py-8">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <Stethoscope className="w-5 h-5 text-sky-400" />
