@@ -29,3 +29,97 @@
 html {
   scroll-behavior: smooth;
 }
+
+/* ============================================================
+   Native App Safe Areas (Capacitor / iOS / Android)
+
+   These styles ONLY activate inside native Capacitor app shells.
+   - html.capacitor class is added in main.jsx via isNativeApp()
+   - On web browsers, these rules never apply
+   - Web site is completely unaffected
+   ============================================================ */
+
+/* ============================================================
+   Nursing Track — Readability Boost (all screens)
+   Bump tiny text sizes for better readability across the nursing track.
+   Scoped to .nursing-track to avoid affecting existing production views.
+   ============================================================ */
+.nursing-track .text-xs {
+  font-size: 0.8125rem; /* 13px instead of 12px */
+  line-height: 1.25rem;
+}
+.nursing-track .text-sm {
+  font-size: 0.9375rem; /* 15px instead of 14px */
+  line-height: 1.375rem;
+}
+
+/* Extra bump on small screens for phone readability */
+@media (max-width: 640px) {
+  .nursing-track .text-xs {
+    font-size: 0.875rem; /* 14px on mobile */
+    line-height: 1.25rem;
+  }
+  .nursing-track .text-sm {
+    font-size: 1rem; /* 16px on mobile */
+    line-height: 1.5rem;
+  }
+}
+
+/* Prevent iOS WebView from auto-zooming on input focus */
+html.capacitor input[type="number"],
+html.capacitor input[type="text"],
+html.capacitor textarea,
+html.capacitor select {
+  font-size: 16px !important;
+}
+
+/* ============================================================
+   iPad / Tablet Scaling (768px+)
+
+   Makes the app look intentional on iPad rather than a stretched
+   phone layout. Only additive rules — never modifies existing styles.
+   Scoped to html.capacitor so web browsers are unaffected.
+   ============================================================ */
+
+/* iPad Portrait & Landscape — constrain content width and center */
+@media (min-width: 768px) {
+  html.capacitor .container {
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Give content breathing room on larger screens */
+  html.capacitor body {
+    font-size: 17px;
+  }
+
+  /* Cards and modals scale up slightly */
+  html.capacitor .rounded-2xl {
+    border-radius: 1.25rem;
+  }
+
+  /* Increase padding on larger viewports */
+  html.capacitor .px-4 {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+/* iPad Landscape — wider content area */
+@media (min-width: 1024px) {
+  html.capacitor .container {
+    max-width: 860px;
+  }
+}
+
+/* iPad Pro 13" — prevent content from looking tiny */
+@media (min-width: 1200px) {
+  html.capacitor .container {
+    max-width: 960px;
+  }
+
+  html.capacitor body {
+    font-size: 18px;
+  }
+}

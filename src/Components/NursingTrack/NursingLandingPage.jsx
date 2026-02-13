@@ -19,22 +19,26 @@ export default function NursingLandingPage() {
           ============================================================ */}
       <nav className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-lg border-b border-gray-100 z-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Stethoscope className="w-6 h-6 text-sky-700" />
-            <span className="font-bold text-lg text-gray-900">NurseInterviewPro</span>
-            <span className="text-xs text-sky-600 font-medium">.ai</span>
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2">
+              <Stethoscope className="w-6 h-6 text-sky-700" />
+              <span className="font-bold text-lg text-gray-900">NurseInterviewPro</span>
+              <span className="text-xs text-sky-600 font-medium">.ai</span>
+            </div>
+            <Link to="/" className="text-[10px] text-gray-400 hover:text-indigo-500 ml-8 -mt-0.5 transition-colors">by InterviewAnswers.AI</Link>
           </div>
           <div className="flex items-center gap-4">
+            <Link to="/" className="text-gray-500 hover:text-indigo-600 text-sm hidden sm:block transition-colors">General Interviews</Link>
             <a href="#features" className="text-gray-600 hover:text-gray-900 text-sm hidden sm:block">Features</a>
             <a href="#pricing" className="text-gray-600 hover:text-gray-900 text-sm hidden sm:block">Pricing</a>
             <Link
-              to="/login"
+              to="/login?from=nursing"
               className="text-gray-600 hover:text-gray-900 text-sm"
             >
               Log In
             </Link>
             <Link
-              to="/signup"
+              to="/signup?from=nursing"
               className="bg-sky-700 hover:bg-sky-800 text-white font-medium text-sm px-4 py-2 rounded-lg transition-colors"
             >
               Start Free
@@ -106,7 +110,7 @@ export default function NursingLandingPage() {
                 transition={{ delay: 0.4 }}
               >
                 <Link
-                  to="/signup"
+                  to="/signup?from=nursing"
                   className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-sky-600 to-cyan-500 hover:from-sky-700 hover:to-cyan-600 text-white font-bold text-lg px-8 py-4 rounded-xl transition-all shadow-xl shadow-sky-500/30 hover:shadow-sky-500/50 hover:-translate-y-0.5"
                 >
                   Start Practicing Free
@@ -289,68 +293,34 @@ export default function NursingLandingPage() {
       </section>
 
       {/* ============================================================
-          TESTIMONIALS (Placeholders — replace with real quotes at launch)
+          BUILT FOR NURSES — Social proof without fake testimonials
           ============================================================ */}
       <section className="py-16 sm:py-24 bg-gray-50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              Nurses love practicing with NurseInterviewPro
-            </h2>
-            <p className="text-gray-500 text-sm">Beta testers share their experience</p>
-          </div>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+            Built by nurses, for nurses
+          </h2>
+          <p className="text-gray-600 text-lg mb-10 max-w-2xl mx-auto">
+            Every question, rubric, and coaching prompt is reviewed by healthcare professionals.
+            No AI-generated clinical content — ever.
+          </p>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            {[
-              {
-                quote: "I used to freeze on behavioral questions. After a week of practice, I walked into my ED interview and nailed every answer.",
-                name: "Sarah M.",
-                role: "ED Nurse, 4 years experience",
-                initials: "SM",
-                color: "bg-sky-100 text-sky-700",
-              },
-              {
-                quote: "The SBAR drills were a game-changer. I could feel my communication getting sharper after just three sessions.",
-                name: "James R.",
-                role: "ICU Travel Nurse",
-                initials: "JR",
-                color: "bg-emerald-100 text-emerald-700",
-              },
-              {
-                quote: "I negotiated $4/hour more on my offer after practicing with the Offer Coach. That's over $8,000 a year.",
-                name: "Priya K.",
-                role: "OR Nurse, new grad",
-                initials: "PK",
-                color: "bg-purple-100 text-purple-700",
-              },
-            ].map((testimonial, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
-              >
-                <div className="flex items-center gap-1 mb-4">
-                  {[...Array(5)].map((_, j) => (
-                    <svg key={j} className="w-4 h-4 text-amber-400 fill-current" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                  ))}
-                </div>
-                <p className="text-gray-700 text-sm leading-relaxed mb-4">"{testimonial.quote}"</p>
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-full ${testimonial.color} flex items-center justify-center font-bold text-sm`}>
-                    {testimonial.initials}
-                  </div>
-                  <div>
-                    <p className="text-gray-900 font-medium text-sm">{testimonial.name}</p>
-                    <p className="text-gray-500 text-xs">{testimonial.role}</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+          <div className="grid sm:grid-cols-3 gap-6">
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <div className="text-3xl mb-3">🩺</div>
+              <p className="text-gray-900 font-semibold mb-1">25+ Curated Questions</p>
+              <p className="text-gray-500 text-sm">Across 8 nursing specialties, grounded in NCSBN, SBAR, and Nursing Process frameworks</p>
+            </div>
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <div className="text-3xl mb-3">🛡️</div>
+              <p className="text-gray-900 font-semibold mb-1">Clinically Reviewed</p>
+              <p className="text-gray-500 text-sm">Every scenario vetted by practicing nurses and nurse educators before it reaches you</p>
+            </div>
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <div className="text-3xl mb-3">🎯</div>
+              <p className="text-gray-900 font-semibold mb-1">Communication Coaching</p>
+              <p className="text-gray-500 text-sm">AI evaluates how you communicate — structure, specificity, confidence — not clinical accuracy</p>
+            </div>
           </div>
         </div>
       </section>
@@ -417,7 +387,7 @@ export default function NursingLandingPage() {
                   </li>
                 ))}
               </ul>
-              <Link to="/signup" className="block w-full text-center bg-gray-100 hover:bg-gray-200 text-gray-900 font-medium py-3 rounded-xl transition-colors">
+              <Link to="/signup?from=nursing" className="block w-full text-center bg-gray-100 hover:bg-gray-200 text-gray-900 font-medium py-3 rounded-xl transition-colors">
                 Start Free
               </Link>
             </div>
@@ -445,7 +415,7 @@ export default function NursingLandingPage() {
                   </li>
                 ))}
               </ul>
-              <Link to="/signup" className="block w-full text-center bg-sky-700 hover:bg-sky-800 text-white font-medium py-3 rounded-xl transition-colors shadow-lg shadow-sky-500/20">
+              <Link to="/signup?from=nursing" className="block w-full text-center bg-sky-700 hover:bg-sky-800 text-white font-medium py-3 rounded-xl transition-colors shadow-lg shadow-sky-500/20">
                 Get Pro Access
               </Link>
             </div>
@@ -465,7 +435,7 @@ export default function NursingLandingPage() {
             Stop guessing what to say. Start practicing with an AI coach that helps you tell your story with confidence.
           </p>
           <Link
-            to="/signup"
+            to="/signup?from=nursing"
             className="inline-flex items-center gap-2 bg-white text-blue-950 font-bold text-lg px-8 py-4 rounded-xl hover:shadow-xl hover:-translate-y-0.5 transition-all"
           >
             Start Practicing Free
@@ -485,7 +455,7 @@ export default function NursingLandingPage() {
               <span className="text-white font-medium">NurseInterviewPro.ai</span>
             </div>
             <p className="text-sm">
-              A product of <span className="text-white">InterviewAnswers.AI</span>
+              A product of <Link to="/" className="text-white hover:text-indigo-300 transition-colors">InterviewAnswers.AI</Link>
             </p>
             <div className="flex gap-4 text-sm">
               <Link to="/terms" className="hover:text-white transition-colors">Terms</Link>
@@ -498,7 +468,7 @@ export default function NursingLandingPage() {
       {/* Mobile sticky CTA */}
       <div className="fixed bottom-0 left-0 right-0 md:hidden bg-white/95 backdrop-blur-lg border-t border-gray-200 p-3 z-40">
         <Link
-          to="/signup"
+          to="/signup?from=nursing"
           className="block w-full text-center bg-gradient-to-r from-sky-600 to-cyan-500 text-white font-bold py-3 rounded-lg shadow-lg"
         >
           Start Practicing Free

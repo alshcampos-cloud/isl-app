@@ -1,6 +1,8 @@
 import { Check, Crown, X, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import StripeCheckout from './StripeCheckout';
+import NativeCheckout from './NativeCheckout';
+import { isNativeApp } from '../utils/platform';
 
 export default function PricingPage({ onSelectTier, currentTier = 'free', user, userEmail }) {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -53,15 +55,10 @@ export default function PricingPage({ onSelectTier, currentTier = 'free', user, 
         { text: '5 Answer Assistant sessions/month', included: true },
         { text: '5 Question Generations/month', included: true },
         { text: '10 Live Prompter questions/month', included: true },
-        { text: 'Unlimited question bank storage', included: true },
+        { text: 'Question bank storage', included: true },
         { text: 'Speech recognition', included: true },
         { text: 'Session history & analytics', included: true },
-        { text: 'Template library access', included: true },
-        { text: 'Unlimited AI Interviewer', included: false },
-        { text: 'Unlimited Practice Mode', included: false },
-        { text: 'Unlimited Answer Assistant', included: false },
-        { text: 'Unlimited Question Generator', included: false },
-        { text: 'Unlimited Live Prompter', included: false }
+        { text: '🩺 Nursing Interview Track (limited)', included: true },
       ],
       cta: currentTier === 'free' ? 'Current Plan' : 'Downgrade',
       ctaDisabled: currentTier === 'free',
@@ -72,7 +69,7 @@ export default function PricingPage({ onSelectTier, currentTier = 'free', user, 
       name: 'Pro',
       price: 29.99,
       period: '/month',
-      description: 'Unlimited practice for serious job seekers',
+      description: 'Unlimited practice for general + nursing interviews',
       badge: 'UNLIMITED',
       badgeColor: 'bg-gradient-to-r from-indigo-500 to-purple-500',
       features: [
@@ -81,6 +78,8 @@ export default function PricingPage({ onSelectTier, currentTier = 'free', user, 
         { text: '✨ UNLIMITED Answer Assistant', included: true, highlight: true },
         { text: '✨ UNLIMITED Question Generator', included: true, highlight: true },
         { text: '✨ UNLIMITED Live Prompter', included: true, highlight: true },
+        { text: '🩺 Full Nursing Interview Track', included: true, highlight: true },
+        { text: 'Everything in Free, plus:', included: true, separator: true },
         { text: 'Unlimited question bank storage', included: true },
         { text: 'Speech recognition', included: true },
         { text: 'Session history & analytics', included: true },
@@ -177,40 +176,75 @@ export default function PricingPage({ onSelectTier, currentTier = 'free', user, 
                   <p className="text-sm text-gray-600">{tier.description}</p>
                 </div>
 
-                {/* CTA Button */}
+                {/* CTA Button — Native IAP on iOS, Stripe on Web */}
                 {tier.id === 'pro' && !tier.ctaDisabled ? (
-                  // Stripe Checkout button for Pro tier
                   <div className="mb-8">
-                    <StripeCheckout
-                      user={user}
-                      userEmail={userEmail}
-                      onSuccess={() => {
-                        console.log('🚀 Redirecting to Stripe Checkout...');
-                        setIsProcessing(true);
-                      }}
-                      onError={(error) => {
-                        console.error('❌ Checkout error:', error);
-                        setCheckoutError(error);
-                        setIsProcessing(false);
-                      }}
-                      disabled={isProcessing || !user}
-                      className={`w-full py-4 rounded-lg font-bold text-white transition text-lg ${
-                        isProcessing || !user
-                          ? 'bg-gray-300 cursor-not-allowed'
-                          : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg'
-                      }`}
-                    >
-                      {isProcessing ? (
-                        <span className="flex items-center justify-center gap-2">
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                          Redirecting to checkout...
-                        </span>
-                      ) : !user ? (
-                        'Sign in to Upgrade'
-                      ) : (
-                        'Upgrade to Pro'
-                      )}
-                    </StripeCheckout>
+                    {isNativeApp() ? (
+                      // Apple In-App Purchase for iOS native app
+                      <NativeCheckout
+                        user={user}
+                        onSuccess={() => {
+                          console.log('🎉 Native purchase successful');
+                          setIsProcessing(false);
+                          // Reload to reflect Pro status
+                          window.location.reload();
+                        }}
+                        onError={(error) => {
+                          console.error('❌ Native checkout error:', error);
+                          setCheckoutError(error);
+                          setIsProcessing(false);
+                        }}
+                        disabled={isProcessing || !user}
+                        className={`w-full py-4 rounded-lg font-bold text-white transition text-lg ${
+                          isProcessing || !user
+                            ? 'bg-gray-300 cursor-not-allowed'
+                            : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg'
+                        }`}
+                      >
+                        {isProcessing ? (
+                          <span className="flex items-center justify-center gap-2">
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                            Processing...
+                          </span>
+                        ) : !user ? (
+                          'Sign in to Upgrade'
+                        ) : (
+                          'Subscribe to Pro'
+                        )}
+                      </NativeCheckout>
+                    ) : (
+                      // Stripe Checkout for web browser
+                      <StripeCheckout
+                        user={user}
+                        userEmail={userEmail}
+                        onSuccess={() => {
+                          console.log('🚀 Redirecting to Stripe Checkout...');
+                          setIsProcessing(true);
+                        }}
+                        onError={(error) => {
+                          console.error('❌ Checkout error:', error);
+                          setCheckoutError(error);
+                          setIsProcessing(false);
+                        }}
+                        disabled={isProcessing || !user}
+                        className={`w-full py-4 rounded-lg font-bold text-white transition text-lg ${
+                          isProcessing || !user
+                            ? 'bg-gray-300 cursor-not-allowed'
+                            : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg'
+                        }`}
+                      >
+                        {isProcessing ? (
+                          <span className="flex items-center justify-center gap-2">
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                            Redirecting to checkout...
+                          </span>
+                        ) : !user ? (
+                          'Sign in to Upgrade'
+                        ) : (
+                          'Upgrade to Pro'
+                        )}
+                      </StripeCheckout>
+                    )}
                     {checkoutError && (
                       <p className="mt-2 text-sm text-red-600 text-center">{checkoutError}</p>
                     )}
@@ -235,26 +269,32 @@ export default function PricingPage({ onSelectTier, currentTier = 'free', user, 
                 {/* Features List */}
                 <div className="space-y-4">
                   {tier.features.map((feature, idx) => (
-                    <div key={idx} className="flex items-start gap-3">
-                      {feature.included ? (
-                        <div className="flex-shrink-0 w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
-                          <Check className="w-3 h-3 text-green-600" />
-                        </div>
-                      ) : (
-                        <div className="flex-shrink-0 w-5 h-5 bg-gray-100 rounded-full flex items-center justify-center">
-                          <X className="w-3 h-3 text-gray-400" />
-                        </div>
-                      )}
-                      <span className={`text-sm ${
-                        feature.included 
-                          ? feature.highlight 
-                            ? 'text-indigo-700 font-bold' 
-                            : 'text-gray-700 font-medium' 
-                          : 'text-gray-400'
-                      }`}>
-                        {feature.text}
-                      </span>
-                    </div>
+                    feature.separator ? (
+                      <div key={idx} className="pt-2 pb-1 border-t border-gray-200">
+                        <span className="text-xs text-gray-500 uppercase tracking-wide font-semibold">{feature.text}</span>
+                      </div>
+                    ) : (
+                      <div key={idx} className="flex items-start gap-3">
+                        {feature.included ? (
+                          <div className="flex-shrink-0 w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                            <Check className="w-3 h-3 text-green-600" />
+                          </div>
+                        ) : (
+                          <div className="flex-shrink-0 w-5 h-5 bg-gray-100 rounded-full flex items-center justify-center">
+                            <X className="w-3 h-3 text-gray-400" />
+                          </div>
+                        )}
+                        <span className={`text-sm ${
+                          feature.included
+                            ? feature.highlight
+                              ? 'text-indigo-700 font-bold'
+                              : 'text-gray-700 font-medium'
+                            : 'text-gray-400'
+                        }`}>
+                          {feature.text}
+                        </span>
+                      </div>
+                    )
                   ))}
                 </div>
               </div>
@@ -316,6 +356,11 @@ export default function PricingPage({ onSelectTier, currentTier = 'free', user, 
                   <td className="py-4 px-4 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
                   <td className="py-4 px-4 text-center"><Check className="w-5 h-5 text-green-600 mx-auto" /></td>
                 </tr>
+                <tr>
+                  <td className="py-4 px-4 text-gray-700">Nursing Interview Track</td>
+                  <td className="py-4 px-4 text-center text-gray-600">Limited</td>
+                  <td className="py-4 px-4 text-center font-bold text-indigo-600">Full Access</td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -343,7 +388,16 @@ export default function PricingPage({ onSelectTier, currentTier = 'free', user, 
             <div>
               <h3 className="font-bold text-gray-900 mb-2">What payment methods do you accept?</h3>
               <p className="text-gray-600">
-                We accept all major credit cards (Visa, Mastercard, American Express, Discover). Secure payment processing powered by Stripe.
+                {isNativeApp()
+                  ? 'Payment is handled securely through your Apple ID. You can manage your subscription in your device Settings.'
+                  : 'We accept all major credit cards (Visa, Mastercard, American Express, Discover). Secure payment processing powered by Stripe.'}
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-bold text-gray-900 mb-2">What's included with the Nursing Interview Track?</h3>
+              <p className="text-gray-600">
+                Pro subscribers get full access to both the general interview prep tools AND the specialized Nursing Interview Track — including mock interviews, SBAR drills, AI coaching, and flashcards designed specifically for nursing roles. One subscription covers everything.
               </p>
             </div>
 

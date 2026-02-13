@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { supabase } from './lib/supabase'
 import { Mail, Lock, User, AlertCircle, CheckCircle } from 'lucide-react'
 
-function Auth({ onAuthSuccess }) {
+function Auth({ onAuthSuccess, defaultMode = 'login' }) {
   const [loading, setLoading] = useState(false)
-  const [isSignUp, setIsSignUp] = useState(false)
+  const [isSignUp, setIsSignUp] = useState(defaultMode === 'signup')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
@@ -60,7 +60,7 @@ function Auth({ onAuthSuccess }) {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: `${window.location.origin}/app`,
       })
 
       if (error) throw error

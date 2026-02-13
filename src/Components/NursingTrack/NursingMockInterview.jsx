@@ -18,9 +18,10 @@ import { getFrameworkDetails, CLINICAL_FRAMEWORKS } from './nursingQuestions';
 import useNursingQuestions from './useNursingQuestions';
 import NursingLoadingSkeleton from './NursingLoadingSkeleton';
 import { fetchWithRetry } from '../../utils/fetchWithRetry';
+import useSpeechRecognition from './useSpeechRecognition';
 import { canUseFeature, incrementUsage } from '../../utils/creditSystem';
 import NursingSessionSummary from './NursingSessionSummary';
-import { parseScoreFromResponse, stripScoreTag } from './nursingUtils';
+import { parseScoreFromResponse, stripScoreTag, getCitationSource, validateNursingResponse } from './nursingUtils';
 import { createMockInterviewSession } from './nursingSessionStore';
 
 // ============================================================
@@ -38,6 +39,8 @@ const NURSING_SYSTEM_PROMPT = (specialty, question) => {
   const frameworkContext = framework
     ? `\nRelevant clinical framework: ${framework.name} (${framework.description})\nSource: ${framework.source}`
     : '';
+
+  const citationSource = getCitationSource(question);
 
   // SBAR vs STAR — dynamic evaluation based on question's responseFramework
   const isSBAR = question.responseFramework === 'sbar';
@@ -85,7 +88,7 @@ IMPORTANT: NEVER evaluate clinical accuracy. You assess HOW they communicate, no
 1. WHAT WAS STRONG — Name one specific thing they did well. Be genuine, not generic.
 2. WHAT TO IMPROVE — Name one specific area to strengthen. Frame as opportunity, never criticism.
 3. OFFER RETRY — Ask: "Would you like to try that answer again incorporating [specific suggestion]?"
-${framework ? `4. CITE FRAMEWORK — Reference the relevant framework naturally: "Your answer demonstrated strong ${framework.name} structure (Source: ${framework.source})"` : ''}
+${framework ? `4. CITE FRAMEWORK — Reference: "${framework.name}" (${framework.source})${citationSource ? ` | Source material: ${citationSource}` : ''}` : citationSource ? `4. CITE SOURCE — Reference this source naturally in your coaching: "${citationSource}"` : ''}
 
 SCORING: At the very end of your feedback response, include a score on a new line in EXACTLY this format:
 [SCORE: X/5]
@@ -140,6 +143,24 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
+  // Speech recognition (Battle Scars #4-7 — all iOS Safari fixes included)
+  const {
+    transcript: speechTranscript,
+    isListening: micActive,
+    isSupported: micSupported,
+    startSession: startMic,
+    stopSession: stopMic,
+    clearTranscript: clearSpeech,
+    error: micError,
+  } = useSpeechRecognition();
+
+  // Sync speech transcript → input field when mic is active
+  useEffect(() => {
+    if (micActive && speechTranscript) {
+      setCurrentInput(speechTranscript);
+    }
+  }, [speechTranscript, micActive]);
+
   // Get questions for this specialty (Supabase → fallback to static)
   const { questions, loading: questionsLoading } = useNursingQuestions(specialty.id);
 
@@ -147,10 +168,10 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
   useEffect(() => {
     if (userData && !userData.loading && userData.usage) {
       const check = canUseFeature(
-        // Convert stats format to flat usage format for canUseFeature
-        { ai_interviewer: userData.usage.aiInterviewer?.used || 0 },
+        // Nursing track uses separate credit pool
+        { nursing_mock: userData.usage.nursingMock?.used || 0 },
         userData.tier,
-        'aiInterviewer'
+        'nursingMock'
       );
       if (!check.allowed) {
         setCreditBlocked(true);
@@ -179,7 +200,7 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
 
   // Send a message to the AI
   const sendMessage = useCallback(async () => {
-    if (!currentInput.trim() || isLoading) return;
+    if (!currentInput.trim() || isLoading || creditBlocked) return;
 
     const userMessage = currentInput.trim();
     setCurrentInput('');
@@ -221,7 +242,8 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
             'Authorization': `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
-            mode: 'answer-assistant-continue',
+            mode: 'nursing-coach',
+            nursingFeature: 'nursingMock',
             systemPrompt: NURSING_SYSTEM_PROMPT(specialty, currentQuestion),
             conversationHistory: conversationHistory,
             userMessage: userMessage,
@@ -236,11 +258,12 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
       }
 
       const data = await response.json();
-      const rawContent = data.response || data.feedback || 'I appreciate your answer. Could you tell me more about that experience?';
+      const rawContent = data.content?.[0]?.text || data.response || data.feedback || 'I appreciate your answer. Could you tell me more about that experience?';
 
       // Parse score defensively — null fallback = "Unscored" (per user request)
       const score = parseScoreFromResponse(rawContent);
       const cleanContent = stripScoreTag(rawContent);
+      const validation = validateNursingResponse(rawContent, 'mock');
 
       // Add AI response to chat (with score stripped from display)
       setMessages(prev => [...prev, {
@@ -248,6 +271,7 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
         content: cleanContent,
         timestamp: new Date(),
         score, // attached for session results tracking
+        walledGardenFlag: validation.walledGardenFlag,
       }]);
 
       // Track session result for this question
@@ -278,9 +302,16 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
       // Only charge if we got a successful AI response
       if (userData?.user?.id) {
         try {
-          await incrementUsage(supabase, userData.user.id, 'aiInterviewer');
+          await incrementUsage(supabase, userData.user.id, 'nursingMock');
           // Refresh parent's usage stats so dashboard stays current
           if (refreshUsage) refreshUsage();
+          // Re-check credits after charge to catch hitting zero (prevents stale state bypass)
+          const recheck = canUseFeature(
+            { nursing_mock: (userData.usage.nursingMock?.used || 0) + sessionResults.length + 1 },
+            userData.tier,
+            'nursingMock'
+          );
+          if (!recheck.allowed) setCreditBlocked(true);
         } catch (chargeErr) {
           // Log but don't break the session — the AI response already succeeded
           console.warn('⚠️ Usage increment failed (non-blocking):', chargeErr);
@@ -355,7 +386,7 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
   // ============================================================
   if (!sessionStarted) {
     // Credit check gate
-    const creditInfo = userData?.usage?.aiInterviewer;
+    const creditInfo = userData?.usage?.nursingMock;
     const isUnlimited = userData?.isBeta || userData?.tier === 'pro';
 
     return (
@@ -414,7 +445,7 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
 
             {creditBlocked ? (
               <a
-                href="/app"
+                href="/app?upgrade=true&returnTo=/nursing"
                 className="block w-full text-center font-semibold py-3 rounded-xl transition-all bg-gradient-to-r from-purple-600 to-sky-500 text-white shadow-lg shadow-purple-500/30 hover:-translate-y-0.5"
               >
                 Upgrade to Pro — Unlimited Interviews
@@ -422,7 +453,6 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
             ) : (
               <button
                 onClick={startSession}
-                onTouchEnd={(e) => { e.preventDefault(); startSession(); }}
                 className="w-full font-semibold py-3 rounded-xl transition-all bg-gradient-to-r from-sky-600 to-cyan-500 text-white shadow-lg shadow-sky-500/30 hover:-translate-y-0.5"
               >
                 Start Interview
@@ -431,7 +461,6 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
 
             <button
               onClick={onBack}
-              onTouchEnd={(e) => { e.preventDefault(); onBack(); }}
               className="mt-3 text-slate-400 hover:text-white text-sm transition-colors"
             >
               ← Back to Dashboard
@@ -454,7 +483,6 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
           <button
             onClick={onBack}
-            onTouchEnd={(e) => { e.preventDefault(); onBack(); }}
             className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -482,7 +510,6 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
           {/* Tips toggle */}
           <button
             onClick={() => setShowTips(!showTips)}
-            onTouchEnd={(e) => { e.preventDefault(); setShowTips(!showTips); }}
             className="text-slate-400 hover:text-white transition-colors"
           >
             <BookOpen className="w-5 h-5" />
@@ -537,6 +564,11 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
                   : 'bg-white/10 text-slate-200'
               }`}>
                 <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                {msg.walledGardenFlag && (
+                  <p className="text-amber-400 text-xs mt-2 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" /> This response may contain clinical guidance — verify with facility protocols.
+                  </p>
+                )}
               </div>
               {msg.role === 'user' && (
                 <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0 mt-1">
@@ -572,7 +604,6 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
               <span className="text-red-300 text-sm">{error}</span>
               <button
                 onClick={() => setError(null)}
-                onTouchEnd={(e) => { e.preventDefault(); setError(null); }}
                 className="ml-auto text-red-400 hover:text-red-300"
               >
                 <XCircle className="w-4 h-4" />
@@ -591,22 +622,12 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
           <div className="flex gap-2 mb-3">
             <button
               onClick={nextQuestion}
-              onTouchEnd={(e) => { e.preventDefault(); nextQuestion(); }}
               className="text-xs text-sky-400 hover:text-sky-300 bg-sky-500/10 border border-sky-500/20 px-3 py-1.5 rounded-full transition-colors"
             >
               Next Question →
             </button>
             <button
               onClick={() => {
-                setMessages([]);
-                setQuestionIndex(0);
-                setSessionStarted(false);
-                setSessionComplete(false);
-                setSessionResults([]);
-                setFeedback(null);
-              }}
-              onTouchEnd={(e) => {
-                e.preventDefault();
                 setMessages([]);
                 setQuestionIndex(0);
                 setSessionStarted(false);
@@ -622,7 +643,6 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
             {sessionResults.length > 0 && (
               <button
                 onClick={endSessionEarly}
-                onTouchEnd={(e) => { e.preventDefault(); endSessionEarly(); }}
                 className="text-xs text-amber-400 hover:text-amber-300 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-full transition-colors"
               >
                 End Session →
@@ -630,25 +650,76 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
             )}
           </div>
 
-          {/* Text input */}
+          {/* Credit blocked alert — shown mid-session when credits hit zero */}
+          {creditBlocked && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 mb-3 text-center">
+              <p className="text-red-300 text-xs mb-1">You've used all free interview sessions this month.</p>
+              <a href="/app?upgrade=true&returnTo=/nursing" className="text-xs font-medium text-white bg-gradient-to-r from-purple-600 to-sky-500 px-3 py-1 rounded-lg inline-block">
+                Upgrade to Pro
+              </a>
+            </div>
+          )}
+          {/* Input area — mic + text + send */}
+          {micError && (
+            <p className="text-red-400 text-xs mb-1 text-center">{micError}</p>
+          )}
           <div className="flex items-end gap-2">
+            {/* Mic toggle — Battle Scar #5: must be user gesture (onClick/onTouchEnd) */}
+            {micSupported && (
+              <button
+                onClick={async () => {
+                  if (micActive) {
+                    stopMic();
+                  } else {
+                    clearSpeech();
+                    await startMic();
+                  }
+                }}
+                onTouchEnd={async (e) => {
+                  e.preventDefault();
+                  if (micActive) {
+                    stopMic();
+                  } else {
+                    clearSpeech();
+                    await startMic();
+                  }
+                }}
+                className={`p-3 rounded-xl transition-all flex-shrink-0 ${
+                  micActive
+                    ? 'bg-red-500 text-white shadow-lg shadow-red-500/30 animate-pulse'
+                    : 'bg-white/10 text-white/50 hover:text-white hover:bg-white/20'
+                }`}
+                title={micActive ? 'Stop microphone' : 'Start microphone'}
+              >
+                {micActive ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+              </button>
+            )}
             <div className="flex-1 relative">
               <textarea
                 ref={inputRef}
                 value={currentInput}
-                onChange={(e) => setCurrentInput(e.target.value)}
+                onChange={(e) => {
+                  setCurrentInput(e.target.value);
+                  // If user types while mic is on, stop mic (they're taking over)
+                  if (micActive) stopMic();
+                }}
                 onKeyDown={handleKeyDown}
-                placeholder="Type your answer..."
+                placeholder={micActive ? 'Listening... speak your answer' : 'Type or tap the mic to speak your answer...'}
                 rows={2}
-                className="w-full bg-white/10 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 resize-none focus:outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/30"
+                className={`w-full bg-white/10 border rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 resize-none focus:outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/30 ${
+                  micActive ? 'border-red-500/40' : 'border-white/10'
+                }`}
               />
             </div>
             <button
-              onClick={sendMessage}
-              onTouchEnd={(e) => { e.preventDefault(); sendMessage(); }}
-              disabled={!currentInput.trim() || isLoading}
-              className={`p-3 rounded-xl transition-all ${
-                currentInput.trim() && !isLoading
+              onClick={() => {
+                if (micActive) stopMic();
+                clearSpeech();
+                sendMessage();
+              }}
+              disabled={!currentInput.trim() || isLoading || creditBlocked}
+              className={`p-3 rounded-xl transition-all flex-shrink-0 ${
+                currentInput.trim() && !isLoading && !creditBlocked
                   ? 'bg-sky-600 text-white shadow-lg shadow-sky-500/30 hover:-translate-y-0.5'
                   : 'bg-white/10 text-white/30 cursor-not-allowed'
               }`}

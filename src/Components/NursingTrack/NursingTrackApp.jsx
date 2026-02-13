@@ -44,6 +44,7 @@ export default function NursingTrackApp() {
   // Track internal view state
   const [currentView, setCurrentView] = useState(VIEWS.SPECIALTY_SELECTION);
   const [selectedSpecialty, setSelectedSpecialty] = useState(null);
+  const [targetQuestionId, setTargetQuestionId] = useState(null);
 
   // Session history — loaded from Supabase when available, falls back to in-memory
   const [sessionHistory, setSessionHistory] = useState([]);
@@ -168,7 +169,9 @@ export default function NursingTrackApp() {
     setCurrentView(VIEWS.SPECIALTY_SELECTION);
   }, []);
 
-  const handleStartMode = useCallback((modeId) => {
+  const handleStartMode = useCallback((modeId, questionId = null) => {
+    // Store target question ID for modes that support deep-linking to a specific question
+    setTargetQuestionId(questionId);
     switch (modeId) {
       case 'mock-interview':
         setCurrentView(VIEWS.MOCK_INTERVIEW);
@@ -205,6 +208,8 @@ export default function NursingTrackApp() {
 
   const handleBackToDashboard = useCallback(() => {
     setCurrentView(VIEWS.DASHBOARD);
+    // Clear any deep-link target so re-entering a mode starts fresh
+    setTargetQuestionId(null);
   }, []);
 
   const handleBackToApp = useCallback(() => {
@@ -213,125 +218,171 @@ export default function NursingTrackApp() {
   }, [navigate]);
 
   // ============================================================
+  // PRO GATE — blocks free users from premium modes
+  // ============================================================
+  const isProUser = userData?.isBeta || userData?.tier === 'pro' || userData?.tier === 'beta';
+
+  const ProGateScreen = ({ modeName, modeIcon, onBack }) => (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-sky-950 to-slate-900 flex items-center justify-center p-4">
+      <div className="max-w-md w-full text-center">
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-8">
+          <div className="text-4xl mb-4">{modeIcon}</div>
+          <h2 className="text-white text-xl font-bold mb-2">{modeName}</h2>
+          <p className="text-slate-400 text-sm mb-1">This is a Pro feature.</p>
+          <p className="text-slate-500 text-xs mb-6">
+            Upgrade to get unlimited access to {modeName}, plus all other nursing interview tools.
+          </p>
+          <a
+            href="/app?upgrade=true&returnTo=/nursing"
+            className="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-500 text-white font-medium px-6 py-3 rounded-xl transition-colors text-sm mb-4"
+          >
+            Upgrade to Pro — $29.99/mo
+          </a>
+          <div>
+            <button
+              onClick={onBack}
+              className="text-slate-500 hover:text-slate-300 text-xs transition-colors mt-2"
+            >
+              ← Back to Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ============================================================
   // VIEW RENDERING
+  // Wrapped in .nursing-track for mobile readability CSS overrides
   // ============================================================
 
-  switch (currentView) {
-    case VIEWS.SPECIALTY_SELECTION:
-      return (
-        <SpecialtySelection
-          onSelectSpecialty={handleSelectSpecialty}
-          onBack={handleBackToApp}
-        />
-      );
+  const renderView = () => {
+    switch (currentView) {
+      case VIEWS.SPECIALTY_SELECTION:
+        return (
+          <SpecialtySelection
+            onSelectSpecialty={handleSelectSpecialty}
+            onBack={handleBackToApp}
+          />
+        );
 
-    case VIEWS.DASHBOARD:
-      return (
-        <NursingDashboard
-          specialty={selectedSpecialty}
-          onStartMode={handleStartMode}
-          onChangeSpecialty={handleChangeSpecialty}
-          onBack={handleBackToApp}
-          userData={userData}
-        />
-      );
+      case VIEWS.DASHBOARD:
+        return (
+          <NursingDashboard
+            specialty={selectedSpecialty}
+            onStartMode={handleStartMode}
+            onChangeSpecialty={handleChangeSpecialty}
+            onBack={handleBackToApp}
+            userData={userData}
+            sessionHistory={sessionHistory}
+          />
+        );
 
-    case VIEWS.MOCK_INTERVIEW:
-      return (
-        <NursingMockInterview
-          specialty={selectedSpecialty}
-          onBack={handleBackToDashboard}
-          userData={userData}
-          refreshUsage={refreshUsage}
-          addSession={addSession}
-        />
-      );
+      case VIEWS.MOCK_INTERVIEW:
+        return (
+          <NursingMockInterview
+            specialty={selectedSpecialty}
+            onBack={handleBackToDashboard}
+            userData={userData}
+            refreshUsage={refreshUsage}
+            addSession={addSession}
+          />
+        );
 
-    case VIEWS.PRACTICE:
-      return (
-        <NursingPracticeMode
-          specialty={selectedSpecialty}
-          onBack={handleBackToDashboard}
-          userData={userData}
-          refreshUsage={refreshUsage}
-          addSession={addSession}
-        />
-      );
+      case VIEWS.PRACTICE:
+        return (
+          <NursingPracticeMode
+            specialty={selectedSpecialty}
+            onBack={handleBackToDashboard}
+            userData={userData}
+            refreshUsage={refreshUsage}
+            addSession={addSession}
+            startQuestionId={targetQuestionId}
+          />
+        );
 
-    case VIEWS.SBAR_DRILL:
-      return (
-        <NursingSBARDrill
-          specialty={selectedSpecialty}
-          onBack={handleBackToDashboard}
-          userData={userData}
-          refreshUsage={refreshUsage}
-          addSession={addSession}
-        />
-      );
+      case VIEWS.SBAR_DRILL:
+        return (
+          <NursingSBARDrill
+            specialty={selectedSpecialty}
+            onBack={handleBackToDashboard}
+            userData={userData}
+            refreshUsage={refreshUsage}
+            addSession={addSession}
+          />
+        );
 
-    case VIEWS.FLASHCARDS:
-      return (
-        <NursingFlashcards
-          specialty={selectedSpecialty}
-          onBack={handleBackToDashboard}
-          userData={userData}
-        />
-      );
+      case VIEWS.FLASHCARDS:
+        return (
+          <NursingFlashcards
+            specialty={selectedSpecialty}
+            onBack={handleBackToDashboard}
+            userData={userData}
+          />
+        );
 
-    case VIEWS.COMMAND_CENTER:
-      return (
-        <NursingCommandCenter
-          specialty={selectedSpecialty}
-          onBack={handleBackToDashboard}
-          onStartMode={handleStartMode}
-          sessionHistory={sessionHistory}
-        />
-      );
+      case VIEWS.COMMAND_CENTER:
+        return (
+          <NursingCommandCenter
+            specialty={selectedSpecialty}
+            onBack={handleBackToDashboard}
+            onStartMode={handleStartMode}
+            sessionHistory={sessionHistory}
+            userData={userData}
+          />
+        );
 
-    case VIEWS.AI_COACH:
-      return (
-        <NursingAICoach
-          specialty={selectedSpecialty}
-          onBack={handleBackToDashboard}
-          userData={userData}
-          refreshUsage={refreshUsage}
-        />
-      );
+      case VIEWS.AI_COACH:
+        if (!isProUser) return <ProGateScreen modeName="AI Coach" modeIcon="🤖" onBack={handleBackToDashboard} />;
+        return (
+          <NursingAICoach
+            specialty={selectedSpecialty}
+            onBack={handleBackToDashboard}
+            userData={userData}
+            refreshUsage={refreshUsage}
+            addSession={addSession}
+          />
+        );
 
-    case VIEWS.RESOURCES:
-      return (
-        <NursingResources
-          onBack={handleBackToDashboard}
-        />
-      );
+      case VIEWS.RESOURCES:
+        return (
+          <NursingResources
+            onBack={handleBackToDashboard}
+          />
+        );
 
-    case VIEWS.CONFIDENCE:
-      return (
-        <NursingConfidenceBuilder
-          specialty={selectedSpecialty}
-          onBack={handleBackToDashboard}
-          userData={userData}
-          refreshUsage={refreshUsage}
-        />
-      );
+      case VIEWS.CONFIDENCE:
+        if (!isProUser) return <ProGateScreen modeName="Confidence Builder" modeIcon="💪" onBack={handleBackToDashboard} />;
+        return (
+          <NursingConfidenceBuilder
+            specialty={selectedSpecialty}
+            onBack={handleBackToDashboard}
+            userData={userData}
+            refreshUsage={refreshUsage}
+          />
+        );
 
-    case VIEWS.NEGOTIATION:
-      return (
-        <NursingOfferCoach
-          specialty={selectedSpecialty}
-          onBack={handleBackToDashboard}
-          userData={userData}
-          refreshUsage={refreshUsage}
-          addSession={addSession}
-        />
-      );
+      case VIEWS.NEGOTIATION:
+        if (!isProUser) return <ProGateScreen modeName="Offer Negotiation" modeIcon="💰" onBack={handleBackToDashboard} />;
+        return (
+          <NursingOfferCoach
+            specialty={selectedSpecialty}
+            onBack={handleBackToDashboard}
+            userData={userData}
+            refreshUsage={refreshUsage}
+            addSession={addSession}
+          />
+        );
 
-    default:
-      return (
-        <SpecialtySelection
-          onSelectSpecialty={handleSelectSpecialty}
-          onBack={handleBackToApp}
-        />
-      );
-  }
+      default:
+        return (
+          <SpecialtySelection
+            onSelectSpecialty={handleSelectSpecialty}
+            onBack={handleBackToApp}
+          />
+        );
+    }
+  };
+
+  return <div className="nursing-track">{renderView()}</div>;
 }

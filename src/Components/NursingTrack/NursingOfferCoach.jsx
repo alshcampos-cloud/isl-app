@@ -12,7 +12,6 @@
 //   #3  — fetchWithRetry (3 attempts, 0s/1s/2s backoff)
 //   #8  — Charge AFTER success, never before
 //   #9  — Beta users bypass limits (upstream tier check)
-//   #16 — onClick AND onTouchEnd on ALL buttons
 //   #19 — AI NEVER recommends specific dollar amounts or financial advice
 //
 // D.R.A.F.T. Protocol: NEW file. No existing code modified.
@@ -339,7 +338,7 @@ export default function NursingOfferCoach({ specialty, onBack, userData, refresh
             'Authorization': `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
-            mode: 'answer-assistant-continue',
+            mode: 'nursing-coach',
             systemPrompt: NEGOTIATION_SYSTEM_PROMPT(selectedScenario),
             conversationHistory: [],
             userMessage: userAnswer.trim(),
@@ -354,7 +353,7 @@ export default function NursingOfferCoach({ specialty, onBack, userData, refresh
       }
 
       const data = await response.json();
-      const rawContent = data.response || data.feedback || 'Unable to evaluate. Please try again.';
+      const rawContent = data.content?.[0]?.text || data.response || data.feedback || 'Unable to evaluate. Please try again.';
 
       const scores = parseNegotiationScores(rawContent);
       const feedbackText = parseFeedback(rawContent);
@@ -463,7 +462,6 @@ export default function NursingOfferCoach({ specialty, onBack, userData, refresh
           <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
             <button
               onClick={onBack}
-              onTouchEnd={(e) => { e.preventDefault(); onBack(); }}
               className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -525,7 +523,7 @@ export default function NursingOfferCoach({ specialty, onBack, userData, refresh
                   You've used all {creditInfo?.limit} free practice sessions this month.
                 </p>
                 <a
-                  href="/app"
+                  href="/app?upgrade=true&returnTo=/nursing"
                   className="inline-block text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-sky-500 px-4 py-2 rounded-lg hover:-translate-y-0.5 transition-all"
                 >
                   Upgrade to Pro — Unlimited Practice
@@ -539,7 +537,6 @@ export default function NursingOfferCoach({ specialty, onBack, userData, refresh
                 <button
                   key={cat.value}
                   onClick={() => setCategoryFilter(cat.value)}
-                  onTouchEnd={(e) => { e.preventDefault(); setCategoryFilter(cat.value); }}
                   className={`text-xs px-3 py-1.5 rounded-full border transition-all ${
                     categoryFilter === cat.value
                       ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-300'
@@ -554,10 +551,6 @@ export default function NursingOfferCoach({ specialty, onBack, userData, refresh
             {/* Random scenario button */}
             <button
               onClick={() => selectScenario(NEGOTIATION_SCENARIOS[Math.floor(Math.random() * NEGOTIATION_SCENARIOS.length)])}
-              onTouchEnd={(e) => {
-                e.preventDefault();
-                selectScenario(NEGOTIATION_SCENARIOS[Math.floor(Math.random() * NEGOTIATION_SCENARIOS.length)]);
-              }}
               className="w-full mb-4 flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-emerald-500/20 to-green-500/20 border border-emerald-500/30 text-emerald-300 font-medium text-sm hover:from-emerald-500/30 hover:to-green-500/30 transition-all"
             >
               <Shuffle className="w-4 h-4" /> Random Scenario
@@ -578,7 +571,6 @@ export default function NursingOfferCoach({ specialty, onBack, userData, refresh
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.05 }}
                     onClick={() => selectScenario(scenario)}
-                    onTouchEnd={(e) => { e.preventDefault(); selectScenario(scenario); }}
                     className="w-full text-left bg-white/5 border border-white/10 rounded-xl p-4 hover:bg-white/10 hover:border-white/20 transition-all group"
                   >
                     <div className="flex items-start justify-between gap-3">
@@ -639,7 +631,6 @@ export default function NursingOfferCoach({ specialty, onBack, userData, refresh
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
           <button
             onClick={backToScenarios}
-            onTouchEnd={(e) => { e.preventDefault(); backToScenarios(); }}
             className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -717,7 +708,6 @@ export default function NursingOfferCoach({ specialty, onBack, userData, refresh
                 <div className="flex items-center gap-3">
                   <button
                     onClick={submitAnswer}
-                    onTouchEnd={(e) => { e.preventDefault(); submitAnswer(); }}
                     disabled={!userAnswer.trim() || isLoading || creditBlocked}
                     className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all ${
                       userAnswer.trim() && !isLoading && !creditBlocked
@@ -740,7 +730,7 @@ export default function NursingOfferCoach({ specialty, onBack, userData, refresh
                       Free practice limit reached.
                     </p>
                     <a
-                      href="/app"
+                      href="/app?upgrade=true&returnTo=/nursing"
                       className="inline-block text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-sky-500 px-4 py-2 rounded-lg hover:-translate-y-0.5 transition-all"
                     >
                       Upgrade to Pro — Unlimited Practice
@@ -811,14 +801,12 @@ export default function NursingOfferCoach({ specialty, onBack, userData, refresh
                 <div className="flex gap-3">
                   <button
                     onClick={tryAgain}
-                    onTouchEnd={(e) => { e.preventDefault(); tryAgain(); }}
                     className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-sm hover:bg-white/20 transition-all"
                   >
                     <RotateCcw className="w-4 h-4" /> Try Again
                   </button>
                   <button
                     onClick={nextRandom}
-                    onTouchEnd={(e) => { e.preventDefault(); nextRandom(); }}
                     className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 text-white font-semibold text-sm shadow-lg shadow-emerald-500/30 hover:-translate-y-0.5 transition-all"
                   >
                     Next Scenario <ChevronRight className="w-4 h-4" />
@@ -835,7 +823,6 @@ export default function NursingOfferCoach({ specialty, onBack, userData, refresh
               <span className="text-red-300 text-sm">{error}</span>
               <button
                 onClick={() => setError(null)}
-                onTouchEnd={(e) => { e.preventDefault(); setError(null); }}
                 className="ml-auto text-red-400 hover:text-red-300"
               >
                 <XCircle className="w-4 h-4" />

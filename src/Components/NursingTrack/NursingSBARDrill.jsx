@@ -3,7 +3,7 @@
 // Situation, Background, Assessment, Recommendation — each scored 1-10.
 // Optional timed mode (90 seconds per question).
 //
-// Credit feature: 'practiceMode' (shares with quick practice)
+// Credit feature: 'nursingSbar' (free: 3/month, pro: unlimited — separate pool)
 // Uses C.O.A.C.H. protocol. Charge-after-success (Battle Scar #8).
 //
 // ⚠️ D.R.A.F.T. Protocol: NEW file. No existing code modified.
@@ -13,7 +13,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, Send, Loader2, Stethoscope, AlertCircle,
   CheckCircle, XCircle, ChevronRight, Timer, TimerOff,
-  RotateCcw, Zap, BarChart3
+  RotateCcw, Zap, BarChart3, Mic, MicOff
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { getFrameworkDetails } from './nursingQuestions';
@@ -21,8 +21,9 @@ import useNursingQuestions from './useNursingQuestions';
 import NursingLoadingSkeleton from './NursingLoadingSkeleton';
 import { fetchWithRetry } from '../../utils/fetchWithRetry';
 import { canUseFeature, incrementUsage } from '../../utils/creditSystem';
-import { parseSBARScores, stripSBARScoreTags, scoreColor10, scoreBg10 } from './nursingUtils';
+import { parseSBARScores, stripSBARScoreTags, scoreColor10, scoreBg10, getCitationSource, validateNursingResponse } from './nursingUtils';
 import { createSBARDrillSession } from './nursingSessionStore';
+import useSpeechRecognition from './useSpeechRecognition';
 
 const TIMER_SECONDS = 90;
 
@@ -32,12 +33,14 @@ const SBAR_DRILL_PROMPT = (specialty, question) => {
   const frameworkContext = framework
     ? `\nFramework: ${framework.name} — ${framework.description}\nSource: ${framework.source}`
     : '';
+  const citationSource = getCitationSource(question);
+  const citationLine = citationSource ? `\nSource material: ${citationSource}` : '';
 
   return `You are a nursing interview coach running an SBAR communication drill for a ${specialty.shortName} nurse.
 
 The scenario question is:
 "${question.question}"
-Category: ${question.category}${frameworkContext}
+Category: ${question.category}${frameworkContext}${citationLine}
 
 The candidate just gave their SBAR-structured response. Score EACH component individually on a scale of 1-10:
 
@@ -46,7 +49,12 @@ BACKGROUND (1-10): Did they provide relevant clinical history, pertinent finding
 ASSESSMENT (1-10): Did they share their clinical reasoning — what they believe is occurring and why?
 RECOMMENDATION (1-10): Did they state a clear recommendation, specific action taken or requested, with follow-up plan?
 
-Give brief feedback (2-3 sentences per component):
+Give brief feedback (2-3 sentences per component). Label each section with S:, B:, A:, R: for parsing, but your coaching MUST follow this critical rule:
+
+⚠️ NATURAL DELIVERY RULE: Experienced nurses deliver SBAR fluidly — the components flow naturally without announcing each section. NEVER coach the user to say phrases like "The situation is…", "The background is…", "My assessment is…", or "My recommendation is…". These labeled introductions sound like a student reciting a framework, NOT a confident professional communicating with a colleague. Instead, reward responses that weave SBAR elements naturally. For example, a strong Situation sounds like "I'm calling about Mrs. Chen in bed 4 — she's developed new-onset tachycardia at 130" NOT "The situation is that the patient has tachycardia." If their response already flows naturally, praise that specifically.
+
+SCORING ANCHOR: Score each component based on its CONTENT quality (specificity, relevance, completeness) as defined above. Natural, fluid delivery is a sign of proficiency — note it positively but do NOT add or subtract points for delivery style alone. A response with labeled headers ("S: ..., B: ...") that has strong content should still score well on content, with a coaching note about natural delivery. A response that flows naturally but is vague should score lower on content.
+
 - S: [feedback on Situation component]
 - B: [feedback on Background component]
 - A: [feedback on Assessment component]
@@ -89,6 +97,7 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
   const [userAnswer, setUserAnswer] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [feedback, setFeedback] = useState(null); // { text, scores: { situation, background, assessment, recommendation } }
+  const [validationFlags, setValidationFlags] = useState(null);
   const [error, setError] = useState(null);
   const [creditBlocked, setCreditBlocked] = useState(false);
 
@@ -103,15 +112,34 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
   const [drillComplete, setDrillComplete] = useState(false);
 
   const inputRef = useRef(null);
+
+  // Speech recognition (Battle Scars #4-7)
+  const {
+    transcript: speechTranscript,
+    isListening: micActive,
+    isSupported: micSupported,
+    startSession: startMic,
+    stopSession: stopMic,
+    clearTranscript: clearSpeech,
+    error: micError,
+  } = useSpeechRecognition();
+
+  // Sync speech → answer field
+  useEffect(() => {
+    if (micActive && speechTranscript) {
+      setUserAnswer(speechTranscript);
+    }
+  }, [speechTranscript, micActive]);
+
   const currentQuestion = questions[questionIndex] || null;
 
   // Credit check
   useEffect(() => {
     if (userData && !userData.loading && userData.usage) {
       const check = canUseFeature(
-        { practice_mode: userData.usage.practiceMode?.used || 0 },
+        { nursing_sbar: userData.usage.nursingSbar?.used || 0 },
         userData.tier,
-        'practiceMode'
+        'nursingSbar'
       );
       if (!check.allowed) setCreditBlocked(true);
     }
@@ -163,7 +191,8 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
             'Authorization': `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
-            mode: 'answer-assistant-continue',
+            mode: 'nursing-coach',
+            nursingFeature: 'nursingSbar',
             systemPrompt: SBAR_DRILL_PROMPT(specialty, currentQuestion),
             conversationHistory: [],
             userMessage: userAnswer.trim(),
@@ -177,12 +206,14 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
       }
 
       const data = await response.json();
-      const rawContent = data.response || data.feedback || '';
+      const rawContent = data.content?.[0]?.text || data.response || data.feedback || '';
 
       const scores = parseSBARScores(rawContent);
       const cleanContent = stripSBARScoreTags(rawContent);
+      const validation = validateNursingResponse(rawContent, 'sbar');
 
       setFeedback({ text: cleanContent, scores });
+      setValidationFlags(validation);
 
       // Track result
       setDrillResults(prev => [...prev, {
@@ -204,8 +235,15 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
       // CHARGE AFTER SUCCESS
       if (userData?.user?.id) {
         try {
-          await incrementUsage(supabase, userData.user.id, 'practiceMode');
+          await incrementUsage(supabase, userData.user.id, 'nursingSbar');
           if (refreshUsage) refreshUsage();
+          // Re-check credits after charge to catch hitting zero
+          const recheck = canUseFeature(
+            { nursing_sbar: (userData.usage.nursingSbar?.used || 0) + drillResults.length + 1 },
+            userData.tier,
+            'nursingSbar'
+          );
+          if (!recheck.allowed) setCreditBlocked(true);
         } catch (chargeErr) {
           console.warn('⚠️ SBAR drill usage increment failed:', chargeErr);
         }
@@ -225,6 +263,7 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
       setQuestionIndex(nextIdx);
       setUserAnswer('');
       setFeedback(null);
+      setValidationFlags(null);
       setError(null);
     } else {
       setDrillComplete(true);
@@ -263,7 +302,7 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-sky-950 to-slate-900">
         <div className="bg-slate-900/80 backdrop-blur-lg border-b border-white/10 sticky top-0 z-30">
           <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-            <button onClick={onBack} onTouchEnd={(e) => { e.preventDefault(); onBack(); }}
+            <button onClick={onBack}
               className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
               <ArrowLeft className="w-4 h-4" /><span className="text-sm">Dashboard</span>
             </button>
@@ -330,12 +369,11 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
 
           {/* Actions */}
           <div className="flex flex-col sm:flex-row gap-3">
-            <button onClick={() => { setDrillResults([]); setDrillComplete(false); setQuestionIndex(0); setUserAnswer(''); setFeedback(null); }}
-              onTouchEnd={(e) => { e.preventDefault(); setDrillResults([]); setDrillComplete(false); setQuestionIndex(0); setUserAnswer(''); setFeedback(null); }}
+            <button onClick={() => { setDrillResults([]); setDrillComplete(false); setQuestionIndex(0); setUserAnswer(''); setFeedback(null); setValidationFlags(null); }}
               className="flex-1 bg-gradient-to-r from-sky-600 to-cyan-500 text-white font-semibold py-3 rounded-xl shadow-lg shadow-sky-500/30 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2">
               <RotateCcw className="w-4 h-4" /> Drill Again
             </button>
-            <button onClick={onBack} onTouchEnd={(e) => { e.preventDefault(); onBack(); }}
+            <button onClick={onBack}
               className="flex-1 bg-white/10 border border-white/20 text-white font-semibold py-3 rounded-xl hover:bg-white/20 transition-all flex items-center justify-center gap-2">
               <ArrowLeft className="w-4 h-4" /> Back to Dashboard
             </button>
@@ -355,7 +393,7 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-sky-950 to-slate-900 flex items-center justify-center p-4">
         <div className="text-center">
           <p className="text-slate-400">No SBAR questions available for {specialty.shortName}.</p>
-          <button onClick={onBack} onTouchEnd={(e) => { e.preventDefault(); onBack(); }}
+          <button onClick={onBack}
             className="mt-4 text-sky-400 hover:text-sky-300 text-sm">← Back to Dashboard</button>
         </div>
       </div>
@@ -367,7 +405,7 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
       {/* Header */}
       <div className="bg-slate-900/80 backdrop-blur-lg border-b border-white/10 sticky top-0 z-30">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-          <button onClick={onBack} onTouchEnd={(e) => { e.preventDefault(); onBack(); }}
+          <button onClick={onBack}
             className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
             <ArrowLeft className="w-4 h-4" /><span className="text-sm">Back</span>
           </button>
@@ -382,7 +420,6 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
           {/* Timer toggle */}
           <button
             onClick={() => setTimedMode(prev => !prev)}
-            onTouchEnd={(e) => { e.preventDefault(); setTimedMode(prev => !prev); }}
             className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full transition-colors ${
               timedMode ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'text-slate-400 hover:text-white'
             }`}
@@ -413,7 +450,7 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
             <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-4 text-center">
               <p className="text-red-300 text-sm mb-2">Free practice limit reached this month.</p>
               <a
-                href="/app"
+                href="/app?upgrade=true&returnTo=/nursing"
                 className="inline-block text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-sky-500 px-4 py-2 rounded-lg hover:-translate-y-0.5 transition-all"
               >
                 Upgrade to Pro — Unlimited Drills
@@ -450,20 +487,46 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
           <AnimatePresence mode="wait">
             {!feedback ? (
               <motion.div key="input" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <textarea
-                  ref={inputRef}
-                  value={userAnswer}
-                  onChange={(e) => setUserAnswer(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Structure your response using SBAR: Start with the Situation, then Background, your Assessment, and finally your Recommendation..."
-                  rows={8}
-                  disabled={creditBlocked || isLoading}
-                  className="w-full bg-white/10 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 resize-none focus:outline-none focus:border-green-500/50 focus:ring-1 focus:ring-green-500/30 mb-4"
-                />
+                {micError && <p className="text-red-400 text-xs mb-2">{micError}</p>}
+                <div className="flex items-start gap-2 mb-4">
+                  {micSupported && (
+                    <button
+                      onClick={async () => {
+                        if (micActive) { stopMic(); } else { clearSpeech(); await startMic(); }
+                      }}
+                      onTouchEnd={async (e) => {
+                        e.preventDefault();
+                        if (micActive) { stopMic(); } else { clearSpeech(); await startMic(); }
+                      }}
+                      className={`p-3 rounded-xl transition-all flex-shrink-0 mt-0.5 ${
+                        micActive
+                          ? 'bg-red-500 text-white shadow-lg shadow-red-500/30 animate-pulse'
+                          : 'bg-white/10 text-white/50 hover:text-white hover:bg-white/20'
+                      }`}
+                      title={micActive ? 'Stop microphone' : 'Start microphone'}
+                    >
+                      {micActive ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                    </button>
+                  )}
+                  <textarea
+                    ref={inputRef}
+                    value={userAnswer}
+                    onChange={(e) => {
+                      setUserAnswer(e.target.value);
+                      if (micActive) stopMic();
+                    }}
+                    onKeyDown={handleKeyDown}
+                    placeholder={micActive ? 'Listening... speak your SBAR response' : 'Give your response naturally — cover the situation, relevant background, your assessment, and what you recommend. No need to label each section.'}
+                    rows={8}
+                    disabled={creditBlocked || isLoading}
+                    className={`flex-1 bg-white/10 border rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 resize-none focus:outline-none focus:border-green-500/50 focus:ring-1 focus:ring-green-500/30 ${
+                      micActive ? 'border-red-500/40' : 'border-white/10'
+                    }`}
+                  />
+                </div>
 
                 <button
-                  onClick={submitAnswer}
-                  onTouchEnd={(e) => { e.preventDefault(); submitAnswer(); }}
+                  onClick={() => { if (micActive) stopMic(); clearSpeech(); submitAnswer(); }}
                   disabled={!userAnswer.trim() || isLoading || creditBlocked}
                   className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all ${
                     userAnswer.trim() && !isLoading && !creditBlocked
@@ -507,6 +570,16 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
                   })}
                 </div>
 
+                {/* Walled garden warning */}
+                {validationFlags?.walledGardenFlag && (
+                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-2 mb-3 flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
+                    <p className="text-amber-300 text-xs">
+                      This response may contain clinical guidance. Always verify with your facility protocols.
+                    </p>
+                  </div>
+                )}
+
                 {/* Feedback text */}
                 <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-4">
                   <p className="text-slate-200 text-sm leading-relaxed whitespace-pre-wrap">{feedback.text}</p>
@@ -515,15 +588,13 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
                 {/* Actions */}
                 <div className="flex gap-3">
                   <button
-                    onClick={() => { setUserAnswer(''); setFeedback(null); }}
-                    onTouchEnd={(e) => { e.preventDefault(); setUserAnswer(''); setFeedback(null); }}
+                    onClick={() => { setUserAnswer(''); setFeedback(null); setValidationFlags(null); }}
                     className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-sm hover:bg-white/20 transition-all"
                   >
                     <RotateCcw className="w-4 h-4" /> Retry
                   </button>
                   <button
                     onClick={nextQuestion}
-                    onTouchEnd={(e) => { e.preventDefault(); nextQuestion(); }}
                     className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-green-600 to-emerald-500 text-white font-semibold text-sm shadow-lg shadow-green-500/30 hover:-translate-y-0.5 transition-all"
                   >
                     {questionIndex + 1 < questions.length ? (
@@ -542,7 +613,7 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
             <div className="mt-4 bg-red-500/10 border border-red-500/20 rounded-xl p-3 flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-red-400" />
               <span className="text-red-300 text-sm">{error}</span>
-              <button onClick={() => setError(null)} onTouchEnd={(e) => { e.preventDefault(); setError(null); }} className="ml-auto text-red-400 hover:text-red-300">
+              <button onClick={() => setError(null)} className="ml-auto text-red-400 hover:text-red-300">
                 <XCircle className="w-4 h-4" />
               </button>
             </div>

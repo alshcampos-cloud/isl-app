@@ -13,7 +13,6 @@
 //   #3  — fetchWithRetry (3 attempts, 0s/1s/2s backoff) for Section C
 //   #8  — Charge AFTER success, never before
 //   #9  — Beta users bypass limits
-//   #16 — onClick AND onTouchEnd on all buttons
 //   #19 — AI NEVER generates clinical content
 //
 // Credit feature: 'practiceMode' (shares with Practice + SBAR + AI Coach)
@@ -326,9 +325,8 @@ export default function NursingConfidenceBuilder({ specialty, onBack, userData, 
             'Authorization': `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
-            mode: 'answer-assistant-continue',
+            mode: 'confidence-brief',
             systemPrompt: CONFIDENCE_BRIEF_PROMPT(specialty, profile, evidenceFile),
-            conversationHistory: [],
             userMessage: 'Generate my personalized confidence brief based on my background profile.',
           }),
         }
@@ -341,7 +339,8 @@ export default function NursingConfidenceBuilder({ specialty, onBack, userData, 
       }
 
       const data = await response.json();
-      const briefContent = data.response || data.feedback || 'Unable to generate brief. Please try again.';
+      // Anthropic API returns { content: [{ type: 'text', text: '...' }] }
+      const briefContent = data.content?.[0]?.text || data.response || data.feedback || 'Unable to generate brief. Please try again.';
 
       setConfidenceBrief(briefContent);
 
@@ -404,7 +403,6 @@ export default function NursingConfidenceBuilder({ specialty, onBack, userData, 
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
           <button
             onClick={onBack}
-            onTouchEnd={(e) => { e.preventDefault(); onBack(); }}
             className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -431,7 +429,6 @@ export default function NursingConfidenceBuilder({ specialty, onBack, userData, 
                 <button
                   key={section.id}
                   onClick={isDisabled ? undefined : () => setActiveSection(section.id)}
-                  onTouchEnd={isDisabled ? undefined : (e) => { e.preventDefault(); setActiveSection(section.id); }}
                   disabled={isDisabled}
                   className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg text-xs font-medium transition-all ${
                     isActive
@@ -521,7 +518,6 @@ export default function NursingConfidenceBuilder({ specialty, onBack, userData, 
             <span className="text-red-300 text-sm flex-1">{error}</span>
             <button
               onClick={() => setError(null)}
-              onTouchEnd={(e) => { e.preventDefault(); setError(null); }}
               className="text-red-400 hover:text-red-300"
             >
               <XCircle className="w-4 h-4" />
@@ -579,7 +575,6 @@ function ProfileSection({ profile, updateField, saveProfile, profileSaved, speci
               <button
                 key={level.value}
                 onClick={() => updateField('experienceLevel', level.value)}
-                onTouchEnd={(e) => { e.preventDefault(); updateField('experienceLevel', level.value); }}
                 className={`text-left text-sm px-3 py-2 rounded-lg border transition-all ${
                   profile.experienceLevel === level.value
                     ? 'bg-amber-500/20 border-amber-500/30 text-amber-200'
@@ -658,7 +653,6 @@ function ProfileSection({ profile, updateField, saveProfile, profileSaved, speci
               <button
                 key={pref.value}
                 onClick={() => updateField('shiftPreference', pref.value)}
-                onTouchEnd={(e) => { e.preventDefault(); updateField('shiftPreference', pref.value); }}
                 className={`text-sm px-3 py-1.5 rounded-lg border transition-all ${
                   profile.shiftPreference === pref.value
                     ? 'bg-amber-500/20 border-amber-500/30 text-amber-200'
@@ -716,7 +710,6 @@ function ProfileSection({ profile, updateField, saveProfile, profileSaved, speci
       <div className="sticky bottom-0 bg-slate-900/95 backdrop-blur-lg border-t border-white/10 -mx-4 px-4 py-4 mt-6">
         <button
           onClick={saveProfile}
-          onTouchEnd={(e) => { e.preventDefault(); saveProfile(); }}
           className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all ${
             profileSaved
               ? 'bg-green-500/20 border border-green-500/30 text-green-300'
@@ -751,7 +744,6 @@ function EvidenceSection({ evidenceFile, profileHasData, copied, onCopy, onEditP
         </p>
         <button
           onClick={onEditProfile}
-          onTouchEnd={(e) => { e.preventDefault(); onEditProfile(); }}
           className="text-amber-400 hover:text-amber-300 text-sm font-medium"
         >
           ← Go to Profile
@@ -770,7 +762,6 @@ function EvidenceSection({ evidenceFile, profileHasData, copied, onCopy, onEditP
         <div className="flex items-center gap-2">
           <button
             onClick={onCopy}
-            onTouchEnd={(e) => { e.preventDefault(); onCopy(); }}
             className="flex items-center gap-1 text-xs text-slate-400 hover:text-white bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg transition-colors"
           >
             {copied ? <CheckCircle className="w-3 h-3 text-green-400" /> : <Clipboard className="w-3 h-3" />}
@@ -778,7 +769,6 @@ function EvidenceSection({ evidenceFile, profileHasData, copied, onCopy, onEditP
           </button>
           <button
             onClick={onEditProfile}
-            onTouchEnd={(e) => { e.preventDefault(); onEditProfile(); }}
             className="flex items-center gap-1 text-xs text-slate-400 hover:text-white bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg transition-colors"
           >
             <FileText className="w-3 h-3" /> Edit Profile
@@ -820,7 +810,7 @@ function EvidenceSection({ evidenceFile, profileHasData, copied, onCopy, onEditP
 
         {creditBlocked ? (
           <a
-            href="/app"
+            href="/app?upgrade=true&returnTo=/nursing"
             className="block w-full text-center font-semibold py-3 rounded-xl text-sm transition-all bg-gradient-to-r from-purple-600 to-sky-500 text-white shadow-lg shadow-purple-500/30 hover:-translate-y-0.5"
           >
             Upgrade to Pro — Unlimited AI Briefs
@@ -828,7 +818,6 @@ function EvidenceSection({ evidenceFile, profileHasData, copied, onCopy, onEditP
         ) : (
           <button
             onClick={onGenerateBrief}
-            onTouchEnd={(e) => { e.preventDefault(); onGenerateBrief(); }}
             disabled={isGeneratingBrief}
             className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all ${
               isGeneratingBrief
@@ -867,7 +856,6 @@ function BriefSection({ confidenceBrief, isGeneratingBrief, creditBlocked, onReg
         {evidenceFile && (
           <button
             onClick={onGoToEvidence}
-            onTouchEnd={(e) => { e.preventDefault(); onGoToEvidence(); }}
             className="text-amber-400 hover:text-amber-300 text-sm font-medium"
           >
             ← Go to Evidence File
@@ -900,7 +888,6 @@ function BriefSection({ confidenceBrief, isGeneratingBrief, creditBlocked, onReg
         <div className="flex items-center gap-2">
           <button
             onClick={onCopy}
-            onTouchEnd={(e) => { e.preventDefault(); onCopy(); }}
             className="flex items-center gap-1 text-xs text-slate-400 hover:text-white bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg transition-colors"
           >
             {copied ? <CheckCircle className="w-3 h-3 text-green-400" /> : <Clipboard className="w-3 h-3" />}
@@ -909,7 +896,6 @@ function BriefSection({ confidenceBrief, isGeneratingBrief, creditBlocked, onReg
           {!creditBlocked && (
             <button
               onClick={onRegenerate}
-              onTouchEnd={(e) => { e.preventDefault(); onRegenerate(); }}
               disabled={isGeneratingBrief}
               className="flex items-center gap-1 text-xs text-slate-400 hover:text-white bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg transition-colors"
             >

@@ -8,13 +8,13 @@
 //
 // ⚠️ D.R.A.F.T. Protocol: NEW file. No existing code modified.
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, BarChart3, BookOpen, Shield, Target, Bot,
   MessageSquare, Zap, CheckCircle, AlertCircle, TrendingUp,
   TrendingDown, Minus, Clock, Award, Layers, ChevronRight,
-  ChevronDown, ChevronUp
+  ChevronDown, ChevronUp, Save, Edit3, Lock, Sparkles
 } from 'lucide-react';
 import { getCategories, getFrameworkDetails, CLINICAL_FRAMEWORKS } from './nursingQuestions';
 import useNursingQuestions from './useNursingQuestions';
@@ -24,6 +24,7 @@ import {
   averageByFramework, perQuestionStats, scoreTrend, uniqueQuestionsPracticed,
 } from './nursingSessionStore';
 import { scoreColor5, scoreColor10 } from './nursingUtils';
+import { fetchSavedAnswers, upsertSavedAnswer } from './nursingSupabase';
 
 const TABS = [
   { id: 'progress', label: 'Progress', icon: BarChart3 },
@@ -31,7 +32,7 @@ const TABS = [
   { id: 'readiness', label: 'Readiness', icon: Shield },
 ];
 
-export default function NursingCommandCenter({ specialty, onBack, onStartMode, sessionHistory = [] }) {
+export default function NursingCommandCenter({ specialty, onBack, onStartMode, sessionHistory = [], userData }) {
   const [activeTab, setActiveTab] = useState('progress');
 
   const { questions, categories, loading } = useNursingQuestions(specialty.id);
@@ -45,7 +46,6 @@ export default function NursingCommandCenter({ specialty, onBack, onStartMode, s
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
           <button
             onClick={onBack}
-            onTouchEnd={(e) => { e.preventDefault(); onBack(); }}
             className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -69,7 +69,6 @@ export default function NursingCommandCenter({ specialty, onBack, onStartMode, s
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  onTouchEnd={(e) => { e.preventDefault(); setActiveTab(tab.id); }}
                   className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-medium transition-all ${
                     activeTab === tab.id
                       ? 'bg-sky-600 text-white shadow-md'
@@ -105,6 +104,7 @@ export default function NursingCommandCenter({ specialty, onBack, onStartMode, s
                 sessionHistory={sessionHistory}
                 specialty={specialty}
                 onStartMode={onStartMode}
+                userData={userData}
               />
             </motion.div>
           )}
@@ -208,7 +208,7 @@ function ProgressTab({ sessionHistory, questions, specialty }) {
               {trend.map((point, i) => {
                 const height = (point.score / 5) * 100;
                 return (
-                  <div key={i} className="flex-1 flex flex-col items-center justify-end">
+                  <div key={i} className="flex-1 h-full flex flex-col items-center justify-end">
                     <div
                       className={`w-full max-w-[20px] rounded-t-sm transition-all ${
                         point.score >= 4 ? 'bg-green-500' : point.score >= 3 ? 'bg-yellow-500' : 'bg-red-500'
@@ -355,11 +355,65 @@ function ProgressTab({ sessionHistory, questions, specialty }) {
 // ============================================================
 // TAB 2: QUESTION BANK
 // ============================================================
-function QuestionBankTab({ questions, categories, sessionHistory, specialty, onStartMode }) {
+function QuestionBankTab({ questions, categories, sessionHistory, specialty, onStartMode, userData }) {
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterFramework, setFilterFramework] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all'); // all, mastered, needs-review, unattempted
   const [expandedQuestion, setExpandedQuestion] = useState(null);
+
+  // Saved answers state: { [questionCode]: answerText }
+  const [savedAnswers, setSavedAnswers] = useState({});
+  const [editingAnswer, setEditingAnswer] = useState(null); // question ID being edited
+  const [draftAnswer, setDraftAnswer] = useState('');
+  const [savingAnswer, setSavingAnswer] = useState(false);
+
+  const userId = userData?.user?.id;
+
+  // Load saved answers on mount
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+
+    async function load() {
+      const result = await fetchSavedAnswers(userId);
+      if (!cancelled) {
+        if (result.fromSupabase && result.data) {
+          setSavedAnswers(result.data);
+        } else {
+          // Fallback: load from localStorage
+          try {
+            const local = JSON.parse(localStorage.getItem(`nursing_saved_answers_${userId}`) || '{}');
+            setSavedAnswers(local);
+          } catch { /* ignore */ }
+        }
+      }
+    }
+
+    load();
+    return () => { cancelled = true; };
+  }, [userId]);
+
+  // Save an answer (Supabase + localStorage fallback)
+  const handleSaveAnswer = useCallback(async (questionCode) => {
+    if (!draftAnswer.trim() || !userId) return;
+    setSavingAnswer(true);
+
+    const trimmed = draftAnswer.trim();
+
+    // Update local state immediately
+    setSavedAnswers(prev => {
+      const next = { ...prev, [questionCode]: trimmed };
+      // Also persist to localStorage as fallback
+      try { localStorage.setItem(`nursing_saved_answers_${userId}`, JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+
+    // Persist to Supabase (non-blocking, best-effort)
+    await upsertSavedAnswer(userId, questionCode, trimmed);
+
+    setSavingAnswer(false);
+    setEditingAnswer(null);
+  }, [draftAnswer, userId]);
 
   const qStats = useMemo(() => perQuestionStats(sessionHistory), [sessionHistory]);
 
@@ -377,13 +431,17 @@ function QuestionBankTab({ questions, categories, sessionHistory, specialty, onS
   const needsReviewCount = questions.filter(q => qStats[q.id] && (qStats[q.id].bestScore === null || qStats[q.id].bestScore < 4)).length;
   const unattemptedCount = questions.filter(q => !qStats[q.id]).length;
 
+  // Tier gating — free users see only first 3 questions fully, rest are blurred
+  const FREE_PREVIEW_COUNT = 3;
+  const userTier = userData?.tier || 'free';
+  const isPro = userTier === 'pro' || userTier === 'beta' || userData?.isBeta;
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
       {/* Summary strip */}
       <div className="grid grid-cols-3 gap-3 mb-6">
         <button
           onClick={() => setFilterStatus(filterStatus === 'mastered' ? 'all' : 'mastered')}
-          onTouchEnd={(e) => { e.preventDefault(); setFilterStatus(filterStatus === 'mastered' ? 'all' : 'mastered'); }}
           className={`text-center p-3 rounded-xl border transition-all ${
             filterStatus === 'mastered' ? 'bg-green-500/10 border-green-500/30' : 'bg-white/5 border-white/10'
           }`}
@@ -394,7 +452,6 @@ function QuestionBankTab({ questions, categories, sessionHistory, specialty, onS
         </button>
         <button
           onClick={() => setFilterStatus(filterStatus === 'needs-review' ? 'all' : 'needs-review')}
-          onTouchEnd={(e) => { e.preventDefault(); setFilterStatus(filterStatus === 'needs-review' ? 'all' : 'needs-review'); }}
           className={`text-center p-3 rounded-xl border transition-all ${
             filterStatus === 'needs-review' ? 'bg-amber-500/10 border-amber-500/30' : 'bg-white/5 border-white/10'
           }`}
@@ -405,7 +462,6 @@ function QuestionBankTab({ questions, categories, sessionHistory, specialty, onS
         </button>
         <button
           onClick={() => setFilterStatus(filterStatus === 'unattempted' ? 'all' : 'unattempted')}
-          onTouchEnd={(e) => { e.preventDefault(); setFilterStatus(filterStatus === 'unattempted' ? 'all' : 'unattempted'); }}
           className={`text-center p-3 rounded-xl border transition-all ${
             filterStatus === 'unattempted' ? 'bg-sky-500/10 border-sky-500/30' : 'bg-white/5 border-white/10'
           }`}
@@ -422,7 +478,6 @@ function QuestionBankTab({ questions, categories, sessionHistory, specialty, onS
         <div className="flex flex-wrap gap-1.5">
           <button
             onClick={() => setFilterCategory('all')}
-            onTouchEnd={(e) => { e.preventDefault(); setFilterCategory('all'); }}
             className={`text-xs px-2 py-1 rounded-full border transition-colors ${
               filterCategory === 'all' ? 'bg-sky-500/20 text-sky-300 border-sky-500/30' : 'text-slate-400 bg-white/5 border-white/10'
             }`}
@@ -430,7 +485,6 @@ function QuestionBankTab({ questions, categories, sessionHistory, specialty, onS
           {categories.map(cat => (
             <button key={cat}
               onClick={() => setFilterCategory(cat)}
-              onTouchEnd={(e) => { e.preventDefault(); setFilterCategory(cat); }}
               className={`text-xs px-2 py-1 rounded-full border transition-colors ${
                 filterCategory === cat ? 'bg-sky-500/20 text-sky-300 border-sky-500/30' : 'text-slate-400 bg-white/5 border-white/10'
               }`}
@@ -446,7 +500,6 @@ function QuestionBankTab({ questions, categories, sessionHistory, specialty, onS
           ].map(opt => (
             <button key={opt.value}
               onClick={() => setFilterFramework(opt.value)}
-              onTouchEnd={(e) => { e.preventDefault(); setFilterFramework(opt.value); }}
               className={`text-xs px-2 py-1 rounded-full border transition-colors ${
                 filterFramework === opt.value
                   ? (opt.cls || 'bg-sky-500/20 text-sky-300 border-sky-500/30')
@@ -458,21 +511,52 @@ function QuestionBankTab({ questions, categories, sessionHistory, specialty, onS
       </div>
 
       {/* Question list */}
-      <p className="text-slate-500 text-xs mb-3">{filteredQuestions.length} question{filteredQuestions.length !== 1 ? 's' : ''}</p>
+      <p className="text-slate-500 text-xs mb-3">
+        {filteredQuestions.length} question{filteredQuestions.length !== 1 ? 's' : ''}
+        {!isPro && filteredQuestions.length > FREE_PREVIEW_COUNT && (
+          <span className="text-slate-600 ml-1">
+            · {FREE_PREVIEW_COUNT} unlocked · <Lock className="w-2.5 h-2.5 inline -mt-0.5" /> {filteredQuestions.length - FREE_PREVIEW_COUNT} Pro
+          </span>
+        )}
+      </p>
 
       <div className="space-y-2 mb-8">
-        {filteredQuestions.map(q => {
+        {filteredQuestions.map((q, idx) => {
           const stats = qStats[q.id];
           const isMastered = stats?.bestScore >= 4;
           const isExpanded = expandedQuestion === q.id;
+          const isLocked = !isPro && idx >= FREE_PREVIEW_COUNT;
 
+          // ── Locked/blurred question card (free users, beyond preview) ──
+          if (isLocked) {
+            return (
+              <div key={q.id} className="relative bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+                <div className="p-4 flex items-start gap-3 select-none" style={{ filter: 'blur(6px)', WebkitFilter: 'blur(6px)' }}>
+                  <div className="mt-0.5 flex-shrink-0">
+                    <div className="w-4 h-4 rounded-full border border-slate-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/10 text-slate-400">{q.category}</span>
+                    </div>
+                    <p className="text-white text-sm leading-relaxed">{q.question}</p>
+                  </div>
+                </div>
+                {/* Lock overlay */}
+                <div className="absolute inset-0 bg-slate-900/40 flex items-center justify-center pointer-events-none">
+                  <Lock className="w-4 h-4 text-slate-500" />
+                </div>
+              </div>
+            );
+          }
+
+          // ── Visible question card (Pro, Beta, or within free preview) ──
           return (
             <div key={q.id} className={`bg-white/5 border rounded-xl overflow-hidden transition-colors ${
               isMastered ? 'border-green-500/20' : stats ? 'border-amber-500/20' : 'border-white/10'
             }`}>
               <button
                 onClick={() => setExpandedQuestion(isExpanded ? null : q.id)}
-                onTouchEnd={(e) => { e.preventDefault(); setExpandedQuestion(isExpanded ? null : q.id); }}
                 className="w-full text-left p-4 flex items-start gap-3"
               >
                 {/* Status icon */}
@@ -536,41 +620,113 @@ function QuestionBankTab({ questions, categories, sessionHistory, specialty, onS
                     className="overflow-hidden"
                   >
                     <div className="px-4 pb-4 border-t border-white/5 pt-3">
-                      {/* Key points */}
-                      {q.bullets?.length > 0 && (
-                        <div className="mb-3">
-                          <p className="text-sky-300 text-xs font-medium mb-1.5">Key points to hit:</p>
-                          {q.bullets.map((b, i) => (
-                            <p key={i} className="text-slate-400 text-xs mb-0.5">• {b}</p>
-                          ))}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {/* Left column: key points, follow-ups, practice CTA */}
+                        <div>
+                          {/* Key points */}
+                          {q.bullets?.length > 0 && (
+                            <div className="mb-3">
+                              <p className="text-sky-300 text-xs font-medium mb-1.5">Key points to hit:</p>
+                              {q.bullets.map((b, i) => (
+                                <p key={i} className="text-slate-400 text-xs mb-0.5">• {b}</p>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Framework citation */}
+                          {q.clinicalFramework && (
+                            <p className="text-slate-500 text-[10px] italic mb-3">
+                              Framework: {getFrameworkDetails(q.clinicalFramework)?.name} — {getFrameworkDetails(q.clinicalFramework)?.source}
+                            </p>
+                          )}
+
+                          {/* Follow-ups */}
+                          {q.followUps?.length > 0 && (
+                            <div className="mb-3">
+                              <p className="text-slate-500 text-xs font-medium mb-1">Possible follow-ups:</p>
+                              {q.followUps.map((fu, i) => (
+                                <p key={i} className="text-slate-500 text-xs italic">• {fu}</p>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Practice CTA */}
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onStartMode('practice', q.id); }}
+                            className="text-xs bg-sky-600/20 text-sky-300 border border-sky-500/30 px-3 py-1.5 rounded-lg hover:bg-sky-600/30 transition-colors flex items-center gap-1"
+                          >
+                            <Target className="w-3 h-3" /> Practice This
+                          </button>
                         </div>
-                      )}
 
-                      {/* Framework citation */}
-                      {q.clinicalFramework && (
-                        <p className="text-slate-500 text-[10px] italic mb-3">
-                          Framework: {getFrameworkDetails(q.clinicalFramework)?.name} — {getFrameworkDetails(q.clinicalFramework)?.source}
-                        </p>
-                      )}
+                        {/* Right column: My Best Answer */}
+                        <div className="bg-white/5 border border-white/10 rounded-xl p-3">
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="text-sky-300 text-xs font-medium flex items-center gap-1">
+                              <Save className="w-3 h-3" /> My Best Answer
+                            </p>
+                            {savedAnswers[q.id] && editingAnswer !== q.id && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingAnswer(q.id);
+                                  setDraftAnswer(savedAnswers[q.id]);
+                                }}
+                                className="text-slate-500 hover:text-slate-300 transition-colors"
+                              >
+                                <Edit3 className="w-3 h-3" />
+                              </button>
+                            )}
+                          </div>
 
-                      {/* Follow-ups */}
-                      {q.followUps?.length > 0 && (
-                        <div className="mb-3">
-                          <p className="text-slate-500 text-xs font-medium mb-1">Possible follow-ups:</p>
-                          {q.followUps.map((fu, i) => (
-                            <p key={i} className="text-slate-500 text-xs italic">• {fu}</p>
-                          ))}
+                          {editingAnswer === q.id ? (
+                            // Edit mode
+                            <div onClick={(e) => e.stopPropagation()}>
+                              <textarea
+                                value={draftAnswer}
+                                onChange={(e) => setDraftAnswer(e.target.value)}
+                                placeholder="Write your strongest answer here... Review it before your next interview."
+                                className="w-full bg-slate-800/50 border border-white/10 rounded-lg p-2 text-slate-300 text-xs leading-relaxed resize-none focus:outline-none focus:border-sky-500/40 placeholder-slate-600"
+                                rows={5}
+                                autoFocus
+                              />
+                              <div className="flex items-center justify-end gap-2 mt-2">
+                                <button
+                                  onClick={() => { setEditingAnswer(null); setDraftAnswer(''); }}
+                                  className="text-[10px] text-slate-500 hover:text-slate-300 px-2 py-1 transition-colors"
+                                >
+                                  Cancel
+                                </button>
+                                <button
+                                  onClick={() => handleSaveAnswer(q.id)}
+                                  disabled={savingAnswer || !draftAnswer.trim()}
+                                  className="text-[10px] bg-sky-600/20 text-sky-300 border border-sky-500/30 px-3 py-1 rounded-lg hover:bg-sky-600/30 transition-colors disabled:opacity-50 flex items-center gap-1"
+                                >
+                                  <Save className="w-2.5 h-2.5" />
+                                  {savingAnswer ? 'Saving...' : 'Save'}
+                                </button>
+                              </div>
+                            </div>
+                          ) : savedAnswers[q.id] ? (
+                            // Display saved answer
+                            <p className="text-slate-400 text-xs leading-relaxed whitespace-pre-wrap">{savedAnswers[q.id]}</p>
+                          ) : (
+                            // Empty state — prompt to add
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingAnswer(q.id);
+                                setDraftAnswer('');
+                              }}
+                              className="w-full text-center py-4 text-slate-600 hover:text-slate-400 transition-colors"
+                            >
+                              <Edit3 className="w-5 h-5 mx-auto mb-1 opacity-50" />
+                              <p className="text-xs">Save your best answer</p>
+                              <p className="text-[10px] mt-0.5 opacity-70">Review it before interviews</p>
+                            </button>
+                          )}
                         </div>
-                      )}
-
-                      {/* Practice CTA */}
-                      <button
-                        onClick={(e) => { e.stopPropagation(); onStartMode('practice'); }}
-                        onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); onStartMode('practice'); }}
-                        className="text-xs bg-sky-600/20 text-sky-300 border border-sky-500/30 px-3 py-1.5 rounded-lg hover:bg-sky-600/30 transition-colors flex items-center gap-1"
-                      >
-                        <Target className="w-3 h-3" /> Practice This
-                      </button>
+                      </div>
                     </div>
                   </motion.div>
                 )}
@@ -579,6 +735,34 @@ function QuestionBankTab({ questions, categories, sessionHistory, specialty, onS
           );
         })}
       </div>
+
+      {/* Upgrade CTA for free users with locked questions */}
+      {!isPro && filteredQuestions.length > FREE_PREVIEW_COUNT && (
+        <div className="relative mb-8">
+          {/* Gradient fade from the blurred cards */}
+          <div className="absolute -top-16 inset-x-0 h-16 bg-gradient-to-t from-slate-900 to-transparent pointer-events-none z-10" />
+
+          <div className="relative z-20 bg-gradient-to-br from-sky-600/10 to-purple-600/10 border border-sky-500/20 rounded-2xl p-6 text-center">
+            <Sparkles className="w-6 h-6 text-sky-400 mx-auto mb-3" />
+            <h3 className="text-white font-semibold text-lg mb-1">
+              Unlock All {filteredQuestions.length} Questions
+            </h3>
+            <p className="text-slate-400 text-sm mb-1">
+              You're previewing {FREE_PREVIEW_COUNT} of {filteredQuestions.length} curated interview questions.
+            </p>
+            <p className="text-slate-500 text-xs mb-4">
+              Pro members get the full question bank, key points to hit, follow-up questions, and saved answers.
+            </p>
+            <a
+              href="/app?upgrade=true&returnTo=/nursing"
+              className="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-500 text-white font-medium px-6 py-2.5 rounded-xl transition-colors text-sm"
+            >
+              <Sparkles className="w-4 h-4" />
+              Upgrade to Pro — $29.99/mo
+            </a>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

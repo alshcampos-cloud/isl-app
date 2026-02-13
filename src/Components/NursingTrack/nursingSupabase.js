@@ -231,6 +231,73 @@ export async function upsertNursingProfile(userId, profileData) {
  * The caller should fall back to getQuestionsForSpecialty() from nursingQuestions.js
  * when fromSupabase is false.
  */
+// ============================================================
+// SAVED ANSWERS (user's best response per question)
+// ============================================================
+
+/**
+ * Fetch all saved answers for a user.
+ * Returns { data: { [questionCode]: answerText }, fromSupabase: true }
+ * or { data: null, fromSupabase: false } on failure.
+ */
+export async function fetchSavedAnswers(userId) {
+  try {
+    const { data, error } = await supabase
+      .from('nursing_saved_answers')
+      .select('question_code, answer_text')
+      .eq('user_id', userId);
+
+    if (error) {
+      console.warn('⚠️ fetchSavedAnswers query failed:', error.message);
+      return { data: null, fromSupabase: false };
+    }
+
+    const answersMap = {};
+    (data || []).forEach(row => {
+      answersMap[row.question_code] = row.answer_text;
+    });
+
+    return { data: answersMap, fromSupabase: true };
+  } catch (err) {
+    console.warn('⚠️ fetchSavedAnswers exception:', err.message);
+    return { data: null, fromSupabase: false };
+  }
+}
+
+/**
+ * Upsert a saved answer for a question.
+ * Uses UNIQUE(user_id, question_code) constraint.
+ */
+export async function upsertSavedAnswer(userId, questionCode, answerText) {
+  try {
+    const { error } = await supabase
+      .from('nursing_saved_answers')
+      .upsert(
+        {
+          user_id: userId,
+          question_code: questionCode,
+          answer_text: answerText,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id,question_code' }
+      );
+
+    if (error) {
+      console.warn('⚠️ upsertSavedAnswer failed:', error.message);
+      return { success: false };
+    }
+    return { success: true };
+  } catch (err) {
+    console.warn('⚠️ upsertSavedAnswer exception:', err.message);
+    return { success: false };
+  }
+}
+
+
+// ============================================================
+// QUESTIONS (try Supabase, fallback to local nursingQuestions.js)
+// ============================================================
+
 export async function fetchQuestionsFromSupabase(specialtyId) {
   try {
     const { data, error } = await supabase

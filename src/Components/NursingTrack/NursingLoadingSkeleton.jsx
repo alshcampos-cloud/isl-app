@@ -20,7 +20,6 @@ export default function NursingLoadingSkeleton({ title = 'Loading...', onBack })
           {onBack && (
             <button
               onClick={onBack}
-              onTouchEnd={(e) => { e.preventDefault(); onBack(); }}
               className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />

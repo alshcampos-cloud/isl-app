@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>NurseInterviewPro Review</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro',system-ui,sans-serif;background:#0f172a;color:#e2e8f0;padding-bottom:60px}
+
+/* STICKY HEADER */
+.header{position:sticky;top:0;z-index:100;background:#0f172a;padding:12px 16px;border-bottom:1px solid #1e293b}
+.header h1{font-size:16px;color:#38bdf8;text-align:center}
+.header .sub{font-size:12px;color:#64748b;text-align:center;margin-top:2px}
+.stats{display:flex;justify-content:center;gap:14px;margin-top:8px;font-size:12px}
+.stats .g{color:#4ade80;font-weight:700}
+.stats .y{color:#fbbf24;font-weight:700}
+.stats .r{color:#f87171;font-weight:700}
+
+/* SPECIALTY SECTION */
+.sp-section{margin:20px 12px 0}
+.sp-header{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:14px 14px 0 0;font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:1px}
+.sp-General{background:rgba(56,189,248,0.15);color:#38bdf8}
+.sp-Emergency{background:rgba(248,113,113,0.15);color:#f87171}
+.sp-ICU{background:rgba(167,139,250,0.15);color:#a78bfa}
+.sp-OR{background:rgba(52,211,153,0.15);color:#34d399}
+.sp-LD{background:rgba(251,191,36,0.15);color:#fbbf24}
+.sp-Pediatrics{background:rgba(251,146,60,0.15);color:#fb923c}
+.sp-Psych{background:rgba(232,121,249,0.15);color:#e879f9}
+.sp-MedSurg{background:rgba(96,165,250,0.15);color:#60a5fa}
+.sp-Travel{background:rgba(45,212,191,0.15);color:#2dd4bf}
+
+/* QUESTION CARD */
+.qcard{background:#1e293b;border:1px solid #334155;border-top:none;padding:16px;position:relative}
+.qcard:last-child{border-radius:0 0 14px 14px}
+.qcard .qnum{font-size:10px;color:#475569;margin-bottom:6px}
+.qcard .qnum .new-badge{background:rgba(251,191,36,0.15);color:#fbbf24;padding:2px 6px;border-radius:4px;font-weight:700;margin-left:6px}
+.qcard .qtxt{font-size:15px;font-weight:600;color:#f1f5f9;line-height:1.4;margin-bottom:10px}
+.qcard .tags{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}
+.qcard .tag{font-size:9px;padding:2px 7px;border-radius:99px;font-weight:600}
+.tag-cat{background:rgba(56,189,248,0.1);color:#38bdf8;border:1px solid rgba(56,189,248,0.2)}
+.tag-fw{background:rgba(167,139,250,0.1);color:#a78bfa;border:1px solid rgba(167,139,250,0.2)}
+.tag-src{background:rgba(100,116,139,0.08);color:#64748b;border:1px solid rgba(100,116,139,0.15);font-weight:400;font-style:italic}
+
+/* EXPANDABLE DETAILS */
+.details{display:none;margin-top:10px;padding-top:10px;border-top:1px solid #334155}
+.details.open{display:block}
+.details-toggle{font-size:11px;color:#38bdf8;background:none;border:none;cursor:pointer;padding:4px 0;font-weight:600}
+.section-title{font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin:8px 0 4px}
+.bullet{font-size:12px;color:#94a3b8;padding:2px 0 2px 14px;position:relative;line-height:1.4}
+.bullet::before{content:'•';position:absolute;left:0;color:#38bdf8}
+.followup{font-size:11px;color:#64748b;font-style:italic;padding:2px 0 2px 14px;position:relative}
+.followup::before{content:'→';position:absolute;left:0;color:#475569}
+
+/* ACTION BUTTONS */
+.actions{display:flex;gap:8px;margin-top:12px}
+.abtn{flex:1;padding:10px 0;border:2px solid;border-radius:10px;font-size:13px;font-weight:700;background:transparent;cursor:pointer;text-align:center;-webkit-tap-highlight-color:transparent}
+.abtn-approve{border-color:#4ade80;color:#4ade80}
+.abtn-approve.selected{background:#4ade80;color:#000}
+.abtn-rewrite{border-color:#fbbf24;color:#fbbf24}
+.abtn-rewrite.selected{background:#fbbf24;color:#000}
+.abtn-reject{border-color:#f87171;color:#f87171}
+.abtn-reject.selected{background:#f87171;color:#000}
+
+/* NOTES */
+.notes-area{margin-top:8px}
+.notes-area textarea{width:100%;min-height:60px;background:rgba(0,0,0,0.3);border:1px solid #334155;border-radius:8px;color:#e2e8f0;font-size:13px;padding:8px;font-family:inherit;resize:vertical}
+.notes-area textarea:focus{outline:none;border-color:#38bdf8}
+.notes-label{font-size:10px;color:#64748b;margin-bottom:4px}
+.decided-badge{position:absolute;top:12px;right:12px;font-size:18px}
+
+/* FLOATING SEND BUTTON */
+.float-send{position:fixed;bottom:16px;right:16px;z-index:200;background:linear-gradient(135deg,#7c3aed,#38bdf8);color:white;border:none;border-radius:50px;padding:14px 20px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(56,189,248,0.4);-webkit-tap-highlight-color:transparent}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🩺 NurseInterviewPro — Question Review</h1>
+  <div class="sub" id="sub">68 questions for clinical approval</div>
+  <div class="stats">
+    <span>✅ <span class="g" id="sA">0</span></span>
+    <span>✏️ <span class="y" id="sR">0</span></span>
+    <span>❌ <span class="r" id="sX">0</span></span>
+    <span>📋 <span id="sL">68</span> left</span>
+  </div>
+</div>
+
+<div id="list"></div>
+
+<button class="float-send" onclick="sendProgress()">📤 Send Progress</button>
+
+<script>
+var Q=[
+{id:'ng_1',n:1,sp:'General',st:'existing',q:'Tell me about yourself and why you chose nursing.',cat:'Motivation',fw:'STAR',src:'NCSBN Professional Standards',bp:['Authentic personal motivation for choosing nursing','Connection between values and nursing practice','Brief professional journey and growth','Enthusiasm for the specialty'],fu:['What moment confirmed nursing was right for you?','How has your motivation evolved?']},
+{id:'ng_2',n:2,sp:'General',st:'existing',q:'Tell me about a time you had to advocate for a patient.',cat:'Behavioral',fw:'STAR',src:'ANA Standard: Advocacy',bp:['Identified a patient need not being addressed','Took specific action to advocate','Navigated resistance or hierarchy','Positive outcome for the patient'],fu:['What made you realize the patient needed an advocate?','How did you handle pushback?']},
+{id:'ng_3',n:3,sp:'General',st:'existing',q:'Describe a time you made an error or near-miss in clinical practice.',cat:'Behavioral',fw:'STAR',src:'NCSBN: Patient Safety; Joint Commission',bp:['Honest acknowledgment of the error','Immediate actions for patient safety','Proper reporting and documentation','Lessons learned and practice changes'],fu:['How did you report it?','What changed about your practice?']},
+{id:'ng_4',n:4,sp:'General',st:'existing',q:'How do you prioritize when you have multiple patients with competing needs?',cat:'Clinical Judgment',fw:'STAR',src:'NCSBN NCJMM; Maslow\'s; ABC',bp:['Uses systematic prioritization (ABC, Maslow\'s, acuity)','Real-time reassessment','Delegates appropriately','Communicates with team about priorities'],fu:['Give a specific example of competing patient needs.','How do you decide what can wait?']},
+{id:'ng_5',n:5,sp:'General',st:'existing',q:'Describe a situation where you used SBAR to communicate critical information.',cat:'Communication',fw:'SBAR',src:'IHI SBAR Toolkit; AHRQ TeamSTEPPS',bp:['Clear Situation statement','Relevant Background','Clinical Assessment with data','Specific Recommendation or request'],fu:['Who did you communicate with?','What was the outcome?']},
+{id:'ng_6',n:6,sp:'General',st:'existing',q:'Tell me about a time you had a conflict with a colleague or provider.',cat:'Behavioral',fw:'STAR',src:'ANA: Collaboration; AHRQ TeamSTEPPS',bp:['Describes conflict professionally','Shows initiative resolving directly','Respectful communication techniques','Focuses on patient care, not personality'],fu:['How did you approach the conversation?','What would you do differently?']},
+{id:'ng_7',n:7,sp:'General',st:'existing',q:'Why are you interested in this specialty and this unit specifically?',cat:'Motivation',fw:'STAR',src:'General interview competency',bp:['Specific reasons tied to the specialty','Connection to experience or career goals','Knowledge about the unit/facility','Genuine enthusiasm'],fu:['What research have you done about this unit?','How does this fit your long-term goals?']},
+{id:'ng_8',n:8,sp:'General',st:'existing',q:'How do you handle end-of-life care and supporting grieving families?',cat:'Communication',fw:'STAR',src:'ANA: Caring Practices; AACN Synergy',bp:['Empathy and emotional presence','Specific comfort measures','Interdisciplinary support (chaplain, social work)','Personal emotional impact and self-care'],fu:['How do you take care of yourself after a patient death?']},
+{id:'ng_9',n:9,sp:'General',st:'existing',q:'Describe your experience with electronic health records and clinical documentation.',cat:'Technical',fw:'SBAR',src:'ANA: Documentation; Joint Commission',bp:['Names specific EHR systems used','Documentation practices and accuracy','Awareness of documentation as legal record','Efficiency strategies'],fu:['How do you ensure timely documentation during a busy shift?']},
+{id:'ng_10',n:10,sp:'General',st:'existing',q:'Tell me about a time you received critical feedback from a supervisor or peer.',cat:'Behavioral',fw:'STAR',src:'ANA: Professional Growth',bp:['Describes feedback without defensiveness','Shows receptiveness','Specific actions to improve','Demonstrates self-awareness'],fu:['How did you respond in the moment?','What changed afterward?']},
+{id:'G-11',n:11,sp:'General',st:'new',q:'How do you communicate with families when a patient has a poor prognosis?',cat:'Communication',fw:'STAR',src:'ANA: Communication; AACN Synergy',bp:['Empathy while being honest','Private, unhurried environment','Cultural/spiritual considerations','Interdisciplinary involvement','Family\'s emotional readiness'],fu:['How do you balance truth with compassion?','What about disagreeing family members?']},
+{id:'G-12',n:12,sp:'General',st:'new',q:'How do you manage a patient refusing care or threatening to leave AMA?',cat:'Clinical Judgment',fw:'STAR',src:'ANA: Advocacy; NCSBN NCJMM',bp:['Explores why patient wants to leave','Respects right to refuse','Documents conversation and understanding of risks','Involves provider and resources'],fu:['What\'s the nurse\'s role when patient has capacity and refuses?']},
+{id:'G-13',n:13,sp:'General',st:'new',q:'How do you decide what tasks to delegate, and ensure they\'re completed safely?',cat:'Clinical Judgment',fw:'STAR',src:'NCSBN: Five Rights of Delegation',bp:['Understands scope for CNAs, LPNs, techs','Uses 5 Rights of Delegation','Follows up and verifies','Takes responsibility for delegated tasks'],fu:['What do you do when a CNA pushes back?']},
+{id:'G-14',n:14,sp:'General',st:'new',q:'Tell me about a time you dealt with a threatening or unsafe situation involving a patient or visitor.',cat:'Behavioral',fw:'STAR',src:'ENA: Workplace Violence; Joint Commission',bp:['De-escalation techniques','Personal and team safety awareness','Institutional resources (security, behavioral teams)','Documentation and reporting'],fu:['What de-escalation techniques do you use?']},
+{id:'G-15',n:15,sp:'General',st:'new',q:'Tell me about a time you used evidence-based practice to improve care delivery on your unit.',cat:'Behavioral',fw:'STAR',src:'ANA: Evidence-Based Practice; AACN',bp:['Identifies clinical question or practice gap','Searches for or applies research evidence','Implements a practice change','Measures the outcome'],fu:['How do you stay current with nursing research?']},
+{id:'G-16',n:16,sp:'General',st:'new',q:'Describe caring for a patient whose cultural background, language, or beliefs differed significantly from your own.',cat:'Communication',fw:'STAR',src:'ANA: Culturally Congruent Practice',bp:['Respect for cultural practices','Uses interpreter services (not family for medical)','Adapts care plan','Demonstrates humility and willingness to learn'],fu:['What if a cultural practice conflicts with the medical plan?']},
+{id:'ED-1',n:17,sp:'Emergency',st:'new',q:'The ED sees everything \u2014 trauma, psychiatric crises, labor, pediatrics. How do you adapt your care approach with very different populations back-to-back?',cat:'Clinical Judgment',fw:'STAR',src:'BCEN CEN Domains 1-10; ENA Core',bp:['Awareness of breadth of ED populations','Shifts assessment approach by population','Prioritization and resource allocation','Clinical versatility'],fu:['How do you adjust for pediatric vs. geriatric?']},
+{id:'ED-2',n:18,sp:'Emergency',st:'new',q:'Walk me through how you manage a trauma patient from arrival to stabilization.',cat:'Clinical Judgment',fw:'SBAR',src:'ENA TNCC; BCEN CEN',bp:['Primary survey (ABCDE) approach','Team roles and communication','Rapid assessment and intervention','Documentation during trauma'],fu:['How do you communicate findings using SBAR?']},
+{id:'ED-3',n:19,sp:'Emergency',st:'new',q:'How do you care for patients who present to the ED for issues that could be managed in primary care?',cat:'Communication',fw:'STAR',src:'BCEN CEN Domain 10',bp:['Empathy \u2014 understands access barriers','Treats with respect regardless of acuity','Education about community resources','Avoids being judgmental'],fu:['How do you balance compassion with efficiency?']},
+{id:'ED-4',n:20,sp:'Emergency',st:'new',q:'Describe managing patients with suspected infectious diseases in the ED, including isolation and team safety.',cat:'Clinical Judgment',fw:'SBAR',src:'BCEN CEN Domain 9; CDC Guidelines',bp:['Rapid isolation and PPE protocols','Communication with infection prevention','Protecting other patients and staff','Documentation and reporting'],fu:['What if isolation rooms are full?']},
+{id:'ED-5',n:21,sp:'Emergency',st:'new',q:'Tell me about caring for a patient experiencing a psychiatric or mental health crisis in the ED.',cat:'Communication',fw:'STAR',src:'BCEN CEN Domain 5: Mental Health',bp:['Therapeutic communication','De-escalation techniques','Safety awareness (patient and staff)','Collaboration with psych services/social work'],fu:['How do you maintain safety while being therapeutic?']},
+{id:'ED-6',n:22,sp:'Emergency',st:'new',q:'Describe how you identify and respond to a patient showing signs of sepsis in the ED.',cat:'Clinical Judgment',fw:'SBAR',src:'BCEN CEN Domain 6; CMS SEP-1',bp:['Recognizes early sepsis indicators','Initiates sepsis bundle','Urgency and time-sensitivity','Clear team communication'],fu:['What if the provider hasn\'t responded to a positive screen?']},
+{id:'ED-7',n:23,sp:'Emergency',st:'new',q:'How do you assess and manage a patient with a suspected fracture or orthopedic injury?',cat:'Clinical Judgment',fw:'STAR',src:'BCEN CEN Domain 7',bp:['Neurovascular assessment (5 P\'s)','Pain management approach','Compartment syndrome awareness','Splinting and patient education'],fu:['What signs concern you for compartment syndrome?']},
+{id:'ED-8',n:24,sp:'Emergency',st:'new',q:'Tell me about your experience managing a pregnant patient presenting to the ED.',cat:'Clinical Judgment',fw:'SBAR',src:'BCEN CEN Domain 4: GYN/OB',bp:['Pregnancy changes normal parameters','Common OB emergencies','Coordination with L&D/OB team','Two-patient care (mother and fetus)'],fu:['What if the patient arrives in active labor?']},
+{id:'ICU-1',n:25,sp:'ICU',st:'existing',q:'Describe a time you noticed a subtle change in a critically ill patient that others missed.',cat:'Clinical Judgment',fw:'SBAR',src:'AACN Synergy; NCSBN: Recognize Cues',bp:['Specific change observed','Clinical reasoning for concern','Timely escalation','Outcome documented'],fu:['How do you stay vigilant during a 12-hour shift?']},
+{id:'ICU-2',n:26,sp:'ICU',st:'new',q:'Describe interpreting hemodynamic data and using it to advocate for a change in the plan of care.',cat:'Technical',fw:'SBAR',src:'CCRN: Cardiovascular (17%)',bp:['Familiarity with hemodynamic parameters','Interprets trends, not just numbers','Communicates findings to team','Links data to clinical decisions'],fu:['How do you communicate to a provider who seems unconcerned?']},
+{id:'ICU-3',n:27,sp:'ICU',st:'new',q:'Tell me about managing ventilated patients, including assessing readiness for weaning.',cat:'Technical',fw:'STAR',src:'CCRN: Respiratory (15%)',bp:['Ventilator settings awareness','Weaning protocols and readiness criteria','ABG interpretation','Patient comfort and sedation management'],fu:['What if a patient fails a spontaneous breathing trial?']},
+{id:'ICU-4',n:28,sp:'ICU',st:'existing',q:'Tell me about managing multiple vasoactive drips and devices simultaneously.',cat:'Technical',fw:'STAR',src:'CCRN: Cardiovascular + Multisystem',bp:['Titration protocol knowledge','Prioritization with changing parameters','Monitoring approach and frequency','Safety (double-check, pump, line management)'],fu:['How do you prioritize simultaneous drip adjustments?']},
+{id:'ICU-5',n:29,sp:'ICU',st:'new',q:'Describe managing a patient progressing from sepsis to multiorgan dysfunction.',cat:'Clinical Judgment',fw:'SBAR',src:'CCRN: Multisystem (14%)',bp:['Recognizes progressive organ failure','Escalation of care (pressors, CRRT, vent)','Team communication during deterioration','Family communication during critical changes'],fu:['When do you advocate for a goals-of-care conversation?']},
+{id:'ICU-6',n:30,sp:'ICU',st:'new',q:'Describe transitioning a patient from aggressive treatment to comfort care.',cat:'Communication',fw:'STAR',src:'CCRN: End-of-Life/Palliative (20%)',bp:['Supporting family through the decision','Collaboration with palliative care','Symptom management during comfort care','Emotional intelligence and presence'],fu:['How do you handle your own emotions after a patient death?']},
+{id:'ICU-7',n:31,sp:'ICU',st:'new',q:'Tell me about an ethical dilemma in the ICU. How did you navigate it?',cat:'Behavioral',fw:'STAR',src:'AACN: Advocacy and Moral Agency',bp:['Describes the ethical tension','Institutional resources (ethics committee, chaplain)','Patient advocacy','Reflects on what was learned'],fu:['Have you disagreed with a provider\'s plan? How?']},
+{id:'ICU-8',n:32,sp:'ICU',st:'new',q:'How do you assess for and manage delirium in your ICU patients?',cat:'Clinical Judgment',fw:'STAR',src:'CCRN: Neurological (14%)',bp:['Validated tools (CAM-ICU, RASS)','Non-pharmacological interventions first','Sedation protocols and daily vacations','Communicates delirium findings to team'],fu:['How do you differentiate delirium from dementia?']},
+{id:'OR-1',n:33,sp:'OR',st:'existing',q:'Walk me through surgical counts and what you do when a count is off.',cat:'Technical',fw:'STAR',src:'CNOR SA3; AORN RSI Prevention',bp:['Standardized counting procedure','Actions when count is discrepant','Risk factor awareness','Patient advocacy under pressure'],fu:['What if the surgeon wants to close and counts don\'t reconcile?']},
+{id:'OR-2',n:34,sp:'OR',st:'existing',q:'Tell me about identifying a break in sterile technique during a procedure.',cat:'Clinical Judgment',fw:'SBAR',src:'CNOR SA5; AORN Sterile Technique',bp:['Specific break identified','Assertive communication (speaking up)','Correction without disrupting flow','Understanding contamination vs. sterility'],fu:['What if a surgeon dismisses your concern?']},
+{id:'OR-3',n:35,sp:'OR',st:'new',q:'Describe responding to an intraoperative emergency \u2014 malignant hyperthermia, hemorrhage, or cardiac arrest.',cat:'Clinical Judgment',fw:'SBAR',src:'CNOR SA6: Emergency Situations',bp:['Specific emergency situation','Clear role identification and team coordination','Knowledge of emergency protocols','Post-event debriefing and documentation'],fu:['What is your role as circulator during an MH crisis?']},
+{id:'OR-4',n:36,sp:'OR',st:'new',q:'The patient can\'t speak under anesthesia. How do you advocate for your patient in the OR?',cat:'Behavioral',fw:'STAR',src:'CNOR SA3; AORN: Advocacy',bp:['Specific advocacy actions (positioning, temp, dignity)','Circulating nurse IS the patient\'s voice','Communication with team about patient needs','Consent verification and patient preferences'],fu:['Have you ever stopped a procedure for safety?']},
+{id:'OR-5',n:37,sp:'OR',st:'new',q:'How do you communicate effectively with the surgical team, especially raising a concern during a critical moment?',cat:'Communication',fw:'STAR',src:'CNOR SA4: Communication; TeamSTEPPS',bp:['CUS framework (Concerned, Uncomfortable, Safety)','Assertive but respectful communication','Navigating OR hierarchy','Time-out and surgical pause practices'],fu:['What if a surgeon is dismissive?']},
+{id:'OR-6',n:38,sp:'OR',st:'new',q:'Describe your experience with complex surgical equipment \u2014 robotics, laparoscopic, or specialized devices.',cat:'Technical',fw:'STAR',src:'CNOR SA3: Equipment; AORN',bp:['Equipment setup and troubleshooting','Learning new technology','Equipment failure and backup plans','Manufacturer specs and safety protocols'],fu:['What if equipment malfunctions during a case?']},
+{id:'LD-1',n:39,sp:'L&D',st:'existing',q:'How do you handle unexpected changes to a birth plan \u2014 like when a vaginal delivery requires an emergency cesarean?',cat:'Communication',fw:'STAR',src:'NCC RNC-OB Domain 3; AWHONN',bp:['Empathy for patient\'s emotional response','Clear communication about why','Maintains patient involvement in decisions','Supports patient and partner through transition'],fu:['How do you balance urgency with keeping patient informed?']},
+{id:'LD-2',n:40,sp:'L&D',st:'existing',q:'Describe identifying a concerning fetal heart rate pattern and how you escalated it.',cat:'Clinical Judgment',fw:'SBAR',src:'AWHONN FHM; NCC RNC-OB Domain 2; NICHD',bp:['Uses NICHD terminology (Category I, II, III)','Specific interventions attempted','Clear SBAR communication to provider','Documents findings and interventions'],fu:['What if you and the provider disagree on interpretation?']},
+{id:'LD-3',n:41,sp:'L&D',st:'new',q:'Walk me through your response to a postpartum hemorrhage.',cat:'Clinical Judgment',fw:'SBAR',src:'NCC RNC-OB Domain 4; AWHONN: QBL',bp:['Quantified blood loss measurement','Uterotonic cascade knowledge','Team communication and role identification','Massive transfusion protocol awareness'],fu:['How do you recognize early PPH signs?']},
+{id:'LD-4',n:42,sp:'L&D',st:'new',q:'Describe managing oxytocin administration during labor, including monitoring for complications.',cat:'Technical',fw:'STAR',src:'AWHONN: 1:1 Staffing; NCC RNC-OB',bp:['Titration protocols and facility policy','Continuous monitoring requirements','Hyperstimulation awareness and response','Patient communication about the process'],fu:['What if you observe tachysystole?']},
+{id:'LD-5',n:43,sp:'L&D',st:'new',q:'How do you support a family experiencing a fetal loss or stillbirth?',cat:'Communication',fw:'STAR',src:'AWHONN; NCC; ANA: Caring Practices',bp:['Compassion and presence','Supportive environment (memory-making, keepsakes)','Chaplain, social work, bereavement support','Cultural and individual preferences for grieving'],fu:['How do you take care of yourself after?']},
+{id:'LD-6',n:44,sp:'L&D',st:'new',q:'Describe managing a high-risk antepartum patient \u2014 pre-eclampsia, preterm labor, or gestational diabetes.',cat:'Clinical Judgment',fw:'SBAR',src:'NCC RNC-OB Domain 1; AWHONN',bp:['Monitoring protocols for the condition','Escalation when parameters change','Patient education and anxiety management','Interdisciplinary communication'],fu:['How do you manage a patient on mag sulfate?']},
+{id:'PEDS-1',n:45,sp:'Pediatrics',st:'existing',q:'How do assessment and communication differ with pediatric patients compared to adults?',cat:'Clinical Judgment',fw:'STAR',src:'PNCB CPN Domain 2; SPN',bp:['Adjusts communication by developmental stage','Age-appropriate assessment techniques','Involves parents/caregivers appropriately','Different vital sign norms by age'],fu:['How do you approach a terrified 4-year-old who needs an IV?']},
+{id:'PEDS-2',n:46,sp:'Pediatrics',st:'new',q:'What are the key differences in clinical care for pediatric vs. adult patients, and how do they affect your practice?',cat:'Clinical Judgment',fw:'STAR',src:'PNCB CPN Domain 3; SPN PNE Model',bp:['Weight-based medication dosing','Different pharmacokinetics','Higher risk for medication errors','Vital sign norms differ by age group'],fu:['Describe your process for double-checking a pediatric medication dose.']},
+{id:'PEDS-3',n:47,sp:'Pediatrics',st:'new',q:'How do you implement family-centered care when a parent\'s wishes conflict with the care team\'s recommendations?',cat:'Communication',fw:'STAR',src:'SPN: Family-Centered Care; PNCB',bp:['Parents as full partners in care planning','Navigating disagreements with empathy','Cultural sensitivity in family dynamics','Including parents in procedures when appropriate'],fu:['How do you handle a parent who refuses treatment?']},
+{id:'PEDS-4',n:48,sp:'Pediatrics',st:'new',q:'How do you assess and manage pain in a child who can\'t clearly verbalize what they\'re feeling?',cat:'Clinical Judgment',fw:'STAR',src:'PNCB CPN Domain 2; SPN',bp:['Age-appropriate pain scales (FLACC, Wong-Baker, numeric)','Behavioral and physiological cues','Pharmacological and non-pharmacological approaches','Involves caregivers in assessment'],fu:['How do you manage pain differently in 6-month-old vs. 12-year-old?']},
+{id:'PEDS-5',n:49,sp:'Pediatrics',st:'new',q:'Tell me about mandatory reporting. Have you ever suspected abuse or neglect?',cat:'Behavioral',fw:'STAR',src:'PNCB CPN Domain 4; SPN: Advocacy',bp:['Mandatory reporting obligations','Assessment for abuse indicators','Appropriate documentation','Emotional difficulty of reporting'],fu:['How do you maintain the relationship while a report is investigated?']},
+{id:'PEDS-6',n:50,sp:'Pediatrics',st:'new',q:'How do you navigate adolescent care around confidentiality, consent/assent, and sensitive topics?',cat:'Communication',fw:'STAR',src:'PNCB CPN Domain 3; AAP Guidelines',bp:['Legal framework for minor consent/assent','Space for private conversations','Sensitive topics (substance use, sexual health, mental health)','Balances parental involvement with adolescent autonomy'],fu:['What if an adolescent tells you something affecting their safety?']},
+{id:'PSYCH-1',n:51,sp:'Psych',st:'existing',q:'Describe using therapeutic communication to de-escalate a patient in crisis.',cat:'Communication',fw:'STAR',src:'APNA; ANCC PMH-BC Domain III (46%)',bp:['Specific techniques (active listening, validation, limits, choices)','Body language and environmental awareness','Progression from verbal to other interventions','Team safety and patient dignity'],fu:['What if verbal de-escalation isn\'t working?']},
+{id:'PSYCH-2',n:52,sp:'Psych',st:'new',q:'Describe your approach to assessing suicide risk and developing a safety plan.',cat:'Clinical Judgment',fw:'STAR',src:'APNA Suicide Prevention; ANCC PMH-BC; Joint Commission',bp:['Validated risk assessment tools','Asks directly about suicidal ideation','Collaborative safety planning','Environmental safety and documentation'],fu:['How do you reassess throughout the stay?']},
+{id:'PSYCH-3',n:53,sp:'Psych',st:'new',q:'Tell me about managing a patient who became physically aggressive. Walk me through it.',cat:'Behavioral',fw:'STAR',src:'APNA Seclusion & Restraint; ANCC PMH-BC',bp:['Least restrictive interventions first','De-escalation before physical intervention','Team coordination and safety','Seclusion/restraint as last resort with documentation'],fu:['How do you debrief after a physical intervention?']},
+{id:'PSYCH-4',n:54,sp:'Psych',st:'new',q:'How do you care for a patient with both a psychiatric disorder and substance use disorder?',cat:'Clinical Judgment',fw:'STAR',src:'ANCC PMH-BC; APNA; NCSBN',bp:['Non-judgmental approach','Both conditions need simultaneous treatment','Withdrawal assessment and monitoring','Motivational interviewing techniques'],fu:['What if a patient is using substances while admitted?']},
+{id:'PSYCH-5',n:55,sp:'Psych',st:'new',q:'How do you contribute to maintaining a therapeutic milieu on a psychiatric unit?',cat:'Behavioral',fw:'STAR',src:'APNA: Milieu Therapy; ANCC PMH-BC',bp:['Safe, structured environment','Group dynamics and patient interactions','Limit-setting while maintaining relationships','Environmental safety (ligature risk, contraband)'],fu:['What if one patient\'s behavior affects others\' environment?']},
+{id:'PSYCH-6',n:56,sp:'Psych',st:'new',q:'Describe a situation involving involuntary commitment, patient rights, or confidentiality. How did you navigate it?',cat:'Behavioral',fw:'STAR',src:'ANCC PMH-BC; APNA; NCSBN: Ethics',bp:['Knowledge of involuntary hold criteria','Respect for rights even during commitment','Confidentiality boundaries (duty to warn)','Emotional complexity and ethical reasoning'],fu:['How do you explain involuntary commitment to an angry patient?']},
+{id:'MS-1',n:57,sp:'Med-Surg',st:'existing',q:'How do you manage a full patient assignment and make sure nothing falls through the cracks?',cat:'Clinical Judgment',fw:'STAR',src:'AMSN Domain 1; CMSRN',bp:['Organizational system (brain sheets, time management)','Prioritization approach','Delegation to CNAs/techs','Catches things early before emergencies'],fu:['How do you reprioritize when an admission disrupts your plan?']},
+{id:'MS-2',n:58,sp:'Med-Surg',st:'new',q:'Tell me about recognizing a patient was deteriorating before it became obvious. What clues did you notice?',cat:'Clinical Judgment',fw:'SBAR',src:'CMSRN: Rapidly Changing Situations',bp:['Subtle clinical changes (mental status, trending vitals, urine output)','Assessment-driven response, not just protocols','SBAR communication to rapid response/provider','Links to outcome'],fu:['How do you communicate when vitals are still "technically normal"?']},
+{id:'MS-3',n:59,sp:'Med-Surg',st:'new',q:'Describe managing a post-operative patient \u2014 what you\'re assessing for in the first 24 hours.',cat:'Technical',fw:'STAR',src:'AMSN: Surgical Management; CMSRN',bp:['Systematic assessment (airway, pain, surgical site, drains)','Watches for complications (bleeding, infection, DVT, ileus)','Pain management approach','Patient education on recovery'],fu:['How do you differentiate expected discomfort from a complication?']},
+{id:'MS-4',n:60,sp:'Med-Surg',st:'new',q:'How do you ensure medication safety, especially with high-alert medications?',cat:'Technical',fw:'STAR',src:'AMSN: Medication Management; CMSRN',bp:['5 Rights consistently','Additional safeguards (double checks, smart pumps)','Medication reconciliation','What they do when something doesn\'t feel right'],fu:['Tell me about catching a medication error before it reached the patient.']},
+{id:'MS-5',n:61,sp:'Med-Surg',st:'new',q:'How do you assess and manage pain in patients with chronic pain or substance use history?',cat:'Clinical Judgment',fw:'STAR',src:'AMSN: Pain Management; CMSRN',bp:['Multimodal approach','Believes and respects reported pain level','Addresses bias and judgment','Advocacy when pain isn\'t adequately managed'],fu:['What non-pharmacological interventions have you found effective?']},
+{id:'MS-6',n:62,sp:'Med-Surg',st:'new',q:'How do you prepare a patient for discharge \u2014 especially with complex needs or low health literacy?',cat:'Communication',fw:'STAR',src:'AMSN: Education; CMSRN: Teaching',bp:['Assesses learning readiness and health literacy','Teach-back method','Medication education, restrictions, follow-up','Involves family/caregivers'],fu:['What if a patient says they understand but you\'re not confident?']},
+{id:'TRAVEL-1',n:63,sp:'Travel',st:'existing',q:'Walk me through your first 48 hours at a new facility. How do you get up to speed quickly?',cat:'Behavioral',fw:'STAR',src:'Joint Commission NPG 12; NATHO',bp:['Systematic approach to orientation','Identifies resources and go-to people','Asks questions proactively','Doesn\'t assume same policies'],fu:['What\'s the first thing you look for on a new unit?']},
+{id:'TRAVEL-2',n:64,sp:'Travel',st:'existing',q:'Describe identifying a safety concern at a new facility. What did you do?',cat:'Clinical Judgment',fw:'STAR',src:'Joint Commission NPG 12; ANA: Advocacy',bp:['Specific concern identified','Appropriate escalation','Navigates being the "outsider"','Patient safety over being liked'],fu:['How do you raise a concern without alienating staff?']},
+{id:'TRAVEL-3',n:65,sp:'Travel',st:'new',q:'Epic at one facility, Cerner at the next, Meditech at another. How do you adapt to different EMR systems?',cat:'Technical',fw:'STAR',src:'Joint Commission: Documentation Standards',bp:['Lists systems worked in','Adaptation strategies (super-users, quick guides)','Documentation accuracy as priority','Humility about asking for help'],fu:['What if you can\'t figure out documentation in an unfamiliar system?']},
+{id:'TRAVEL-4',n:66,sp:'Travel',st:'new',q:'How do you handle being floated to a unit outside your primary specialty?',cat:'Clinical Judgment',fw:'STAR',src:'NCSBN: Scope of Practice',bp:['Self-assessment of competency vs. unit needs','Communicates limitations honestly','Identifies unit resources and support','Patient safety as priority'],fu:['How do you advocate when you feel out of your depth?']},
+{id:'TRAVEL-5',n:67,sp:'Travel',st:'new',q:'How do you build trust with a new team when you\'re only there for 13 weeks?',cat:'Communication',fw:'STAR',src:'ANA: Collaboration; NATHO Ethics',bp:['Initiative (introduces self, offers help)','Respects existing culture','Addresses the "outsider" dynamic','Credibility through competence'],fu:['How do you handle tension between travelers and permanent staff?']},
+{id:'TRAVEL-6',n:68,sp:'Travel',st:'new',q:'How do you stay aware of scope-of-practice differences when working in different states?',cat:'Behavioral',fw:'STAR',src:'NCSBN: Nurse Practice Act; NLC/eNLC',bp:['Practice governed by state where patient is located','Researches state-specific scope before assignments','Compact vs. non-compact licensure','Handles situations where scope differs'],fu:['What if a facility asks something outside your scope in that state?']}
+];
+
+var SK='erin_list_v1';
+var decisions={},notes={};
+function load(){try{var s=localStorage.getItem(SK);if(s){var p=JSON.parse(s);decisions=p.d||{};notes=p.n||{}}}catch(e){}}
+function save(){try{localStorage.setItem(SK,JSON.stringify({d:decisions,n:notes,t:new Date().toISOString()}))}catch(e){}}
+
+var icons={General:'\ud83d\udccb',Emergency:'\ud83d\udea8',ICU:'\ud83c\udfe5',OR:'\ud83d\udd2a','L&D':'\ud83d\udc76',Pediatrics:'\ud83e\uddf8',Psych:'\ud83e\udde0','Med-Surg':'\ud83d\udc8a',Travel:'\u2708\ufe0f'};
+
+function spClass(s){if(s==='L&D')return'sp-LD';if(s==='Med-Surg')return'sp-MedSurg';return'sp-'+s.replace(/[^a-zA-Z]/g,'')}
+
+function render(){
+  var list=document.getElementById('list');
+  var html='';
+  var curSp='';
+  for(var i=0;i<Q.length;i++){
+    var q=Q[i];
+    if(q.sp!==curSp){
+      if(curSp)html+='</div>';
+      curSp=q.sp;
+      html+='<div class="sp-section"><div class="sp-header '+spClass(q.sp)+'">'+(icons[q.sp]||'')+' '+q.sp+'</div>';
+    }
+    var d=decisions[q.id]||'';
+    var badge=d==='approve'?'\u2705':d==='rewrite'?'\u270f\ufe0f':d==='reject'?'\u274c':'';
+    html+='<div class="qcard" id="q_'+q.id+'">';
+    if(badge)html+='<div class="decided-badge">'+badge+'</div>';
+    html+='<div class="qnum">Q'+q.n+' of 68'+(q.st==='new'?' <span class="new-badge">NEW</span>':'')+'</div>';
+    html+='<div class="qtxt">\u201c'+q.q+'\u201d</div>';
+    html+='<div class="tags"><span class="tag tag-cat">'+q.cat+'</span><span class="tag tag-fw">'+q.fw+'</span><span class="tag tag-src">'+q.src+'</span></div>';
+    html+='<button class="details-toggle" onclick="toggleDetails(\'det_'+q.id+'\')">Show details \u25bc</button>';
+    html+='<div class="details" id="det_'+q.id+'">';
+    html+='<div class="section-title">Key Points (AI coaches toward)</div>';
+    for(var b=0;b<q.bp.length;b++)html+='<div class="bullet">'+q.bp[b]+'</div>';
+    if(q.fu&&q.fu.length){
+      html+='<div class="section-title">Follow-ups</div>';
+      for(var f=0;f<q.fu.length;f++)html+='<div class="followup">'+q.fu[f]+'</div>';
+    }
+    html+='</div>';
+    html+='<div class="actions">';
+    html+='<button class="abtn abtn-approve'+(d==='approve'?' selected':'')+'" onclick="decide(\''+q.id+'\',\'approve\')">✅ Approve</button>';
+    html+='<button class="abtn abtn-rewrite'+(d==='rewrite'?' selected':'')+'" onclick="decide(\''+q.id+'\',\'rewrite\')">✏️ Rewrite</button>';
+    html+='<button class="abtn abtn-reject'+(d==='reject'?' selected':'')+'" onclick="decide(\''+q.id+'\',\'reject\')">❌ Reject</button>';
+    html+='</div>';
+    html+='<div class="notes-area"><div class="notes-label">Notes (optional):</div>';
+    html+='<textarea id="note_'+q.id+'" placeholder="Reword, flag concern, suggest edits..." oninput="saveNote(\''+q.id+'\')">'+(notes[q.id]||'')+'</textarea></div>';
+    html+='</div>';
+  }
+  if(curSp)html+='</div>';
+  list.innerHTML=html;
+  updateStats();
+}
+
+function toggleDetails(id){
+  var el=document.getElementById(id);
+  if(el)el.classList.toggle('open');
+}
+
+function decide(qid,d){
+  if(decisions[qid]===d){delete decisions[qid]}
+  else{decisions[qid]=d}
+  save();
+  // Update just this card's buttons and badge
+  var card=document.getElementById('q_'+qid);
+  if(card){
+    var btns=card.querySelectorAll('.abtn');
+    for(var i=0;i<btns.length;i++){btns[i].classList.remove('selected')}
+    var cur=decisions[qid];
+    if(cur==='approve')btns[0].classList.add('selected');
+    if(cur==='rewrite')btns[1].classList.add('selected');
+    if(cur==='reject')btns[2].classList.add('selected');
+    var badge=card.querySelector('.decided-badge');
+    if(!badge){badge=document.createElement('div');badge.className='decided-badge';card.appendChild(badge)}
+    badge.textContent=cur==='approve'?'\u2705':cur==='rewrite'?'\u270f\ufe0f':cur==='reject'?'\u274c':'';
+  }
+  updateStats();
+}
+
+function saveNote(qid){
+  var ta=document.getElementById('note_'+qid);
+  if(ta){notes[qid]=ta.value;save()}
+}
+
+function updateStats(){
+  var a=0,r=0,x=0;
+  Object.values(decisions).forEach(function(d){if(d==='approve')a++;if(d==='rewrite')r++;if(d==='reject')x++});
+  document.getElementById('sA').textContent=a;
+  document.getElementById('sR').textContent=r;
+  document.getElementById('sX').textContent=x;
+  document.getElementById('sL').textContent=68-(a+r+x);
+  document.getElementById('sub').textContent=(a+r+x)+' of 68 reviewed';
+}
+
+function buildText(){
+  var a=0,r=0,x=0;
+  Object.values(decisions).forEach(function(d){if(d==='approve')a++;if(d==='rewrite')r++;if(d==='reject')x++});
+  var t="ERIN'S QUESTION REVIEW \u2014 NurseInterviewPro\n";
+  t+="Date: "+new Date().toLocaleDateString()+"\n";
+  t+="Approved: "+a+" | Rewrite: "+r+" | Rejected: "+x+"\n";
+  t+="Total: "+(a+r+x)+" of 68\n\n";
+  var sp='';
+  Q.forEach(function(q){
+    if(q.sp!==sp){sp=q.sp;t+="\n=== "+(icons[sp]||'')+' '+sp.toUpperCase()+" ===\n\n"}
+    var d=decisions[q.id]||'pending';
+    var ic=d==='approve'?'\u2705':d==='rewrite'?'\u270f\ufe0f':d==='reject'?'\u274c':'\u2b1c';
+    t+="Q"+q.n+" ["+ic+" "+d.toUpperCase()+"] "+q.q+"\n";
+    if(notes[q.id])t+="   \ud83d\udcdd NOTES: "+notes[q.id]+"\n";
+    t+="\n";
+  });
+  return t;
+}
+
+function sendProgress(){
+  var done=Object.keys(decisions).length;
+  if(done===0){alert('No questions reviewed yet!');return}
+  var t=buildText();
+  if(navigator.share){
+    navigator.share({title:'NurseInterviewPro Review \u2014 '+done+'/68',text:t}).catch(function(){
+      if(navigator.clipboard){navigator.clipboard.writeText(t).then(function(){alert('\u2705 Copied!')})}
+    });
+  } else if(navigator.clipboard){
+    navigator.clipboard.writeText(t).then(function(){alert('\u2705 Copied to clipboard! Paste in a text or email.')});
+  } else {
+    prompt('Copy this:',t);
+  }
+}
+
+load();
+render();
+</script>
+</body>
+</html>

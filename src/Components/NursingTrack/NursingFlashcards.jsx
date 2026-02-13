@@ -19,8 +19,6 @@ import { fetchFlashcardProgress, upsertFlashcardProgress } from './nursingSupaba
 export default function NursingFlashcards({ specialty, onBack, userData }) {
   const { questions: allQuestions, categories, loading } = useNursingQuestions(specialty.id);
 
-  if (loading) return <NursingLoadingSkeleton title="Flashcards" onBack={onBack} />;
-
   // Filters
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterFramework, setFilterFramework] = useState('all'); // all, sbar, star
@@ -115,6 +113,9 @@ export default function NursingFlashcards({ specialty, onBack, userData }) {
     setIsFlipped(false);
   }, []);
 
+  // Loading check — MUST be after all hooks (Rules of Hooks)
+  if (loading) return <NursingLoadingSkeleton title="Flashcards" onBack={onBack} />;
+
   if (!currentCard) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-sky-950 to-slate-900 flex items-center justify-center p-4">
@@ -122,7 +123,6 @@ export default function NursingFlashcards({ specialty, onBack, userData }) {
           <Layers className="w-12 h-12 text-slate-600 mx-auto mb-3" />
           <p className="text-slate-400 mb-4">No flashcards match your filters.</p>
           <button onClick={() => { setFilterCategory('all'); setFilterFramework('all'); }}
-            onTouchEnd={(e) => { e.preventDefault(); setFilterCategory('all'); setFilterFramework('all'); }}
             className="text-sky-400 hover:text-sky-300 text-sm">Clear Filters</button>
         </div>
       </div>
@@ -137,7 +137,7 @@ export default function NursingFlashcards({ specialty, onBack, userData }) {
       {/* Header */}
       <div className="bg-slate-900/80 backdrop-blur-lg border-b border-white/10 sticky top-0 z-30">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-          <button onClick={onBack} onTouchEnd={(e) => { e.preventDefault(); onBack(); }}
+          <button onClick={onBack}
             className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
             <ArrowLeft className="w-4 h-4" /><span className="text-sm">Back</span>
           </button>
@@ -150,7 +150,6 @@ export default function NursingFlashcards({ specialty, onBack, userData }) {
 
           <button
             onClick={() => setShowFilters(prev => !prev)}
-            onTouchEnd={(e) => { e.preventDefault(); setShowFilters(prev => !prev); }}
             className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full transition-colors ${
               (filterCategory !== 'all' || filterFramework !== 'all')
                 ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
@@ -177,7 +176,6 @@ export default function NursingFlashcards({ specialty, onBack, userData }) {
                   <div className="flex flex-wrap gap-1.5">
                     <button
                       onClick={() => { setFilterCategory('all'); setCurrentIndex(0); setIsFlipped(false); }}
-                      onTouchEnd={(e) => { e.preventDefault(); setFilterCategory('all'); setCurrentIndex(0); setIsFlipped(false); }}
                       className={`text-xs px-2 py-1 rounded-full transition-colors ${
                         filterCategory === 'all' ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30' : 'text-slate-400 bg-white/5 border border-white/10'
                       }`}
@@ -185,7 +183,6 @@ export default function NursingFlashcards({ specialty, onBack, userData }) {
                     {categories.map(cat => (
                       <button key={cat}
                         onClick={() => { setFilterCategory(cat); setCurrentIndex(0); setIsFlipped(false); }}
-                        onTouchEnd={(e) => { e.preventDefault(); setFilterCategory(cat); setCurrentIndex(0); setIsFlipped(false); }}
                         className={`text-xs px-2 py-1 rounded-full transition-colors ${
                           filterCategory === cat ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30' : 'text-slate-400 bg-white/5 border border-white/10'
                         }`}
@@ -204,7 +201,6 @@ export default function NursingFlashcards({ specialty, onBack, userData }) {
                     ].map(opt => (
                       <button key={opt.value}
                         onClick={() => { setFilterFramework(opt.value); setCurrentIndex(0); setIsFlipped(false); }}
-                        onTouchEnd={(e) => { e.preventDefault(); setFilterFramework(opt.value); setCurrentIndex(0); setIsFlipped(false); }}
                         className={`text-xs px-2 py-1 rounded-full transition-colors border ${
                           filterFramework === opt.value
                             ? (opt.cls || 'bg-sky-500/20 text-sky-300 border-sky-500/30')
@@ -232,7 +228,7 @@ export default function NursingFlashcards({ specialty, onBack, userData }) {
               <span className="text-amber-400 text-xs flex items-center gap-1">
                 <AlertCircle className="w-3 h-3" /> {needPracticeCount} Practice
               </span>
-              <button onClick={resetCards} onTouchEnd={(e) => { e.preventDefault(); resetCards(); }} className="text-slate-500 text-xs hover:text-slate-300 flex items-center gap-1">
+              <button onClick={resetCards} className="text-slate-500 text-xs hover:text-slate-300 flex items-center gap-1">
                 <RotateCcw className="w-3 h-3" /> Reset
               </button>
             </div>
@@ -245,7 +241,6 @@ export default function NursingFlashcards({ specialty, onBack, userData }) {
             animate={{ opacity: 1, rotateY: 0 }}
             transition={{ duration: 0.3 }}
             onClick={() => setIsFlipped(prev => !prev)}
-            onTouchEnd={(e) => { e.preventDefault(); setIsFlipped(prev => !prev); }}
             className={`cursor-pointer select-none min-h-[320px] rounded-2xl p-6 border-2 transition-colors ${
               status === 'got-it' ? 'border-green-500/30 bg-green-500/5' :
               status === 'need-practice' ? 'border-amber-500/30 bg-amber-500/5' :
@@ -327,16 +322,16 @@ export default function NursingFlashcards({ specialty, onBack, userData }) {
           <div className="flex items-center justify-between mt-6">
             {/* Nav */}
             <div className="flex items-center gap-2">
-              <button onClick={goPrev} onTouchEnd={(e) => { e.preventDefault(); goPrev(); }}
+              <button onClick={goPrev}
                 className="p-2 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all">
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              <button onClick={goShuffle} onTouchEnd={(e) => { e.preventDefault(); goShuffle(); }}
+              <button onClick={goShuffle}
                 className="p-2 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all"
                 title="Shuffle (need-practice cards appear more often)">
                 <Shuffle className="w-5 h-5" />
               </button>
-              <button onClick={goNext} onTouchEnd={(e) => { e.preventDefault(); goNext(); }}
+              <button onClick={goNext}
                 className="p-2 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all">
                 <ChevronRight className="w-5 h-5" />
               </button>
@@ -346,7 +341,6 @@ export default function NursingFlashcards({ specialty, onBack, userData }) {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => markCard('need-practice')}
-                onTouchEnd={(e) => { e.preventDefault(); markCard('need-practice'); }}
                 className={`flex items-center gap-1 text-xs px-3 py-2 rounded-xl transition-all ${
                   status === 'need-practice'
                     ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
@@ -357,7 +351,6 @@ export default function NursingFlashcards({ specialty, onBack, userData }) {
               </button>
               <button
                 onClick={() => markCard('got-it')}
-                onTouchEnd={(e) => { e.preventDefault(); markCard('got-it'); }}
                 className={`flex items-center gap-1 text-xs px-3 py-2 rounded-xl transition-all ${
                   status === 'got-it'
                     ? 'bg-green-500/20 text-green-300 border border-green-500/30'
