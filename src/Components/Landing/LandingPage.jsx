@@ -24,14 +24,27 @@ export default function LandingPage() {
       return;
     }
 
+    // Fallback timeout — if getSession() hangs or fails silently, show landing page anyway
+    const fallbackTimer = setTimeout(() => {
+      console.warn('⚠️ LandingPage: getSession() timed out after 3s, showing landing page');
+      setLoading(false);
+    }, 3000);
+
     // If already authenticated, redirect to app
     supabase.auth.getSession().then(({ data: { session } }) => {
+      clearTimeout(fallbackTimer);
       if (session) {
         navigate('/app', { replace: true });
       } else {
         setLoading(false);
       }
+    }).catch((error) => {
+      clearTimeout(fallbackTimer);
+      console.error('LandingPage: getSession() failed:', error);
+      setLoading(false); // Show landing page even if auth check fails
     });
+
+    return () => clearTimeout(fallbackTimer);
   }, [navigate]);
 
   if (loading) {

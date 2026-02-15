@@ -46,6 +46,9 @@ function ProtectedRoute({ children }) {
       if (!window.location.hash.includes('type=recovery')) {
         setLoading(false);
       }
+    }).catch((error) => {
+      console.error('ProtectedRoute: getSession() failed:', error);
+      setLoading(false); // Show auth screen even if session check fails
     });
 
     // Fallback: If getSession doesn't trigger PASSWORD_RECOVERY within 3 seconds
