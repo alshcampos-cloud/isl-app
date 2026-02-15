@@ -18,8 +18,10 @@ export default function LandingPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Handle recovery tokens — pass through to /app where ProtectedRoute handles them
-    if (window.location.hash.includes('type=recovery')) {
+    // Handle auth tokens in URL hash — pass through to /app where ProtectedRoute handles them
+    // This covers: email verification (type=signup), password recovery (type=recovery), magic links
+    if (window.location.hash.includes('access_token')) {
+      console.log('🔑 Auth token detected in URL hash, redirecting to /app');
       navigate('/app' + window.location.hash, { replace: true });
       return;
     }
@@ -50,7 +52,10 @@ export default function LandingPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex items-center justify-center">
-        <div className="text-white text-2xl">Loading...</div>
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="text-white/80 text-lg">Loading InterviewAnswers.ai...</div>
+        </div>
       </div>
     );
   }

@@ -234,7 +234,8 @@ const ISL = () => {
   const [showDeleteChoiceModal, setShowDeleteChoiceModal] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
   const [showAddQuestionsPrompt, setShowAddQuestionsPrompt] = useState(false);
-  
+  const [hasAcceptedFirstTimeTerms, setHasAcceptedFirstTimeTerms] = useState(false);
+
   // Legal Protection States
   const [showConsentDialog, setShowConsentDialog] = useState(false);
   const [hasConsented, setHasConsented] = useState(() => {
@@ -3389,10 +3390,10 @@ const startPracticeMode = async () => {
   // OVERLAY DIALOGS - Render BEFORE view checks so they always work
   return (
     <>
-      {/* TUTORIAL - Shows for new users first */}
-      <Tutorial 
+      {/* TUTORIAL - Shows for new users first, but AFTER FirstTimeConsent is dismissed */}
+      <Tutorial
         user={currentUser}
-        isActive={showTutorial}
+        isActive={showTutorial && hasAcceptedFirstTimeTerms}
         onClose={() => {
           setShowTutorial(false);
           // After tutorial, show add questions prompt
@@ -3762,7 +3763,8 @@ const startPracticeMode = async () => {
       />
 
       {/* FIRST-TIME CONSENT - Terms & Privacy acceptance for new users */}
-      {currentUser && <FirstTimeConsent user={currentUser} onAccepted={() => console.log('✅ User accepted Terms & Privacy')} />}
+      {/* onAccepted sets hasAcceptedFirstTimeTerms so Tutorial waits until consent is done */}
+      {currentUser && <FirstTimeConsent user={currentUser} onAccepted={() => { console.log('✅ User accepted Terms & Privacy'); setHasAcceptedFirstTimeTerms(true); }} onAlreadyAccepted={() => setHasAcceptedFirstTimeTerms(true)} />}
 
       {/* LIVE PROMPTER WARNING - Shows before activating prompter */}
       {showLivePrompterWarning && (
@@ -8125,7 +8127,10 @@ const NursingLandingPage = lazy(() => import('./Components/NursingTrack/NursingL
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex items-center justify-center">
-    <div className="text-white text-2xl">Loading...</div>
+    <div className="text-center">
+      <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
+      <div className="text-white/80 text-lg">Loading InterviewAnswers.ai...</div>
+    </div>
   </div>
 );
 
