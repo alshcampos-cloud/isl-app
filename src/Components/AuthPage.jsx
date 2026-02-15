@@ -14,14 +14,27 @@ export default function AuthPage({ mode = 'login' }) {
   const redirectTo = from === 'nursing' ? '/nursing' : '/app';
 
   useEffect(() => {
+    // Fallback timeout — if getSession() hangs, show auth form anyway
+    const fallbackTimer = setTimeout(() => {
+      console.warn('⚠️ AuthPage: getSession() timed out after 3s, showing auth form');
+      setLoading(false);
+    }, 3000);
+
     // If already authenticated, redirect
     supabase.auth.getSession().then(({ data: { session } }) => {
+      clearTimeout(fallbackTimer);
       if (session) {
         navigate(redirectTo, { replace: true });
       } else {
         setLoading(false);
       }
+    }).catch((error) => {
+      clearTimeout(fallbackTimer);
+      console.error('AuthPage: getSession() failed:', error);
+      setLoading(false); // Show auth form even if session check fails
     });
+
+    return () => clearTimeout(fallbackTimer);
   }, [navigate, redirectTo]);
 
   if (loading) {
