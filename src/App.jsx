@@ -8136,6 +8136,7 @@ const TermsPage = lazy(() => import('./Components/Landing/TermsPage'));
 const PrivacyPage = lazy(() => import('./Components/Landing/PrivacyPage'));
 const NursingTrackApp = lazy(() => import('./Components/NursingTrack/NursingTrackApp'));
 const NursingLandingPage = lazy(() => import('./Components/NursingTrack/NursingLandingPage'));
+const ArchetypeOnboarding = lazy(() => import('./Components/Onboarding/ArchetypeOnboarding'));
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex items-center justify-center">
@@ -8158,6 +8159,7 @@ function App() {
         <Route path="/app" element={<ProtectedRoute><ISL /></ProtectedRoute>} />
         <Route path="/nursing" element={<ProtectedRoute><NursingTrackApp /></ProtectedRoute>} />
         <Route path="/nurse" element={<NursingLandingPage />} />
+        <Route path="/onboarding" element={<ArchetypeOnboarding />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>

@@ -82,7 +82,7 @@ export default function HeroSection() {
               transition={{ duration: 0.6, delay: 0.35 }}
             >
               <Link
-                to="/signup"
+                to="/onboarding"
                 className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-bold text-lg px-8 py-4 rounded-xl transition-all shadow-xl shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:-translate-y-0.5"
               >
                 Start Practicing Free

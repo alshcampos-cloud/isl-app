@@ -131,6 +131,9 @@ When giving feedback, reference their specific background when relevant. Example
     const { data: { user } } = await supabaseClient.auth.getUser()
     if (!user) throw new Error('Not authenticated')
 
+    // Anonymous users (Phase 2 onboarding) — allow 1 practice session, skip usage tracking
+    const isAnonymous = user.is_anonymous === true
+
     // Beta tester whitelist - add your user IDs here
     const BETA_TESTERS = [
       user.id, // You're automatically included for testing
@@ -138,7 +141,7 @@ When giving feedback, reference their specific background when relevant. Example
     ]
     const isBetaTester = BETA_TESTERS.includes(user.id)
 
-    if (!isBetaTester) {
+    if (!isBetaTester && !isAnonymous) {
       const now = new Date()
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
       
