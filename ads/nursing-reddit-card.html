@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200, initial-scale=1">
+<title>NurseInterviewPro.ai — Reddit Link Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 1200px;
+    height: 628px;
+    overflow: hidden;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #ffffff;
+    color: #1e293b;
+    position: relative;
+  }
+
+  .container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    position: relative;
+  }
+
+  /* Left side — content */
+  .left {
+    flex: 0 0 720px;
+    padding: 52px 56px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: #ffffff;
+    position: relative;
+  }
+
+  /* Subtle left-side accent */
+  .left::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    background: linear-gradient(180deg, #0284c7, #06b6d4);
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+
+  .brand-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #0284c7, #06b6d4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25);
+  }
+
+  .brand-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  .brand-ai { color: #0284c7; }
+
+  .brand-sub {
+    font-size: 13px;
+    color: #94a3b8;
+    margin-left: 8px;
+    font-weight: 500;
+  }
+
+  .headline {
+    font-size: 42px;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    color: #0f172a;
+    margin-bottom: 20px;
+  }
+
+  .headline .accent { color: #0284c7; }
+
+  .description {
+    font-size: 21px;
+    font-weight: 500;
+    color: #64748b;
+    line-height: 1.55;
+    margin-bottom: 28px;
+  }
+
+  /* Feature chips */
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    background: #f0f9ff;
+    border: 1.5px solid #bae6fd;
+    border-radius: 10px;
+    font-size: 17px;
+    font-weight: 600;
+    color: #0369a1;
+  }
+
+  .chip-icon { font-size: 18px; }
+
+  /* CTA row */
+  .cta-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .cta-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 36px;
+    background: linear-gradient(135deg, #0284c7, #06b6d4);
+    border-radius: 12px;
+    font-size: 20px;
+    font-weight: 700;
+    color: white;
+    box-shadow: 0 4px 16px rgba(2, 132, 199, 0.25);
+    border: none;
+  }
+
+  .cta-note {
+    font-size: 16px;
+    color: #94a3b8;
+    font-weight: 500;
+  }
+
+  /* Right side — specialty visual */
+  .right {
+    flex: 1;
+    background: linear-gradient(135deg, #0c1929, #0e2640);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Glow effect */
+  .right::before {
+    content: '';
+    position: absolute;
+    top: 20%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(ellipse, rgba(14, 165, 233, 0.2) 0%, transparent 70%);
+    filter: blur(40px);
+  }
+
+  .specialty-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: relative;
+    z-index: 1;
+    width: 100%;
+  }
+
+  .specialty-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 20px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+  }
+
+  .specialty-emoji { font-size: 24px; width: 36px; text-align: center; }
+
+  .specialty-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+    flex: 1;
+  }
+
+  .specialty-count {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.4);
+    font-weight: 500;
+  }
+
+  .right-stat {
+    margin-top: 24px;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  .right-stat-num {
+    font-size: 48px;
+    font-weight: 900;
+    color: #38bdf8;
+  }
+
+  .right-stat-label {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 500;
+    margin-top: 4px;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <!-- Left side -->
+    <div class="left">
+      <div class="brand">
+        <div class="brand-icon">&#x1FA7A;</div>
+        <span class="brand-name">NurseInterviewPro<span class="brand-ai">.ai</span></span>
+        <span class="brand-sub">Free nursing interview prep</span>
+      </div>
+
+      <div class="headline">
+        68 Nursing Interview Questions<br>
+        <span class="accent">Organized by Specialty</span>
+      </div>
+
+      <div class="description">
+        AI coaching that helps you practice SBAR delivery, behavioral questions, and clinical scenarios for YOUR specialty. Built by healthcare professionals.
+      </div>
+
+      <div class="chips">
+        <div class="chip">
+          <span class="chip-icon">&#x1F4CA;</span>
+          SBAR Drills
+        </div>
+        <div class="chip">
+          <span class="chip-icon">&#x2B50;</span>
+          STAR Coaching
+        </div>
+        <div class="chip">
+          <span class="chip-icon">&#x1F916;</span>
+          AI Feedback
+        </div>
+        <div class="chip">
+          <span class="chip-icon">&#x1FA7A;</span>
+          8 Specialties
+        </div>
+      </div>
+
+      <div class="cta-row">
+        <div class="cta-button">
+          Practice Free &rarr;
+        </div>
+        <div class="cta-note">No credit card required</div>
+      </div>
+    </div>
+
+    <!-- Right side -->
+    <div class="right">
+      <div class="specialty-list">
+        <div class="specialty-item">
+          <span class="specialty-emoji">&#x1F6A8;</span>
+          <span class="specialty-name">Emergency Dept</span>
+          <span class="specialty-count">12 Qs</span>
+        </div>
+        <div class="specialty-item">
+          <span class="specialty-emoji">&#x1FAC0;</span>
+          <span class="specialty-name">ICU / Critical Care</span>
+          <span class="specialty-count">10 Qs</span>
+        </div>
+        <div class="specialty-item">
+          <span class="specialty-emoji">&#x1F3E5;</span>
+          <span class="specialty-name">Operating Room</span>
+          <span class="specialty-count">8 Qs</span>
+        </div>
+        <div class="specialty-item">
+          <span class="specialty-emoji">&#x1F476;</span>
+          <span class="specialty-name">Labor & Delivery</span>
+          <span class="specialty-count">8 Qs</span>
+        </div>
+        <div class="specialty-item">
+          <span class="specialty-emoji">&#x1F9F8;</span>
+          <span class="specialty-name">Pediatrics</span>
+          <span class="specialty-count">8 Qs</span>
+        </div>
+        <div class="specialty-item">
+          <span class="specialty-emoji">&#x1F48A;</span>
+          <span class="specialty-name">Med-Surg</span>
+          <span class="specialty-count">10 Qs</span>
+        </div>
+      </div>
+
+      <div class="right-stat">
+        <div class="right-stat-num">68</div>
+        <div class="right-stat-label">questions across 8 specialties</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

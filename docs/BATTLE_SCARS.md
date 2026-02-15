@@ -169,3 +169,12 @@
 
 *Compiled from 3+ months of InterviewAnswers.AI development — Lucas & Claude, February 2026*
 *Every lesson here was learned the hard way. Don't repeat them.*
+
+### Battle Scar: Ideal Answer hallucination
+The Example Strong Answer prompt had no constraints on what facts the AI could use. It hallucinated HIPAA, patient data, and flu season for a fintech analytics answer because it saw 'Stanford' and assumed healthcare. Fix: added 6 IDEAL ANSWER RULES modeled on the nursing walled garden — ONLY use facts from the user's actual exchanges, NEVER invent context. Same principle as C.O.A.C.H.: constrain what the AI can generate.
+
+### Battle Scar: AI Interviewer exchangeCount is 0-indexed
+exchangeCount starts at 0, increments AFTER each response. So >= 3 check fires on the 4th user submission, not the 3rd. Self-efficacy addendum and consolidated ideal answer both fire at exchangeCount >= 3.
+
+### Battle Scar: Nursing previousScores uses averaged scores
+NursingPracticeMode.jsx line 188 creates [avg, avg, avg] instead of real per-session scores. Works for Phase 1. Replace with actual Supabase query in Phase 3 when IRS is wired up. Flagged by Erin.

@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+  .linkedin {
+    width: 1200px;
+    height: 627px;
+    position: relative;
+    overflow: hidden;
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #1a0a2e 0%, #0f0619 60%, #150826 100%);
+    display: flex;
+  }
+
+  .linkedin::before {
+    content: '';
+    position: absolute;
+    top: -150px;
+    left: -150px;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(139,92,246,0.1) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .noise {
+    position: absolute;
+    inset: 0;
+    opacity: 0.02;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .left-content {
+    flex: 1;
+    padding: 56px 48px 56px 64px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    z-index: 2;
+  }
+
+  .brand-mark {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .brand-dot {
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, #8B5CF6, #6D28D9);
+    border-radius: 7px;
+  }
+
+  .brand-text {
+    font-size: 18px;
+    font-weight: 500;
+    color: rgba(196,181,253,0.45);
+  }
+
+  .copy-block {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .headline {
+    font-size: 44px;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.12;
+    letter-spacing: -1.5px;
+    margin-bottom: 20px;
+  }
+
+  .headline .gold {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .subtext {
+    font-size: 20px;
+    font-weight: 400;
+    color: rgba(216,208,240,0.6);
+    line-height: 1.5;
+    max-width: 480px;
+  }
+
+  .cta-row {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .cta-btn {
+    display: inline-flex;
+    padding: 18px 36px;
+    background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 50%, #DB2777 100%);
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cta-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  .cta-btn span {
+    font-family: 'Inter', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.3px;
+  }
+
+  .cta-sub {
+    font-size: 15px;
+    color: rgba(196,181,253,0.4);
+    font-weight: 400;
+  }
+
+  /* Right side — feature cards */
+  .right-panel {
+    width: 420px;
+    padding: 56px 48px 56px 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 16px;
+    z-index: 2;
+  }
+
+  .feature-card {
+    background: rgba(139,92,246,0.06);
+    border: 1px solid rgba(139,92,246,0.15);
+    border-radius: 16px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .feature-icon {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    background: linear-gradient(135deg, rgba(139,92,246,0.2), rgba(79,70,229,0.15));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  .feature-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 3px;
+  }
+
+  .feature-desc {
+    font-size: 13px;
+    font-weight: 400;
+    color: rgba(196,181,253,0.5);
+    line-height: 1.4;
+  }
+
+  /* Decorative vertical line */
+  .divider-line {
+    position: absolute;
+    left: 58%;
+    top: 56px;
+    bottom: 56px;
+    width: 1px;
+    background: linear-gradient(180deg, transparent, rgba(139,92,246,0.2), transparent);
+    z-index: 2;
+  }
+</style>
+</head>
+<body>
+<div class="linkedin">
+  <div class="noise"></div>
+  <div class="divider-line"></div>
+
+  <div class="left-content">
+    <div class="brand-mark">
+      <div class="brand-dot"></div>
+      <span class="brand-text">InterviewAnswers.ai</span>
+    </div>
+
+    <div class="copy-block">
+      <h1 class="headline">
+        Stop practicing answers.<br>
+        <span class="gold">Start practicing confidence.</span>
+      </h1>
+      <p class="subtext">
+        AI-powered interview coaching that listens to you speak and gives real-time feedback on delivery, structure, and presence.
+      </p>
+    </div>
+
+    <div class="cta-row">
+      <div class="cta-btn">
+        <span>Start Preparing Free</span>
+      </div>
+      <span class="cta-sub">No credit card required</span>
+    </div>
+  </div>
+
+  <div class="right-panel">
+    <div class="feature-card">
+      <div class="feature-icon">🎤</div>
+      <div>
+        <div class="feature-title">Live Prompter</div>
+        <div class="feature-desc">Real-time coaching during your actual interview</div>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🤖</div>
+      <div>
+        <div class="feature-title">AI Mock Interviewer</div>
+        <div class="feature-desc">Practice with an AI that adapts to your responses</div>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">⭐</div>
+      <div>
+        <div class="feature-title">STAR Method Scoring</div>
+        <div class="feature-desc">Get scored on structure, specificity, and impact</div>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📊</div>
+      <div>
+        <div class="feature-title">Progress Tracking</div>
+        <div class="feature-desc">See your improvement across practice sessions</div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

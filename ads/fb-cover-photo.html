@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1640, initial-scale=1">
+<title>InterviewAnswers.AI — Cover Photo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1640px;
+    height: 624px;
+    overflow: hidden;
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #0c1929 0%, #0e2640 40%, #0f3058 100%);
+    position: relative;
+    color: white;
+  }
+  /* Subtle glow accents */
+  body::before {
+    content: '';
+    position: absolute;
+    top: -100px;
+    right: 200px;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(2, 132, 199, 0.15) 0%, transparent 70%);
+    filter: blur(60px);
+  }
+  body::after {
+    content: '';
+    position: absolute;
+    bottom: -100px;
+    left: 300px;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(6, 182, 212, 0.1) 0%, transparent 70%);
+    filter: blur(50px);
+  }
+  .container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    padding: 60px 80px;
+    position: relative;
+    z-index: 1;
+  }
+  /* Left content */
+  .left {
+    flex: 0 0 800px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .tagline {
+    font-size: 18px;
+    font-weight: 600;
+    color: #38bdf8;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+  .headline {
+    font-size: 56px;
+    font-weight: 900;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+  }
+  .headline .accent { color: #38bdf8; }
+  .subline {
+    font-size: 24px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.6);
+    line-height: 1.5;
+    max-width: 650px;
+  }
+  .stats-row {
+    display: flex;
+    gap: 40px;
+    margin-top: 8px;
+  }
+  .stat {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .stat-num {
+    font-size: 32px;
+    font-weight: 800;
+    color: #38bdf8;
+  }
+  .stat-label {
+    font-size: 18px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.5);
+  }
+  /* Right side — feature cards */
+  .right {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding-left: 80px;
+  }
+  .feature-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 24px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+  }
+  .feature-icon {
+    font-size: 28px;
+    width: 44px;
+    text-align: center;
+  }
+  .feature-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .feature-name {
+    font-size: 20px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.9);
+  }
+  .feature-desc {
+    font-size: 15px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.4);
+  }
+  /* URL bar at bottom */
+  .url-bar {
+    position: absolute;
+    bottom: 24px;
+    right: 80px;
+    font-size: 18px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.3);
+    z-index: 2;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="left">
+      <div class="tagline">&#x1F399; AI-Powered Interview Coaching</div>
+      <div class="headline">
+        Stop winging interviews.<br>
+        <span class="accent">Start practicing confidence.</span>
+      </div>
+      <div class="subline">
+        Mock interviews, real-time coaching, and STAR method feedback — powered by AI that listens while you speak.
+      </div>
+      <div class="stats-row">
+        <div class="stat">
+          <span class="stat-num">100+</span>
+          <span class="stat-label">questions</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num">AI</span>
+          <span class="stat-label">coaching</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num">Free</span>
+          <span class="stat-label">to start</span>
+        </div>
+      </div>
+    </div>
+    <div class="right">
+      <div class="feature-card">
+        <div class="feature-icon">&#x1F3A4;</div>
+        <div class="feature-text">
+          <div class="feature-name">AI Mock Interviewer</div>
+          <div class="feature-desc">Conversational practice with real-time feedback</div>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">&#x1F4AC;</div>
+        <div class="feature-text">
+          <div class="feature-name">Live Prompter</div>
+          <div class="feature-desc">Real-time coaching while you answer</div>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">&#x2B50;</div>
+        <div class="feature-text">
+          <div class="feature-name">STAR Method Scoring</div>
+          <div class="feature-desc">Structured feedback on every response</div>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">&#x1FA7A;</div>
+        <div class="feature-text">
+          <div class="feature-name">Nursing Specialty Track</div>
+          <div class="feature-desc">68 questions across 8 nursing specialties</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="url-bar">interviewanswers.ai</div>
+</body>
+</html>

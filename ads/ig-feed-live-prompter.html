@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+  .feed {
+    width: 1080px;
+    height: 1080px;
+    position: relative;
+    overflow: hidden;
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(150deg, #1a0a2e 0%, #0f0619 100%);
+  }
+
+  .feed::before {
+    content: '';
+    position: absolute;
+    top: -100px;
+    right: -100px;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(139,92,246,0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .noise {
+    position: absolute;
+    inset: 0;
+    opacity: 0.02;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .top-bar {
+    position: absolute;
+    top: 44px;
+    left: 52px;
+    right: 52px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 3;
+  }
+
+  .brand-mark {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .brand-dot {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #8B5CF6, #6D28D9);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .brand-dot svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .brand-text {
+    font-size: 22px;
+    font-weight: 600;
+    color: rgba(196,181,253,0.5);
+  }
+
+  .tag {
+    font-size: 16px;
+    font-weight: 600;
+    color: rgba(251,191,36,0.9);
+    background: rgba(251,191,36,0.1);
+    padding: 8px 18px;
+    border-radius: 24px;
+    border: 1px solid rgba(251,191,36,0.2);
+  }
+
+  /* Headline over the phone */
+  .hook-section {
+    position: absolute;
+    top: 120px;
+    left: 52px;
+    z-index: 3;
+    max-width: 500px;
+  }
+
+  .hook-section h2 {
+    font-size: 48px;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.1;
+    letter-spacing: -1.5px;
+  }
+
+  .hook-section .gold {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hook-section .sub {
+    font-size: 22px;
+    font-weight: 400;
+    color: rgba(216,208,240,0.55);
+    margin-top: 14px;
+  }
+
+  /* Phone mockup — big, prominent, right-aligned */
+  .phone-frame {
+    position: absolute;
+    top: 100px;
+    right: -40px;
+    width: 520px;
+    z-index: 2;
+  }
+
+  .phone {
+    width: 100%;
+    background: #13101f;
+    border-radius: 36px;
+    border: 2px solid rgba(139,92,246,0.25);
+    overflow: hidden;
+    box-shadow:
+      0 0 80px rgba(139,92,246,0.2),
+      0 0 160px rgba(139,92,246,0.05),
+      inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+
+  .phone-notch {
+    height: 36px;
+    background: #0a0810;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+  }
+
+  .phone-notch::after {
+    content: '';
+    width: 100px;
+    height: 24px;
+    background: #000;
+    border-radius: 0 0 16px 16px;
+    position: absolute;
+    top: 0;
+  }
+
+  .phone-time {
+    position: absolute;
+    left: 24px;
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.5);
+  }
+
+  .phone-header {
+    height: 52px;
+    background: linear-gradient(135deg, #8B5CF6, #6D28D9);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 10px;
+  }
+
+  .phone-header-icon {
+    width: 24px;
+    height: 24px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 6px;
+  }
+
+  .phone-header-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .live-badge {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    background: #ef4444;
+    padding: 3px 10px;
+    border-radius: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .prompter-content {
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .question-card {
+    background: rgba(139,92,246,0.08);
+    border: 1px solid rgba(139,92,246,0.2);
+    border-radius: 14px;
+    padding: 16px;
+  }
+
+  .question-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: #8B5CF6;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+
+  .question-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    line-height: 1.4;
+  }
+
+  .prompt-card {
+    background: linear-gradient(135deg, rgba(139,92,246,0.12), rgba(79,70,229,0.08));
+    border: 1px solid rgba(139,92,246,0.2);
+    border-radius: 14px;
+    padding: 16px;
+    position: relative;
+  }
+
+  .prompt-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 10px;
+    bottom: 10px;
+    width: 3px;
+    background: linear-gradient(180deg, #8B5CF6, #DB2777);
+    border-radius: 2px;
+  }
+
+  .prompt-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: #fbbf24;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+
+  .prompt-bullet {
+    font-size: 13px;
+    color: rgba(255,255,255,0.8);
+    line-height: 1.8;
+    padding-left: 6px;
+  }
+
+  .prompt-bullet span {
+    color: #c4b5fd;
+    font-weight: 600;
+  }
+
+  .mic-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px;
+  }
+
+  .mic-bar {
+    width: 3px;
+    border-radius: 2px;
+    background: #8B5CF6;
+  }
+  .mic-bar:nth-child(1) { height: 8px; opacity: 0.4; }
+  .mic-bar:nth-child(2) { height: 18px; opacity: 0.6; }
+  .mic-bar:nth-child(3) { height: 28px; opacity: 1; }
+  .mic-bar:nth-child(4) { height: 14px; opacity: 0.7; }
+  .mic-bar:nth-child(5) { height: 22px; opacity: 0.8; }
+  .mic-bar:nth-child(6) { height: 10px; opacity: 0.5; }
+
+  .mic-text {
+    font-size: 12px;
+    font-weight: 600;
+    color: #8B5CF6;
+    margin-left: 6px;
+  }
+
+  /* Bottom CTA area */
+  .bottom-cta {
+    position: absolute;
+    bottom: 48px;
+    left: 52px;
+    z-index: 3;
+  }
+
+  .cta-btn {
+    display: inline-flex;
+    padding: 22px 48px;
+    background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 50%, #DB2777 100%);
+    border: none;
+    border-radius: 18px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cta-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 50%);
+  }
+
+  .cta-btn span {
+    font-family: 'Inter', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.3px;
+  }
+
+  .cta-sub {
+    margin-top: 14px;
+    font-size: 16px;
+    color: rgba(196,181,253,0.35);
+  }
+</style>
+</head>
+<body>
+<div class="feed">
+  <div class="noise"></div>
+
+  <div class="top-bar">
+    <div class="brand-mark">
+      <div class="brand-dot">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+          <path d="M2 17l10 5 10-5"/>
+          <path d="M2 12l10 5 10-5"/>
+        </svg>
+      </div>
+      <span class="brand-text">InterviewAnswers.ai</span>
+    </div>
+    <div class="tag">Live Prompter</div>
+  </div>
+
+  <div class="hook-section">
+    <h2>What if you had a<br>coach <span class="gold">in your ear?</span></h2>
+    <p class="sub">Real-time AI prompts while you interview.</p>
+  </div>
+
+  <div class="phone-frame">
+    <div class="phone">
+      <div class="phone-notch">
+        <span class="phone-time">9:41</span>
+      </div>
+      <div class="phone-header">
+        <div class="phone-header-icon"></div>
+        <span class="phone-header-title">Live Prompter</span>
+        <span class="live-badge">LIVE</span>
+      </div>
+      <div class="prompter-content">
+        <div class="question-card">
+          <div class="question-label">Current Question</div>
+          <div class="question-text">Tell me about a time you handled a difficult situation at work.</div>
+        </div>
+        <div class="prompt-card">
+          <div class="prompt-label">AI Coaching</div>
+          <div class="prompt-bullet">
+            <span>Situation:</span> Set the scene briefly<br>
+            <span>Task:</span> What was your responsibility?<br>
+            <span>Action:</span> Focus on YOUR specific steps<br>
+            <span>Result:</span> Quantify the outcome
+          </div>
+        </div>
+        <div class="mic-row">
+          <div class="mic-bar"></div>
+          <div class="mic-bar"></div>
+          <div class="mic-bar"></div>
+          <div class="mic-bar"></div>
+          <div class="mic-bar"></div>
+          <div class="mic-bar"></div>
+          <span class="mic-text">Listening...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-cta">
+    <div class="cta-btn">
+      <span>Try It Free</span>
+    </div>
+    <p class="cta-sub">interviewanswers.ai</p>
+  </div>
+</div>
+</body>
+</html>

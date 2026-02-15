@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1080, initial-scale=1">
+<title>InterviewAnswers.ai — IG Story: Loss Aversion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 1080px;
+    height: 1920px;
+    overflow: hidden;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: linear-gradient(170deg, #0F0A1A 0%, #1A0F2E 40%, #12082A 70%, #0F0A1A 100%);
+    color: #FFFFFF;
+    position: relative;
+  }
+
+  /* Subtle noise/grain overlay for premium feel */
+  body::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 20%, rgba(139, 92, 246, 0.08) 0%, transparent 60%),
+                radial-gradient(ellipse at 30% 80%, rgba(79, 70, 229, 0.06) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 60px 72px 50px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Brand mark */
+  .brand-mark {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    align-self: flex-start;
+  }
+
+  .brand-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #8B5CF6, #4F46E5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: 800;
+    color: white;
+    box-shadow: 0 4px 16px rgba(139, 92, 246, 0.4);
+  }
+
+  .brand-name {
+    font-size: 26px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+    letter-spacing: -0.02em;
+  }
+
+  /* Spacer */
+  .spacer-top { flex: 0 0 100px; }
+
+  /* Hook text */
+  .hook-primary {
+    font-size: 96px;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    line-height: 1.0;
+    text-align: left;
+    width: 100%;
+  }
+
+  .hook-gold {
+    font-size: 80px;
+    font-weight: 800;
+    color: #F59E0B;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    text-align: left;
+    width: 100%;
+    margin-top: 8px;
+  }
+
+  /* Gold accent divider */
+  .gold-divider {
+    width: 80px;
+    height: 4px;
+    background: linear-gradient(90deg, #F59E0B, #F59E0B80);
+    border-radius: 2px;
+    margin: 36px 0 32px;
+    align-self: flex-start;
+  }
+
+  /* Insight text */
+  .insight-block {
+    width: 100%;
+    text-align: left;
+  }
+
+  .insight-line {
+    font-size: 36px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.55);
+    line-height: 1.5;
+    letter-spacing: -0.01em;
+  }
+
+  .insight-line.emphasis {
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 600;
+  }
+
+  .insight-gap {
+    height: 32px;
+  }
+
+  .insight-line-italic {
+    font-size: 34px;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.45);
+    line-height: 1.55;
+    font-style: italic;
+    letter-spacing: -0.01em;
+  }
+
+  /* Spacer before phone */
+  .spacer-mid { flex: 1; min-height: 40px; max-height: 60px; }
+
+  /* Phone mockup */
+  .phone-wrapper {
+    position: relative;
+    width: 520px;
+    transform: perspective(1200px) rotateY(-4deg) rotateX(2deg);
+    filter: drop-shadow(0 40px 80px rgba(0, 0, 0, 0.6)) drop-shadow(0 8px 24px rgba(139, 92, 246, 0.2));
+  }
+
+  .phone-frame {
+    width: 100%;
+    border-radius: 40px;
+    overflow: hidden;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    background: #000;
+    position: relative;
+    max-height: 580px;
+  }
+
+  .phone-frame img {
+    width: 100%;
+    display: block;
+  }
+
+  /* Glow behind phone */
+  .phone-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    height: 400px;
+    background: radial-gradient(ellipse, rgba(139, 92, 246, 0.2) 0%, transparent 70%);
+    z-index: -1;
+    filter: blur(40px);
+  }
+
+  /* CTA */
+  .cta-section {
+    margin-top: 36px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .cta-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 24px 64px;
+    background: linear-gradient(135deg, #8B5CF6, #EC4899);
+    border-radius: 60px;
+    font-size: 34px;
+    font-weight: 700;
+    color: white;
+    letter-spacing: -0.01em;
+    box-shadow: 0 8px 32px rgba(139, 92, 246, 0.4), 0 2px 8px rgba(236, 72, 153, 0.3);
+    border: none;
+    cursor: pointer;
+  }
+
+  .cta-arrow {
+    font-size: 30px;
+    margin-left: 4px;
+  }
+
+  /* Bottom section */
+  .bottom-section {
+    margin-top: auto;
+    padding-top: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .bottom-link {
+    font-size: 26px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 0.02em;
+  }
+
+  /* Swipe up indicator */
+  .swipe-up {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    opacity: 0.5;
+  }
+
+  .swipe-arrow {
+    width: 28px;
+    height: 28px;
+    border-left: 3px solid rgba(255, 255, 255, 0.5);
+    border-top: 3px solid rgba(255, 255, 255, 0.5);
+    transform: rotate(45deg);
+    animation: swipeUp 2s ease-in-out infinite;
+  }
+
+  .swipe-text {
+    font-size: 20px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+  }
+
+  @keyframes swipeUp {
+    0%, 100% { transform: rotate(45deg) translateY(0); opacity: 0.5; }
+    50% { transform: rotate(45deg) translateY(-8px); opacity: 1; }
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <!-- Brand mark -->
+    <div class="brand-mark">
+      <div class="brand-icon">iA</div>
+      <span class="brand-name">InterviewAnswers.ai</span>
+    </div>
+
+    <!-- Top spacer -->
+    <div class="spacer-top"></div>
+
+    <!-- HOOK -->
+    <div class="hook-primary">You're not ready.</div>
+    <div class="hook-gold">And you can feel it.</div>
+
+    <!-- Gold divider -->
+    <div class="gold-divider"></div>
+
+    <!-- INSIGHT -->
+    <div class="insight-block">
+      <div class="insight-line emphasis">That pause when you blanked?</div>
+      <div class="insight-line">The interviewer noticed.</div>
+      <div class="insight-gap"></div>
+      <div class="insight-line-italic">Every great answer you've ever given<br>was in the shower. After the interview.</div>
+    </div>
+
+    <!-- Mid spacer -->
+    <div class="spacer-mid"></div>
+
+    <!-- Phone mockup -->
+    <div class="phone-wrapper">
+      <div class="phone-glow"></div>
+      <div class="phone-frame">
+        <img src="ss-02-dashboard-stats.png" alt="InterviewAnswers.ai Dashboard">
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta-section">
+      <div class="cta-button">
+        Start Preparing Free <span class="cta-arrow">&rarr;</span>
+      </div>
+    </div>
+
+    <!-- Bottom -->
+    <div class="bottom-section">
+      <div class="bottom-link">interviewanswers.ai</div>
+      <div class="swipe-up">
+        <div class="swipe-arrow"></div>
+        <div class="swipe-text">Swipe Up</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

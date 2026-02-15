@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1080, initial-scale=1">
+<title>NurseInterviewPro.ai — FB Carousel: Question Card</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 1080px;
+    height: 1080px;
+    overflow: hidden;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #ffffff;
+    color: #1e293b;
+    position: relative;
+  }
+
+  .container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 64px;
+    position: relative;
+  }
+
+  /* Top category tag */
+  .category-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 24px;
+    background: #fef2f2;
+    border: 2px solid #fecaca;
+    border-radius: 12px;
+    align-self: flex-start;
+    margin-bottom: 20px;
+  }
+
+  .category-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #ef4444;
+  }
+
+  .category-text {
+    font-size: 22px;
+    font-weight: 700;
+    color: #dc2626;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  /* Hook line */
+  .hook {
+    font-size: 38px;
+    font-weight: 700;
+    color: #64748b;
+    margin-bottom: 48px;
+    letter-spacing: -0.01em;
+  }
+
+  /* Question card */
+  .question-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 16px;
+  }
+
+  .quote-mark {
+    font-size: 120px;
+    font-weight: 900;
+    color: #e2e8f0;
+    line-height: 0.6;
+    margin-bottom: 16px;
+    font-family: Georgia, 'Times New Roman', serif;
+  }
+
+  .question-text {
+    font-size: 52px;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.25;
+    letter-spacing: -0.03em;
+    margin-bottom: 36px;
+  }
+
+  .question-context {
+    font-size: 26px;
+    font-weight: 500;
+    color: #94a3b8;
+    line-height: 1.5;
+    padding-left: 20px;
+    border-left: 4px solid #e2e8f0;
+  }
+
+  /* Separator */
+  .separator {
+    width: 100%;
+    height: 2px;
+    background: #f1f5f9;
+    margin: 40px 0;
+  }
+
+  /* Bottom section */
+  .bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .bottom-left {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .bottom-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .brand-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #0284c7, #06b6d4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25);
+  }
+
+  .brand-name {
+    font-size: 24px;
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  .brand-ai { color: #0284c7; }
+
+  .bottom-stat {
+    font-size: 20px;
+    font-weight: 600;
+    color: #64748b;
+  }
+
+  .bottom-stat strong {
+    color: #0284c7;
+    font-weight: 800;
+  }
+
+  /* Swipe indicator */
+  .swipe-indicator {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 32px;
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 50px;
+  }
+
+  .swipe-text {
+    font-size: 22px;
+    font-weight: 700;
+    color: #64748b;
+  }
+
+  .swipe-arrows {
+    font-size: 22px;
+    color: #0284c7;
+    font-weight: 700;
+    letter-spacing: -0.05em;
+  }
+
+  /* Pagination dots */
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 24px;
+  }
+
+  .dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #e2e8f0;
+  }
+
+  .dot.active {
+    width: 36px;
+    border-radius: 6px;
+    background: #0284c7;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <!-- Category tag -->
+    <div class="category-tag">
+      <div class="category-dot"></div>
+      <span class="category-text">Emergency Dept</span>
+    </div>
+
+    <!-- Hook -->
+    <div class="hook">Can you answer this nursing interview question?</div>
+
+    <!-- Question area -->
+    <div class="question-area">
+      <div class="quote-mark">&#x201C;</div>
+      <div class="question-text">Tell me about a time you recognized a change in patient condition and had to act quickly.</div>
+      <div class="question-context">This is 1 of 68 specialty-specific questions in NurseInterviewPro. Practice your answer with real-time AI coaching.</div>
+    </div>
+
+    <!-- Separator -->
+    <div class="separator"></div>
+
+    <!-- Bottom section -->
+    <div class="bottom">
+      <div class="bottom-left">
+        <div class="bottom-brand">
+          <div class="brand-icon">&#x1FA7A;</div>
+          <span class="brand-name">NurseInterviewPro<span class="brand-ai">.ai</span></span>
+        </div>
+        <div class="bottom-stat"><strong>68</strong> questions &middot; <strong>8</strong> specialties &middot; <strong>AI</strong> coaching</div>
+      </div>
+      <div class="swipe-indicator">
+        <span class="swipe-text">Swipe for more</span>
+        <span class="swipe-arrows">&rarr;&rarr;</span>
+      </div>
+    </div>
+
+    <!-- Pagination dots -->
+    <div class="pagination">
+      <div class="dot active"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+  </div>
+</body>
+</html>
