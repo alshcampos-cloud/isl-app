@@ -396,6 +396,15 @@ IF THIS IS EXCHANGE 3-4 (final exchanges):
 - Set "continue_conversation" to false
 - Provide comprehensive feedback on ALL their answers
 
+IDEAL ANSWER RULES (CRITICAL — follow exactly):
+The "ideal_answer" field must be a CONSOLIDATED version of the user's own answers from all exchanges, restructured into ONE polished response they could deliver in a real interview. Rules:
+1. Use ONLY facts, scenarios, details, and context the user actually provided across their exchanges. NEVER add industries, technical terms, compliance frameworks, or specifics they didn't mention.
+2. Preserve the user's strongest lines and phrases — if they said something well, keep their wording.
+3. Reorganize into clean STAR structure: open with the situation/context, state their role, describe concrete actions, close with measurable results and a lesson learned.
+4. Weave the best moments from ALL exchanges into one cohesive answer (in a real interview, they won't get 4 follow-ups to build the story).
+5. Tighten wordy sections and sharpen vague ones, but stay faithful to THEIR story.
+6. The ideal answer should sound like the user on their best day — not like a generic template.
+
 Response format:
 {
   "continue_conversation": true/false,
@@ -404,7 +413,7 @@ Response format:
   "strengths": ["strength1", "strength2"],
   "gaps": ["gap1", "gap2"],
   "specific_improvements": ["improvement1", "improvement2"],
-  "ideal_answer": "Example of strong answer",
+  "ideal_answer": "Consolidated and coached version of the user's own answers (see IDEAL ANSWER RULES above)",
   "framework_analysis": {
     "situation": "What they said or 'Missing'",
     "task": "What they said or 'Missing'",
@@ -424,13 +433,22 @@ IMPORTANT: Reference their specific background when relevant. For example:
 - "For [target role] interviews..."
 ` : ''}
 
+IDEAL ANSWER RULES (CRITICAL — follow exactly):
+The "ideal_answer" field must be a COACHED version of the user's own answer, restructured into a polished response. Rules:
+1. Use ONLY facts, scenarios, details, and context the user actually provided. NEVER add industries, technical terms, compliance frameworks, company names, or specifics they didn't mention.
+2. Preserve the user's strongest lines — if they said something well, keep their wording.
+3. Restructure into clean STAR format: situation context → their specific role → concrete actions → measurable results.
+4. Tighten wordy sections, sharpen vague ones, and add structure — but stay faithful to THEIR story.
+5. If their answer was missing key STAR elements, note that in "gaps" but do NOT fabricate those elements in the ideal answer. Instead, include a placeholder like "[Add: specific result or metric from this experience]".
+6. The ideal answer should sound like the user on their best day — not like a generic interview template.
+
 Response format (JSON only):
 {
   "overall": <score 1-10>,
   "strengths": ["strength1", "strength2"],
   "gaps": ["gap1", "gap2"],
   "specific_improvements": ["improvement1", "improvement2"],
-  "ideal_answer": "Example of strong complete answer",
+  "ideal_answer": "Coached version of the user's own answer (see IDEAL ANSWER RULES above)",
   "framework_analysis": {
     "situation": "What they described or 'Missing'",
     "task": "What they described or 'Missing'",
