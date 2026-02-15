@@ -23,6 +23,7 @@ import { canUseFeature, incrementUsage } from '../../utils/creditSystem';
 import { parseScoreFromResponse, stripScoreTag, scoreColor5, getCitationSource, validateNursingResponse } from './nursingUtils';
 import { createPracticeSession } from './nursingSessionStore';
 import useSpeechRecognition from './useSpeechRecognition';
+import { buildSelfEfficacyPrompt } from '../../utils/selfEfficacyFeedback';
 
 // System prompt for quick practice — simpler than full interview
 const PRACTICE_SYSTEM_PROMPT = (specialty, question) => {
@@ -182,7 +183,14 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
           body: JSON.stringify({
             mode: 'nursing-coach',
             nursingFeature: 'nursingPractice',
-            systemPrompt: PRACTICE_SYSTEM_PROMPT(specialty, currentQuestion),
+            systemPrompt: PRACTICE_SYSTEM_PROMPT(specialty, currentQuestion) + '\n\n' + buildSelfEfficacyPrompt({
+              currentAnswer: userAnswer.trim(),
+              questionText: currentQuestion.question,
+              previousScores: Array.from({ length: scoredCount }, (_, i) => scoredCount > 0 ? totalScore / scoredCount : 0),
+              streakDays: 0, // TODO Phase 3: wire to streak system
+              questionsCompleted: questionsAnswered,
+              totalQuestions: questions.length,
+            }),
             conversationHistory: [],
             userMessage: userAnswer.trim(),
           }),

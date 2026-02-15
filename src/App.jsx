@@ -3060,7 +3060,13 @@ const startPracticeMode = async () => {
             questionText: currentQuestion.question,
             userAnswer: answer,
             expectedBullets: currentQuestion.bullets || [],
-            mode: 'practice'
+            mode: 'practice',
+            selfEfficacyData: {
+              previousScores: practiceHistory.slice(-10).map(h => h.feedback?.overall).filter(Boolean),
+              streakDays: 0, // TODO Phase 3: wire to streak system
+              questionsCompleted: practiceHistory.length,
+              totalQuestions: questions.length,
+            }
           })
         }, 3);
       })
@@ -3216,7 +3222,13 @@ const startPracticeMode = async () => {
               userContext: getUserContext(),
               mode: 'ai-interviewer',
               conversationHistory: conversationHistory,
-              exchangeCount: exchangeCount
+              exchangeCount: exchangeCount,
+              selfEfficacyData: {
+                previousScores: practiceHistory.slice(-10).map(h => h.feedback?.overall).filter(Boolean),
+                streakDays: 0, // TODO Phase 3: wire to streak system
+                questionsCompleted: practiceHistory.length,
+                totalQuestions: questions.length,
+              }
             }),
           },
           3 // maxAttempts
