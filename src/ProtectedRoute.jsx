@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from './lib/supabase'
 import Auth from './Auth'
 import ResetPassword from './Components/ResetPassword' // ADDED: For password recovery flow
 import { Mail } from 'lucide-react' // ADDED: For email verification UI
 
 function ProtectedRoute({ children }) {
+  const navigate = useNavigate()
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [showResetPassword, setShowResetPassword] = useState(false) // ADDED: Track recovery modal
@@ -130,6 +132,23 @@ function ProtectedRoute({ children }) {
 
   if (!user) {
     return <Auth onAuthSuccess={setUser} />
+  }
+
+  // FIX: Anonymous users (from onboarding) have no email and no email_confirmed_at.
+  // Don't trap them on "Verify Your Email" — redirect to onboarding to complete signup.
+  if (user.is_anonymous) {
+    // Sign out the anonymous user and redirect to onboarding
+    supabase.auth.signOut().then(() => {
+      navigate('/onboarding', { replace: true });
+    });
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="text-white/80 text-lg">Redirecting...</div>
+        </div>
+      </div>
+    )
   }
 
   // Check if email is verified

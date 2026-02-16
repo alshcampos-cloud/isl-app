@@ -33,9 +33,10 @@ export default function LandingPage() {
     }, 3000);
 
     // If already authenticated, redirect to app
+    // BUT: anonymous users (from onboarding) should see the landing page, not get trapped
     supabase.auth.getSession().then(({ data: { session } }) => {
       clearTimeout(fallbackTimer);
-      if (session) {
+      if (session && !session.user.is_anonymous) {
         navigate('/app', { replace: true });
       } else {
         setLoading(false);
