@@ -1285,24 +1285,28 @@ loadPracticeHistory();
     const ua = navigator.userAgent;
     const isOpera = ua.includes('OPR/') || ua.includes('Opera');
     const isOperaGX = isOpera && ua.includes('GX');
-    const isFirefox = ua.includes('Firefox');
+    const isFirefox = ua.includes('Firefox') || ua.includes('FxiOS');
     const isChrome = ua.includes('Chrome') && !ua.includes('OPR/') && !ua.includes('Edg/');
-    const isSafari = ua.includes('Safari') && !ua.includes('Chrome');
-    const isEdge = ua.includes('Edg/');
+    const isSafari = ua.includes('Safari') && !ua.includes('Chrome') && !ua.includes('CriOS') && !ua.includes('FxiOS') && !ua.includes('EdgiOS');
+    const isEdge = ua.includes('Edg/') || ua.includes('EdgiOS');
 
     // iOS detection — all iOS browsers use WebKit (Safari engine) under the hood
     // Chrome/Edge/Firefox on iOS are just Safari skins and do NOT support Web Speech API
+    // iOS Chrome uses "CriOS" in UA (NOT "Chrome"). iOS Firefox uses "FxiOS". iOS Edge uses "EdgiOS".
     const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    const isIOSChrome = isIOS && isChrome;
+    const isIOSChrome = isIOS && (isChrome || ua.includes('CriOS'));
+    const isIOSFirefox = isIOS && ua.includes('FxiOS');
+    const isIOSEdge = isIOS && ua.includes('EdgiOS');
+    const isIOSThirdParty = isIOSChrome || isIOSFirefox || isIOSEdge;
 
     // Check if running inside native Capacitor app (iOS/Android)
     // Native WebView uses Safari's engine (WKWebView) — speech works reliably
     const isNative = document.documentElement.classList.contains('capacitor');
 
-    // Web Speech API works best in Chrome (desktop/Android), Edge, Safari, and native app
-    // Broken in: Opera, Opera GX, Firefox, Chrome on iOS (uses WebKit, no SpeechRecognition)
+    // Web Speech API works best in Chrome (desktop/Android), Edge (desktop), Safari (incl iOS), and native app
+    // Broken in: Opera, Opera GX, Firefox, ALL non-Safari iOS browsers (they use WebKit but lack SpeechRecognition)
     const hasSpeechSupport = 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window;
-    const hasReliableSpeech = hasSpeechSupport && ((isChrome && !isIOSChrome) || isEdge || isSafari || isNative);
+    const hasReliableSpeech = hasSpeechSupport && !isIOSThirdParty && ((isChrome && !isIOS) || (isEdge && !isIOS) || isSafari || isNative);
 
     return {
       isOpera,
@@ -1313,10 +1317,11 @@ loadPracticeHistory();
       isEdge,
       isIOS,
       isIOSChrome,
+      isIOSThirdParty,
       isNative,
       hasSpeechSupport,
       hasReliableSpeech,
-      name: isNative ? 'App' : isIOSChrome ? 'Chrome (iOS)' : isOperaGX ? 'Opera GX' : isOpera ? 'Opera' : isFirefox ? 'Firefox' : isChrome ? 'Chrome' : isSafari ? 'Safari' : isEdge ? 'Edge' : 'Unknown'
+      name: isNative ? 'App' : isIOSChrome ? 'Chrome (iOS)' : isIOSFirefox ? 'Firefox (iOS)' : isIOSEdge ? 'Edge (iOS)' : isOperaGX ? 'Opera GX' : isOpera ? 'Opera' : isFirefox ? 'Firefox' : isChrome ? 'Chrome' : isSafari ? 'Safari' : isEdge ? 'Edge' : 'Unknown'
     };
   };
 
@@ -1856,10 +1861,12 @@ const stopSystemAudioCapture = () => {
 const startInterviewSession = async () => {
   console.log('🎬 Starting interview session');
 
-  // Block session on iOS Chrome — Web Speech API not supported (all iOS browsers use WebKit)
+  // Block session on iOS non-Safari browsers — Web Speech API not supported
+  // All iOS browsers use WebKit under the hood, but only Safari exposes SpeechRecognition
+  // iOS Chrome uses "CriOS" in UA, iOS Firefox uses "FxiOS", iOS Edge uses "EdgiOS"
   const browser = getBrowserInfo();
-  if (browser.isIOSChrome) {
-    alert('Speech recognition is not supported in Chrome on iPhone.\n\nPlease open this page in Safari for voice features.');
+  if (browser.isIOSThirdParty) {
+    alert('Speech recognition is not supported in ' + browser.name + '.\n\nPlease open this page in Safari on your iPhone for voice features.');
     return;
   }
 
@@ -3856,10 +3863,13 @@ const startPracticeMode = async () => {
                   Voice recognition works best in:
                 </p>
                 <div className="flex flex-wrap gap-1 mb-2">
-                  <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-medium">✓ Chrome</span>
-                  <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-medium">✓ Edge</span>
+                  <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-medium">✓ Chrome (desktop)</span>
+                  <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-medium">✓ Edge (desktop)</span>
                   <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-medium">✓ Safari</span>
                 </div>
+                <p className="text-red-600 text-xs font-medium mb-1">
+                  📱 iPhone users: Use <strong>Safari</strong> only. Chrome, Edge, and Firefox on iPhone do not support voice recognition.
+                </p>
                 <p className="text-blue-700 text-xs">
                   <strong>Not recommended:</strong> Opera, Opera GX, Firefox (limited voice support).
                   Text search fallback is available.
@@ -4409,8 +4419,8 @@ const startPracticeMode = async () => {
                 <div className="bg-amber-900/30 border border-amber-500/50 rounded-lg px-4 py-2 mb-4 flex items-center gap-2">
                   <span className="text-lg">💡</span>
                   <p className="text-sm text-amber-200/80">
-                    {browser.isIOSChrome ? (
-                      <>Speech recognition requires <strong>Safari</strong> on iPhone. Open this page in Safari for voice features.</>
+                    {browser.isIOSThirdParty ? (
+                      <>Speech recognition requires <strong>Safari</strong> on iPhone. <strong>{browser.name}</strong> does not support voice features — open this page in Safari.</>
                     ) : (
                       <><strong>{browser.name}</strong> has limited voice support. Use the text search below, or switch to <strong>Chrome/Edge/Safari</strong> for voice.</>
                     )}
