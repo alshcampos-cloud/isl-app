@@ -20,10 +20,14 @@ export default function AuthPage({ mode = 'login' }) {
       setLoading(false);
     }, 3000);
 
-    // If already authenticated, redirect
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // If already authenticated, redirect (but handle anonymous sessions)
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       clearTimeout(fallbackTimer);
-      if (session) {
+      if (session && session.user.is_anonymous) {
+        // Anonymous session from onboarding — sign out silently so login form shows
+        await supabase.auth.signOut();
+        setLoading(false);
+      } else if (session) {
         navigate(redirectTo, { replace: true });
       } else {
         setLoading(false);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { getArchetype, getArchetypeConfig, getPostOnboardingRoute, TIMELINE_OPTIONS, FIELD_OPTIONS } from '../../utils/archetypeRouter'
 import { trackOnboardingEvent, startScreenTimer } from '../../utils/onboardingTracker'
@@ -163,14 +163,31 @@ export default function ArchetypeOnboarding() {
         />
       </div>
 
-      {/* Sign-in link — persistent on all screens */}
+      {/* Logo — link back to landing page (signs out anonymous session) */}
+      <div className="fixed top-3 left-4 z-50">
+        <button
+          onClick={async () => {
+            await supabase.auth.signOut()
+            navigate('/', { replace: true })
+          }}
+          className="text-sm font-bold text-slate-700 hover:text-teal-600 transition-colors flex items-center gap-1.5"
+        >
+          <span className="text-lg">🎯</span>
+          <span>InterviewAnswers<span className="text-teal-500">.AI</span></span>
+        </button>
+      </div>
+
+      {/* Sign-in link — signs out anonymous session before navigating */}
       <div className="fixed top-4 right-4 z-50">
-        <Link
-          to="/login"
+        <button
+          onClick={async () => {
+            await supabase.auth.signOut()
+            navigate('/login', { replace: true })
+          }}
           className="text-sm text-slate-500 hover:text-teal-600 transition-colors"
         >
           Already have an account? <span className="font-medium">Sign in</span>
-        </Link>
+        </button>
       </div>
 
       {/* Screen content */}
