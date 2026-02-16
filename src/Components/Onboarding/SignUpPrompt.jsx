@@ -17,6 +17,7 @@ import { trackOnboardingEvent } from '../../utils/onboardingTracker'
 export default function SignUpPrompt({ archetype, archetypeConfig, onComplete }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [fullName, setFullName] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -26,6 +27,11 @@ export default function SignUpPrompt({ archetype, archetypeConfig, onComplete })
   const handleSignUp = useCallback(async (e) => {
     e.preventDefault()
     if (!email.trim() || !password.trim()) return
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match')
+      return
+    }
 
     setIsLoading(true)
     setError(null)
@@ -61,7 +67,7 @@ export default function SignUpPrompt({ archetype, archetypeConfig, onComplete })
     } finally {
       setIsLoading(false)
     }
-  }, [email, password, fullName, archetype, onComplete])
+  }, [email, password, confirmPassword, fullName, archetype, onComplete])
 
   return (
     <div className="flex-1 flex flex-col justify-center">
@@ -139,7 +145,7 @@ export default function SignUpPrompt({ archetype, archetypeConfig, onComplete })
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Create a password"
             required
-            minLength={6}
+            minLength={8}
             className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-700 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 pr-12"
             autoComplete="new-password"
           />
@@ -161,6 +167,43 @@ export default function SignUpPrompt({ archetype, archetypeConfig, onComplete })
           </button>
         </div>
 
+        {/* Password strength guidance */}
+        {password.length > 0 && (
+          <div className="mt-2 space-y-1">
+            <p className={`text-xs ${password.length >= 8 ? 'text-teal-600' : 'text-slate-300'}`}>
+              {password.length >= 8 ? '✓' : '○'} At least 8 characters
+            </p>
+            <p className={`text-xs ${/[A-Z]/.test(password) ? 'text-teal-600' : 'text-slate-300'}`}>
+              {/[A-Z]/.test(password) ? '✓' : '○'} One uppercase letter
+            </p>
+            <p className={`text-xs ${/[0-9]/.test(password) ? 'text-teal-600' : 'text-slate-300'}`}>
+              {/[0-9]/.test(password) ? '✓' : '○'} One number
+            </p>
+            <p className={`text-xs ${/[^A-Za-z0-9]/.test(password) ? 'text-teal-600' : 'text-slate-300'}`}>
+              {/[^A-Za-z0-9]/.test(password) ? '✓' : '○'} One special character (recommended)
+            </p>
+          </div>
+        )}
+
+        {/* Confirm password */}
+        <div>
+          <input
+            type={showPassword ? 'text' : 'password'}
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="Confirm password"
+            required
+            className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-700 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500"
+            autoComplete="new-password"
+          />
+          {confirmPassword && password !== confirmPassword && (
+            <p className="text-xs text-red-500 mt-1">Passwords don't match</p>
+          )}
+          {confirmPassword && password === confirmPassword && confirmPassword.length > 0 && (
+            <p className="text-xs text-teal-600 mt-1">✓ Passwords match</p>
+          )}
+        </div>
+
         {error && (
           <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">
             {error}
@@ -169,9 +212,9 @@ export default function SignUpPrompt({ archetype, archetypeConfig, onComplete })
 
         <button
           type="submit"
-          disabled={isLoading || !email.trim() || !password.trim()}
+          disabled={isLoading || !email.trim() || !password.trim() || password !== confirmPassword}
           className={`w-full py-3 px-6 rounded-xl font-semibold transition-all
-            ${!isLoading && email.trim() && password.trim()
+            ${!isLoading && email.trim() && password.trim() && password === confirmPassword
               ? 'bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-600/20'
               : 'bg-slate-100 text-slate-300 cursor-not-allowed'
             }`}

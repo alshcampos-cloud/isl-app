@@ -7,6 +7,7 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
   const [isSignUp, setIsSignUp] = useState(defaultMode === 'signup')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [fullName, setFullName] = useState('')
   const [message, setMessage] = useState(null)
   const [error, setError] = useState(null)
@@ -20,6 +21,12 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
     setMessage(null)
 
     try {
+      if (isSignUp && password !== confirmPassword) {
+        setError('Passwords do not match')
+        setLoading(false)
+        return
+      }
+
       if (isSignUp) {
         // Sign up
         const { data, error } = await supabase.auth.signUp({
@@ -165,12 +172,53 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
                 placeholder="••••••••"
               />
             </div>
-            {isSignUp && (
+            {isSignUp && password.length > 0 && (
+              <div className="mt-2 space-y-1">
+                <p className={`text-xs ${password.length >= 8 ? 'text-green-600' : 'text-gray-400'}`}>
+                  {password.length >= 8 ? '✓' : '○'} At least 8 characters
+                </p>
+                <p className={`text-xs ${/[A-Z]/.test(password) ? 'text-green-600' : 'text-gray-400'}`}>
+                  {/[A-Z]/.test(password) ? '✓' : '○'} One uppercase letter
+                </p>
+                <p className={`text-xs ${/[0-9]/.test(password) ? 'text-green-600' : 'text-gray-400'}`}>
+                  {/[0-9]/.test(password) ? '✓' : '○'} One number
+                </p>
+                <p className={`text-xs ${/[^A-Za-z0-9]/.test(password) ? 'text-green-600' : 'text-gray-400'}`}>
+                  {/[^A-Za-z0-9]/.test(password) ? '✓' : '○'} One special character (recommended)
+                </p>
+              </div>
+            )}
+            {isSignUp && !password && (
               <p className="text-xs text-gray-500 mt-1">
                 At least 8 characters
               </p>
             )}
           </div>
+
+          {isSignUp && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Confirm Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  placeholder="••••••••"
+                />
+              </div>
+              {confirmPassword && password !== confirmPassword && (
+                <p className="text-xs text-red-500 mt-1">Passwords don't match</p>
+              )}
+              {confirmPassword && password === confirmPassword && confirmPassword.length > 0 && (
+                <p className="text-xs text-green-600 mt-1">✓ Passwords match</p>
+              )}
+            </div>
+          )}
 
           {isSignUp && (
             <div className="space-y-3 pt-2">
@@ -232,6 +280,7 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
               setIsSignUp(!isSignUp)
               setError(null)
               setMessage(null)
+              setConfirmPassword('')
             }}
             className="text-indigo-600 hover:text-indigo-700 font-medium"
           >

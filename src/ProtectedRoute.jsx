@@ -98,6 +98,27 @@ function ProtectedRoute({ children }) {
     return () => subscription.unsubscribe();
   }, [])
 
+  // Poll for email verification (cross-device support)
+  // When user verifies on phone, desktop auto-detects within 3 seconds
+  useEffect(() => {
+    if (!user || user.email_confirmed_at || user.is_anonymous) return;
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const { data: { user: freshUser } } = await supabase.auth.getUser();
+        if (freshUser?.email_confirmed_at) {
+          console.log('✅ Email verified (detected by polling)');
+          setUser(freshUser);
+          clearInterval(pollInterval);
+        }
+      } catch (err) {
+        console.warn('Verification poll failed:', err);
+      }
+    }, 3000);
+
+    return () => clearInterval(pollInterval);
+  }, [user]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex items-center justify-center">
