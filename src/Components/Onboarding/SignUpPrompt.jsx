@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { trackOnboardingEvent } from '../../utils/onboardingTracker'
 
@@ -15,6 +15,7 @@ import { trackOnboardingEvent } from '../../utils/onboardingTracker'
  */
 
 export default function SignUpPrompt({ archetype, archetypeConfig, onComplete }) {
+  const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -22,6 +23,7 @@ export default function SignUpPrompt({ archetype, archetypeConfig, onComplete })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
   const [showPassword, setShowPassword] = useState(false)
+  const [signUpSuccess, setSignUpSuccess] = useState(false)
   const hasTrackedFormStart = useRef(false)
 
   const handleSignUp = useCallback(async (e) => {
@@ -58,8 +60,11 @@ export default function SignUpPrompt({ archetype, archetypeConfig, onComplete })
         throw updateError
       }
 
-      // Success — onComplete will store archetype + navigate
-      onComplete()
+      // Success — show confirmation message instead of navigating
+      // updateUser() on anonymous users requires email confirmation before
+      // is_anonymous flips to false, so we can't navigate to /app yet.
+      trackOnboardingEvent(5, 'signup_completed', { archetype })
+      setSignUpSuccess(true)
     } catch (err) {
       console.error('Sign up error:', err)
       setError(err.message || 'Something went wrong. Please try again.')
@@ -68,6 +73,53 @@ export default function SignUpPrompt({ archetype, archetypeConfig, onComplete })
       setIsLoading(false)
     }
   }, [email, password, confirmPassword, fullName, archetype, onComplete])
+
+  // After successful signup, show confirmation screen
+  if (signUpSuccess) {
+    return (
+      <div className="flex-1 flex flex-col justify-center">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-teal-100 flex items-center justify-center">
+            <svg className="w-8 h-8 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+            </svg>
+          </div>
+
+          <h2 className="text-2xl font-bold text-slate-800 mb-2">
+            Check your email
+          </h2>
+
+          <p className="text-slate-500 text-sm max-w-xs mx-auto mb-2">
+            We sent a confirmation link to:
+          </p>
+
+          <p className="text-teal-600 font-semibold mb-6">
+            {email}
+          </p>
+
+          <p className="text-slate-400 text-xs max-w-xs mx-auto mb-8">
+            Click the link in the email to activate your account. Check your spam folder if you don't see it.
+          </p>
+        </div>
+
+        <button
+          onClick={async () => {
+            // Sign out the anonymous session and redirect to login
+            await supabase.auth.signOut()
+            navigate('/login', { replace: true })
+          }}
+          className="w-full py-3 px-6 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl transition-colors shadow-lg shadow-teal-600/20"
+        >
+          Go to Sign In
+        </button>
+
+        <p className="text-center text-xs text-slate-400 mt-4">
+          After confirming your email, sign in to access your account.
+        </p>
+      </div>
+    )
+  }
 
   return (
     <div className="flex-1 flex flex-col justify-center">
