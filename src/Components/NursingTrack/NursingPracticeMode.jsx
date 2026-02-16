@@ -23,6 +23,7 @@ import { canUseFeature, incrementUsage } from '../../utils/creditSystem';
 import { parseScoreFromResponse, stripScoreTag, scoreColor5, getCitationSource, validateNursingResponse } from './nursingUtils';
 import { createPracticeSession } from './nursingSessionStore';
 import useSpeechRecognition from './useSpeechRecognition';
+import SpeechUnavailableWarning from '../SpeechUnavailableWarning';
 import { buildSelfEfficacyPrompt } from '../../utils/selfEfficacyFeedback';
 
 // System prompt for quick practice — simpler than full interview
@@ -128,9 +129,7 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
   const {
     transcript: speechTranscript,
     isListening: micActive,
-    isSupported: micSupported,
-    isIOSThirdParty,
-    iosThirdPartyName,
+    hasReliableSpeech,
     startSession: startMic,
     stopSession: stopMic,
     clearTranscript: clearSpeech,
@@ -398,11 +397,9 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
                     exit={{ opacity: 0 }}
                   >
                     {micError && <p className="text-red-400 text-xs mb-2">{micError}</p>}
-                    {isIOSThirdParty && (
-                      <p className="text-amber-400 text-xs mb-2">📱 Voice input requires Safari on iPhone. {iosThirdPartyName} doesn't support speech recognition. Type your answer below.</p>
-                    )}
+                    <SpeechUnavailableWarning variant="inline" darkMode />
                     <div className="flex items-start gap-2 mb-4">
-                      {micSupported && !isIOSThirdParty && (
+                      {hasReliableSpeech && (
                         <button
                           onClick={async () => {
                             if (micActive) { stopMic(); } else { clearSpeech(); await startMic(); }

@@ -26,6 +26,8 @@ import ConsentDialog from './Components/ConsentDialog';
 import SessionDetailsModal from './Components/SessionDetailsModal';
 import SubscriptionManagement from './Components/SubscriptionManagement';
 import ArchetypeCTA from './Components/Onboarding/ArchetypeCTA';
+import { getBrowserInfo as getSharedBrowserInfo } from './utils/browserDetection';
+import SpeechUnavailableWarning from './Components/SpeechUnavailableWarning';
 
 // CSS string is OK at top-level
 const styles = `
@@ -1280,50 +1282,10 @@ loadPracticeHistory();
     return showAllFeedback || revealStage >= stage;
   };
 
-  // BROWSER DETECTION - For speech recognition compatibility warnings
-  const getBrowserInfo = () => {
-    const ua = navigator.userAgent;
-    const isOpera = ua.includes('OPR/') || ua.includes('Opera');
-    const isOperaGX = isOpera && ua.includes('GX');
-    const isFirefox = ua.includes('Firefox') || ua.includes('FxiOS');
-    const isChrome = ua.includes('Chrome') && !ua.includes('OPR/') && !ua.includes('Edg/');
-    const isSafari = ua.includes('Safari') && !ua.includes('Chrome') && !ua.includes('CriOS') && !ua.includes('FxiOS') && !ua.includes('EdgiOS');
-    const isEdge = ua.includes('Edg/') || ua.includes('EdgiOS');
-
-    // iOS detection — all iOS browsers use WebKit (Safari engine) under the hood
-    // Chrome/Edge/Firefox on iOS are just Safari skins and do NOT support Web Speech API
-    // iOS Chrome uses "CriOS" in UA (NOT "Chrome"). iOS Firefox uses "FxiOS". iOS Edge uses "EdgiOS".
-    const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    const isIOSChrome = isIOS && (isChrome || ua.includes('CriOS'));
-    const isIOSFirefox = isIOS && ua.includes('FxiOS');
-    const isIOSEdge = isIOS && ua.includes('EdgiOS');
-    const isIOSThirdParty = isIOSChrome || isIOSFirefox || isIOSEdge;
-
-    // Check if running inside native Capacitor app (iOS/Android)
-    // Native WebView uses Safari's engine (WKWebView) — speech works reliably
-    const isNative = document.documentElement.classList.contains('capacitor');
-
-    // Web Speech API works best in Chrome (desktop/Android), Edge (desktop), Safari (incl iOS), and native app
-    // Broken in: Opera, Opera GX, Firefox, ALL non-Safari iOS browsers (they use WebKit but lack SpeechRecognition)
-    const hasSpeechSupport = 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window;
-    const hasReliableSpeech = hasSpeechSupport && !isIOSThirdParty && ((isChrome && !isIOS) || (isEdge && !isIOS) || isSafari || isNative);
-
-    return {
-      isOpera,
-      isOperaGX,
-      isFirefox,
-      isChrome,
-      isSafari,
-      isEdge,
-      isIOS,
-      isIOSChrome,
-      isIOSThirdParty,
-      isNative,
-      hasSpeechSupport,
-      hasReliableSpeech,
-      name: isNative ? 'App' : isIOSChrome ? 'Chrome (iOS)' : isIOSFirefox ? 'Firefox (iOS)' : isIOSEdge ? 'Edge (iOS)' : isOperaGX ? 'Opera GX' : isOpera ? 'Opera' : isFirefox ? 'Firefox' : isChrome ? 'Chrome' : isSafari ? 'Safari' : isEdge ? 'Edge' : 'Unknown'
-    };
-  };
+  // BROWSER DETECTION — Delegates to shared utility (src/utils/browserDetection.js)
+  // All detection logic, browser matrix, and messaging live in one place.
+  // This thin wrapper preserves the existing call pattern: getBrowserInfo().hasReliableSpeech, etc.
+  const getBrowserInfo = () => getSharedBrowserInfo();
 
   // SPEECH RECOGNITION
   const initSpeechRecognition = () => {
@@ -1861,11 +1823,11 @@ const stopSystemAudioCapture = () => {
 const startInterviewSession = async () => {
   console.log('🎬 Starting interview session');
 
-  // iOS non-Safari browsers: allow session to start (text search works)
-  // but skip mic setup — Web Speech API not supported on iOS Chrome/Firefox/Edge
+  // Unsupported browsers: allow session to start (text search works)
+  // but skip mic setup — voice not reliable in this browser
   const browser = getBrowserInfo();
-  if (browser.isIOSThirdParty) {
-    console.log('⚠️ iOS third-party browser detected — skipping mic setup, text search still works');
+  if (!browser.hasReliableSpeech) {
+    console.log(`⚠️ ${browser.browserName} — speech not reliable, skipping mic setup. Text search still works.`);
     setInterviewSessionActive(true);
     return;
   }
@@ -3860,19 +3822,19 @@ const startPracticeMode = async () => {
               <div className="bg-blue-50 border-l-4 border-blue-400 rounded p-3 mb-4">
                 <p className="font-bold text-blue-900 text-xs mb-1">🌐 Browser Compatibility:</p>
                 <p className="text-blue-800 text-xs mb-2">
-                  Voice recognition works best in:
+                  Voice recognition works in:
                 </p>
                 <div className="flex flex-wrap gap-1 mb-2">
-                  <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-medium">✓ Chrome (desktop)</span>
-                  <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-medium">✓ Edge (desktop)</span>
+                  <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-medium">✓ Chrome (desktop/Android)</span>
                   <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-medium">✓ Safari</span>
+                  <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-medium">✓ Samsung Internet (Android)</span>
                 </div>
                 <p className="text-red-600 text-xs font-medium mb-1">
-                  📱 iPhone users: Use <strong>Safari</strong> only. Chrome, Edge, and Firefox on iPhone do not support voice recognition.
+                  📱 iPhone users: Use <strong>Safari</strong> only. Chrome, Edge, and Firefox on iPhone do not support voice.
                 </p>
                 <p className="text-blue-700 text-xs">
-                  <strong>Not recommended:</strong> Opera, Opera GX, Firefox (limited voice support).
-                  Text search fallback is available.
+                  <strong>Not supported for voice:</strong> Edge, Firefox, Opera, Brave.
+                  Text search and typing always work in all browsers.
                 </p>
               </div>
 
@@ -4412,24 +4374,7 @@ const startPracticeMode = async () => {
           </div>
 
           {/* Browser compatibility reminder for unsupported browsers */}
-          {(() => {
-            const browser = getBrowserInfo();
-            if (!browser.hasReliableSpeech) {
-              return (
-                <div className="bg-amber-900/30 border border-amber-500/50 rounded-lg px-4 py-2 mb-4 flex items-center gap-2">
-                  <span className="text-lg">💡</span>
-                  <p className="text-sm text-amber-200/80">
-                    {browser.isIOSThirdParty ? (
-                      <>Speech recognition requires <strong>Safari</strong> on iPhone. <strong>{browser.name}</strong> does not support voice features — open this page in Safari.</>
-                    ) : (
-                      <><strong>{browser.name}</strong> has limited voice support. Use the text search below, or switch to <strong>Chrome/Edge/Safari</strong> for voice.</>
-                    )}
-                  </p>
-                </div>
-              );
-            }
-            return null;
-          })()}
+          <SpeechUnavailableWarning variant="banner" darkMode />
 
           {!matchedQuestion ? (
             <div className="text-center py-20">
@@ -4441,18 +4386,7 @@ const startPracticeMode = async () => {
               {!interviewSessionActive ? (
                 <>
                   <p className="text-xl text-gray-300 mb-8">Click "Start Session" to begin</p>
-                  {(() => {
-                    const b = getBrowserInfo();
-                    if (b.isIOSThirdParty) {
-                      return (
-                        <div className="mt-4 mb-6 bg-amber-900/40 border border-amber-500/50 rounded-lg p-4 max-w-2xl mx-auto">
-                          <p className="text-amber-200 text-sm font-medium mb-1">📱 Voice not available in {b.name} on iPhone</p>
-                          <p className="text-amber-200/70 text-xs">Speech recognition requires Safari. You can still use <strong>text search</strong> to look up questions by keyword. For voice features, open this page in Safari.</p>
-                        </div>
-                      );
-                    }
-                    return null;
-                  })()}
+                  <SpeechUnavailableWarning variant="banner" darkMode className="mt-4 mb-6 max-w-2xl mx-auto" />
                   <div className="mt-12 bg-blue-900/30 rounded-lg p-6 max-w-2xl mx-auto">
                     <h4 className="font-bold mb-3">💡 Session Mode Benefits:</h4>
                     <ul className="text-left text-sm space-y-2">
@@ -4472,23 +4406,17 @@ const startPracticeMode = async () => {
                 </>
               ) : (
                 <>
-                  {(() => {
-                    const b = getBrowserInfo();
-                    if (b.isIOSThirdParty) {
-                      return (
-                        <>
-                          <p className="text-xl text-green-300 mb-4">✨ Session Active — Use Text Search Below</p>
-                          <p className="text-lg text-amber-300 mb-8">Voice is not available in {b.name} on iPhone. Type keywords below to find your question.</p>
-                        </>
-                      );
-                    }
-                    return (
-                      <>
-                        <p className="text-xl text-green-300 mb-4">✨ Session Active - Ready to capture questions!</p>
-                        <p className="text-lg text-gray-300 mb-8">Hold SPACEBAR when interviewer asks a question</p>
-                      </>
-                    );
-                  })()}
+                  {getBrowserInfo().hasReliableSpeech ? (
+                    <>
+                      <p className="text-xl text-green-300 mb-4">✨ Session Active - Ready to capture questions!</p>
+                      <p className="text-lg text-gray-300 mb-8">Hold SPACEBAR when interviewer asks a question</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-xl text-green-300 mb-4">✨ Session Active — Use Text Search Below</p>
+                      <SpeechUnavailableWarning variant="banner" darkMode className="max-w-2xl mx-auto mb-8" />
+                    </>
+                  )}
 
                   {transcript && (
                     <div className="mt-8 bg-gray-800 rounded-lg p-6 max-w-2xl mx-auto">
@@ -4499,10 +4427,8 @@ const startPracticeMode = async () => {
                     </div>
                   )}
 
-                  {(() => {
-                    const b = getBrowserInfo();
-                    if (b.isIOSThirdParty) return null; // Skip voice instructions for iOS third-party
-                    return (
+                  {/* Voice instructions — only shown when speech is available */}
+                  {getBrowserInfo().hasReliableSpeech && (
                   <div className="mt-12 bg-green-900/30 rounded-lg p-6 max-w-2xl mx-auto border-2 border-green-500/50">
                     <h4 className="font-bold mb-3 text-green-300">🎤 How to Use (Session Mode):</h4>
                     <ol className="text-left text-sm space-y-2">
@@ -4513,8 +4439,7 @@ const startPracticeMode = async () => {
                       <li>5. Repeat for next question</li>
                     </ol>
                   </div>
-                    );
-                  })()}
+                  )}
 
                   {/* Manual text input fallback - for browsers with broken speech recognition */}
                   <div className="mt-8 max-w-2xl mx-auto">
@@ -4795,22 +4720,8 @@ const startPracticeMode = async () => {
               <h3 className="text-2xl font-bold mb-6">Your Answer:</h3>
               
               {/* SPEECH INPUT SECTION */}
-              {(() => {
-                const b = getBrowserInfo();
-                if (b.isIOSThirdParty) {
-                  return (
-                    <div className="bg-amber-50 border-2 border-amber-300 rounded-lg p-6 mb-6">
-                      <div className="flex items-center gap-3 mb-2">
-                        <span className="text-2xl">📱</span>
-                        <h4 className="font-bold text-amber-900">Voice not available in {b.name}</h4>
-                      </div>
-                      <p className="text-sm text-amber-800 mb-2">
-                        Speech recognition requires <strong>Safari</strong> on iPhone. Please type your answer below, or open this page in Safari for voice input.
-                      </p>
-                    </div>
-                  );
-                }
-                return (
+              <SpeechUnavailableWarning variant="banner" />
+              {getBrowserInfo().hasReliableSpeech ? (
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-lg p-6 mb-6">
                 <div className="flex items-center gap-3 mb-4">
                   <Mic className={`w-6 h-6 ${isListening ? 'text-red-600 animate-pulse' : 'text-blue-600'}`} />
@@ -4829,8 +4740,7 @@ const startPracticeMode = async () => {
                 </button>
                 <p className="text-xs text-center text-gray-600">Hold SPACEBAR or this button to speak. Your answer will appear below.</p>
               </div>
-                );
-              })()}
+              ) : null}
               
               {/* Live Transcript */}
               {(spokenAnswer || transcript) && (
@@ -5370,22 +5280,8 @@ const startPracticeMode = async () => {
             {!feedback && (
               <>
                 {/* Speech Input */}
-                {(() => {
-                  const b = getBrowserInfo();
-                  if (b.isIOSThirdParty) {
-                    return (
-                      <div className="bg-amber-50 border-2 border-amber-300 rounded-lg p-6 mb-6">
-                        <div className="flex items-center gap-3 mb-2">
-                          <span className="text-2xl">📱</span>
-                          <h4 className="font-bold text-amber-900">Voice not available in {b.name}</h4>
-                        </div>
-                        <p className="text-sm text-amber-800 mb-2">
-                          Speech recognition requires <strong>Safari</strong> on iPhone. Please type your answer below, or open this page in Safari for voice input.
-                        </p>
-                      </div>
-                    );
-                  }
-                  return (
+                <SpeechUnavailableWarning variant="banner" />
+                {getBrowserInfo().hasReliableSpeech && (
                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-lg p-6 mb-6">
                   <div className="flex items-center gap-3 mb-4">
                     <Mic className={`w-6 h-6 ${isListening ? 'text-red-600 animate-pulse' : 'text-blue-600'}`} />
@@ -5401,8 +5297,7 @@ const startPracticeMode = async () => {
                     {isListening ? '🎤 Release to Stop' : '🎤 Hold to Speak (or use SPACEBAR)'}
                   </button>
                 </div>
-                  );
-                })()}
+                )}
                 
                 {(spokenAnswer || transcript) && (
                   <div className="bg-gray-50 border-2 border-gray-300 rounded-lg p-6 mb-6">

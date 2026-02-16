@@ -1,4 +1,4 @@
-# Session State — Last Updated: February 17, 2026
+# Session State — Last Updated: February 16, 2026
 
 ## What's Live on Production (www.interviewanswers.ai)
 
@@ -7,7 +7,7 @@
 - "Example Strong Answer" constrained to user's actual content
 - Bandura-aligned coaching language
 
-### Phase 2: Onboarding + Funnel ~90% ✅
+### Phase 2: Onboarding + Funnel ✅
 - 5-screen onboarding flow (archetype → breathing → practice → IRS → signup)
 - Anonymous auth routing fixed (LandingPage, ProtectedRoute, AuthPage)
 - Onboarding redirect loop fixed (sign out anonymous before /login or /)
@@ -21,7 +21,14 @@
 - Zero-state home screen: archetype-aware welcome message
 - IRS Screen 4: practice score prominent, IRS secondary with explanation
 - Funnel tracking: 25 onboarding_events being recorded
-- ArchetypeCTA component deployed (not yet verified rendering)
+- ArchetypeCTA fix: column mismatch (id→user_id) + missing migration applied (9d10421)
+- E2E signup tested on iPhone Chrome — works (email goes to spam)
+
+### Phase 3: IRS + Streaks — IN PROGRESS
+- Unit 1: ArchetypeCTA fix (9d10421) — SHIPPED
+- Unit 2: IRS v1 — PLANNING
+- Unit 3: Streak system — NOT STARTED
+- Unit 4: Nursing dashboard wiring — NOT STARTED
 
 ### Nursing Track
 - Walled garden model: AI coaches communication, never generates clinical content
@@ -31,28 +38,24 @@
 - Pro tier badge fix deployed
 
 ## Known Bugs / Unverified Items
-1. **E2E signup NOT tested on production** — Nobody has completed 
-   Screen 5 signup with a real email on production. Unknown if 
-   account creation, email verification, and redirect work together.
-2. **ArchetypeCTA rendering NOT verified** — Component deployed but 
-   never confirmed showing on home screen with real user data.
-3. **Email deliverability unknown** — SPF/DKIM/DMARC not configured 
-   for Supabase email. Verification emails may go to spam or not arrive.
-4. **Mobile responsiveness NOT tested** — No real device testing done. 
-   Audit flagged potential issues with stat cards and practice mode 
+1. ~~E2E signup NOT tested~~ — **TESTED Feb 16.** Works on iPhone Chrome.
+2. **ArchetypeCTA fix deployed** (9d10421) — needs verification with new signup.
+3. **Email goes to spam** — SPF/DKIM/DMARC not configured. Verification
+   emails arrive but in spam folder. Needs Resend or DNS fix.
+4. **Mobile responsiveness NOT tested** — No real device testing done.
+   Audit flagged potential issues with stat cards and practice mode
    cards at phone widths.
-5. **Tutorial race condition** — Pre-existing bug from commit 9924434 
+5. **Tutorial race condition** — Pre-existing bug from commit 9924434
    (Feb 14). hasAcceptedFirstTimeTerms never initialized from DB.
-6. **Duplicate loadUserTierAndStats calls** — Runs twice on page load. 
+6. **Duplicate loadUserTierAndStats calls** — Runs twice on page load.
    Not user-facing but doubles Supabase request volume.
 
-## What's Next: Phase 2 Completion
-Before Phase 3, Lucas must manually verify:
-- [ ] Complete real signup through all 5 screens on production (phone)
-- [ ] Confirm email verification works
-- [ ] Confirm ArchetypeCTA renders on home screen
-- [ ] Test on actual phone (mobile responsiveness)
-- [ ] Check onboarding_events in Supabase for real ad traffic data
+## What's Next: Phase 3 Units
+- [x] Unit 1: ArchetypeCTA fix (SHIPPED 9d10421)
+- [ ] Unit 2: IRS v1 (Interview Readiness Score)
+- [ ] Unit 3: Streak system
+- [ ] Unit 4: Wire nursing dashboard to real IRS/streak data
+- [ ] Email deliverability (SPF/DKIM/DMARC or Resend)
 
 ## Phase 3 Plan (after Phase 2 verified)
 Per strategy doc, highest-ROI features:
@@ -82,13 +85,12 @@ Per strategy doc, highest-ROI features:
 - main (production, auto-deploys via Vercel)
 
 ## Key Commits (recent)
-- b3891f7: Fix anonymous users trapped on email verification
-- ea78e3b: Route all landing page CTAs through /onboarding
-- 4bab02a: Phase 2 completion — 6 production fixes
-- 547e17a: Fix onboarding redirect loop + logo back link
-- e91cf84: Breathing claims + nursing onboarding customization
-- 7145606: Docs — battle scars + audit report update
-- [latest]: Nursing AI Coach wired to curated question library
+- 9d10421: Fix ArchetypeCTA column mismatch + add missing migration (Phase 3 Unit 1)
+- b9bb4c6: Pro tier query, AI Coach question library, webhook, session docs
+- 857a518: Onboarding signup copy honesty fix
+- 3609709: Email verification bypass security fix
+- 80b31ab: Email confirmation screen after onboarding signup
+- f363f5a: Email verification polling + confirm password + password strength
 
 ## Product Expansion Sequence (from strategy)
 1. Nursing Interview Prep (weeks 1-4) — IN PROGRESS

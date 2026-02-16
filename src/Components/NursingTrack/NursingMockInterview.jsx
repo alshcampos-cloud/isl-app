@@ -19,6 +19,7 @@ import useNursingQuestions from './useNursingQuestions';
 import NursingLoadingSkeleton from './NursingLoadingSkeleton';
 import { fetchWithRetry } from '../../utils/fetchWithRetry';
 import useSpeechRecognition from './useSpeechRecognition';
+import SpeechUnavailableWarning from '../SpeechUnavailableWarning';
 import { canUseFeature, incrementUsage } from '../../utils/creditSystem';
 import NursingSessionSummary from './NursingSessionSummary';
 import { parseScoreFromResponse, stripScoreTag, getCitationSource, validateNursingResponse } from './nursingUtils';
@@ -147,9 +148,7 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
   const {
     transcript: speechTranscript,
     isListening: micActive,
-    isSupported: micSupported,
-    isIOSThirdParty,
-    iosThirdPartyName,
+    hasReliableSpeech,
     startSession: startMic,
     stopSession: stopMic,
     clearTranscript: clearSpeech,
@@ -665,12 +664,10 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
           {micError && (
             <p className="text-red-400 text-xs mb-1 text-center">{micError}</p>
           )}
-          {isIOSThirdParty && (
-            <p className="text-amber-400 text-xs mb-1 text-center">📱 Voice input requires Safari on iPhone. Type your answer below.</p>
-          )}
+          <SpeechUnavailableWarning variant="inline" darkMode className="text-center" />
           <div className="flex items-end gap-2">
             {/* Mic toggle — Battle Scar #5: must be user gesture (onClick/onTouchEnd) */}
-            {micSupported && !isIOSThirdParty && (
+            {hasReliableSpeech && (
               <button
                 onClick={async () => {
                   if (micActive) {

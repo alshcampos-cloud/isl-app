@@ -25,6 +25,7 @@ import { fetchWithRetry } from '../../utils/fetchWithRetry';
 import { canUseFeature, incrementUsage } from '../../utils/creditSystem';
 import { CLINICAL_FRAMEWORKS, getQuestionsForSpecialty } from './nursingQuestions';
 import useSpeechRecognition from './useSpeechRecognition';
+import SpeechUnavailableWarning from '../SpeechUnavailableWarning';
 
 // ============================================================
 // THE WALLED GARDEN SYSTEM PROMPT — AIRTIGHT
@@ -218,9 +219,7 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
   const {
     transcript: speechTranscript,
     isListening: micActive,
-    isSupported: micSupported,
-    isIOSThirdParty,
-    iosThirdPartyName,
+    hasReliableSpeech,
     startSession: startMic,
     stopSession: stopMic,
     clearTranscript: clearSpeech,
@@ -601,11 +600,9 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
             {!creditBlocked && (
               <>
                 {micError && <p className="text-red-400 text-xs mb-1 text-center">{micError}</p>}
-                {isIOSThirdParty && (
-                  <p className="text-amber-400 text-xs mb-1 text-center">📱 Voice input requires Safari on iPhone. Type below.</p>
-                )}
+                <SpeechUnavailableWarning variant="inline" darkMode className="text-center" />
                 <div className="flex items-end gap-2">
-                  {micSupported && !isIOSThirdParty && (
+                  {hasReliableSpeech && (
                     <button
                       onClick={async () => {
                         if (micActive) { stopMic(); } else { clearSpeech(); await startMic(); }
@@ -783,11 +780,9 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
       <div className="bg-slate-900/95 backdrop-blur-lg border-t border-white/10 p-4">
         <div className="max-w-3xl mx-auto">
           {micError && <p className="text-red-400 text-xs mb-1 text-center">{micError}</p>}
-          {isIOSThirdParty && (
-            <p className="text-amber-400 text-xs mb-1 text-center">📱 Voice requires Safari on iPhone. Type below.</p>
-          )}
+          <SpeechUnavailableWarning variant="inline" darkMode className="text-center" />
           <div className="flex items-end gap-2">
-            {micSupported && !isIOSThirdParty && !creditBlocked && (
+            {hasReliableSpeech && !creditBlocked && (
               <button
                 onClick={async () => {
                   if (micActive) { stopMic(); } else { clearSpeech(); await startMic(); }
