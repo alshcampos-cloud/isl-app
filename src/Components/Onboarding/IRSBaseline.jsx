@@ -4,20 +4,12 @@ import { trackOnboardingEvent } from '../../utils/onboardingTracker'
 /**
  * IRSBaseline — Screen 4: Interview Readiness Score Baseline
  *
- * IRS v1 (from PRODUCT_ARCHITECTURE.md):
- *   Composite 0-100. Three inputs equally weighted:
- *   1. Session consistency: streak days / 14, capped at 1.0
- *   2. STAR structure adherence: average AI assessment score
- *   3. Question coverage: unique questions practiced / total in bank
- *
- * For onboarding: 1 session, 1 question, 0 streak days.
- *   - Session consistency: 1/14 = 0.071 → 7.1/100
- *   - STAR adherence: practiceScore/10 → e.g. 6/10 = 60/100
- *   - Question coverage: 1/50 = 0.02 → 2/100
- *   - Composite: (7.1 + 60 + 2) / 3 ≈ 23
- *
- * Display: Animated progress ring (0 → score) with 500ms fill.
- * Ghost ring at 75 shows aspirational target.
+ * Reframed per Phase 2 Completion:
+ *   - Practice score shown prominently ("You scored 7/10 on your first try")
+ *   - IRS shown as secondary with clear explanation of why it's low
+ *   - Ghost ring removed (confusing without context)
+ *   - Breakdown kept but labeled so users understand the components
+ *   - Skip link available immediately for users who want to move on
  */
 
 export default function IRSBaseline({ practiceScore, onContinue }) {
@@ -25,39 +17,39 @@ export default function IRSBaseline({ practiceScore, onContinue }) {
   const [showDetails, setShowDetails] = useState(false)
   const animationRef = useRef(null)
 
+  const normalizedPracticeScore = practiceScore || 6
+
   // Calculate real IRS
   const sessionConsistency = (1 / 14) * 100    // 1 day / 14 target = ~7
-  const starAdherence = ((practiceScore || 6) / 10) * 100 // practice score normalized
+  const starAdherence = (normalizedPracticeScore / 10) * 100 // practice score normalized
   const questionCoverage = (1 / 50) * 100       // 1 question / ~50 in bank = 2
 
   const realIRS = Math.round((sessionConsistency + starAdherence + questionCoverage) / 3)
   const hasTrackedScore = useRef(false)
 
-  // Animate the score ring on mount
+  // Animate the practice score ring on mount (based on practice score, not IRS)
+  const practicePercent = (normalizedPracticeScore / 10) * 100
   useEffect(() => {
     const startTime = Date.now()
-    const duration = 1200 // 1.2s for dramatic effect
+    const duration = 1200
 
     const animate = () => {
       const elapsed = Date.now() - startTime
       const progress = Math.min(elapsed / duration, 1)
-      // Ease-out cubic for smooth deceleration
       const eased = 1 - Math.pow(1 - progress, 3)
-      setAnimatedScore(Math.round(eased * realIRS))
+      setAnimatedScore(Math.round(eased * normalizedPracticeScore * 10) / 10)
 
       if (progress < 1) {
         animationRef.current = requestAnimationFrame(animate)
       } else {
-        // Show details after animation completes
         setTimeout(() => setShowDetails(true), 300)
         if (!hasTrackedScore.current) {
           hasTrackedScore.current = true
-          trackOnboardingEvent(4, 'score_shown', { irs_score: realIRS, practice_score: practiceScore || 6 })
+          trackOnboardingEvent(4, 'score_shown', { irs_score: realIRS, practice_score: normalizedPracticeScore })
         }
       }
     }
 
-    // Small delay before starting animation
     const timeout = setTimeout(() => {
       animationRef.current = requestAnimationFrame(animate)
     }, 500)
@@ -66,50 +58,46 @@ export default function IRSBaseline({ practiceScore, onContinue }) {
       clearTimeout(timeout)
       if (animationRef.current) cancelAnimationFrame(animationRef.current)
     }
-  }, [realIRS])
+  }, [normalizedPracticeScore, realIRS])
 
   const circumference = 2 * Math.PI * 80
-  const scoreOffset = circumference - (animatedScore / 100) * circumference
-  const ghostOffset = circumference - (75 / 100) * circumference
+  const scoreOffset = circumference - (Math.min(animatedScore, 10) / 10) * circumference
 
   return (
     <div className="flex-1 flex flex-col justify-center items-center text-center">
       <p className="text-sm text-teal-600 font-medium tracking-wide uppercase mb-2">
-        Your Starting Point
+        Your First Practice
       </p>
 
-      <h2 className="text-2xl font-bold text-slate-800 mb-8">
-        Interview Readiness Score
+      <h2 className="text-2xl font-bold text-slate-800 mb-2">
+        You scored {normalizedPracticeScore}/10 on your first try
       </h2>
 
-      {/* Score ring */}
-      <div className="relative w-52 h-52 mx-auto mb-8">
-        <svg className="w-52 h-52 -rotate-90" viewBox="0 0 200 200">
+      <p className="text-slate-500 text-sm mb-8">
+        {normalizedPracticeScore >= 7
+          ? "That's a strong start — most people score lower on their first attempt."
+          : normalizedPracticeScore >= 5
+          ? "That's better than many first attempts. Practice makes the difference."
+          : "Everyone starts here. The key is consistent practice — scores climb fast."}
+      </p>
+
+      {/* Practice score ring */}
+      <div className="relative w-44 h-44 mx-auto mb-8">
+        <svg className="w-44 h-44 -rotate-90" viewBox="0 0 200 200">
           {/* Background ring */}
           <circle
             cx="100" cy="100" r="80"
             fill="none"
             stroke="#e2e8f0"
-            strokeWidth="8"
+            strokeWidth="10"
           />
 
-          {/* Ghost ring at 75 (aspirational target) */}
-          <circle
-            cx="100" cy="100" r="80"
-            fill="none"
-            stroke="#0d948833"
-            strokeWidth="8"
-            strokeLinecap="round"
-            strokeDasharray={circumference}
-            strokeDashoffset={ghostOffset}
-          />
-
-          {/* Actual score ring */}
+          {/* Score ring — based on practice score */}
           <circle
             cx="100" cy="100" r="80"
             fill="none"
             stroke="#0d9488"
-            strokeWidth="8"
+            strokeWidth="10"
             strokeLinecap="round"
             strokeDasharray={circumference}
             strokeDashoffset={scoreOffset}
@@ -120,40 +108,24 @@ export default function IRSBaseline({ practiceScore, onContinue }) {
         {/* Score number */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-4xl font-bold text-slate-800">
-            {animatedScore}
+            {animatedScore.toFixed(0)}
           </span>
-          <span className="text-sm text-slate-400">out of 100</span>
-        </div>
-
-        {/* 75 marker */}
-        <div
-          className="absolute text-xs font-medium text-teal-500/50"
-          style={{
-            top: '8px',
-            right: '20px',
-          }}
-        >
-          75
+          <span className="text-sm text-slate-400">out of 10</span>
         </div>
       </div>
 
-      {/* Score context */}
-      <div className="mb-6">
-        <p className="text-slate-600 mb-2">
-          {realIRS < 20
-            ? "Everyone starts here. One practice session and you're already ahead of most candidates who never practice at all."
-            : realIRS < 40
-            ? "A solid starting point. With consistent practice, users typically see their score climb 15+ points in the first week."
-            : "Great start! You're already showing strong fundamentals."}
-        </p>
-      </div>
-
-      {/* Score breakdown (appears after animation) */}
+      {/* IRS as secondary element + breakdown (appears after animation) */}
       {showDetails && (
         <div className="animate-fadeIn w-full max-w-sm mb-8">
           <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm text-left">
-            <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-3">
-              Score Breakdown
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">
+                Interview Readiness Score
+              </p>
+              <span className="text-lg font-bold text-teal-600">{realIRS}/100</span>
+            </div>
+            <p className="text-xs text-slate-400 mb-3">
+              This combines practice consistency, answer quality, and question coverage. It grows as you practice.
             </p>
             <div className="space-y-3">
               <ScoreRow
@@ -164,7 +136,7 @@ export default function IRSBaseline({ practiceScore, onContinue }) {
               <ScoreRow
                 label="Answer quality"
                 value={Math.round(starAdherence)}
-                sublabel={`${practiceScore || 6}/10 on your practice`}
+                sublabel={`${normalizedPracticeScore}/10 on your practice`}
               />
               <ScoreRow
                 label="Question coverage"
@@ -195,6 +167,16 @@ export default function IRSBaseline({ practiceScore, onContinue }) {
             Save my progress
           </button>
         </div>
+      )}
+
+      {/* Skip link — visible immediately while animation plays */}
+      {!showDetails && (
+        <button
+          onClick={() => { trackOnboardingEvent(4, 'skipped'); onContinue(); }}
+          className="mt-4 text-sm text-slate-400 hover:text-slate-500 transition-colors"
+        >
+          Skip for now
+        </button>
       )}
 
       <style>{`

@@ -4103,18 +4103,26 @@ const startPracticeMode = async () => {
 
           {/* Quick Start Tip - Enhanced */}
           {questions.length === 0 && (
-            <div className="bg-gradient-to-r from-blue-500/30 to-indigo-500/30 backdrop-blur-xl border-2 border-blue-400/50 rounded-2xl p-6 text-white mb-6 shadow-xl">
+            <div className="bg-gradient-to-r from-teal-500/30 to-emerald-500/30 backdrop-blur-xl border-2 border-teal-400/50 rounded-2xl p-6 text-white mb-6 shadow-xl">
               <div className="flex items-start gap-4">
                 <div className="text-4xl">👋</div>
                 <div className="flex-1">
-                  <p className="text-xl font-black mb-2">Ready to start your interview journey?</p>
-                  <p className="text-base text-white/90 font-medium mb-4">Let's load some questions and start practicing!</p>
-                  <button
-                    onClick={() => setCurrentView('command-center')}
-                    className="bg-white text-indigo-600 px-6 py-3 rounded-lg font-bold hover:bg-indigo-50 transition-all shadow-lg"
-                  >
-                    Go to Command Center →
-                  </button>
+                  <p className="text-xl font-black mb-2">Welcome{currentUser?.user_metadata?.full_name ? `, ${currentUser.user_metadata.full_name.split(' ')[0]}` : ''}! Let's build your confidence.</p>
+                  <p className="text-base text-white/90 font-medium mb-4">Start with a quick practice or explore your question bank.</p>
+                  <div className="flex flex-wrap gap-3">
+                    <button
+                      onClick={() => startPracticeMode()}
+                      className="bg-white text-teal-600 px-6 py-3 rounded-lg font-bold hover:bg-teal-50 transition-all shadow-lg"
+                    >
+                      Start your first practice →
+                    </button>
+                    <button
+                      onClick={() => setCurrentView('command-center')}
+                      className="bg-white/20 text-white px-5 py-3 rounded-lg font-semibold hover:bg-white/30 transition-all"
+                    >
+                      Explore question bank
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -4133,15 +4141,15 @@ const startPracticeMode = async () => {
             <p className="text-white/80 text-sm sm:text-base mb-5 font-medium">Choose your training method and level up your skills</p>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
               {/* Live Prompter - Enhanced */}
-              <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:shadow-xl hover:shadow-pink-500/30 hover:-translate-y-1 cursor-pointer group relative overflow-hidden border border-slate-100">
-                <div className="absolute inset-0 bg-gradient-to-br from-pink-400/0 to-rose-500/0 group-hover:from-pink-400/10 group-hover:to-rose-500/10 transition-all duration-300"></div>
+              <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:shadow-xl hover:shadow-teal-500/30 hover:-translate-y-1 cursor-pointer group relative overflow-hidden border border-slate-100">
+                <div className="absolute inset-0 bg-gradient-to-br from-teal-400/0 to-emerald-500/0 group-hover:from-teal-400/10 group-hover:to-emerald-500/10 transition-all duration-300"></div>
                 <div className="text-center flex flex-col h-full relative z-10">
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-pink-500 to-rose-500 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300 shadow-md">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300 shadow-md">
                     <Mic className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-white" />
                   </div>
                   <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-1 sm:mb-2 text-slate-800">Live Prompter</h3>
                   <p className="text-slate-500 text-xs sm:text-sm mb-3 sm:mb-4 flex-1 font-medium">Real-time bullet prompts</p>
-                  <button onClick={(e) => { e.stopPropagation(); startPrompterMode(); }} className="w-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg hover:brightness-110 active:scale-[0.98] text-sm sm:text-base">
+                  <button onClick={(e) => { e.stopPropagation(); startPrompterMode(); }} className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg hover:brightness-110 active:scale-[0.98] text-sm sm:text-base">
                     Start Practice
                   </button>
                 </div>
@@ -4810,7 +4818,7 @@ const startPracticeMode = async () => {
               {/* ULTIMATE FIX: Extracted inline async to named function with promise chains */}
               <button
                 onClick={() => handleAIInterviewerSubmit()}
-                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-4 rounded-lg disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-bold py-4 rounded-lg disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {isAnalyzing ? (
                   <>
@@ -5188,7 +5196,7 @@ const startPracticeMode = async () => {
             accumulatedTranscript.current = '';
             currentMode === 'ai-interviewer' ? startAIInterviewer() : startPracticeMode(); 
           }} 
-          className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-4 rounded-xl transition-all hover:scale-105 shadow-lg"
+          className="flex-1 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-bold py-4 rounded-xl transition-all hover:scale-105 shadow-lg"
         >
           ➡️ Next Question
         </button>
@@ -5738,7 +5746,7 @@ const startPracticeMode = async () => {
             accumulatedTranscript.current = '';
             currentMode === 'ai-interviewer' ? startAIInterviewer() : startPracticeMode(); 
           }} 
-          className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-4 rounded-xl transition-all hover:scale-105 shadow-lg"
+          className="flex-1 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-bold py-4 rounded-xl transition-all hover:scale-105 shadow-lg"
         >
           ➡️ Next Question
         </button>

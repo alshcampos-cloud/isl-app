@@ -50,9 +50,9 @@ export function getArchetypeConfig(archetype) {
       notificationCadence: 'daily',
       firstQuestion: {
         id: 'onboarding-1',
-        question: 'Tell me about yourself and why you\'re interested in this role.',
+        question: 'Tell me about your professional background.',
         category: 'General',
-        tip: 'Start with your current role, then bridge to why this opportunity excites you. Keep it under 2 minutes.',
+        tip: 'Start with your current role, highlight 2-3 key experiences, then mention what you\'re looking for next. Keep it under 2 minutes.',
       },
     },
     strategic_builder: {

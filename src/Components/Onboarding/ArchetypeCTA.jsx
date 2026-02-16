@@ -68,11 +68,11 @@ export default function ArchetypeCTA({ onAction }) {
   // Map archetype to visual style
   const styles = {
     urgent_seeker: {
-      gradient: 'from-red-500/30 to-orange-500/30',
-      border: 'border-red-400/50',
+      gradient: 'from-teal-500/30 to-cyan-500/30',
+      border: 'border-teal-400/50',
       icon: '🔥',
       subtitle: 'Your interview is coming up — every practice session counts.',
-      buttonGradient: 'from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600',
+      buttonGradient: 'from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600',
     },
     strategic_builder: {
       gradient: 'from-teal-500/30 to-emerald-500/30',

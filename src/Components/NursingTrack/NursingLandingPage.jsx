@@ -38,7 +38,7 @@ export default function NursingLandingPage() {
               Log In
             </Link>
             <Link
-              to="/signup?from=nursing"
+              to="/onboarding?from=nursing"
               className="bg-sky-700 hover:bg-sky-800 text-white font-medium text-sm px-4 py-2 rounded-lg transition-colors"
             >
               Start Free
@@ -110,7 +110,7 @@ export default function NursingLandingPage() {
                 transition={{ delay: 0.4 }}
               >
                 <Link
-                  to="/signup?from=nursing"
+                  to="/onboarding?from=nursing"
                   className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-sky-600 to-cyan-500 hover:from-sky-700 hover:to-cyan-600 text-white font-bold text-lg px-8 py-4 rounded-xl transition-all shadow-xl shadow-sky-500/30 hover:shadow-sky-500/50 hover:-translate-y-0.5"
                 >
                   Start Practicing Free
@@ -430,7 +430,7 @@ export default function NursingLandingPage() {
                   </li>
                 ))}
               </ul>
-              <Link to="/signup?from=nursing" className="block w-full text-center bg-gray-100 hover:bg-gray-200 text-gray-900 font-semibold py-3 rounded-xl transition-colors text-base">
+              <Link to="/onboarding?from=nursing" className="block w-full text-center bg-gray-100 hover:bg-gray-200 text-gray-900 font-semibold py-3 rounded-xl transition-colors text-base">
                 Start Free
               </Link>
             </div>
@@ -478,7 +478,7 @@ export default function NursingLandingPage() {
             Stop guessing what to say. Start practicing with an AI coach that helps you tell your story with confidence.
           </p>
           <Link
-            to="/signup?from=nursing"
+            to="/onboarding?from=nursing"
             className="inline-flex items-center gap-2 bg-white text-blue-950 font-bold text-lg px-8 py-4 rounded-xl hover:shadow-xl hover:-translate-y-0.5 transition-all"
           >
             Start Practicing Free
@@ -511,7 +511,7 @@ export default function NursingLandingPage() {
       {/* Mobile sticky CTA */}
       <div className="fixed bottom-0 left-0 right-0 md:hidden bg-white/95 backdrop-blur-lg border-t border-gray-200 p-3 z-40">
         <Link
-          to="/signup?from=nursing"
+          to="/onboarding?from=nursing"
           className="block w-full text-center bg-gradient-to-r from-sky-600 to-cyan-500 text-white font-bold py-3 rounded-lg shadow-lg"
         >
           Start Practicing Free
