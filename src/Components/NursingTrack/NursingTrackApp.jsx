@@ -94,7 +94,7 @@ export default function NursingTrackApp() {
 
         // Fetch profile (name, tier) and beta status in parallel
         const [profileResult, betaResult] = await Promise.all([
-          supabase.from('user_profiles').select('first_name, last_name, tier').eq('user_id', userId).maybeSingle(),
+          supabase.from('user_profiles').select('tier').eq('user_id', userId).maybeSingle(),
           isBetaUser(supabase, userId),
         ]);
 
@@ -110,7 +110,7 @@ export default function NursingTrackApp() {
             tier,
             isBeta: betaResult,
             usage: usageStats,
-            displayName: profile?.first_name || user.email?.split('@')[0] || 'Nurse',
+            displayName: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Nurse',
             loading: false,
           });
         }
