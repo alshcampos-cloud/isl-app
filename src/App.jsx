@@ -1290,14 +1290,19 @@ loadPracticeHistory();
     const isSafari = ua.includes('Safari') && !ua.includes('Chrome');
     const isEdge = ua.includes('Edg/');
 
+    // iOS detection — all iOS browsers use WebKit (Safari engine) under the hood
+    // Chrome/Edge/Firefox on iOS are just Safari skins and do NOT support Web Speech API
+    const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const isIOSChrome = isIOS && isChrome;
+
     // Check if running inside native Capacitor app (iOS/Android)
     // Native WebView uses Safari's engine (WKWebView) — speech works reliably
     const isNative = document.documentElement.classList.contains('capacitor');
 
-    // Web Speech API works best in Chrome, Edge, Safari, and native app
-    // Limited/broken in: Opera, Opera GX, Firefox
+    // Web Speech API works best in Chrome (desktop/Android), Edge, Safari, and native app
+    // Broken in: Opera, Opera GX, Firefox, Chrome on iOS (uses WebKit, no SpeechRecognition)
     const hasSpeechSupport = 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window;
-    const hasReliableSpeech = hasSpeechSupport && (isChrome || isEdge || isSafari || isNative);
+    const hasReliableSpeech = hasSpeechSupport && ((isChrome && !isIOSChrome) || isEdge || isSafari || isNative);
 
     return {
       isOpera,
@@ -1306,10 +1311,12 @@ loadPracticeHistory();
       isChrome,
       isSafari,
       isEdge,
+      isIOS,
+      isIOSChrome,
       isNative,
       hasSpeechSupport,
       hasReliableSpeech,
-      name: isNative ? 'App' : isOperaGX ? 'Opera GX' : isOpera ? 'Opera' : isFirefox ? 'Firefox' : isChrome ? 'Chrome' : isSafari ? 'Safari' : isEdge ? 'Edge' : 'Unknown'
+      name: isNative ? 'App' : isIOSChrome ? 'Chrome (iOS)' : isOperaGX ? 'Opera GX' : isOpera ? 'Opera' : isFirefox ? 'Firefox' : isChrome ? 'Chrome' : isSafari ? 'Safari' : isEdge ? 'Edge' : 'Unknown'
     };
   };
 
@@ -1848,6 +1855,13 @@ const stopSystemAudioCapture = () => {
 // SESSION-BASED MICROPHONE CONTROL
 const startInterviewSession = async () => {
   console.log('🎬 Starting interview session');
+
+  // Block session on iOS Chrome — Web Speech API not supported (all iOS browsers use WebKit)
+  const browser = getBrowserInfo();
+  if (browser.isIOSChrome) {
+    alert('Speech recognition is not supported in Chrome on iPhone.\n\nPlease open this page in Safari for voice features.');
+    return;
+  }
 
   // iOS SAFARI FIX: Request mic permission FIRST in the same user gesture
   // This is CRITICAL - iOS Safari requires getUserMedia before SpeechRecognition
@@ -4395,7 +4409,11 @@ const startPracticeMode = async () => {
                 <div className="bg-amber-900/30 border border-amber-500/50 rounded-lg px-4 py-2 mb-4 flex items-center gap-2">
                   <span className="text-lg">💡</span>
                   <p className="text-sm text-amber-200/80">
-                    <strong>{browser.name}</strong> has limited voice support. Use the text search below, or switch to <strong>Chrome/Edge/Safari</strong> for voice.
+                    {browser.isIOSChrome ? (
+                      <>Speech recognition requires <strong>Safari</strong> on iPhone. Open this page in Safari for voice features.</>
+                    ) : (
+                      <><strong>{browser.name}</strong> has limited voice support. Use the text search below, or switch to <strong>Chrome/Edge/Safari</strong> for voice.</>
+                    )}
                   </p>
                 </div>
               );
