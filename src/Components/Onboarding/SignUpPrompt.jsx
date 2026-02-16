@@ -6,12 +6,13 @@ import { trackOnboardingEvent } from '../../utils/onboardingTracker'
 /**
  * SignUpPrompt — Screen 5: Create Account to Save Progress
  *
- * Uses Supabase updateUser() to promote anonymous user to real account.
- * This preserves the same user ID, so any data created during onboarding
- * (practice sessions, scores) stays linked to the account.
+ * SECURITY: Uses signUp() (not updateUser()) to create real accounts.
+ * updateUser() on anonymous users has a known Supabase bug (#29350) that
+ * auto-confirms emails without the user clicking the confirmation link,
+ * allowing fake emails to access the platform.
  *
- * "Create an account to save your progress and start your 7-day free Pro trial."
- * Value already demonstrated — signup preserves what they built.
+ * Trade-off: anonymous user's onboarding data is not preserved (new user ID).
+ * But proper email verification is non-negotiable for platform security.
  */
 
 export default function SignUpPrompt({ archetype, archetypeConfig, onComplete }) {
@@ -39,30 +40,41 @@ export default function SignUpPrompt({ archetype, archetypeConfig, onComplete })
     setError(null)
 
     try {
-      // Promote anonymous user to real account using updateUser
-      // This preserves the same user ID + any onboarding data
-      const { data, error: updateError } = await supabase.auth.updateUser({
+      // SECURITY FIX: Use signUp() instead of updateUser() to create the account.
+      // updateUser() on anonymous users has a known Supabase bug (GitHub #29350)
+      // that auto-confirms the email without the user clicking the confirmation link.
+      // This allowed fake emails to access the platform.
+      //
+      // Trade-off: onboarding data linked to the anonymous user ID is not preserved.
+      // But security > convenience. The user will get a fresh account after confirming.
+
+      // Step 1: Sign out the anonymous session
+      await supabase.auth.signOut()
+
+      // Step 2: Create a real account with signUp() — this properly requires email confirmation
+      const { data, error: signUpError } = await supabase.auth.signUp({
         email: email.trim(),
         password: password.trim(),
-        data: {
-          full_name: fullName.trim() || undefined,
-          archetype: archetype,
+        options: {
+          data: {
+            full_name: fullName.trim() || undefined,
+            archetype: archetype,
+          },
         },
       })
 
-      if (updateError) {
-        // If updateUser fails (e.g., email already exists), try regular signup
-        if (updateError.message.includes('already') || updateError.message.includes('exists')) {
+      if (signUpError) {
+        if (signUpError.message.includes('already') || signUpError.message.includes('exists')) {
           setError('An account with this email already exists. Try signing in instead.')
           trackOnboardingEvent(5, 'signup_error', { error: 'email_exists' })
           return
         }
-        throw updateError
+        throw signUpError
       }
 
-      // Success — show confirmation message instead of navigating
-      // updateUser() on anonymous users requires email confirmation before
-      // is_anonymous flips to false, so we can't navigate to /app yet.
+      // Success — signUp() sends a confirmation email.
+      // email_confirmed_at will be null until the user clicks the link.
+      // ProtectedRoute.jsx will block access to /app until confirmed.
       trackOnboardingEvent(5, 'signup_completed', { archetype })
       setSignUpSuccess(true)
     } catch (err) {
@@ -105,7 +117,7 @@ export default function SignUpPrompt({ archetype, archetypeConfig, onComplete })
 
         <button
           onClick={async () => {
-            // Sign out the anonymous session and redirect to login
+            // Sign out any session and redirect to login
             await supabase.auth.signOut()
             navigate('/login', { replace: true })
           }}
