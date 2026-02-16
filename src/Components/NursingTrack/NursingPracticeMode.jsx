@@ -20,6 +20,7 @@ import useNursingQuestions from './useNursingQuestions';
 import NursingLoadingSkeleton from './NursingLoadingSkeleton';
 import { fetchWithRetry } from '../../utils/fetchWithRetry';
 import { canUseFeature, incrementUsage } from '../../utils/creditSystem';
+import { updateStreakAfterSession } from '../../utils/streakSupabase';
 import { parseScoreFromResponse, stripScoreTag, scoreColor5, getCitationSource, validateNursingResponse } from './nursingUtils';
 import { createPracticeSession } from './nursingSessionStore';
 import useSpeechRecognition from './useSpeechRecognition';
@@ -234,6 +235,7 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
       if (userData?.user?.id) {
         try {
           await incrementUsage(supabase, userData.user.id, 'nursingPractice');
+          updateStreakAfterSession(supabase, userData.user.id).catch(() => {}); // Phase 3 streak
           if (refreshUsage) refreshUsage();
           // Re-check credits after charge to catch hitting zero (prevents stale state bypass)
           const recheck = canUseFeature(

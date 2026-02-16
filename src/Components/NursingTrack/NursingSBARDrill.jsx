@@ -21,6 +21,7 @@ import useNursingQuestions from './useNursingQuestions';
 import NursingLoadingSkeleton from './NursingLoadingSkeleton';
 import { fetchWithRetry } from '../../utils/fetchWithRetry';
 import { canUseFeature, incrementUsage } from '../../utils/creditSystem';
+import { updateStreakAfterSession } from '../../utils/streakSupabase';
 import { parseSBARScores, stripSBARScoreTags, scoreColor10, scoreBg10, getCitationSource, validateNursingResponse } from './nursingUtils';
 import { createSBARDrillSession } from './nursingSessionStore';
 import useSpeechRecognition from './useSpeechRecognition';
@@ -237,6 +238,7 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
       if (userData?.user?.id) {
         try {
           await incrementUsage(supabase, userData.user.id, 'nursingSbar');
+          updateStreakAfterSession(supabase, userData.user.id).catch(() => {}); // Phase 3 streak
           if (refreshUsage) refreshUsage();
           // Re-check credits after charge to catch hitting zero
           const recheck = canUseFeature(

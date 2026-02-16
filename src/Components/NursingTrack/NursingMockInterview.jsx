@@ -21,6 +21,7 @@ import { fetchWithRetry } from '../../utils/fetchWithRetry';
 import useSpeechRecognition from './useSpeechRecognition';
 import SpeechUnavailableWarning from '../SpeechUnavailableWarning';
 import { canUseFeature, incrementUsage } from '../../utils/creditSystem';
+import { updateStreakAfterSession } from '../../utils/streakSupabase';
 import NursingSessionSummary from './NursingSessionSummary';
 import { parseScoreFromResponse, stripScoreTag, getCitationSource, validateNursingResponse } from './nursingUtils';
 import { createMockInterviewSession } from './nursingSessionStore';
@@ -304,6 +305,7 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
       if (userData?.user?.id) {
         try {
           await incrementUsage(supabase, userData.user.id, 'nursingMock');
+          updateStreakAfterSession(supabase, userData.user.id).catch(() => {}); // Phase 3 streak
           // Refresh parent's usage stats so dashboard stays current
           if (refreshUsage) refreshUsage();
           // Re-check credits after charge to catch hitting zero (prevents stale state bypass)

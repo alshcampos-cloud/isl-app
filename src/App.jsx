@@ -28,6 +28,9 @@ import SubscriptionManagement from './Components/SubscriptionManagement';
 import ArchetypeCTA from './Components/Onboarding/ArchetypeCTA';
 import { getBrowserInfo as getSharedBrowserInfo } from './utils/browserDetection';
 import SpeechUnavailableWarning from './Components/SpeechUnavailableWarning';
+import StreakDisplay from './Components/Streaks/StreakDisplay';
+import MilestoneToast from './Components/Streaks/MilestoneToast';
+import { updateStreakAfterSession } from './utils/streakSupabase';
 
 // CSS string is OK at top-level
 const styles = `
@@ -222,6 +225,8 @@ const ISL = () => {
   const [showSubscriptionManagement, setShowSubscriptionManagement] = useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState('inactive');
   const [showUsageDashboard, setShowUsageDashboard] = useState(false);
+  const [streakMilestone, setStreakMilestone] = useState(null);
+  const [streakRefreshTrigger, setStreakRefreshTrigger] = useState(0);
   // REMOVED: showResetPassword and isPasswordResetRequired - now handled in ProtectedRoute.jsx
   const [usageStatsData, setUsageStatsData] = useState(null);
   const [comparisonMode, setComparisonMode] = useState(false);
@@ -3118,6 +3123,11 @@ const startPracticeMode = async () => {
         // BUG 7 FIX: Track usage AFTER successful feedback (not at session start)
         trackUsageInBackground('practiceMode', 'Practice Mode');
 
+        // Update streak after successful session (fire-and-forget, Phase 3 Unit 1)
+        updateStreakAfterSession(supabase, currentUser.id)
+          .then(r => { if (r?.milestone) setStreakMilestone(r.milestone); setStreakRefreshTrigger(t => t + 1); })
+          .catch(() => {});
+
         // Save to database in parallel (fire-and-forget)
         savePracticeSession(currentQuestion, answer, feedbackJson)
           .then(() => console.log('✅ Database save completed'))
@@ -3332,6 +3342,11 @@ const startPracticeMode = async () => {
 
           // BUG 7 FIX: Track usage AFTER successful feedback (not at session start)
           trackUsageInBackground('aiInterviewer', 'AI Interviewer');
+
+          // Update streak after successful session (fire-and-forget, Phase 3 Unit 1)
+          updateStreakAfterSession(supabase, currentUser.id)
+            .then(r => { if (r?.milestone) setStreakMilestone(r.milestone); setStreakRefreshTrigger(t => t + 1); })
+            .catch(() => {});
 
           // Save to database in parallel (fire-and-forget)
           savePracticeSession(currentQuestion, conversationSummary, feedbackWithConversation)
@@ -4004,7 +4019,7 @@ const startPracticeMode = async () => {
           </div>
 
           {/* Compact Stats Row - Enhanced with Gradients */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 mb-6 sm:mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-2 sm:gap-3 mb-6 sm:mb-8">
             <div className="bg-white/10 backdrop-blur-lg rounded-xl sm:rounded-2xl p-3 sm:p-4 text-white hover:bg-white/15 hover:scale-[1.02] transition-all duration-200 border border-white/20 cursor-pointer" onClick={() => {
               setCurrentView('command-center');
               setCommandCenterTab('bank');
@@ -4085,7 +4100,12 @@ const startPracticeMode = async () => {
                 </div>
               </div>
             </div>
+            {/* Streak Card — Phase 3 Unit 1 */}
+            <StreakDisplay refreshTrigger={streakRefreshTrigger} />
           </div>
+
+          {/* Milestone Toast — renders nothing when no milestone */}
+          <MilestoneToast milestone={streakMilestone} onDismiss={() => setStreakMilestone(null)} />
 
           {/* Quick Start Tip - Enhanced */}
           {questions.length === 0 && (

@@ -23,6 +23,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import { fetchWithRetry } from '../../utils/fetchWithRetry';
 import { canUseFeature, incrementUsage } from '../../utils/creditSystem';
+import { updateStreakAfterSession } from '../../utils/streakSupabase';
 import { CLINICAL_FRAMEWORKS, getQuestionsForSpecialty } from './nursingQuestions';
 import useSpeechRecognition from './useSpeechRecognition';
 import SpeechUnavailableWarning from '../SpeechUnavailableWarning';
@@ -340,6 +341,7 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
       if (userData?.user?.id) {
         try {
           await incrementUsage(supabase, userData.user.id, 'practiceMode');
+          updateStreakAfterSession(supabase, userData.user.id).catch(() => {}); // Phase 3 streak
           if (refreshUsage) refreshUsage();
         } catch (chargeErr) {
           // Log but don't break session — AI response already succeeded
