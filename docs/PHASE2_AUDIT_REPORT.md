@@ -241,6 +241,55 @@ The app works. It's stable. The nursing track is impressive for a solo-founder b
 
 ---
 
-*Report generated: February 15, 2026*
-*Protocol: V.S.A.F.E.R.-M observation session — NO code changes made*
-*Next action: Review with Lucas, prioritize P0 fixes, then begin Phase 3 (IRS + Streaks)*
+---
+
+## Part 5: Fixes Applied (Phase 2 Completion — February 15, 2026)
+
+**Protocol:** V.S.A.F.E.R.-M (production fixes)
+**Commits:** `b3891f7` (anonymous auth trap), `ea78e3b` (landing page CTAs), `4bab02a` (Phase 2 completion batch)
+
+### P0 Fixes Applied
+
+| # | Issue | Fix | Commit |
+|---|-------|-----|--------|
+| P0-anon | Anonymous users trapped on email verification | ProtectedRoute.jsx checks `is_anonymous` before email verification; LandingPage.jsx guards against anonymous sessions | `b3891f7` |
+| P0-2 | Red/pink CTA buttons → teal | Live Prompter card, "Practice Next Question" (×2), "Submit Answer" — all changed from purple-to-pink gradients to teal-to-emerald | `4bab02a` |
+| P0-cta | Landing page CTAs bypass onboarding | All 7 `/signup` links across 5 landing page files changed to `/onboarding` | `ea78e3b` |
+
+### P1 Fixes Applied
+
+| # | Issue | Fix | Commit |
+|---|-------|-----|--------|
+| P1-3 | Personalize home screen by archetype | Zero-state home screen now shows teal-themed welcome with user's first name, "Start your first practice" primary CTA, "Explore question bank" secondary CTA. ArchetypeCTA component renders personalized banner for users with archetype. | `4bab02a` |
+| P1-nursing | Nursing landing page CTAs bypass onboarding | 5 of 6 `/signup?from=nursing` links changed to `/onboarding?from=nursing`. "Get Pro Access" intentionally kept on `/signup?from=nursing`. | `4bab02a` |
+
+### Additional Fixes Applied
+
+| # | Issue | Fix | Commit |
+|---|-------|-----|--------|
+| Practice Q | Urgent seeker practice question too role-specific for cold traffic | Changed from "Tell me about yourself and why you're interested in this role." to "Tell me about your professional background." | `4bab02a` |
+| Skip IRS | No way to skip IRS baseline screen | Added "Skip for now" button on Screen 4 that advances to next screen (not to signup) | `4bab02a` |
+| IRS display | IRS score misleading on Screen 4 (always shows low number) | Reframed: practice score shown prominently ("You scored 7/10"), IRS as secondary with explanation, ghost ring removed, breakdown labeled clearly | `4bab02a` |
+| ArchetypeCTA colors | Urgent seeker CTA used red/orange (threat response) | Changed to teal/cyan to match anxiety-reducing color system | `4bab02a` |
+
+### Updated Scorecard
+
+| Dimension | Before | After | Notes |
+|-----------|--------|-------|-------|
+| **UX Quality** | 6/10 | 7/10 | Teal CTAs, personalized home screen, better IRS display. General track closer to nursing track quality. |
+| **Strategy Alignment** | 3/10 | 4/10 | Archetype personalization active on home screen. Color psychology implemented. Onboarding flow properly connected to all landing page CTAs. |
+
+### Remaining P0: Email Deliverability
+P0-3 (SPF/DKIM/DMARC or Resend) is still outstanding. Emails may still go to spam for new signups.
+
+### Next Steps
+- Phase 3: IRS v1 (P1-1) + Streaks (P1-2)
+- Mobile responsiveness audit (real device testing)
+- Email deliverability fix
+
+---
+
+*Original report: February 15, 2026*
+*Fixes applied: February 15, 2026*
+*Protocol: V.S.A.F.E.R.-M — production fixes with exact-line accounting*
+*Next action: Begin Phase 3 (IRS + Streaks)*
