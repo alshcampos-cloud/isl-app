@@ -40,7 +40,7 @@ export default function CTASection() {
           transition={{ duration: 0.5, delay: 0.2 }}
         >
           <Link
-            to="/signup"
+            to="/onboarding"
             className="inline-flex items-center gap-2 bg-white text-indigo-700 font-bold text-lg px-10 py-4 rounded-xl hover:bg-indigo-50 transition-all shadow-xl hover:-translate-y-0.5"
           >
             Start Practicing Free

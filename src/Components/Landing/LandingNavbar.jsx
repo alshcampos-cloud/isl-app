@@ -89,7 +89,7 @@ export default function LandingNavbar() {
               Log In
             </Link>
             <Link
-              to="/signup"
+              to="/onboarding"
               className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-sm font-bold px-5 py-2.5 rounded-lg transition-all shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40"
             >
               Start Practicing Free
@@ -122,7 +122,7 @@ export default function LandingNavbar() {
             <hr className="border-gray-200" />
             <Link to="/login" className="block text-gray-700 font-medium py-2" onClick={() => setMobileOpen(false)}>Log In</Link>
             <Link
-              to="/signup"
+              to="/onboarding"
               className="block w-full text-center bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold py-3 rounded-lg"
               onClick={() => setMobileOpen(false)}
             >

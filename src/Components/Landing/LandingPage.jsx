@@ -78,7 +78,7 @@ export default function LandingPage() {
       {/* Mobile sticky CTA */}
       <div className="fixed bottom-0 left-0 right-0 md:hidden bg-white/95 backdrop-blur-lg border-t border-gray-200 p-3 z-40">
         <a
-          href="/signup"
+          href="/onboarding"
           className="block w-full text-center bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold py-3 rounded-lg shadow-lg"
         >
           Start Practicing Free

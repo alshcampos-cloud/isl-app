@@ -87,7 +87,7 @@ export default function HowItWorksSection() {
           transition={{ duration: 0.5, delay: 0.4 }}
         >
           <Link
-            to="/signup"
+            to="/onboarding"
             className="inline-flex items-center gap-2 bg-white text-indigo-700 font-bold text-lg px-8 py-4 rounded-xl hover:bg-indigo-50 transition-all shadow-xl"
           >
             Start Practicing Free

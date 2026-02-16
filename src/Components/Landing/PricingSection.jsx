@@ -9,7 +9,7 @@ const tiers = [
     period: '',
     description: 'Perfect for trying out ISL',
     cta: 'Get Started Free',
-    ctaLink: '/signup',
+    ctaLink: '/onboarding',
     highlighted: false,
     features: [
       { text: '3 AI Interviewer sessions/month', included: true },
@@ -31,7 +31,7 @@ const tiers = [
     period: '/month',
     description: 'Unlimited practice for serious job seekers',
     cta: 'Start Pro',
-    ctaLink: '/signup',
+    ctaLink: '/onboarding',
     highlighted: true,
     badge: 'UNLIMITED',
     features: [
