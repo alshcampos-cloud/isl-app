@@ -82,6 +82,13 @@
 
 **Total landing: ~1,564 lines across 15 files**
 
+## IRS Components (src/Components/IRS/)
+| File | Lines | Purpose |
+|------|------:|---------|
+| `IRSDisplay.jsx` | 260 | Self-contained IRS hero card + animated ring + detail modal (Phase 3) |
+| `irsCalculator.js` | 101 | Pure IRS calculation functions, zero dependencies (Phase 3) |
+| `irsSupabase.js` | 108 | IRS data fetching layer, 3 parallel queries (Phase 3) |
+
 ## Streak Components (src/Components/Streaks/)
 | File | Lines | Purpose |
 |------|------:|---------|
@@ -328,10 +335,11 @@ These files are referenced in the Session 0-3 prompt templates but have not been
 
 | Metric | Count |
 |--------|------:|
-| Total src/ files | 78 |
-| Active source files (excl. backups) | 67 |
+| Total src/ files | 81 |
+| Active source files (excl. backups) | 70 |
 | Backup files | 11 |
 | Nursing track files | 21 |
+| IRS files | 3 (1 component + 2 utils) |
 | Streak files | 2 components + 2 utils |
 | Shared components | 1 (SpeechUnavailableWarning) |
 | Landing page files | 15 |

@@ -19,7 +19,7 @@ regressions before they reach production.
 
 ---
 
-## The 8 Critical Paths
+## The 9 Critical Paths
 
 These are the paths that MUST work at all times. Every deploy
 gets tested against all 8. No exceptions.
@@ -114,6 +114,25 @@ Failure indicators: Missing streak card, grid layout broken,
   user_streaks table query, popover doesn't open
 Note: If user_streaks table doesn't exist, streak card
   renders nothing (graceful degradation — not an error)
+```
+
+### Path 9: IRS Display on Home Screen (Phase 3)
+```
+Action: As logged-in user with practice history, navigate to /app
+Expected:
+  - IRS hero card renders above stats grid (full-width)
+  - Shows score 0-100 with animated progress ring
+  - Three breakdown bars (Consistency, Quality, Coverage)
+  - Level label displays (Just Beginning → Interview Ready)
+  - Growth tip shows below the card
+  - Tapping opens detail modal with full breakdown
+  - After completing a session, score updates automatically
+  - New user with zero sessions: shows 0 with "Just Beginning"
+Failure indicators: Missing hero card, NaN score, broken ring,
+  layout pushed off screen, console errors from IRS queries,
+  detail modal doesn't open, score doesn't update after session
+Note: If any of the 3 queries fail, IRS card renders nothing
+  (graceful degradation — not an error). Stats grid unaffected.
 ```
 
 ---

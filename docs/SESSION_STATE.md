@@ -1,4 +1,4 @@
-# Session State — Last Updated: February 16, 2026 (Evening)
+# Session State — Last Updated: February 16, 2026 (Late Evening)
 
 ## What's Live on Production (www.interviewanswers.ai)
 
@@ -28,7 +28,7 @@
 - Unit 1: ArchetypeCTA fix (9d10421) — SHIPPED
 - Unit 1b: Browser detection consolidation (887daca) — SHIPPED
 - Unit 1c: Streak counter system (cfe857a) — SHIPPED ✅ (migration applied)
-- Unit 2: IRS v1 — PLANNING (depends on streaks being live)
+- Unit 2: IRS v1 — Interview Readiness Score (b60348e) — SHIPPED ✅
 - Unit 3: Nursing dashboard wiring — NOT STARTED
 
 ### Nursing Track
@@ -55,7 +55,7 @@
 - [x] Unit 1: ArchetypeCTA fix (SHIPPED 9d10421)
 - [x] Unit 1b: Browser detection consolidation (SHIPPED 887daca)
 - [x] Unit 1c: Streak counter system (SHIPPED cfe857a) — ✅ MIGRATION APPLIED
-- [ ] Unit 2: IRS v1 (Interview Readiness Score) — depends on streaks being live
+- [x] Unit 2: IRS v1 (Interview Readiness Score) — SHIPPED b60348e ✅
 - [ ] Unit 3: Wire nursing dashboard to real IRS/streak data
 - [ ] Email deliverability (SPF/DKIM/DMARC or Resend)
 
@@ -87,6 +87,7 @@ Per strategy doc, highest-ROI features:
 - main (production, auto-deploys via Vercel)
 
 ## Key Commits (recent)
+- b60348e: Phase 3 Unit 2 — IRS hero card with animated ring, breakdown bars, detail modal
 - cfe857a: Phase 3 Unit 1c — Streak counter with Supabase persistence + milestone toasts
 - 887daca: Browser detection consolidation into shared utility
 - ff15595: iOS third-party browser warnings for all mic features
