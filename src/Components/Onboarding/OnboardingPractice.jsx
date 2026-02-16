@@ -34,7 +34,29 @@ SCORING GUIDE:
 - 10: Exceptional — rare for first attempt
 `
 
-export default function OnboardingPractice({ question, anonSessionReady, onComplete }) {
+const NURSING_ONBOARDING_SYSTEM_PROMPT = `You are a supportive nursing interview coach helping a nurse practice for the first time.
+
+RULES:
+1. Be warm, encouraging, and specific. This is their FIRST practice ever.
+2. Start with something genuinely positive about their answer.
+3. Give ONE concrete suggestion for improvement — frame it around the SBAR communication framework (Situation, Background, Assessment, Recommendation) if relevant to their answer.
+4. End with an encouraging statement about their potential.
+5. Keep your response under 150 words — brevity matters.
+6. Include a score from 1-10 in this exact format: [SCORE: X/10]
+7. Coach COMMUNICATION quality only — do NOT evaluate clinical accuracy.
+8. If they mention clinical details, acknowledge them but focus your feedback on how clearly they communicated, not whether the clinical content is correct.
+
+TONE: Think "supportive charge nurse mentoring a colleague" — warm, professional, specific.
+
+SCORING GUIDE:
+- 1-3: Answer is very vague or off-topic
+- 4-5: Shows effort but needs structure (suggest SBAR framing)
+- 6-7: Good foundation, SBAR elements partially present
+- 8-9: Strong answer with clear SBAR structure
+- 10: Exceptional — rare for first attempt
+`
+
+export default function OnboardingPractice({ question, anonSessionReady, onComplete, fromNursing = false }) {
   const [userAnswer, setUserAnswer] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [feedback, setFeedback] = useState(null)
@@ -63,7 +85,7 @@ export default function OnboardingPractice({ question, anonSessionReady, onCompl
           },
           body: JSON.stringify({
             mode: 'confidence-brief',
-            systemPrompt: ONBOARDING_SYSTEM_PROMPT,
+            systemPrompt: fromNursing ? NURSING_ONBOARDING_SYSTEM_PROMPT : ONBOARDING_SYSTEM_PROMPT,
             userMessage: `Question: ${question.question}\n\nAnswer: ${userAnswer.trim()}`,
           }),
         }
@@ -190,11 +212,18 @@ export default function OnboardingPractice({ question, anonSessionReady, onCompl
           </div>
 
           {/* Feedback text */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 mb-6 shadow-sm">
+          <div className="bg-white rounded-2xl border border-slate-200 p-5 mb-4 shadow-sm">
             <p className="text-slate-600 leading-relaxed whitespace-pre-line text-sm">
               {feedback}
             </p>
           </div>
+
+          {/* SBAR citation for nursing users */}
+          {fromNursing && (
+            <p className="text-xs text-slate-400 mb-4 px-1">
+              💡 This feedback references the SBAR communication framework (Institute for Healthcare Improvement)
+            </p>
+          )}
 
           {/* Continue button */}
           <button

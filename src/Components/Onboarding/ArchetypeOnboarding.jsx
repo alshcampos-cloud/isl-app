@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { getArchetype, getArchetypeConfig, getPostOnboardingRoute, TIMELINE_OPTIONS, FIELD_OPTIONS } from '../../utils/archetypeRouter'
+import { getArchetype, getArchetypeConfig, getPostOnboardingRoute, TIMELINE_OPTIONS, FIELD_OPTIONS, NURSING_FIRST_QUESTION } from '../../utils/archetypeRouter'
 import { trackOnboardingEvent, startScreenTimer } from '../../utils/onboardingTracker'
 import BreathingExercise from './BreathingExercise'
 import OnboardingPractice from './OnboardingPractice'
@@ -21,9 +21,11 @@ import SignUpPrompt from './SignUpPrompt'
  */
 export default function ArchetypeOnboarding() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const fromNursing = searchParams.get('from') === 'nursing'
   const [screen, setScreen] = useState(1)
   const [timeline, setTimeline] = useState(null)
-  const [field, setField] = useState(null)
+  const [field, setField] = useState(fromNursing ? 'nursing' : null)
   const [archetype, setArchetype] = useState(null)
   const [archetypeConfig, setArchetypeConfig] = useState(null)
   const [practiceScore, setPracticeScore] = useState(null)
@@ -199,6 +201,7 @@ export default function ArchetypeOnboarding() {
             field={field}
             setField={setField}
             onContinue={handleArchetypeDetection}
+            fromNursing={fromNursing}
           />
         )}
 
@@ -208,9 +211,10 @@ export default function ArchetypeOnboarding() {
 
         {screen === 3 && archetypeConfig && (
           <OnboardingPractice
-            question={archetypeConfig.firstQuestion}
+            question={fromNursing ? NURSING_FIRST_QUESTION : archetypeConfig.firstQuestion}
             anonSessionReady={anonSessionReady}
             onComplete={handlePracticeComplete}
+            fromNursing={fromNursing}
           />
         )}
 
@@ -236,15 +240,20 @@ export default function ArchetypeOnboarding() {
 // ──────────────────────────────────────────────
 // Screen 1: Archetype Detection
 // ──────────────────────────────────────────────
-function ScreenOne({ timeline, setTimeline, field, setField, onContinue }) {
+function ScreenOne({ timeline, setTimeline, field, setField, onContinue, fromNursing }) {
   const [showField, setShowField] = useState(false)
 
   const handleTimelineSelect = (value) => {
     setTimeline(value)
     trackOnboardingEvent(1, 'timeline_selected', { timeline: value })
-    // Brief delay then show field question
-    setTimeout(() => setShowField(true), 300)
+    // If nursing user (field already set), don't show field question
+    if (!fromNursing) {
+      setTimeout(() => setShowField(true), 300)
+    }
   }
+
+  // For nursing users: show Continue as soon as timeline is selected (field is pre-set)
+  const canContinue = timeline && field
 
   return (
     <div className="flex-1 flex flex-col justify-center">
@@ -253,7 +262,9 @@ function ScreenOne({ timeline, setTimeline, field, setField, onContinue }) {
           Let's personalize your experience
         </h1>
         <p className="text-slate-500">
-          Two quick questions so we can help you the right way.
+          {fromNursing
+            ? 'One quick question so we can tailor your nursing interview prep.'
+            : 'Two quick questions so we can help you the right way.'}
         </p>
       </div>
 
@@ -285,8 +296,8 @@ function ScreenOne({ timeline, setTimeline, field, setField, onContinue }) {
         </div>
       </div>
 
-      {/* Question 2: Field (appears after timeline selected) */}
-      {showField && (
+      {/* Question 2: Field (appears after timeline selected) — skipped for nursing users */}
+      {showField && !fromNursing && (
         <div className="mb-8 animate-fadeIn">
           <p className="text-sm font-medium text-slate-600 mb-3">
             What field are you in?
@@ -310,7 +321,7 @@ function ScreenOne({ timeline, setTimeline, field, setField, onContinue }) {
       )}
 
       {/* Continue button */}
-      {timeline && field && (
+      {canContinue && (
         <div className="animate-fadeIn">
           <button
             onClick={onContinue}

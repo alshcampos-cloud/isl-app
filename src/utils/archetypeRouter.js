@@ -115,6 +115,18 @@ export const TIMELINE_OPTIONS = [
 /**
  * Field options for Screen 1
  */
+/**
+ * Nursing-specific first question for users arriving from nursing landing page.
+ * Exercises clinical communication skills (SBAR-informed).
+ * Content note: This question asks about THEIR experience — AI coaches delivery, not clinical accuracy.
+ */
+export const NURSING_FIRST_QUESTION = {
+  id: 'onboarding-nursing-1',
+  question: 'Tell me about a time you had to communicate critical patient information to your care team.',
+  category: 'Clinical Communication',
+  tip: 'Think SBAR: What was the Situation? What Background was relevant? What was your Assessment? What was your Recommendation? Focus on how you communicated, not just what happened.',
+}
+
 export const FIELD_OPTIONS = [
   { value: 'general', label: 'General / Not sure' },
   { value: 'nursing', label: 'Nursing / Healthcare' },

@@ -5,9 +5,9 @@ import { trackOnboardingEvent } from '../../utils/onboardingTracker'
  * BreathingExercise — Screen 2: Guided Breathing Animation
  *
  * 30-second guided breath cycle (box breathing: 4-4-4-4).
- * "92% of people feel interview anxiety. Let's start by taking a breath."
+ * "Most people feel anxious about interviews. Let's start by taking a breath."
  *
- * Physiological Management source (Huang & Mayer 2020):
+ * Physiological Management source (Bandura self-efficacy theory):
  * Managing the body's anxiety response is one of 4 self-efficacy sources.
  *
  * iOS Safari: Uses CSS animations (not requestAnimationFrame) for smooth
@@ -102,8 +102,8 @@ export default function BreathingExercise({ onComplete }) {
           </h2>
 
           <p className="text-slate-500 mb-8 max-w-sm mx-auto">
-            92% of people feel interview anxiety. A 30-second breathing exercise
-            can reduce stress hormones by up to 25%.
+            Most people feel anxious about interviews. A short breathing
+            exercise can help you approach practice with a calmer mindset.
           </p>
 
           <button
@@ -186,8 +186,7 @@ export default function BreathingExercise({ onComplete }) {
           </h2>
 
           <p className="text-slate-500 mb-8 max-w-sm mx-auto">
-            Your heart rate just dropped. You're calmer now than when you started.
-            Let's use that clarity for a quick practice round.
+            Nice work. You're ready to practice with a clearer head.
           </p>
 
           <button
