@@ -178,3 +178,9 @@ exchangeCount starts at 0, increments AFTER each response. So >= 3 check fires o
 
 ### Battle Scar: Nursing previousScores uses averaged scores
 NursingPracticeMode.jsx line 188 creates [avg, avg, avg] instead of real per-session scores. Works for Phase 1. Replace with actual Supabase query in Phase 3 when IRS is wired up. Flagged by Erin.
+
+### Battle Scar: Supabase SQL editor autocomplete corrupts queries
+The Supabase SQL editor has aggressive autocomplete that silently modifies your SQL as you type. Column names, table names, and keywords get replaced with suggestions you didn't choose. This caused migrations to fail with cryptic errors — the SQL that ran wasn't what was written. Fix: Use the Monaco API directly (`window.monaco.editor.getModels()[n].setValue(sql)`) to inject queries, bypassing the autocomplete entirely. Also: migrations run in the SQL editor don't persist across sessions — always save migration SQL as `.sql` files in the repo, and re-run if the table doesn't exist.
+
+### Battle Scar: Supabase onboarding_events table didn't persist
+Ran the onboarding_events migration in the SQL editor during a session, got "Success", but the table wasn't there when we came back. The first full onboarding flow test failed silently (all tracking calls use try/catch with console.warn) because the table didn't exist yet. Had to re-run the migration AND re-do the entire test flow. Lesson: always verify tables exist with `SELECT * FROM information_schema.tables WHERE table_name = 'your_table'` before testing. Save migrations in docs/ and commit them.
