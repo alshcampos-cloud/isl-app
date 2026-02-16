@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { trackOnboardingEvent } from '../../utils/onboardingTracker'
 
 /**
  * BreathingExercise — Screen 2: Guided Breathing Animation
@@ -40,6 +41,7 @@ export default function BreathingExercise({ onComplete }) {
     setPhase(0)
     setCycleCount(0)
     startTimeRef.current = Date.now()
+    trackOnboardingEvent(2, 'started')
   }, [])
 
   // Progress through phases
@@ -55,6 +57,7 @@ export default function BreathingExercise({ onComplete }) {
           // All cycles done
           setIsActive(false)
           setIsComplete(true)
+          trackOnboardingEvent(2, 'completed', { duration_ms: Date.now() - startTimeRef.current })
           return
         }
         setCycleCount(newCycleCount)
@@ -111,7 +114,7 @@ export default function BreathingExercise({ onComplete }) {
           </button>
 
           <button
-            onClick={onComplete}
+            onClick={() => { trackOnboardingEvent(2, 'skipped'); onComplete(); }}
             className="block mx-auto mt-4 text-sm text-slate-400 hover:text-slate-500 transition-colors"
           >
             Skip for now

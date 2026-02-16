@@ -1,6 +1,7 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useRef, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
 import { fetchWithRetry } from '../../utils/fetchWithRetry'
+import { trackOnboardingEvent } from '../../utils/onboardingTracker'
 
 /**
  * OnboardingPractice — Screen 3: First Practice Question
@@ -39,12 +40,14 @@ export default function OnboardingPractice({ question, anonSessionReady, onCompl
   const [feedback, setFeedback] = useState(null)
   const [score, setScore] = useState(null)
   const [error, setError] = useState(null)
+  const hasTrackedTyping = useRef(false)
 
   const submitAnswer = useCallback(async () => {
     if (!userAnswer.trim() || isLoading) return
 
     setIsLoading(true)
     setError(null)
+    trackOnboardingEvent(3, 'submitted', { word_count: userAnswer.trim().split(/\s+/).filter(Boolean).length })
 
     try {
       const { data: { session } } = await supabase.auth.getSession()
@@ -84,12 +87,14 @@ export default function OnboardingPractice({ question, anonSessionReady, onCompl
 
       setScore(parsedScore)
       setFeedback(cleanFeedback)
+      trackOnboardingEvent(3, 'feedback_received', { score: parsedScore })
     } catch (err) {
       console.error('Practice submission error:', err)
       setError('Could not get feedback right now. You can still continue!')
       // Set a default score so they can proceed
       setScore(6)
       setFeedback("Great effort on your first practice! While I couldn't generate detailed feedback right now, the fact that you started practicing puts you ahead of most candidates. Keep going!")
+      trackOnboardingEvent(3, 'feedback_error', { error: err.message })
     } finally {
       setIsLoading(false)
     }
@@ -127,7 +132,13 @@ export default function OnboardingPractice({ question, anonSessionReady, onCompl
         <div className="flex-1 flex flex-col">
           <textarea
             value={userAnswer}
-            onChange={(e) => setUserAnswer(e.target.value)}
+            onChange={(e) => {
+              setUserAnswer(e.target.value)
+              if (!hasTrackedTyping.current && e.target.value.trim().length > 0) {
+                hasTrackedTyping.current = true
+                trackOnboardingEvent(3, 'typing_started')
+              }
+            }}
             placeholder="Type your answer here... (2-3 sentences is great for now)"
             className="flex-1 min-h-[150px] w-full p-4 rounded-2xl border border-slate-200 bg-white resize-none text-slate-700 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500"
             disabled={isLoading}

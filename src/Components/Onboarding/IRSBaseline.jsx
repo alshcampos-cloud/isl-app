@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { trackOnboardingEvent } from '../../utils/onboardingTracker'
 
 /**
  * IRSBaseline — Screen 4: Interview Readiness Score Baseline
@@ -30,6 +31,7 @@ export default function IRSBaseline({ practiceScore, onContinue }) {
   const questionCoverage = (1 / 50) * 100       // 1 question / ~50 in bank = 2
 
   const realIRS = Math.round((sessionConsistency + starAdherence + questionCoverage) / 3)
+  const hasTrackedScore = useRef(false)
 
   // Animate the score ring on mount
   useEffect(() => {
@@ -48,6 +50,10 @@ export default function IRSBaseline({ practiceScore, onContinue }) {
       } else {
         // Show details after animation completes
         setTimeout(() => setShowDetails(true), 300)
+        if (!hasTrackedScore.current) {
+          hasTrackedScore.current = true
+          trackOnboardingEvent(4, 'score_shown', { irs_score: realIRS, practice_score: practiceScore || 6 })
+        }
       }
     }
 
@@ -183,7 +189,7 @@ export default function IRSBaseline({ practiceScore, onContinue }) {
       {showDetails && (
         <div className="animate-fadeIn w-full">
           <button
-            onClick={onContinue}
+            onClick={() => { trackOnboardingEvent(4, 'completed'); onContinue(); }}
             className="w-full py-3 px-6 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl transition-colors shadow-lg shadow-teal-600/20"
           >
             Save my progress

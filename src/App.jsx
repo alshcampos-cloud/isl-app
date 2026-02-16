@@ -25,6 +25,7 @@ import ResetPassword from './Components/ResetPassword';
 import ConsentDialog from './Components/ConsentDialog';
 import SessionDetailsModal from './Components/SessionDetailsModal';
 import SubscriptionManagement from './Components/SubscriptionManagement';
+import ArchetypeCTA from './Components/Onboarding/ArchetypeCTA';
 
 // CSS string is OK at top-level
 const styles = `
@@ -4118,6 +4119,13 @@ const startPracticeMode = async () => {
               </div>
             </div>
           )}
+
+          {/* Archetype-Based Personalized CTA — Phase 2B */}
+          <ArchetypeCTA onAction={(action, archetype) => {
+            if (action === 'practice') startPracticeMode();
+            else if (action === 'assessment') setCurrentView('command-center');
+            else if (action === 'tracks') window.location.href = '/nursing';
+          }} />
 
           {/* Practice Modes - Enhanced with Psychology */}
           <div className="mb-8">

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { getArchetype, getArchetypeConfig, getPostOnboardingRoute, TIMELINE_OPTIONS, FIELD_OPTIONS } from '../../utils/archetypeRouter'
+import { trackOnboardingEvent, startScreenTimer } from '../../utils/onboardingTracker'
 import BreathingExercise from './BreathingExercise'
 import OnboardingPractice from './OnboardingPractice'
 import IRSBaseline from './IRSBaseline'
@@ -30,6 +31,24 @@ export default function ArchetypeOnboarding() {
   const [anonSessionReady, setAnonSessionReady] = useState(false)
   const [isInitializing, setIsInitializing] = useState(true)
   const hasInitialized = useRef(false)
+
+  // Track screen views + time-on-screen when screen changes
+  const screenTimerRef = useRef(null)
+  useEffect(() => {
+    // Track 'viewed' event for current screen
+    trackOnboardingEvent(screen, 'viewed')
+
+    // Start timer for this screen
+    screenTimerRef.current = startScreenTimer(screen)
+
+    // When screen changes, record time spent on previous screen
+    return () => {
+      if (screenTimerRef.current) {
+        screenTimerRef.current()
+        screenTimerRef.current = null
+      }
+    }
+  }, [screen])
 
   // On mount: create anonymous session for Edge Function auth
   useEffect(() => {
@@ -72,6 +91,7 @@ export default function ArchetypeOnboarding() {
     const config = getArchetypeConfig(detected)
     setArchetype(detected)
     setArchetypeConfig(config)
+    trackOnboardingEvent(1, 'completed', { timeline, field: field || 'general', archetype: detected })
     setScreen(2)
   }, [timeline, field])
 
@@ -105,16 +125,19 @@ export default function ArchetypeOnboarding() {
           id: user.id,
           archetype: archetype,
           onboarding_completed_at: new Date().toISOString(),
+          onboarding_field: field || 'general',
         }, { onConflict: 'id' })
       }
     } catch (err) {
       console.error('Failed to store archetype:', err)
     }
 
+    trackOnboardingEvent(5, 'signup_completed', { archetype })
+
     // Navigate to appropriate post-onboarding route
     const route = getPostOnboardingRoute(archetype)
     navigate(route, { replace: true })
-  }, [archetype, navigate])
+  }, [archetype, field, navigate])
 
   // Progress bar
   const progress = (screen / 5) * 100
@@ -201,6 +224,7 @@ function ScreenOne({ timeline, setTimeline, field, setField, onContinue }) {
 
   const handleTimelineSelect = (value) => {
     setTimeline(value)
+    trackOnboardingEvent(1, 'timeline_selected', { timeline: value })
     // Brief delay then show field question
     setTimeout(() => setShowField(true), 300)
   }
@@ -254,7 +278,7 @@ function ScreenOne({ timeline, setTimeline, field, setField, onContinue }) {
             {FIELD_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
-                onClick={() => setField(opt.value)}
+                onClick={() => { setField(opt.value); trackOnboardingEvent(1, 'field_selected', { field: opt.value }); }}
                 className={`px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all duration-200
                   ${field === opt.value
                     ? 'border-teal-500 bg-teal-50 text-teal-700 shadow-sm'

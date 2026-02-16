@@ -1,6 +1,7 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useRef, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { trackOnboardingEvent } from '../../utils/onboardingTracker'
 
 /**
  * SignUpPrompt — Screen 5: Create Account to Save Progress
@@ -20,6 +21,7 @@ export default function SignUpPrompt({ archetype, archetypeConfig, onComplete })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
   const [showPassword, setShowPassword] = useState(false)
+  const hasTrackedFormStart = useRef(false)
 
   const handleSignUp = useCallback(async (e) => {
     e.preventDefault()
@@ -44,6 +46,7 @@ export default function SignUpPrompt({ archetype, archetypeConfig, onComplete })
         // If updateUser fails (e.g., email already exists), try regular signup
         if (updateError.message.includes('already') || updateError.message.includes('exists')) {
           setError('An account with this email already exists. Try signing in instead.')
+          trackOnboardingEvent(5, 'signup_error', { error: 'email_exists' })
           return
         }
         throw updateError
@@ -54,6 +57,7 @@ export default function SignUpPrompt({ archetype, archetypeConfig, onComplete })
     } catch (err) {
       console.error('Sign up error:', err)
       setError(err.message || 'Something went wrong. Please try again.')
+      trackOnboardingEvent(5, 'signup_error', { error: err.message })
     } finally {
       setIsLoading(false)
     }
@@ -114,7 +118,13 @@ export default function SignUpPrompt({ archetype, archetypeConfig, onComplete })
           <input
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value)
+              if (!hasTrackedFormStart.current && e.target.value.trim().length > 0) {
+                hasTrackedFormStart.current = true
+                trackOnboardingEvent(5, 'form_started')
+              }
+            }}
             placeholder="Email address"
             required
             className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-700 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500"
@@ -187,7 +197,7 @@ export default function SignUpPrompt({ archetype, archetypeConfig, onComplete })
 
         <p className="text-sm text-slate-500">
           Already have an account?{' '}
-          <Link to="/login" className="text-teal-600 font-medium hover:text-teal-700">
+          <Link to="/login" className="text-teal-600 font-medium hover:text-teal-700" onClick={() => trackOnboardingEvent(5, 'signin_clicked')}>
             Sign in
           </Link>
         </p>
