@@ -1861,12 +1861,12 @@ const stopSystemAudioCapture = () => {
 const startInterviewSession = async () => {
   console.log('🎬 Starting interview session');
 
-  // Block session on iOS non-Safari browsers — Web Speech API not supported
-  // All iOS browsers use WebKit under the hood, but only Safari exposes SpeechRecognition
-  // iOS Chrome uses "CriOS" in UA, iOS Firefox uses "FxiOS", iOS Edge uses "EdgiOS"
+  // iOS non-Safari browsers: allow session to start (text search works)
+  // but skip mic setup — Web Speech API not supported on iOS Chrome/Firefox/Edge
   const browser = getBrowserInfo();
   if (browser.isIOSThirdParty) {
-    alert('Speech recognition is not supported in ' + browser.name + '.\n\nPlease open this page in Safari on your iPhone for voice features.');
+    console.log('⚠️ iOS third-party browser detected — skipping mic setup, text search still works');
+    setInterviewSessionActive(true);
     return;
   }
 
@@ -4440,7 +4440,19 @@ const startPracticeMode = async () => {
               
               {!interviewSessionActive ? (
                 <>
-                  <p className="text-xl text-gray-300 mb-8">Click "Start Interview" to begin session-based mode</p>
+                  <p className="text-xl text-gray-300 mb-8">Click "Start Session" to begin</p>
+                  {(() => {
+                    const b = getBrowserInfo();
+                    if (b.isIOSThirdParty) {
+                      return (
+                        <div className="mt-4 mb-6 bg-amber-900/40 border border-amber-500/50 rounded-lg p-4 max-w-2xl mx-auto">
+                          <p className="text-amber-200 text-sm font-medium mb-1">📱 Voice not available in {b.name} on iPhone</p>
+                          <p className="text-amber-200/70 text-xs">Speech recognition requires Safari. You can still use <strong>text search</strong> to look up questions by keyword. For voice features, open this page in Safari.</p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
                   <div className="mt-12 bg-blue-900/30 rounded-lg p-6 max-w-2xl mx-auto">
                     <h4 className="font-bold mb-3">💡 Session Mode Benefits:</h4>
                     <ul className="text-left text-sm space-y-2">
@@ -4460,9 +4472,24 @@ const startPracticeMode = async () => {
                 </>
               ) : (
                 <>
-                  <p className="text-xl text-green-300 mb-4">✨ Session Active - Ready to capture questions!</p>
-                  <p className="text-lg text-gray-300 mb-8">Hold SPACEBAR when interviewer asks a question</p>
-                  
+                  {(() => {
+                    const b = getBrowserInfo();
+                    if (b.isIOSThirdParty) {
+                      return (
+                        <>
+                          <p className="text-xl text-green-300 mb-4">✨ Session Active — Use Text Search Below</p>
+                          <p className="text-lg text-amber-300 mb-8">Voice is not available in {b.name} on iPhone. Type keywords below to find your question.</p>
+                        </>
+                      );
+                    }
+                    return (
+                      <>
+                        <p className="text-xl text-green-300 mb-4">✨ Session Active - Ready to capture questions!</p>
+                        <p className="text-lg text-gray-300 mb-8">Hold SPACEBAR when interviewer asks a question</p>
+                      </>
+                    );
+                  })()}
+
                   {transcript && (
                     <div className="mt-8 bg-gray-800 rounded-lg p-6 max-w-2xl mx-auto">
                       <p className="text-sm text-gray-400 mb-2">
@@ -4471,7 +4498,11 @@ const startPracticeMode = async () => {
                       <p className="text-lg">{transcript}</p>
                     </div>
                   )}
-                  
+
+                  {(() => {
+                    const b = getBrowserInfo();
+                    if (b.isIOSThirdParty) return null; // Skip voice instructions for iOS third-party
+                    return (
                   <div className="mt-12 bg-green-900/30 rounded-lg p-6 max-w-2xl mx-auto border-2 border-green-500/50">
                     <h4 className="font-bold mb-3 text-green-300">🎤 How to Use (Session Mode):</h4>
                     <ol className="text-left text-sm space-y-2">
@@ -4482,6 +4513,8 @@ const startPracticeMode = async () => {
                       <li>5. Repeat for next question</li>
                     </ol>
                   </div>
+                    );
+                  })()}
 
                   {/* Manual text input fallback - for browsers with broken speech recognition */}
                   <div className="mt-8 max-w-2xl mx-auto">
@@ -4762,6 +4795,22 @@ const startPracticeMode = async () => {
               <h3 className="text-2xl font-bold mb-6">Your Answer:</h3>
               
               {/* SPEECH INPUT SECTION */}
+              {(() => {
+                const b = getBrowserInfo();
+                if (b.isIOSThirdParty) {
+                  return (
+                    <div className="bg-amber-50 border-2 border-amber-300 rounded-lg p-6 mb-6">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="text-2xl">📱</span>
+                        <h4 className="font-bold text-amber-900">Voice not available in {b.name}</h4>
+                      </div>
+                      <p className="text-sm text-amber-800 mb-2">
+                        Speech recognition requires <strong>Safari</strong> on iPhone. Please type your answer below, or open this page in Safari for voice input.
+                      </p>
+                    </div>
+                  );
+                }
+                return (
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-lg p-6 mb-6">
                 <div className="flex items-center gap-3 mb-4">
                   <Mic className={`w-6 h-6 ${isListening ? 'text-red-600 animate-pulse' : 'text-blue-600'}`} />
@@ -4780,6 +4829,8 @@ const startPracticeMode = async () => {
                 </button>
                 <p className="text-xs text-center text-gray-600">Hold SPACEBAR or this button to speak. Your answer will appear below.</p>
               </div>
+                );
+              })()}
               
               {/* Live Transcript */}
               {(spokenAnswer || transcript) && (
@@ -5319,6 +5370,22 @@ const startPracticeMode = async () => {
             {!feedback && (
               <>
                 {/* Speech Input */}
+                {(() => {
+                  const b = getBrowserInfo();
+                  if (b.isIOSThirdParty) {
+                    return (
+                      <div className="bg-amber-50 border-2 border-amber-300 rounded-lg p-6 mb-6">
+                        <div className="flex items-center gap-3 mb-2">
+                          <span className="text-2xl">📱</span>
+                          <h4 className="font-bold text-amber-900">Voice not available in {b.name}</h4>
+                        </div>
+                        <p className="text-sm text-amber-800 mb-2">
+                          Speech recognition requires <strong>Safari</strong> on iPhone. Please type your answer below, or open this page in Safari for voice input.
+                        </p>
+                      </div>
+                    );
+                  }
+                  return (
                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-lg p-6 mb-6">
                   <div className="flex items-center gap-3 mb-4">
                     <Mic className={`w-6 h-6 ${isListening ? 'text-red-600 animate-pulse' : 'text-blue-600'}`} />
@@ -5334,6 +5401,8 @@ const startPracticeMode = async () => {
                     {isListening ? '🎤 Release to Stop' : '🎤 Hold to Speak (or use SPACEBAR)'}
                   </button>
                 </div>
+                  );
+                })()}
                 
                 {(spokenAnswer || transcript) && (
                   <div className="bg-gray-50 border-2 border-gray-300 rounded-lg p-6 mb-6">

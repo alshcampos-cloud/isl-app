@@ -129,6 +129,8 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
     transcript: speechTranscript,
     isListening: micActive,
     isSupported: micSupported,
+    isIOSThirdParty,
+    iosThirdPartyName,
     startSession: startMic,
     stopSession: stopMic,
     clearTranscript: clearSpeech,
@@ -396,8 +398,11 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
                     exit={{ opacity: 0 }}
                   >
                     {micError && <p className="text-red-400 text-xs mb-2">{micError}</p>}
+                    {isIOSThirdParty && (
+                      <p className="text-amber-400 text-xs mb-2">📱 Voice input requires Safari on iPhone. {iosThirdPartyName} doesn't support speech recognition. Type your answer below.</p>
+                    )}
                     <div className="flex items-start gap-2 mb-4">
-                      {micSupported && (
+                      {micSupported && !isIOSThirdParty && (
                         <button
                           onClick={async () => {
                             if (micActive) { stopMic(); } else { clearSpeech(); await startMic(); }

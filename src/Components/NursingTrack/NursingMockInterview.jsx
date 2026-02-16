@@ -148,6 +148,8 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
     transcript: speechTranscript,
     isListening: micActive,
     isSupported: micSupported,
+    isIOSThirdParty,
+    iosThirdPartyName,
     startSession: startMic,
     stopSession: stopMic,
     clearTranscript: clearSpeech,
@@ -663,9 +665,12 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
           {micError && (
             <p className="text-red-400 text-xs mb-1 text-center">{micError}</p>
           )}
+          {isIOSThirdParty && (
+            <p className="text-amber-400 text-xs mb-1 text-center">📱 Voice input requires Safari on iPhone. Type your answer below.</p>
+          )}
           <div className="flex items-end gap-2">
             {/* Mic toggle — Battle Scar #5: must be user gesture (onClick/onTouchEnd) */}
-            {micSupported && (
+            {micSupported && !isIOSThirdParty && (
               <button
                 onClick={async () => {
                   if (micActive) {

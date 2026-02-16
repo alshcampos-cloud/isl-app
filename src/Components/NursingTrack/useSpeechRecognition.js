@@ -43,6 +43,14 @@ export default function useSpeechRecognition() {
   const isSupported = typeof window !== 'undefined' &&
     ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
 
+  // iOS third-party browser detection — Chrome/Firefox/Edge on iOS use WebKit
+  // but do NOT support Web Speech API. Only Safari on iOS supports it.
+  // iOS Chrome uses "CriOS" (not "Chrome"), iOS Firefox uses "FxiOS", iOS Edge uses "EdgiOS"
+  const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+  const isIOS = /iPad|iPhone|iPod/.test(ua) || (typeof navigator !== 'undefined' && navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isIOSThirdParty = isIOS && (ua.includes('CriOS') || ua.includes('FxiOS') || ua.includes('EdgiOS') || (ua.includes('Chrome') && !ua.includes('Safari')));
+  const iosThirdPartyName = ua.includes('CriOS') ? 'Chrome' : ua.includes('FxiOS') ? 'Firefox' : ua.includes('EdgiOS') ? 'Edge' : 'this browser';
+
   // --- Initialize speech recognition object ---
   const initRecognition = useCallback(() => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -272,6 +280,8 @@ export default function useSpeechRecognition() {
     transcript,
     isListening,
     isSupported,
+    isIOSThirdParty,
+    iosThirdPartyName,
     startSession,
     stopSession,
     clearTranscript,

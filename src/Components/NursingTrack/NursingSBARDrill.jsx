@@ -118,6 +118,8 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
     transcript: speechTranscript,
     isListening: micActive,
     isSupported: micSupported,
+    isIOSThirdParty,
+    iosThirdPartyName,
     startSession: startMic,
     stopSession: stopMic,
     clearTranscript: clearSpeech,
@@ -488,8 +490,11 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
             {!feedback ? (
               <motion.div key="input" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                 {micError && <p className="text-red-400 text-xs mb-2">{micError}</p>}
+                {isIOSThirdParty && (
+                  <p className="text-amber-400 text-xs mb-2">📱 Voice input requires Safari on iPhone. Type your answer below.</p>
+                )}
                 <div className="flex items-start gap-2 mb-4">
-                  {micSupported && (
+                  {micSupported && !isIOSThirdParty && (
                     <button
                       onClick={async () => {
                         if (micActive) { stopMic(); } else { clearSpeech(); await startMic(); }
