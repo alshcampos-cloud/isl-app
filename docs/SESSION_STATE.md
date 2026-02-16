@@ -29,6 +29,7 @@
 - Unit 1b: Browser detection consolidation (887daca) — SHIPPED
 - Unit 1c: Streak counter system (cfe857a) — SHIPPED ✅ (migration applied)
 - Unit 2: IRS v1 — Interview Readiness Score (b60348e) — SHIPPED ✅
+- Unit 2b: IRS v1.1 — Answer Preparedness 4th component (ec92c80) — SHIPPED ✅
 - Unit 3: Nursing dashboard wiring — NOT STARTED
 
 ### Nursing Track
@@ -87,6 +88,7 @@ Per strategy doc, highest-ROI features:
 - main (production, auto-deploys via Vercel)
 
 ## Key Commits (recent)
+- ec92c80: IRS v1.1 — Answer Preparedness as 4th IRS component (template detection via regex)
 - b60348e: Phase 3 Unit 2 — IRS hero card with animated ring, breakdown bars, detail modal
 - cfe857a: Phase 3 Unit 1c — Streak counter with Supabase persistence + milestone toasts
 - 887daca: Browser detection consolidation into shared utility
