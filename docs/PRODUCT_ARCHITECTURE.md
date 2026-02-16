@@ -69,12 +69,17 @@ Every UX decision should reference which archetype it serves.
 
 ---
 
-## IRS (Interview Readiness Score) — v1 Spec
+## IRS (Interview Readiness Score) — v1.1 Spec
 
-Composite 0–100. Three inputs equally weighted:
+Composite 0–100. Four inputs equally weighted:
 1. **Session consistency** — streak days / 14, capped at 1.0
 2. **STAR structure adherence** — average AI assessment score
 3. **Question coverage** — unique questions practiced / total in bank
+4. **Answer preparedness** — personalized answers / total questions in bank
+
+Answer preparedness detects whether a user's question narratives still contain
+`[UPPERCASE_PLACEHOLDER]` template markers. Personalized = real content without
+template brackets. Drives users to the AI Answer Coach.
 
 Display as animated progress ring. 500ms fill animation with easing.
 

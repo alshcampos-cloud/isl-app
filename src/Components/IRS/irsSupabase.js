@@ -10,7 +10,7 @@
  * Three parallel queries via Promise.all:
  *   1. user_streaks → current_streak
  *   2. practice_sessions → scores + question dedup
- *   3. questions → total bank count
+ *   3. questions → total count + narratives (for answer preparedness)
  */
 
 import { supabase } from '../../lib/supabase';
@@ -23,7 +23,8 @@ import { supabase } from '../../lib/supabase';
  *   currentStreak: number,
  *   scores: number[],
  *   uniquePracticed: number,
- *   totalQuestions: number
+ *   totalQuestions: number,
+ *   narratives: (string|null)[]
  * } | null>}
  */
 export async function fetchIRSData() {
@@ -52,10 +53,10 @@ export async function fetchIRSData() {
         .select('question_id, question_text, ai_feedback')
         .eq('user_id', userId),
 
-      // Query 3: Total questions in user's bank
+      // Query 3: Questions in user's bank — need narratives for answer preparedness
       supabase
         .from('questions')
-        .select('id', { count: 'exact', head: true })
+        .select('id, narrative')
         .eq('user_id', userId),
     ]);
 
@@ -97,17 +98,21 @@ export async function fetchIRSData() {
 
     const uniquePracticed = uniqueIds.size + uniqueTexts.size;
 
-    // 6. Total questions in bank
-    const totalQuestions = questionsResult.count || 0;
+    // 6. Questions: total count + narratives for answer preparedness
+    const questionsData = questionsResult.data || [];
     if (questionsResult.error) {
-      console.warn('⚠️ IRS: questions count error (non-blocking):', questionsResult.error.message);
+      console.warn('⚠️ IRS: questions query error (non-blocking):', questionsResult.error.message);
     }
+
+    const totalQuestions = questionsData.length;
+    const narratives = questionsData.map(q => q.narrative);
 
     return {
       currentStreak,
       scores,
       uniquePracticed,
       totalQuestions,
+      narratives,
     };
   } catch (err) {
     console.warn('⚠️ IRS: fetchIRSData failed (non-blocking):', err);

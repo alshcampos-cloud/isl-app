@@ -2,11 +2,12 @@
  * irsCalculator.js — Pure IRS calculation functions
  * Phase 3, Unit 2: Interview Readiness Score
  *
- * Formula (from PRODUCT_ARCHITECTURE.md):
- *   consistency   = min(currentStreak / 14, 1.0) * 100
- *   starAdherence = (avgScore / 10) * 100          [general track: 0-10 scale]
- *   coverage      = min(uniquePracticed / total, 1.0) * 100
- *   IRS           = round((consistency + starAdherence + coverage) / 3)
+ * Formula (v1.1 — 4 equally-weighted components):
+ *   consistency       = min(currentStreak / 14, 1.0) * 100
+ *   starAdherence     = (avgScore / 10) * 100          [general track: 0-10 scale]
+ *   coverage          = min(uniquePracticed / total, 1.0) * 100
+ *   answerPreparedness = (personalizedAnswers / totalQuestions) * 100
+ *   IRS               = round((consistency + starAdherence + coverage + answerPreparedness) / 4)
  *
  * Zero external dependencies. Testable in isolation.
  */
@@ -50,17 +51,49 @@ export function calculateCoverage(uniquePracticed, totalInBank) {
   return Math.min((uniquePracticed || 0) / totalInBank, 1.0) * 100;
 }
 
+/**
+ * Check if a narrative is a truly personalized answer (not a template).
+ * Default questions ship with [UPPERCASE_PLACEHOLDER] patterns like [TITLE], [COMPANY].
+ * A personalized answer has real content without these template markers.
+ *
+ * @param {string|null} narrative - The answer text
+ * @returns {boolean} true if personalized, false if template/empty
+ */
+export function isPersonalizedAnswer(narrative) {
+  if (!narrative || typeof narrative !== 'string' || narrative.trim().length === 0) {
+    return false;
+  }
+  // Template placeholders are UPPERCASE words inside brackets: [TITLE], [COMPANY], [KEY RESPONSIBILITY]
+  // This regex matches [TWO_OR_MORE_UPPERCASE_CHARS] patterns
+  const templatePattern = /\[[A-Z][A-Z\s_/\-]{1,}\]/;
+  return !templatePattern.test(narrative);
+}
+
+/**
+ * Answer preparedness: personalized answers / total questions in bank
+ * @param {(string|null)[]} narratives - Array of narrative texts from questions
+ * @param {number} totalQuestions - Total questions in user's bank
+ * @returns {number} 0-100
+ */
+export function calculateAnswerPreparedness(narratives, totalQuestions) {
+  if (!totalQuestions || totalQuestions <= 0) return 0;
+  if (!narratives || narratives.length === 0) return 0;
+  const personalizedCount = narratives.filter(n => isPersonalizedAnswer(n)).length;
+  return Math.min((personalizedCount / totalQuestions), 1.0) * 100;
+}
+
 // ── Composite Score ────────────────────────────────────────
 
 /**
- * Calculate final IRS from three components
+ * Calculate final IRS from four components
  * @param {number} consistency - 0-100
  * @param {number} starAdherence - 0-100
  * @param {number} coverage - 0-100
+ * @param {number} answerPreparedness - 0-100
  * @returns {number} 0-100 (rounded integer)
  */
-export function calculateIRS(consistency, starAdherence, coverage) {
-  return Math.round((consistency + starAdherence + coverage) / 3);
+export function calculateIRS(consistency, starAdherence, coverage, answerPreparedness) {
+  return Math.round((consistency + starAdherence + coverage + (answerPreparedness || 0)) / 4);
 }
 
 // ── Level & Messaging (growth framing only) ────────────────
@@ -84,10 +117,14 @@ export function getIRSLevel(score) {
  * @param {number} consistency - 0-100
  * @param {number} starAdherence - 0-100
  * @param {number} coverage - 0-100
+ * @param {number} answerPreparedness - 0-100
  * @returns {string}
  */
-export function getGrowthTip(consistency, starAdherence, coverage) {
-  const weakest = Math.min(consistency, starAdherence, coverage);
+export function getGrowthTip(consistency, starAdherence, coverage, answerPreparedness = 0) {
+  const weakest = Math.min(consistency, starAdherence, coverage, answerPreparedness);
+  if (weakest === answerPreparedness && answerPreparedness < 100) {
+    return 'Personalize your answers using the AI Coach to boost your preparedness.';
+  }
   if (weakest === consistency && consistency < 100) {
     return 'Practice daily to build your consistency score.';
   }

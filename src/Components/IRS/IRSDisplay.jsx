@@ -10,13 +10,15 @@
 // D.R.A.F.T. protocol: NEW file. Zero changes to auth, routing, billing.
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { X, TrendingUp, Target, BookOpen, Flame } from 'lucide-react';
+import { X, TrendingUp, Target, BookOpen, Flame, PenTool } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { fetchIRSData } from './irsSupabase';
 import {
   calculateConsistency,
   calculateStarAdherence,
   calculateCoverage,
+  calculateAnswerPreparedness,
+  isPersonalizedAnswer,
   calculateIRS,
   getIRSLevel,
   getGrowthTip,
@@ -64,7 +66,8 @@ export default function IRSDisplay({ refreshTrigger }) {
     const consistency = calculateConsistency(irsData.currentStreak);
     const starAdherence = calculateStarAdherence(irsData.scores);
     const coverage = calculateCoverage(irsData.uniquePracticed, irsData.totalQuestions);
-    const targetScore = calculateIRS(consistency, starAdherence, coverage);
+    const answerPrep = calculateAnswerPreparedness(irsData.narratives, irsData.totalQuestions);
+    const targetScore = calculateIRS(consistency, starAdherence, coverage, answerPrep);
 
     const startScore = prevScoreRef.current;
     const startTime = Date.now();
@@ -98,10 +101,14 @@ export default function IRSDisplay({ refreshTrigger }) {
   const consistency = calculateConsistency(irsData.currentStreak);
   const starAdherence = calculateStarAdherence(irsData.scores);
   const coverage = calculateCoverage(irsData.uniquePracticed, irsData.totalQuestions);
-  const irsScore = calculateIRS(consistency, starAdherence, coverage);
+  const answerPreparedness = calculateAnswerPreparedness(irsData.narratives, irsData.totalQuestions);
+  const irsScore = calculateIRS(consistency, starAdherence, coverage, answerPreparedness);
   const level = getIRSLevel(irsScore);
-  const growthTip = getGrowthTip(consistency, starAdherence, coverage);
+  const growthTip = getGrowthTip(consistency, starAdherence, coverage, answerPreparedness);
   const colors = LEVEL_COLORS[level.color] || LEVEL_COLORS.slate;
+
+  // Count personalized answers for detail modal sublabel
+  const personalizedCount = (irsData.narratives || []).filter(n => isPersonalizedAnswer(n)).length;
 
   // Ring offset for animated score
   const ringOffset = RING_CIRCUMFERENCE - (animatedScore / 100) * RING_CIRCUMFERENCE;
@@ -171,6 +178,12 @@ export default function IRSDisplay({ refreshTrigger }) {
                 icon={<BookOpen className="w-3 h-3" />}
                 label="Coverage"
                 value={Math.round(coverage)}
+                color={colors.barBg}
+              />
+              <MiniBar
+                icon={<PenTool className="w-3 h-3" />}
+                label="Answers"
+                value={Math.round(answerPreparedness)}
                 color={colors.barBg}
               />
             </div>
@@ -266,6 +279,13 @@ export default function IRSDisplay({ refreshTrigger }) {
                   sublabel={`${irsData.uniquePracticed} of ${irsData.totalQuestions} questions practiced`}
                   barColor="bg-blue-400"
                 />
+                <DetailRow
+                  icon={<PenTool className="w-4 h-4 text-purple-400" />}
+                  label="Answer Preparedness"
+                  value={Math.round(answerPreparedness)}
+                  sublabel={`${personalizedCount} of ${irsData.totalQuestions} answers personalized`}
+                  barColor="bg-purple-400"
+                />
               </div>
 
               {/* Growth tip */}
@@ -281,7 +301,7 @@ export default function IRSDisplay({ refreshTrigger }) {
 
               {/* Explanation */}
               <p className="text-[10px] text-slate-500 text-center">
-                IRS combines your practice consistency, answer quality, and question coverage into a single readiness score. Practice daily to watch it climb.
+                IRS combines your practice consistency, answer quality, question coverage, and answer preparedness into a single readiness score. Personalize your answers and practice daily to watch it climb.
               </p>
             </motion.div>
           </motion.div>
