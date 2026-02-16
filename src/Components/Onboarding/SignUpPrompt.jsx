@@ -144,29 +144,29 @@ export default function SignUpPrompt({ archetype, archetypeConfig, onComplete })
         </div>
 
         <h2 className="text-2xl font-bold text-slate-800 mb-2">
-          Save your progress
+          You're ready to go further
         </h2>
 
         <p className="text-slate-500 text-sm max-w-xs mx-auto">
-          Create a free account to keep your score, track your improvement, and unlock more practice questions.
+          You just got a taste of what practice looks like. Create a free account to keep going.
         </p>
       </div>
 
-      {/* What you'll lose without signup */}
-      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
-        <p className="text-sm text-amber-700 font-medium mb-2">Without an account, you'll lose:</p>
-        <ul className="text-sm text-amber-600 space-y-1">
+      {/* What you unlock with an account */}
+      <div className="bg-teal-50 border border-teal-200 rounded-xl p-4 mb-6">
+        <p className="text-sm text-teal-700 font-medium mb-2">With an account, you'll unlock:</p>
+        <ul className="text-sm text-teal-600 space-y-1">
           <li className="flex items-start gap-2">
             <span className="mt-0.5">{'>'}</span>
-            <span>Your Interview Readiness Score baseline</span>
+            <span>Unlimited practice questions with AI feedback</span>
           </li>
           <li className="flex items-start gap-2">
             <span className="mt-0.5">{'>'}</span>
-            <span>Your practice session and feedback</span>
+            <span>Track your Interview Readiness Score over time</span>
           </li>
           <li className="flex items-start gap-2">
             <span className="mt-0.5">{'>'}</span>
-            <span>Your personalized learning path</span>
+            <span>Personalized coaching based on your goals</span>
           </li>
         </ul>
       </div>
