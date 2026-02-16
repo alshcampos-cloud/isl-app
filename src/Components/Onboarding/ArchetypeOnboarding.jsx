@@ -124,11 +124,11 @@ export default function ArchetypeOnboarding() {
       const { data: { user } } = await supabase.auth.getUser()
       if (user && !user.is_anonymous) {
         await supabase.from('user_profiles').upsert({
-          id: user.id,
+          user_id: user.id,
           archetype: archetype,
           onboarding_completed_at: new Date().toISOString(),
           onboarding_field: field || 'general',
-        }, { onConflict: 'id' })
+        }, { onConflict: 'user_id' })
       }
     } catch (err) {
       console.error('Failed to store archetype:', err)

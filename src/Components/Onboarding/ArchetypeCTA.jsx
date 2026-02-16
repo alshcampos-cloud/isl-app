@@ -34,7 +34,7 @@ export default function ArchetypeCTA({ onAction }) {
         const { data, error } = await supabase
           .from('user_profiles')
           .select('archetype, onboarding_field')
-          .eq('id', user.id)
+          .eq('user_id', user.id)
           .single()
 
         if (error || !data?.archetype) { setLoading(false); return }
