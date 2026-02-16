@@ -37,10 +37,34 @@ export default function ArchetypeCTA({ onAction }) {
           .eq('user_id', user.id)
           .single()
 
-        if (error || !data?.archetype) { setLoading(false); return }
-
-        setArchetype(data.archetype)
-        setField(data.onboarding_field || null)
+        if (!error && data?.archetype) {
+          // Found in user_profiles — use it
+          setArchetype(data.archetype)
+          setField(data.onboarding_field || null)
+        } else {
+          // Fallback: check auth metadata (archetype stored during onboarding signup
+          // but never written to user_profiles because handleSignUpComplete doesn't
+          // fire — user navigates away to confirm email before it can execute)
+          const metaArchetype = user.user_metadata?.archetype
+          if (metaArchetype) {
+            // Backfill to user_profiles so this fallback only runs once
+            try {
+              await supabase.from('user_profiles').upsert({
+                user_id: user.id,
+                archetype: metaArchetype,
+                onboarding_field: 'general',
+                onboarding_completed_at: new Date().toISOString(),
+              }, { onConflict: 'user_id' })
+            } catch (backfillErr) {
+              console.warn('[ArchetypeCTA] Backfill failed:', backfillErr.message)
+            }
+            setArchetype(metaArchetype)
+            setField(null)
+          } else {
+            setLoading(false)
+            return
+          }
+        }
       } catch (err) {
         console.warn('[ArchetypeCTA] Failed to fetch archetype:', err.message)
       } finally {
