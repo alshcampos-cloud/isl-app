@@ -30,6 +30,7 @@ import { getBrowserInfo as getSharedBrowserInfo } from './utils/browserDetection
 import SpeechUnavailableWarning from './Components/SpeechUnavailableWarning';
 import StreakDisplay from './Components/Streaks/StreakDisplay';
 import MilestoneToast from './Components/Streaks/MilestoneToast';
+import IRSDisplay from './Components/IRS/IRSDisplay';
 import { updateStreakAfterSession } from './utils/streakSupabase';
 
 // CSS string is OK at top-level
@@ -4017,6 +4018,9 @@ const startPracticeMode = async () => {
               </a>
             </div>
           </div>
+
+          {/* IRS Hero Card — Phase 3 Unit 2 */}
+          <IRSDisplay refreshTrigger={streakRefreshTrigger} />
 
           {/* Compact Stats Row - Enhanced with Gradients */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-2 sm:gap-3 mb-6 sm:mb-8">

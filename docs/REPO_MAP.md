@@ -82,6 +82,17 @@
 
 **Total landing: ~1,564 lines across 15 files**
 
+## Streak Components (src/Components/Streaks/)
+| File | Lines | Purpose |
+|------|------:|---------|
+| `StreakDisplay.jsx` | 191 | Self-contained streak stat card + popover (Phase 3) |
+| `MilestoneToast.jsx` | 58 | Milestone celebration toast with framer-motion (Phase 3) |
+
+## Shared Components (src/Components/)
+| File | Lines | Purpose |
+|------|------:|---------|
+| `SpeechUnavailableWarning.jsx` | ~60 | Reusable speech unavailability warning (Phase 3) |
+
 ## Other Components (src/Components/)
 | File | Lines | Purpose |
 |------|------:|---------|
@@ -108,6 +119,9 @@
 |------|------:|---------|
 | `creditSystem.js` | 424 | Credit/usage limit logic (tier gates) |
 | `nativePurchases.js` | 261 | Apple/Google IAP integration |
+| `streakSupabase.js` | 183 | Streak DB layer: fetch, update, freeze (Phase 3) |
+| `streakCalculator.js` | 130 | Pure streak logic: calculate, freeze, milestones (Phase 3) |
+| `browserDetection.js` | ~90 | Shared browser/speech detection utility (Phase 3) |
 | `fetchWithRetry.js` | 77 | Retry wrapper (3 attempts, backoff) |
 | `nativeInit.js` | 62 | Capacitor initialization |
 | `platform.js` | 58 | Platform detection (web vs native) |
@@ -236,7 +250,7 @@
 
 # 6. SUPABASE DATABASE TABLES
 
-## Core App Tables (7)
+## Core App Tables (8)
 | Table | Purpose |
 |-------|---------|
 | `questions` | Main interview question bank |
@@ -244,6 +258,7 @@
 | `practice_sessions` | Practice session history |
 | `practice_history` | Historical practice records (legacy?) |
 | `usage_tracking` | Per-feature monthly usage counters |
+| `user_streaks` | Streak counter: current/longest streak, freeze status (Phase 3) |
 | `beta_testers` | Beta tester IDs (unlimited access) |
 | `profiles` | Default Supabase auth profiles (rarely used) |
 
@@ -272,6 +287,7 @@
 | `20260210000002_nursing_track_seed.sql` | Seed 68 questions |
 | `20260210000003_nursing_track_v2.sql` | Offer Coach + Confidence Builder modes |
 | `20260211000001_nursing_saved_answers.sql` | Saved answers table |
+| `20260216000002_user_streaks.sql` | Streak counter table + RLS + trigger (Phase 3) |
 
 ---
 
@@ -312,15 +328,17 @@ These files are referenced in the Session 0-3 prompt templates but have not been
 
 | Metric | Count |
 |--------|------:|
-| Total src/ files | 72 |
-| Active source files (excl. backups) | 61 |
+| Total src/ files | 78 |
+| Active source files (excl. backups) | 67 |
 | Backup files | 11 |
 | Nursing track files | 21 |
+| Streak files | 2 components + 2 utils |
+| Shared components | 1 (SpeechUnavailableWarning) |
 | Landing page files | 15 |
 | Edge Functions | 7 |
-| Database tables | 14 |
-| Migration files | 6 |
-| Total active source lines | ~27,000 |
+| Database tables | 15 |
+| Migration files | 7 |
+| Total active source lines | ~28,000 |
 | Total backup dead weight | ~57,600 |
 
 ---

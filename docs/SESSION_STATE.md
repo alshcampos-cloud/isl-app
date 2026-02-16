@@ -1,4 +1,4 @@
-# Session State — Last Updated: February 16, 2026
+# Session State — Last Updated: February 16, 2026 (Evening)
 
 ## What's Live on Production (www.interviewanswers.ai)
 
@@ -26,9 +26,10 @@
 
 ### Phase 3: IRS + Streaks — IN PROGRESS
 - Unit 1: ArchetypeCTA fix (9d10421) — SHIPPED
-- Unit 2: IRS v1 — PLANNING
-- Unit 3: Streak system — NOT STARTED
-- Unit 4: Nursing dashboard wiring — NOT STARTED
+- Unit 1b: Browser detection consolidation (887daca) — SHIPPED
+- Unit 1c: Streak counter system (cfe857a) — SHIPPED ✅ (migration applied)
+- Unit 2: IRS v1 — PLANNING (depends on streaks being live)
+- Unit 3: Nursing dashboard wiring — NOT STARTED
 
 ### Nursing Track
 - Walled garden model: AI coaches communication, never generates clinical content
@@ -52,9 +53,10 @@
 
 ## What's Next: Phase 3 Units
 - [x] Unit 1: ArchetypeCTA fix (SHIPPED 9d10421)
-- [ ] Unit 2: IRS v1 (Interview Readiness Score)
-- [ ] Unit 3: Streak system
-- [ ] Unit 4: Wire nursing dashboard to real IRS/streak data
+- [x] Unit 1b: Browser detection consolidation (SHIPPED 887daca)
+- [x] Unit 1c: Streak counter system (SHIPPED cfe857a) — ✅ MIGRATION APPLIED
+- [ ] Unit 2: IRS v1 (Interview Readiness Score) — depends on streaks being live
+- [ ] Unit 3: Wire nursing dashboard to real IRS/streak data
 - [ ] Email deliverability (SPF/DKIM/DMARC or Resend)
 
 ## Phase 3 Plan (after Phase 2 verified)
@@ -85,12 +87,13 @@ Per strategy doc, highest-ROI features:
 - main (production, auto-deploys via Vercel)
 
 ## Key Commits (recent)
+- cfe857a: Phase 3 Unit 1c — Streak counter with Supabase persistence + milestone toasts
+- 887daca: Browser detection consolidation into shared utility
+- ff15595: iOS third-party browser warnings for all mic features
 - 9d10421: Fix ArchetypeCTA column mismatch + add missing migration (Phase 3 Unit 1)
 - b9bb4c6: Pro tier query, AI Coach question library, webhook, session docs
 - 857a518: Onboarding signup copy honesty fix
 - 3609709: Email verification bypass security fix
-- 80b31ab: Email confirmation screen after onboarding signup
-- f363f5a: Email verification polling + confirm password + password strength
 
 ## Product Expansion Sequence (from strategy)
 1. Nursing Interview Prep (weeks 1-4) — IN PROGRESS

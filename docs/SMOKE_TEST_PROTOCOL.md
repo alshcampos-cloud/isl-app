@@ -19,10 +19,10 @@ regressions before they reach production.
 
 ---
 
-## The 7 Critical Paths
+## The 8 Critical Paths
 
-These are the paths that MUST work at all times. Every deploy 
-gets tested against all 7. No exceptions.
+These are the paths that MUST work at all times. Every deploy
+gets tested against all 8. No exceptions.
 
 ### Path 1: Landing Page Loads
 ```
@@ -91,13 +91,29 @@ Note: Don't complete actual payment in testing — just verify
 
 ### Path 7: AI Features Function
 ```
-Action: As logged-in user, start a practice session → 
+Action: As logged-in user, start a practice session →
   submit an answer → receive AI feedback
-Expected: AI feedback returns within 10 seconds, shows 
+Expected: AI feedback returns within 10 seconds, shows
   structured coaching response
-Failure indicators: API timeout, error message, blank 
+Failure indicators: API timeout, error message, blank
   feedback, "undefined" in response
 Also test: AI Interviewer start → first question appears
+```
+
+### Path 8: Streak Display on Home Screen (Phase 3)
+```
+Action: As logged-in user, navigate to home screen (/app)
+Expected:
+  - 5 stat cards render in grid (including streak card)
+  - Streak card shows flame icon + "0 Day Streak" for new users
+  - After completing a practice session, streak updates to 1
+  - Tapping streak card opens popover with details
+  - On mobile: cards wrap to 2 columns naturally
+Failure indicators: Missing streak card, grid layout broken,
+  streak not incrementing after session, console errors from
+  user_streaks table query, popover doesn't open
+Note: If user_streaks table doesn't exist, streak card
+  renders nothing (graceful degradation — not an error)
 ```
 
 ---
@@ -167,7 +183,7 @@ knows to run smoke tests before deploying.
 ## When to Update This Protocol
 
 Add new paths when:
-- A new critical feature ships (e.g., streaks, IRS dashboard)
+- A new critical feature ships (e.g., IRS dashboard, gamification)
 - A production bug reveals a path that wasn't being tested
 - A new integration is added (e.g., push notifications)
 

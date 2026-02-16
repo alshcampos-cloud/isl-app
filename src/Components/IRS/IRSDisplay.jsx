@@ -1,0 +1,335 @@
+// IRSDisplay.jsx — Self-contained IRS hero card for the home screen
+// Phase 3, Unit 2: Interview Readiness Score
+//
+// Pattern: follows StreakDisplay gold standard:
+//   - Fetches own data via supabase.auth.getUser() internally
+//   - Returns null if no data or error (graceful degradation)
+//   - Errors logged to console, never thrown
+//   - Single prop: refreshTrigger (reuses streakRefreshTrigger from App.jsx)
+//
+// D.R.A.F.T. protocol: NEW file. Zero changes to auth, routing, billing.
+
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { X, TrendingUp, Target, BookOpen, Flame } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { fetchIRSData } from './irsSupabase';
+import {
+  calculateConsistency,
+  calculateStarAdherence,
+  calculateCoverage,
+  calculateIRS,
+  getIRSLevel,
+  getGrowthTip,
+} from './irsCalculator';
+
+// ── SVG Ring Constants ──────────────────────────────────────
+const RING_RADIUS = 54;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
+
+// Color map for IRS levels (matches getIRSLevel in irsCalculator.js)
+const LEVEL_COLORS = {
+  emerald: { ring: '#10b981', bg: 'from-emerald-400 to-teal-500', text: 'text-emerald-400', barBg: 'bg-emerald-500' },
+  teal:    { ring: '#14b8a6', bg: 'from-teal-400 to-cyan-500', text: 'text-teal-400', barBg: 'bg-teal-500' },
+  blue:    { ring: '#3b82f6', bg: 'from-blue-400 to-indigo-500', text: 'text-blue-400', barBg: 'bg-blue-500' },
+  indigo:  { ring: '#6366f1', bg: 'from-indigo-400 to-purple-500', text: 'text-indigo-400', barBg: 'bg-indigo-500' },
+  slate:   { ring: '#94a3b8', bg: 'from-slate-400 to-slate-500', text: 'text-slate-400', barBg: 'bg-slate-500' },
+};
+
+export default function IRSDisplay({ refreshTrigger }) {
+  const [irsData, setIrsData] = useState(null);
+  const [showDetail, setShowDetail] = useState(false);
+  const [animatedScore, setAnimatedScore] = useState(0);
+  const prevScoreRef = useRef(0);
+  const animationRef = useRef(null);
+
+  const loadIRS = useCallback(async () => {
+    try {
+      const data = await fetchIRSData();
+      if (!data) return;
+      setIrsData(data);
+    } catch (err) {
+      console.warn('IRSDisplay load failed:', err);
+    }
+  }, []);
+
+  // Load on mount + whenever refreshTrigger changes (after session completion)
+  useEffect(() => {
+    loadIRS();
+  }, [loadIRS, refreshTrigger]);
+
+  // Animate score when irsData changes
+  useEffect(() => {
+    if (!irsData) return;
+
+    const consistency = calculateConsistency(irsData.currentStreak);
+    const starAdherence = calculateStarAdherence(irsData.scores);
+    const coverage = calculateCoverage(irsData.uniquePracticed, irsData.totalQuestions);
+    const targetScore = calculateIRS(consistency, starAdherence, coverage);
+
+    const startScore = prevScoreRef.current;
+    const startTime = Date.now();
+    const duration = 800; // ms
+
+    const animate = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // Ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = Math.round(startScore + (targetScore - startScore) * eased);
+      setAnimatedScore(current);
+
+      if (progress < 1) {
+        animationRef.current = requestAnimationFrame(animate);
+      } else {
+        prevScoreRef.current = targetScore;
+      }
+    };
+
+    animationRef.current = requestAnimationFrame(animate);
+    return () => {
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+    };
+  }, [irsData]);
+
+  // Don't render anything if no data loaded yet
+  if (!irsData) return null;
+
+  // Calculate components
+  const consistency = calculateConsistency(irsData.currentStreak);
+  const starAdherence = calculateStarAdherence(irsData.scores);
+  const coverage = calculateCoverage(irsData.uniquePracticed, irsData.totalQuestions);
+  const irsScore = calculateIRS(consistency, starAdherence, coverage);
+  const level = getIRSLevel(irsScore);
+  const growthTip = getGrowthTip(consistency, starAdherence, coverage);
+  const colors = LEVEL_COLORS[level.color] || LEVEL_COLORS.slate;
+
+  // Ring offset for animated score
+  const ringOffset = RING_CIRCUMFERENCE - (animatedScore / 100) * RING_CIRCUMFERENCE;
+
+  return (
+    <>
+      {/* IRS Hero Card — full-width, above stats grid */}
+      <div
+        className="mb-4 sm:mb-6 bg-white/10 backdrop-blur-lg rounded-xl sm:rounded-2xl p-4 sm:p-5 text-white border border-white/20 cursor-pointer hover:bg-white/15 transition-all duration-200"
+        onClick={() => setShowDetail(true)}
+        onTouchEnd={(e) => { e.preventDefault(); setShowDetail(true); }}
+      >
+        <div className="flex items-center gap-4 sm:gap-6">
+          {/* Left: Animated SVG Progress Ring */}
+          <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0">
+            <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
+              {/* Background ring */}
+              <circle
+                cx="60" cy="60" r={RING_RADIUS}
+                fill="none"
+                stroke="rgba(255,255,255,0.1)"
+                strokeWidth="8"
+              />
+              {/* Score ring */}
+              <circle
+                cx="60" cy="60" r={RING_RADIUS}
+                fill="none"
+                stroke={colors.ring}
+                strokeWidth="8"
+                strokeLinecap="round"
+                strokeDasharray={RING_CIRCUMFERENCE}
+                strokeDashoffset={ringOffset}
+                style={{ transition: 'stroke-dashoffset 0.3s ease-out' }}
+              />
+            </svg>
+            {/* Score number in center */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-2xl sm:text-3xl font-black leading-none">{animatedScore}</span>
+              <span className="text-[9px] sm:text-[10px] text-white/60 font-medium">IRS</span>
+            </div>
+          </div>
+
+          {/* Right: Level + Breakdown Bars */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-2">
+              <span className={`text-sm sm:text-base font-bold ${colors.text}`}>
+                {level.label}
+              </span>
+              <span className="text-[10px] text-white/40">Interview Readiness</span>
+            </div>
+
+            {/* Mini progress bars */}
+            <div className="space-y-1.5">
+              <MiniBar
+                icon={<Flame className="w-3 h-3" />}
+                label="Consistency"
+                value={Math.round(consistency)}
+                color={colors.barBg}
+              />
+              <MiniBar
+                icon={<Target className="w-3 h-3" />}
+                label="Quality"
+                value={Math.round(starAdherence)}
+                color={colors.barBg}
+              />
+              <MiniBar
+                icon={<BookOpen className="w-3 h-3" />}
+                label="Coverage"
+                value={Math.round(coverage)}
+                color={colors.barBg}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Growth tip — subtle, below the card content */}
+        <div className="mt-3 pt-2 border-t border-white/10 flex items-center gap-2">
+          <TrendingUp className="w-3.5 h-3.5 text-teal-400 flex-shrink-0" />
+          <p className="text-[11px] sm:text-xs text-white/60">{growthTip}</p>
+        </div>
+      </div>
+
+      {/* Detail Modal */}
+      <AnimatePresence>
+        {showDetail && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowDetail(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-slate-900 border border-white/20 rounded-2xl p-6 max-w-sm w-full shadow-2xl relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close button */}
+              <button
+                onClick={() => setShowDetail(false)}
+                className="absolute top-4 right-4 text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              {/* Header with large ring */}
+              <div className="text-center mb-6">
+                <div className="relative w-32 h-32 mx-auto mb-3">
+                  <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
+                    <circle
+                      cx="60" cy="60" r={RING_RADIUS}
+                      fill="none"
+                      stroke="rgba(255,255,255,0.1)"
+                      strokeWidth="8"
+                    />
+                    <circle
+                      cx="60" cy="60" r={RING_RADIUS}
+                      fill="none"
+                      stroke={colors.ring}
+                      strokeWidth="8"
+                      strokeLinecap="round"
+                      strokeDasharray={RING_CIRCUMFERENCE}
+                      strokeDashoffset={RING_CIRCUMFERENCE - (irsScore / 100) * RING_CIRCUMFERENCE}
+                      style={{ transition: 'stroke-dashoffset 0.5s ease-out' }}
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-4xl font-black text-white">{irsScore}</span>
+                    <span className="text-xs text-white/50">out of 100</span>
+                  </div>
+                </div>
+                <h3 className={`text-xl font-bold ${colors.text}`}>{level.label}</h3>
+                <p className="text-sm text-slate-400 mt-1">Interview Readiness Score</p>
+              </div>
+
+              {/* Detailed Breakdown */}
+              <div className="space-y-4 mb-6">
+                <DetailRow
+                  icon={<Flame className="w-4 h-4 text-orange-400" />}
+                  label="Consistency"
+                  value={Math.round(consistency)}
+                  sublabel={`${irsData.currentStreak} day streak (14-day target)`}
+                  barColor="bg-orange-400"
+                />
+                <DetailRow
+                  icon={<Target className="w-4 h-4 text-teal-400" />}
+                  label="Answer Quality"
+                  value={Math.round(starAdherence)}
+                  sublabel={
+                    irsData.scores.length > 0
+                      ? `Avg ${(irsData.scores.reduce((a, b) => a + b, 0) / irsData.scores.length).toFixed(1)}/10 across ${irsData.scores.length} session${irsData.scores.length !== 1 ? 's' : ''}`
+                      : 'No scored sessions yet'
+                  }
+                  barColor="bg-teal-400"
+                />
+                <DetailRow
+                  icon={<BookOpen className="w-4 h-4 text-blue-400" />}
+                  label="Question Coverage"
+                  value={Math.round(coverage)}
+                  sublabel={`${irsData.uniquePracticed} of ${irsData.totalQuestions} questions practiced`}
+                  barColor="bg-blue-400"
+                />
+              </div>
+
+              {/* Growth tip */}
+              <div className="bg-white/5 border border-white/10 rounded-xl p-3 mb-4">
+                <div className="flex items-start gap-2">
+                  <TrendingUp className="w-4 h-4 text-teal-400 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs font-semibold text-white mb-1">Growth Tip</p>
+                    <p className="text-xs text-slate-400">{growthTip}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Explanation */}
+              <p className="text-[10px] text-slate-500 text-center">
+                IRS combines your practice consistency, answer quality, and question coverage into a single readiness score. Practice daily to watch it climb.
+              </p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+}
+
+// ── Sub-components ────────────────────────────────────────────
+
+/** Compact progress bar for the hero card */
+function MiniBar({ icon, label, value, color }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-white/40 flex-shrink-0">{icon}</span>
+      <span className="text-[10px] sm:text-[11px] text-white/50 w-16 sm:w-20 truncate">{label}</span>
+      <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+        <div
+          className={`h-full ${color} rounded-full transition-all duration-700 ease-out`}
+          style={{ width: `${value}%` }}
+        />
+      </div>
+      <span className="text-[10px] text-white/40 w-6 text-right font-medium">{value}</span>
+    </div>
+  );
+}
+
+/** Detailed progress row for the modal */
+function DetailRow({ icon, label, value, sublabel, barColor }) {
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center gap-2">
+          {icon}
+          <span className="text-sm text-slate-300">{label}</span>
+        </div>
+        <span className="text-sm font-bold text-white">{value}/100</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
+          <div
+            className={`h-full ${barColor} rounded-full transition-all duration-700 ease-out`}
+            style={{ width: `${value}%` }}
+          />
+        </div>
+      </div>
+      <p className="text-[10px] text-slate-500 mt-1">{sublabel}</p>
+    </div>
+  );
+}
