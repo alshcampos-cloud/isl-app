@@ -7,7 +7,7 @@
 //     title: 'Page Title',
 //     description: 'Page description for SEO',
 //     keywords: 'comma, separated, keywords',
-//     canonical: 'https://interviewanswers.ai/page',
+//     canonical: 'https://www.interviewanswers.ai/page',
 //     og: { title, description, url, type, image }
 //   });
 
@@ -85,10 +85,10 @@ export default function useDocumentHead({
       document.title = prevTitle || DEFAULT_TITLE;
       setMetaTag('name', 'description', DEFAULT_DESCRIPTION);
       setMetaTag('name', 'keywords', 'interview preparation, job interview, STAR method, behavioral interview, interview practice, AI interview coach');
-      setLinkTag('canonical', 'https://interviewanswers.ai/');
+      setLinkTag('canonical', 'https://www.interviewanswers.ai/');
       setMetaTag('property', 'og:title', DEFAULT_TITLE);
       setMetaTag('property', 'og:description', DEFAULT_DESCRIPTION);
-      setMetaTag('property', 'og:url', 'https://interviewanswers.ai');
+      setMetaTag('property', 'og:url', 'https://www.interviewanswers.ai');
       setMetaTag('name', 'twitter:title', DEFAULT_TITLE);
       setMetaTag('name', 'twitter:description', DEFAULT_DESCRIPTION);
     };

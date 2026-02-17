@@ -23,11 +23,11 @@ export default function LandingPage() {
     title: 'InterviewAnswers.ai - AI Interview Practice & STAR Method Coaching',
     description: 'Practice job interviews with AI mock interviews, real-time coaching, and STAR method feedback. Build answers from your real experiences. Free to start, no credit card required.',
     keywords: 'interview preparation, AI interview practice, mock interview, STAR method, behavioral interview questions, job interview tips, interview coaching, AI interview coach, practice interview questions, interview answers, job interview preparation, career coaching',
-    canonical: 'https://interviewanswers.ai/',
+    canonical: 'https://www.interviewanswers.ai/',
     og: {
       title: 'InterviewAnswers.ai - AI Interview Practice & Coaching',
       description: 'Practice job interviews with AI. Mock interviews, STAR method coaching, real-time prompts. Build answers from your real experiences.',
-      url: 'https://interviewanswers.ai/',
+      url: 'https://www.interviewanswers.ai/',
       type: 'website',
     },
     twitter: {
