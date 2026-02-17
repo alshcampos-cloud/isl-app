@@ -121,10 +121,10 @@ function ProtectedRoute({ children }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-sky-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
-          <div className="text-white/80 text-lg">Setting up your session...</div>
+          <div className="w-12 h-12 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="text-slate-600 text-lg">Setting up your session...</div>
         </div>
       </div>
     )
@@ -163,10 +163,10 @@ function ProtectedRoute({ children }) {
       navigate('/onboarding', { replace: true });
     });
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-sky-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
-          <div className="text-white/80 text-lg">Redirecting...</div>
+          <div className="w-12 h-12 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="text-slate-600 text-lg">Redirecting...</div>
         </div>
       </div>
     )
@@ -175,7 +175,7 @@ function ProtectedRoute({ children }) {
   // Check if email is verified
   if (!user.email_confirmed_at) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-sky-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
           <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Mail className="w-8 h-8 text-yellow-600" />

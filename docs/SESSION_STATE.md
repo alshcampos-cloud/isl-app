@@ -30,7 +30,7 @@
 - Unit 1c: Streak counter system (cfe857a) — SHIPPED ✅ (migration applied)
 - Unit 2: IRS v1 — Interview Readiness Score (b60348e) — SHIPPED ✅
 - Unit 2b: IRS v1.1 — Answer Preparedness 4th component (ec92c80) — SHIPPED ✅
-- Unit 3: Nursing dashboard wiring — CODE COMPLETE (build passes, needs commit + deploy)
+- Unit 3: Nursing dashboard wiring (be63dc5) — SHIPPED ✅
 
 ### Nursing Track
 - Walled garden model: AI coaches communication, never generates clinical content
@@ -57,7 +57,7 @@
 - [x] Unit 1b: Browser detection consolidation (SHIPPED 887daca)
 - [x] Unit 1c: Streak counter system (SHIPPED cfe857a) — ✅ MIGRATION APPLIED
 - [x] Unit 2: IRS v1 (Interview Readiness Score) — SHIPPED b60348e ✅
-- [x] Unit 3: Wire nursing dashboard to real IRS/streak data — CODE COMPLETE
+- [x] Unit 3: Wire nursing dashboard to real IRS/streak data — SHIPPED be63dc5 ✅
 - [ ] Email deliverability (SPF/DKIM/DMARC or Resend)
 
 ## Phase 3 Plan (after Phase 2 verified)
@@ -88,6 +88,7 @@ Per strategy doc, highest-ROI features:
 - main (production, auto-deploys via Vercel)
 
 ## Key Commits (recent)
+- be63dc5: Phase 3 Unit 3 — Wire nursing dashboard to real IRS + streak data (NursingIRSDisplay, StreakDisplay)
 - ec92c80: IRS v1.1 — Answer Preparedness as 4th IRS component (template detection via regex)
 - b60348e: Phase 3 Unit 2 — IRS hero card with animated ring, breakdown bars, detail modal
 - cfe857a: Phase 3 Unit 1c — Streak counter with Supabase persistence + milestone toasts

@@ -52,10 +52,10 @@ export default function LandingPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-sky-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
-          <div className="text-white/80 text-lg">Loading InterviewAnswers.ai...</div>
+          <div className="w-12 h-12 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="text-slate-600 text-lg">Loading InterviewAnswers.ai...</div>
         </div>
       </div>
     );
@@ -79,7 +79,7 @@ export default function LandingPage() {
       <div className="fixed bottom-0 left-0 right-0 md:hidden bg-white/95 backdrop-blur-lg border-t border-gray-200 p-3 z-40">
         <a
           href="/onboarding"
-          className="block w-full text-center bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold py-3 rounded-lg shadow-lg"
+          className="block w-full text-center bg-gradient-to-r from-teal-500 to-emerald-500 text-white font-bold py-3 rounded-lg shadow-lg"
         >
           Start Practicing Free
         </a>

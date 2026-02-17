@@ -4,7 +4,7 @@ import { ArrowRight } from 'lucide-react';
 
 export default function CTASection() {
   return (
-    <section className="py-20 sm:py-28 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 relative overflow-hidden">
+    <section className="py-20 sm:py-28 bg-gradient-to-r from-slate-800 via-slate-900 to-slate-800 relative overflow-hidden">
       {/* Background decoration */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute -top-20 -right-20 w-80 h-80 bg-white/5 rounded-full blur-3xl" />
@@ -41,7 +41,7 @@ export default function CTASection() {
         >
           <Link
             to="/onboarding"
-            className="inline-flex items-center gap-2 bg-white text-indigo-700 font-bold text-lg px-10 py-4 rounded-xl hover:bg-indigo-50 transition-all shadow-xl hover:-translate-y-0.5"
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-teal-500 to-emerald-500 text-white font-bold text-lg px-10 py-4 rounded-xl hover:from-teal-600 hover:to-emerald-600 transition-all shadow-xl shadow-teal-500/30 hover:-translate-y-0.5"
           >
             Start Practicing Free
             <ArrowRight className="w-5 h-5" />

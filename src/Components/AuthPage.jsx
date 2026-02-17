@@ -43,10 +43,10 @@ export default function AuthPage({ mode = 'login' }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-sky-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
-          <div className="text-white/80 text-lg">Just a moment...</div>
+          <div className="w-12 h-12 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="text-slate-600 text-lg">Just a moment...</div>
         </div>
       </div>
     );

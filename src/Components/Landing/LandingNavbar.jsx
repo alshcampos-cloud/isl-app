@@ -31,7 +31,7 @@ export default function LandingNavbar() {
           <Link to="/" className="flex items-center gap-2">
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
               scrolled
-                ? 'bg-gradient-to-br from-indigo-600 to-purple-600'
+                ? 'bg-gradient-to-br from-teal-600 to-emerald-600'
                 : 'bg-white/20 backdrop-blur-sm'
             }`}>
               <Brain className="w-5 h-5 text-white" />
@@ -46,7 +46,7 @@ export default function LandingNavbar() {
             <button
               onClick={() => scrollTo('features')}
               className={`text-sm font-medium transition-colors ${
-                scrolled ? 'text-gray-600 hover:text-gray-900' : 'text-indigo-200 hover:text-white'
+                scrolled ? 'text-gray-600 hover:text-gray-900' : 'text-slate-300 hover:text-white'
               }`}
             >
               Features
@@ -54,7 +54,7 @@ export default function LandingNavbar() {
             <button
               onClick={() => scrollTo('how-it-works')}
               className={`text-sm font-medium transition-colors ${
-                scrolled ? 'text-gray-600 hover:text-gray-900' : 'text-indigo-200 hover:text-white'
+                scrolled ? 'text-gray-600 hover:text-gray-900' : 'text-slate-300 hover:text-white'
               }`}
             >
               How It Works
@@ -62,7 +62,7 @@ export default function LandingNavbar() {
             <button
               onClick={() => scrollTo('pricing')}
               className={`text-sm font-medium transition-colors ${
-                scrolled ? 'text-gray-600 hover:text-gray-900' : 'text-indigo-200 hover:text-white'
+                scrolled ? 'text-gray-600 hover:text-gray-900' : 'text-slate-300 hover:text-white'
               }`}
             >
               Pricing
@@ -83,14 +83,14 @@ export default function LandingNavbar() {
             <Link
               to="/login"
               className={`text-sm font-medium transition-colors ${
-                scrolled ? 'text-gray-600 hover:text-gray-900' : 'text-indigo-200 hover:text-white'
+                scrolled ? 'text-gray-600 hover:text-gray-900' : 'text-slate-300 hover:text-white'
               }`}
             >
               Log In
             </Link>
             <Link
               to="/onboarding"
-              className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-sm font-bold px-5 py-2.5 rounded-lg transition-all shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40"
+              className="bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white text-sm font-bold px-5 py-2.5 rounded-lg transition-all shadow-lg shadow-teal-500/25 hover:shadow-teal-500/40"
             >
               Start Practicing Free
             </Link>
@@ -123,7 +123,7 @@ export default function LandingNavbar() {
             <Link to="/login" className="block text-gray-700 font-medium py-2" onClick={() => setMobileOpen(false)}>Log In</Link>
             <Link
               to="/onboarding"
-              className="block w-full text-center bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold py-3 rounded-lg"
+              className="block w-full text-center bg-gradient-to-r from-teal-500 to-emerald-500 text-white font-bold py-3 rounded-lg"
               onClick={() => setMobileOpen(false)}
             >
               Start Practicing Free

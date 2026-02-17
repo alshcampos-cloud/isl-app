@@ -4,21 +4,21 @@ import { ArrowRight, Play, Mic, Bot, Target, Sparkles, CheckCircle } from 'lucid
 
 export default function HeroSection() {
   return (
-    <section className="relative min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex items-center overflow-hidden">
+    <section className="relative min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center overflow-hidden">
       {/* Animated background orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
-          className="absolute -top-40 -right-40 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl"
+          className="absolute -top-40 -right-40 w-96 h-96 bg-teal-500/15 rounded-full blur-3xl"
           animate={{ x: [0, 30, 0], y: [0, -20, 0] }}
           transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
         />
         <motion.div
-          className="absolute -bottom-40 -left-40 w-96 h-96 bg-pink-500/20 rounded-full blur-3xl"
+          className="absolute -bottom-40 -left-40 w-96 h-96 bg-emerald-500/15 rounded-full blur-3xl"
           animate={{ x: [0, -20, 0], y: [0, 30, 0] }}
           transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
         />
         <motion.div
-          className="absolute top-1/3 left-1/2 w-64 h-64 bg-indigo-500/15 rounded-full blur-3xl"
+          className="absolute top-1/3 left-1/2 w-64 h-64 bg-sky-500/10 rounded-full blur-3xl"
           animate={{ x: [0, 40, 0], y: [0, -30, 0] }}
           transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
         />
@@ -38,7 +38,7 @@ export default function HeroSection() {
               transition={{ duration: 0.5 }}
             >
               <Sparkles className="w-4 h-4 text-yellow-300" />
-              <span className="text-sm text-indigo-200 font-medium">AI-Powered Interview Preparation</span>
+              <span className="text-sm text-slate-300 font-medium">AI-Powered Interview Preparation</span>
             </motion.div>
 
             <motion.h1
@@ -48,13 +48,13 @@ export default function HeroSection() {
               transition={{ duration: 0.6, delay: 0.1 }}
             >
               Nail Every Interview.{' '}
-              <span className="bg-gradient-to-r from-pink-400 to-orange-300 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-teal-400 to-emerald-300 bg-clip-text text-transparent">
                 Powered by AI.
               </span>
             </motion.h1>
 
             <motion.p
-              className="mt-6 text-lg sm:text-xl text-indigo-200 leading-relaxed max-w-xl"
+              className="mt-6 text-lg sm:text-xl text-slate-300 leading-relaxed max-w-xl"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
@@ -65,7 +65,7 @@ export default function HeroSection() {
 
             {/* Trust indicators */}
             <motion.div
-              className="mt-6 flex flex-col sm:flex-row gap-3 text-sm text-indigo-300"
+              className="mt-6 flex flex-col sm:flex-row gap-3 text-sm text-slate-400"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
@@ -83,7 +83,7 @@ export default function HeroSection() {
             >
               <Link
                 to="/onboarding"
-                className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-bold text-lg px-8 py-4 rounded-xl transition-all shadow-xl shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:-translate-y-0.5"
+                className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-bold text-lg px-8 py-4 rounded-xl transition-all shadow-xl shadow-teal-500/30 hover:shadow-teal-500/50 hover:-translate-y-0.5"
               >
                 Start Practicing Free
                 <ArrowRight className="w-5 h-5" />
@@ -107,7 +107,7 @@ export default function HeroSection() {
           >
             <div className="relative">
               {/* Glowing border effect */}
-              <div className="absolute -inset-4 bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-pink-500/20 rounded-3xl blur-xl" />
+              <div className="absolute -inset-4 bg-gradient-to-r from-teal-500/20 via-emerald-500/20 to-sky-500/20 rounded-3xl blur-xl" />
 
               {/* App mockup card */}
               <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-2xl">
