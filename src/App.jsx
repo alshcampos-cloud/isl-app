@@ -3895,15 +3895,17 @@ const startPracticeMode = async () => {
     
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-sky-50">
-        <div className="container mx-auto px-4 py-8">
-          
+        {/* Dark header section for IRS/stats (designed for dark bg) */}
+        <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 pb-8 rounded-b-3xl">
+        <div className="container mx-auto px-4 pt-8">
+
           {/* Profile Menu - Top Right Corner */}
           <div className="flex justify-end mb-6">
             <div className="relative">
               <button
                 data-tutorial="menu"
                 onClick={() => setShowProfileDropdown(!showProfileDropdown)}
-                className="flex items-center gap-2 bg-white hover:bg-gray-50 backdrop-blur-lg rounded-full px-4 py-2 text-slate-700 transition-all border border-slate-200 shadow-sm"
+                className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-lg rounded-full px-4 py-2 text-white transition-all border border-white/20"
               >
                 <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-full flex items-center justify-center font-bold text-sm text-white">
                   {currentUser?.email?.charAt(0).toUpperCase() || 'U'}
@@ -4005,15 +4007,15 @@ const startPracticeMode = async () => {
 
           {/* Clean Centered Title */}
           <div className="text-center mb-6 sm:mb-8">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-slate-800 mb-2 sm:mb-3 tracking-tight">InterviewAnswers.ai</h1>
-            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-slate-500 font-medium">Master Your Interview Answers with AI</p>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-2 sm:mb-3 tracking-tight">InterviewAnswers.ai</h1>
+            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-slate-400 font-medium">Master Your Interview Answers with AI</p>
 
             {/* Track Switcher — toggle between General and Nursing */}
-            <div className="flex items-center justify-center gap-1 mt-4 bg-slate-100 rounded-full p-1 max-w-xs mx-auto border border-slate-200">
-              <span className="flex-1 text-center px-4 py-2 rounded-full text-sm font-semibold bg-white text-teal-700 shadow-sm">
+            <div className="flex items-center justify-center gap-1 mt-4 bg-white/10 backdrop-blur-lg rounded-full p-1 max-w-xs mx-auto border border-white/20">
+              <span className="flex-1 text-center px-4 py-2 rounded-full text-sm font-semibold bg-white text-slate-900 shadow-md">
                 General
               </span>
-              <a href="/nursing" className="flex-1 text-center px-4 py-2 rounded-full text-sm font-semibold text-slate-500 hover:text-slate-700 hover:bg-white/60 transition-all no-underline">
+              <a href="/nursing" className="flex-1 text-center px-4 py-2 rounded-full text-sm font-semibold text-white/70 hover:text-white hover:bg-white/10 transition-all no-underline">
                 🩺 Nursing
               </a>
             </div>
@@ -4024,7 +4026,7 @@ const startPracticeMode = async () => {
 
           {/* Compact Stats Row - Enhanced with Gradients */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-2 sm:gap-3 mb-6 sm:mb-8">
-            <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 text-slate-800 hover:shadow-md hover:scale-[1.02] transition-all duration-200 border border-slate-200 shadow-sm cursor-pointer" onClick={() => {
+            <div className="bg-white/10 backdrop-blur-lg rounded-xl sm:rounded-2xl p-3 sm:p-4 text-white hover:bg-white/15 hover:scale-[1.02] transition-all duration-200 border border-white/20 cursor-pointer" onClick={() => {
               setCurrentView('command-center');
               setCommandCenterTab('bank');
             }}>
@@ -4034,11 +4036,11 @@ const startPracticeMode = async () => {
                 </div>
                 <div className="min-w-0">
                   <p className="text-xl sm:text-2xl font-black leading-tight">{questions.length}</p>
-                  <p className="text-[10px] sm:text-xs text-slate-500 leading-tight font-semibold">Questions</p>
+                  <p className="text-[10px] sm:text-xs text-white/80 leading-tight font-semibold">Questions</p>
                 </div>
               </div>
             </div>
-            <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 text-slate-800 hover:shadow-md hover:scale-[1.02] transition-all duration-200 border border-slate-200 shadow-sm cursor-pointer" onClick={() => {
+            <div className="bg-white/10 backdrop-blur-lg rounded-xl sm:rounded-2xl p-3 sm:p-4 text-white hover:bg-white/15 hover:scale-[1.02] transition-all duration-200 border border-white/20 cursor-pointer" onClick={() => {
               setCurrentView('command-center');
               setCommandCenterTab('progress');
             }}>
@@ -4048,13 +4050,13 @@ const startPracticeMode = async () => {
                 </div>
                 <div className="min-w-0">
                   <p className="text-xl sm:text-2xl font-black leading-tight">{practiceHistory.length}</p>
-                  <p className="text-[10px] sm:text-xs text-slate-500 leading-tight font-semibold">Sessions</p>
+                  <p className="text-[10px] sm:text-xs text-white/80 leading-tight font-semibold">Sessions</p>
                 </div>
               </div>
             </div>
             {/* Usage Dashboard Link Card - Clickable */}
             <div
-              className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 text-slate-800 hover:shadow-md hover:scale-[1.02] transition-all duration-200 cursor-pointer border border-slate-200 shadow-sm"
+              className="bg-white/10 backdrop-blur-lg rounded-xl sm:rounded-2xl p-3 sm:p-4 text-white hover:bg-white/15 hover:scale-[1.02] transition-all duration-200 cursor-pointer border border-white/20"
               onClick={() => setShowUsageDashboard(true)}
             >
               <div className="flex items-center gap-2 sm:gap-3">
@@ -4065,7 +4067,7 @@ const startPracticeMode = async () => {
                   <p className="text-lg sm:text-xl font-black leading-tight">
                     {userTier === 'pro' ? '∞' : 'View'}
                   </p>
-                  <p className="text-[10px] sm:text-xs text-slate-500 leading-tight font-semibold whitespace-nowrap">
+                  <p className="text-[10px] sm:text-xs text-white/80 leading-tight font-semibold whitespace-nowrap">
                     {userTier === 'pro' ? 'Unlimited' : 'Usage'}
                   </p>
                 </div>
@@ -4073,7 +4075,7 @@ const startPracticeMode = async () => {
             </div>
             {/* Days Until Interview Card */}
             <div
-              className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 text-slate-800 hover:shadow-md hover:scale-[1.02] transition-all duration-200 cursor-pointer border border-slate-200 shadow-sm"
+              className="bg-white/10 backdrop-blur-lg rounded-xl sm:rounded-2xl p-3 sm:p-4 text-white hover:bg-white/15 hover:scale-[1.02] transition-all duration-200 cursor-pointer border border-white/20"
               onClick={() => {
                 setCurrentView('command-center');
                 setCommandCenterTab('prep');
@@ -4098,7 +4100,7 @@ const startPracticeMode = async () => {
                       : '—'
                     }
                   </p>
-                  <p className="text-[10px] sm:text-xs text-slate-500 leading-tight font-semibold whitespace-nowrap">
+                  <p className="text-[10px] sm:text-xs text-white/80 leading-tight font-semibold whitespace-nowrap">
                     {interviewDate ? 'Days' : 'Set Date'}
                   </p>
                 </div>
@@ -4110,6 +4112,12 @@ const startPracticeMode = async () => {
 
           {/* Milestone Toast — renders nothing when no milestone */}
           <MilestoneToast milestone={streakMilestone} onDismiss={() => setStreakMilestone(null)} />
+
+        </div>{/* end dark header container */}
+        </div>{/* end dark header bg */}
+
+        {/* Light content section */}
+        <div className="container mx-auto px-4 py-6">
 
           {/* Quick Start Tip - Enhanced */}
           {questions.length === 0 && (
