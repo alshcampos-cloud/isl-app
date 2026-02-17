@@ -4,7 +4,7 @@ import { ArrowRight } from 'lucide-react';
 
 export default function CTASection() {
   return (
-    <section className="py-20 sm:py-28 bg-gradient-to-r from-slate-800 via-slate-900 to-slate-800 relative overflow-hidden">
+    <section className="py-16 sm:py-20 bg-gradient-to-r from-slate-800 via-slate-900 to-slate-800 relative overflow-hidden">
       {/* Background decoration */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute -top-20 -right-20 w-80 h-80 bg-white/5 rounded-full blur-3xl" />
@@ -29,7 +29,7 @@ export default function CTASection() {
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
-          Join for free. No credit card required. Cancel anytime.
+          Start free. Practice today. No credit card needed.
         </motion.p>
 
         <motion.div

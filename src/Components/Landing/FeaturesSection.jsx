@@ -5,35 +5,35 @@ const features = [
   {
     icon: Mic,
     name: 'Live Prompter',
-    gradient: 'from-pink-500 to-rose-500',
-    description: 'Get real-time bullet points during your actual interview. Just hold SPACEBAR and let ISL guide your answers as you speak.',
+    gradient: 'from-teal-500 to-emerald-500',
+    description: 'Get real-time bullet points during your actual interview. Just hold SPACEBAR and get real-time guidance as you speak.',
     highlights: ['Works with Zoom, Teams & more', 'Matches questions to your answers', 'Your answers are never recorded'],
   },
   {
     icon: Bot,
     name: 'AI Interviewer',
-    gradient: 'from-purple-500 to-indigo-500',
+    gradient: 'from-teal-600 to-cyan-600',
     description: 'Practice with a realistic AI interviewer that listens, scores your answers, and asks tough follow-ups — just like the real thing.',
     highlights: ['Scored feedback (0-100)', 'Adaptive follow-up questions', 'Progressive difficulty levels'],
   },
   {
     icon: Target,
     name: 'Practice Mode',
-    gradient: 'from-blue-500 to-cyan-500',
+    gradient: 'from-emerald-500 to-teal-500',
     description: 'Quick drill sessions with instant AI scoring and feedback. See exactly which points you hit and what you missed.',
     highlights: ['Instant performance scoring', 'Track points covered', 'Perfect for daily reps'],
   },
   {
     icon: Sparkles,
     name: 'Answer Assistant',
-    gradient: 'from-green-500 to-emerald-500',
+    gradient: 'from-cyan-500 to-teal-600',
     description: 'Build STAR-formatted answers through conversation. Share your real experiences and let AI structure them into polished responses.',
     highlights: ['Motivational interviewing approach', 'Extracts YOUR real stories', 'STAR method formatting'],
   },
   {
     icon: Lightbulb,
     name: 'Question Generator',
-    gradient: 'from-amber-500 to-orange-500',
+    gradient: 'from-teal-400 to-emerald-500',
     description: 'Paste a job description and get personalized interview questions tailored to the role. Or pick from our template library.',
     highlights: ['AI-generated from job postings', 'Template library included', 'Custom question support'],
   },
@@ -51,21 +51,21 @@ const itemVariants = {
 
 export default function FeaturesSection() {
   return (
-    <section id="features" className="py-20 sm:py-28 bg-gray-50">
+    <section id="features" className="py-16 sm:py-20 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
-          className="text-center mb-16"
+          className="text-center mb-12"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
         >
-          <p className="text-indigo-600 font-semibold text-sm uppercase tracking-wide mb-3">Your Complete Toolkit</p>
+          <p className="text-teal-600 font-semibold text-sm uppercase tracking-wide mb-3">Every Tool You Need</p>
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">
-            5 AI-Powered Tools. One Complete System.
+            From Preparation to Performance
           </h2>
           <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-            Everything you need to prepare, practice, and perform — from your first question to your final interview.
+            Build answers from your real experiences, practice until they're second nature, then get real-time help during the actual interview.
           </p>
         </motion.div>
 
@@ -93,7 +93,7 @@ export default function FeaturesSection() {
                 <ul className="space-y-2">
                   {feature.highlights.map((h) => (
                     <li key={h} className="flex items-center gap-2 text-sm text-gray-500">
-                      <ArrowRight className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
+                      <ArrowRight className="w-3.5 h-3.5 text-teal-500 flex-shrink-0" />
                       {h}
                     </li>
                   ))}
@@ -127,7 +127,7 @@ export default function FeaturesSection() {
                 <ul className="space-y-2">
                   {feature.highlights.map((h) => (
                     <li key={h} className="flex items-center gap-2 text-sm text-gray-500">
-                      <ArrowRight className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
+                      <ArrowRight className="w-3.5 h-3.5 text-teal-500 flex-shrink-0" />
                       {h}
                     </li>
                   ))}

@@ -59,8 +59,8 @@ export default function HeroSection() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
-              Build authentic answers from YOUR real experiences — not generic scripts.
-              Practice with AI that adapts to you and get real-time help during actual interviews.
+              Stop memorizing scripts. Build answers from your real experiences,
+              practice until they're natural, and get real-time help when it counts.
             </motion.p>
 
             {/* Trust indicators */}
@@ -122,10 +122,10 @@ export default function HeroSection() {
                 {/* Feature preview cards */}
                 <div className="grid grid-cols-2 gap-3">
                   {[
-                    { icon: Mic, label: 'Live Prompter', color: 'from-pink-500 to-rose-500', desc: 'Real-time help' },
-                    { icon: Bot, label: 'AI Interviewer', color: 'from-purple-500 to-indigo-500', desc: 'Mock practice' },
-                    { icon: Target, label: 'Practice Mode', color: 'from-blue-500 to-cyan-500', desc: 'Quick drills' },
-                    { icon: Sparkles, label: 'Answer Assistant', color: 'from-green-500 to-emerald-500', desc: 'Build answers' },
+                    { icon: Mic, label: 'Live Prompter', color: 'from-teal-500 to-emerald-500', desc: 'Real-time help' },
+                    { icon: Bot, label: 'AI Interviewer', color: 'from-teal-600 to-cyan-600', desc: 'Mock practice' },
+                    { icon: Target, label: 'Practice Mode', color: 'from-emerald-500 to-teal-500', desc: 'Quick drills' },
+                    { icon: Sparkles, label: 'Answer Assistant', color: 'from-cyan-500 to-teal-500', desc: 'Build answers' },
                   ].map(({ icon: Icon, label, color, desc }) => (
                     <motion.div
                       key={label}

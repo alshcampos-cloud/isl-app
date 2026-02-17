@@ -15,7 +15,7 @@ const testimonials = [
     stars: 5,
   },
   {
-    quote: "I was spending hours writing scripts that sounded robotic. ISL helped me practice speaking naturally about my real experiences. My interviewer even complimented how authentic my answers sounded.",
+    quote: "I was spending hours writing scripts that sounded robotic. InterviewAnswers.ai helped me practice speaking naturally about my real experiences. My interviewer even complimented how authentic my answers sounded.",
     name: 'Priya K.',
     role: 'Data Analyst candidate',
     stars: 5,
@@ -24,7 +24,7 @@ const testimonials = [
 
 export default function TestimonialsSection() {
   return (
-    <section className="py-20 sm:py-28 bg-white">
+    <section className="py-16 sm:py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           className="text-center mb-16"

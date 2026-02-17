@@ -27,10 +27,10 @@ const painPoints = [
 
 export default function ProblemSection() {
   return (
-    <section className="py-20 sm:py-28 bg-white">
+    <section className="py-16 sm:py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
-          className="text-center mb-16"
+          className="text-center mb-12"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -38,10 +38,10 @@ export default function ProblemSection() {
         >
           <p className="text-red-500 font-semibold text-sm uppercase tracking-wide mb-3">The Problem</p>
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">
-            Sound Familiar?
+            You've Been There
           </h2>
           <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-            Most people struggle with interviews — not because they're unqualified, but because they haven't practiced the right way.
+            You're qualified. You just haven't practiced the right way.
           </p>
         </motion.div>
 
@@ -78,13 +78,13 @@ export default function ProblemSection() {
             There's a better way to prepare.
           </p>
           <p className="text-gray-500 max-w-lg">
-            ISL uses proven techniques from motivational interviewing and cognitive psychology to help you discover, structure, and practice your authentic stories.
+            InterviewAnswers.ai uses proven techniques from motivational interviewing and cognitive psychology to help you discover, structure, and practice your authentic stories.
           </p>
           <motion.div
             animate={{ y: [0, 6, 0] }}
             transition={{ duration: 1.5, repeat: Infinity }}
           >
-            <ArrowDown className="w-6 h-6 text-indigo-400" />
+            <ArrowDown className="w-6 h-6 text-teal-500" />
           </motion.div>
         </motion.div>
       </div>

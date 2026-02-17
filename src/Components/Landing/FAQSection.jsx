@@ -9,7 +9,7 @@ const faqs = [
   },
   {
     q: 'How is this different from ChatGPT?',
-    a: 'ISL is purpose-built for interview prep. It uses motivational interviewing techniques to pull answers from YOUR real experiences, provides scored feedback, has a live prompter for actual interviews, and tracks your progress over time. ChatGPT gives generic advice — ISL gives you a complete practice system.',
+    a: 'InterviewAnswers.ai is purpose-built for interview prep. It uses motivational interviewing techniques to pull answers from YOUR real experiences, provides scored feedback, has a live prompter for actual interviews, and tracks your progress over time. ChatGPT gives generic advice — InterviewAnswers.ai gives you a complete practice system.',
   },
   {
     q: 'Does the Live Prompter work during real interviews?',
@@ -32,7 +32,7 @@ function FAQItem({ faq, isOpen, onToggle }) {
         onClick={onToggle}
         className="w-full flex items-center justify-between py-5 text-left group"
       >
-        <span className="text-lg font-medium text-gray-900 group-hover:text-indigo-600 transition-colors pr-4">
+        <span className="text-lg font-medium text-gray-900 group-hover:text-teal-600 transition-colors pr-4">
           {faq.q}
         </span>
         <ChevronDown
@@ -62,7 +62,7 @@ export default function FAQSection() {
   const [openIndex, setOpenIndex] = useState(null);
 
   return (
-    <section className="py-20 sm:py-28 bg-white">
+    <section className="py-16 sm:py-20 bg-white">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           className="text-center mb-12"

@@ -7,7 +7,7 @@ const tiers = [
     name: 'Free',
     price: '0',
     period: '',
-    description: 'Perfect for trying out ISL',
+    description: 'Perfect for getting started',
     cta: 'Get Started Free',
     ctaLink: '/onboarding',
     highlighted: false,
@@ -29,7 +29,7 @@ const tiers = [
     name: 'Pro',
     price: '29.99',
     period: '/month',
-    description: 'Unlimited practice for serious job seekers',
+    description: 'Unlimited everything. No limits. No worries.',
     cta: 'Start Pro',
     ctaLink: '/onboarding',
     highlighted: true,
@@ -52,10 +52,10 @@ const tiers = [
 
 export default function PricingSection() {
   return (
-    <section id="pricing" className="py-20 sm:py-28 bg-gray-50">
+    <section id="pricing" className="py-16 sm:py-20 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
-          className="text-center mb-16"
+          className="text-center mb-12"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}

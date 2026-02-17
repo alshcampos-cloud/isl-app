@@ -10,25 +10,25 @@ const differentiators = [
   },
   {
     icon: BarChart3,
-    color: 'text-indigo-600 bg-indigo-100',
+    color: 'text-teal-600 bg-teal-100',
     title: 'Session History & Analytics',
     description: 'Review every practice session. See which questions you nailed and which need more work. Data-driven interview prep.',
   },
   {
     icon: Brain,
-    color: 'text-purple-600 bg-purple-100',
+    color: 'text-teal-600 bg-teal-50',
     title: 'Motivational Interviewing',
     description: 'Our AI doesn\'t just quiz you — it uses proven psychological techniques to help you discover stories you didn\'t know you had.',
   },
   {
     icon: Mic,
-    color: 'text-pink-600 bg-pink-100',
+    color: 'text-emerald-600 bg-emerald-100',
     title: 'Real-Time Interview Assistance',
     description: 'The only tool that helps you DURING the interview. Live Prompter gives you bullet points while you\'re actually speaking.',
   },
   {
     icon: RefreshCcw,
-    color: 'text-blue-600 bg-blue-100',
+    color: 'text-cyan-600 bg-cyan-100',
     title: 'Adaptive Follow-Ups',
     description: 'Our AI Interviewer doesn\'t just ask questions — it listens to your answer and asks relevant follow-ups, just like a real interviewer would.',
   },
@@ -42,7 +42,7 @@ const differentiators = [
 
 export default function WhyISLSection() {
   return (
-    <section className="py-20 sm:py-28 bg-white overflow-hidden">
+    <section className="py-16 sm:py-20 bg-white overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           {/* Left: Visual — Progress mockup */}
@@ -53,7 +53,7 @@ export default function WhyISLSection() {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-3xl p-8 border border-indigo-100">
+            <div className="bg-gradient-to-br from-teal-50 to-emerald-50 rounded-3xl p-8 border border-teal-100">
               {/* Dashboard header */}
               <div className="flex items-center justify-between mb-6">
                 <h4 className="font-bold text-gray-900">Your Progress</h4>
@@ -63,7 +63,7 @@ export default function WhyISLSection() {
               {/* Score cards */}
               <div className="grid grid-cols-3 gap-3 mb-6">
                 <div className="bg-white rounded-xl p-3 text-center shadow-sm">
-                  <p className="text-2xl font-bold text-indigo-600">12</p>
+                  <p className="text-2xl font-bold text-teal-600">12</p>
                   <p className="text-xs text-gray-500">Sessions</p>
                 </div>
                 <div className="bg-white rounded-xl p-3 text-center shadow-sm">
@@ -71,7 +71,7 @@ export default function WhyISLSection() {
                   <p className="text-xs text-gray-500">Avg Score</p>
                 </div>
                 <div className="bg-white rounded-xl p-3 text-center shadow-sm">
-                  <p className="text-2xl font-bold text-purple-600">24</p>
+                  <p className="text-2xl font-bold text-teal-600">24</p>
                   <p className="text-xs text-gray-500">Questions</p>
                 </div>
               </div>
@@ -81,8 +81,8 @@ export default function WhyISLSection() {
                 {[
                   { label: 'Behavioral Questions', score: 92, color: 'bg-green-500' },
                   { label: 'Technical Questions', score: 78, color: 'bg-blue-500' },
-                  { label: 'Leadership Questions', score: 65, color: 'bg-purple-500' },
-                  { label: 'Situational Questions', score: 84, color: 'bg-indigo-500' },
+                  { label: 'Leadership Questions', score: 65, color: 'bg-teal-500' },
+                  { label: 'Situational Questions', score: 84, color: 'bg-emerald-500' },
                 ].map((item, i) => (
                   <div key={item.label}>
                     <div className="flex justify-between text-sm mb-1">
@@ -115,7 +115,7 @@ export default function WhyISLSection() {
                       <p className="text-sm text-gray-700 truncate">{s.q}</p>
                       <p className="text-xs text-gray-400">{s.time}</p>
                     </div>
-                    <span className={`text-sm font-bold ml-3 ${s.score >= 90 ? 'text-green-600' : 'text-blue-600'}`}>{s.score}%</span>
+                    <span className={`text-sm font-bold ml-3 ${s.score >= 90 ? 'text-green-600' : 'text-teal-600'}`}>{s.score}%</span>
                   </div>
                 ))}
               </div>
@@ -130,14 +130,14 @@ export default function WhyISLSection() {
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
             >
-              <p className="text-indigo-600 font-semibold text-sm uppercase tracking-wide mb-3">Why ISL?</p>
+              <p className="text-teal-600 font-semibold text-sm uppercase tracking-wide mb-3">Why InterviewAnswers.ai?</p>
               <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">
-                Not Just Another AI Tool.{' '}
-                <span className="text-indigo-600">A Complete System.</span>
+                Not Another ChatGPT Wrapper.{' '}
+                <span className="text-teal-600">A Complete Interview System.</span>
               </h2>
               <p className="text-lg text-gray-600 mb-10 leading-relaxed">
-                Most AI tools give you generic answers. ISL builds a personalized practice system
-                around YOUR experiences, tracks your progress, and helps you during the actual interview.
+                Most AI tools give you generic answers. InterviewAnswers.ai builds a personalized practice system
+                around YOUR experiences, tracks your progress, and is the only tool that helps you during the actual interview.
               </p>
             </motion.div>
 

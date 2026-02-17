@@ -7,12 +7,12 @@ export default function TermsPage() {
       <nav className="bg-white border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-600 to-emerald-600 flex items-center justify-center">
               <Brain className="w-5 h-5 text-white" />
             </div>
             <span className="font-bold text-gray-900">InterviewAnswers.ai</span>
           </Link>
-          <Link to="/" className="flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-700 font-medium">
+          <Link to="/" className="flex items-center gap-1 text-sm text-teal-600 hover:text-teal-700 font-medium">
             <ArrowLeft className="w-4 h-4" />
             Back to Home
           </Link>
@@ -25,7 +25,7 @@ export default function TermsPage() {
           <p><strong>Effective Date:</strong> January 1, 2025</p>
 
           <h2 className="text-xl font-bold text-gray-900 mt-8">1. Acceptance of Terms</h2>
-          <p>By accessing or using InterviewAnswers.ai ("ISL", "we", "our", or "the Service"), you agree to be bound by these Terms of Service. If you do not agree, please do not use the Service.</p>
+          <p>By accessing or using InterviewAnswers.ai ("we", "our", or "the Service"), you agree to be bound by these Terms of Service. If you do not agree, please do not use the Service.</p>
 
           <h2 className="text-xl font-bold text-gray-900 mt-8">2. Description of Service</h2>
           <p>InterviewAnswers.ai provides AI-powered interview preparation tools including practice sessions, answer building, question generation, and live interview prompting. The Service is intended for educational and personal development purposes only.</p>
@@ -44,10 +44,10 @@ export default function TermsPage() {
           </ul>
 
           <h2 className="text-xl font-bold text-gray-900 mt-8">5. Subscription and Payments</h2>
-          <p>ISL offers both free and paid subscription tiers. Paid subscriptions are billed monthly through Stripe. You may cancel your subscription at any time. Cancellation takes effect at the end of the current billing period. No refunds are provided for partial billing periods.</p>
+          <p>InterviewAnswers.ai offers both free and paid subscription tiers. Paid subscriptions are billed monthly through Stripe. You may cancel your subscription at any time. Cancellation takes effect at the end of the current billing period. No refunds are provided for partial billing periods.</p>
 
           <h2 className="text-xl font-bold text-gray-900 mt-8">6. Live Prompter Disclaimer</h2>
-          <p>The Live Prompter feature is designed to assist during interviews. Some employers may have policies regarding the use of notes or assistance during interviews. It is your responsibility to understand and comply with any such policies. ISL is not responsible for any consequences resulting from the use of the Live Prompter feature.</p>
+          <p>The Live Prompter feature is designed to assist during interviews. Some employers may have policies regarding the use of notes or assistance during interviews. It is your responsibility to understand and comply with any such policies. InterviewAnswers.ai is not responsible for any consequences resulting from the use of the Live Prompter feature.</p>
 
           <h2 className="text-xl font-bold text-gray-900 mt-8">7. AI-Generated Content</h2>
           <p>The AI feedback, suggestions, and generated content provided by the Service are for educational purposes only and should not be considered professional career advice. AI-generated content may not always be accurate or appropriate for your specific situation.</p>
@@ -62,7 +62,7 @@ export default function TermsPage() {
           <p>We may update these Terms from time to time. Continued use of the Service after changes constitutes acceptance of the new Terms. We will notify users of significant changes via email.</p>
 
           <h2 className="text-xl font-bold text-gray-900 mt-8">11. Contact</h2>
-          <p>For questions about these Terms, contact us at <a href="mailto:support@interviewanswers.ai" className="text-indigo-600 hover:text-indigo-700">support@interviewanswers.ai</a>.</p>
+          <p>For questions about these Terms, contact us at <a href="mailto:support@interviewanswers.ai" className="text-teal-600 hover:text-teal-700">support@interviewanswers.ai</a>.</p>
         </div>
       </div>
     </div>
