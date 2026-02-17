@@ -30,11 +30,11 @@ const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
 // Color map for IRS levels (matches getIRSLevel in irsCalculator.js)
 const LEVEL_COLORS = {
-  emerald: { ring: '#10b981', bg: 'from-emerald-400 to-teal-500', text: 'text-emerald-400', barBg: 'bg-emerald-500' },
-  teal:    { ring: '#14b8a6', bg: 'from-teal-400 to-cyan-500', text: 'text-teal-400', barBg: 'bg-teal-500' },
-  blue:    { ring: '#3b82f6', bg: 'from-blue-400 to-indigo-500', text: 'text-blue-400', barBg: 'bg-blue-500' },
-  indigo:  { ring: '#6366f1', bg: 'from-indigo-400 to-purple-500', text: 'text-indigo-400', barBg: 'bg-indigo-500' },
-  slate:   { ring: '#94a3b8', bg: 'from-slate-400 to-slate-500', text: 'text-slate-400', barBg: 'bg-slate-500' },
+  emerald: { ring: '#10b981', bg: 'from-emerald-400 to-teal-500', text: 'text-emerald-600', barBg: 'bg-emerald-500' },
+  teal:    { ring: '#14b8a6', bg: 'from-teal-400 to-cyan-500', text: 'text-teal-600', barBg: 'bg-teal-500' },
+  blue:    { ring: '#3b82f6', bg: 'from-blue-400 to-indigo-500', text: 'text-blue-600', barBg: 'bg-blue-500' },
+  indigo:  { ring: '#6366f1', bg: 'from-indigo-400 to-purple-500', text: 'text-indigo-600', barBg: 'bg-indigo-500' },
+  slate:   { ring: '#94a3b8', bg: 'from-slate-400 to-slate-500', text: 'text-slate-500', barBg: 'bg-slate-400' },
 };
 
 // Tip rotation interval (ms) — cycles through growth tips
@@ -130,7 +130,7 @@ export default function IRSDisplay({ refreshTrigger }) {
     <>
       {/* IRS Hero Card — full-width, above stats grid */}
       <div
-        className="mb-4 sm:mb-6 bg-white/10 backdrop-blur-lg rounded-xl sm:rounded-2xl p-4 sm:p-5 text-white border border-white/20 cursor-pointer hover:bg-white/15 transition-all duration-200"
+        className="mb-4 sm:mb-6 bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 text-slate-800 border border-slate-200 cursor-pointer hover:shadow-xl shadow-lg shadow-slate-200/50 transition-all duration-200"
         onClick={() => setShowDetail(true)}
         onTouchEnd={(e) => { e.preventDefault(); setShowDetail(true); }}
       >
@@ -142,7 +142,7 @@ export default function IRSDisplay({ refreshTrigger }) {
               <circle
                 cx="60" cy="60" r={RING_RADIUS}
                 fill="none"
-                stroke="rgba(255,255,255,0.1)"
+                stroke="rgba(0,0,0,0.08)"
                 strokeWidth="8"
               />
               {/* Score ring */}
@@ -159,8 +159,8 @@ export default function IRSDisplay({ refreshTrigger }) {
             </svg>
             {/* Score number in center */}
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-2xl sm:text-3xl font-black leading-none">{animatedScore}</span>
-              <span className="text-[9px] sm:text-[10px] text-white/60 font-medium">IRS</span>
+              <span className="text-2xl sm:text-3xl font-black leading-none text-slate-800">{animatedScore}</span>
+              <span className="text-[9px] sm:text-[10px] text-slate-400 font-medium">IRS</span>
             </div>
           </div>
 
@@ -170,7 +170,7 @@ export default function IRSDisplay({ refreshTrigger }) {
               <span className={`text-sm sm:text-base font-bold ${colors.text}`}>
                 {level.label}
               </span>
-              <span className="text-[10px] text-white/40">Interview Readiness</span>
+              <span className="text-[10px] text-slate-400">Interview Readiness</span>
             </div>
 
             {/* Mini progress bars */}
@@ -204,7 +204,7 @@ export default function IRSDisplay({ refreshTrigger }) {
         </div>
 
         {/* Growth tip — rotates through relevant tips */}
-        <div className="mt-3 pt-2 border-t border-white/10 flex items-center gap-2">
+        <div className="mt-3 pt-2 border-t border-slate-200 flex items-center gap-2">
           <TrendingUp className="w-3.5 h-3.5 text-teal-400 flex-shrink-0" />
           <AnimatePresence mode="wait">
             <motion.p
@@ -213,7 +213,7 @@ export default function IRSDisplay({ refreshTrigger }) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
               transition={{ duration: 0.3 }}
-              className="text-[11px] sm:text-xs text-white/60"
+              className="text-[11px] sm:text-xs text-slate-500"
             >
               {currentTip}
             </motion.p>
@@ -352,15 +352,15 @@ export default function IRSDisplay({ refreshTrigger }) {
 function MiniBar({ icon, label, value, color }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="text-white/40 flex-shrink-0">{icon}</span>
-      <span className="text-[10px] sm:text-[11px] text-white/50 w-16 sm:w-20 truncate">{label}</span>
-      <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+      <span className="text-slate-400 flex-shrink-0">{icon}</span>
+      <span className="text-[10px] sm:text-[11px] text-slate-500 w-16 sm:w-20 truncate">{label}</span>
+      <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
         <div
           className={`h-full ${color} rounded-full transition-all duration-700 ease-out`}
           style={{ width: `${value}%` }}
         />
       </div>
-      <span className="text-[10px] text-white/40 w-6 text-right font-medium">{value}</span>
+      <span className="text-[10px] text-slate-400 w-6 text-right font-medium">{value}</span>
     </div>
   );
 }

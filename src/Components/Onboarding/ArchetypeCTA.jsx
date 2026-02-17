@@ -92,22 +92,22 @@ export default function ArchetypeCTA({ onAction }) {
   // Map archetype to visual style
   const styles = {
     urgent_seeker: {
-      gradient: 'from-teal-500/30 to-cyan-500/30',
-      border: 'border-teal-400/50',
+      gradient: 'from-teal-50 to-cyan-50',
+      border: 'border-teal-200',
       icon: '🔥',
       subtitle: 'Your interview is coming up — every practice session counts.',
       buttonGradient: 'from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600',
     },
     strategic_builder: {
-      gradient: 'from-teal-500/30 to-emerald-500/30',
-      border: 'border-teal-400/50',
+      gradient: 'from-teal-50 to-emerald-50',
+      border: 'border-teal-200',
       icon: '🌱',
       subtitle: 'Build your confidence one practice session at a time.',
       buttonGradient: 'from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600',
     },
     domain_specialist: {
-      gradient: 'from-purple-500/30 to-indigo-500/30',
-      border: 'border-purple-400/50',
+      gradient: 'from-purple-50 to-indigo-50',
+      border: 'border-purple-200',
       icon: '🎯',
       subtitle: `Questions tailored to your ${field && field !== 'general' ? field : 'specialty'} field.`,
       buttonGradient: 'from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600',
@@ -117,12 +117,12 @@ export default function ArchetypeCTA({ onAction }) {
   const style = styles[archetype] || styles.strategic_builder
 
   return (
-    <div className={`bg-gradient-to-r ${style.gradient} backdrop-blur-xl border-2 ${style.border} rounded-2xl p-5 text-white mb-6 shadow-xl`}>
+    <div className={`bg-gradient-to-r ${style.gradient} border-2 ${style.border} rounded-2xl p-5 text-slate-800 mb-6 shadow-lg`}>
       <div className="flex items-start gap-4">
         <div className="text-3xl flex-shrink-0">{style.icon}</div>
         <div className="flex-1">
           <p className="text-lg font-bold mb-1">{ctaText}</p>
-          <p className="text-sm text-white/80 font-medium mb-3">{style.subtitle}</p>
+          <p className="text-sm text-slate-600 font-medium mb-3">{style.subtitle}</p>
           <button
             onClick={() => onAction?.(config.ctaAction, archetype)}
             className={`bg-gradient-to-r ${style.buttonGradient} text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all shadow-md hover:shadow-lg active:scale-[0.98]`}

@@ -18,7 +18,7 @@ const MILESTONES_CONFIG = [
   { days: 30, label: '1 month', icon: '🏆' },
 ];
 
-export default function StreakDisplay({ refreshTrigger }) {
+export default function StreakDisplay({ refreshTrigger, variant = 'dark' }) {
   const [streak, setStreak] = useState(null);
   const [showPopover, setShowPopover] = useState(false);
   const [freezeLoading, setFreezeLoading] = useState(false);
@@ -70,7 +70,11 @@ export default function StreakDisplay({ refreshTrigger }) {
     <>
       {/* Stat card — matches existing grid card style */}
       <div
-        className="bg-white/10 backdrop-blur-lg rounded-xl sm:rounded-2xl p-3 sm:p-4 text-white hover:bg-white/15 hover:scale-[1.02] transition-all duration-200 border border-white/20 cursor-pointer relative"
+        className={`rounded-xl sm:rounded-2xl p-3 sm:p-4 hover:scale-[1.02] transition-all duration-200 cursor-pointer relative ${
+          variant === 'light'
+            ? 'bg-white text-slate-800 border border-slate-200 shadow-lg shadow-slate-200/50 hover:shadow-xl'
+            : 'bg-white/10 backdrop-blur-lg text-white border border-white/20 hover:bg-white/15'
+        }`}
         onClick={() => setShowPopover(true)}
         onTouchEnd={(e) => { e.preventDefault(); setShowPopover(true); }}
       >
@@ -82,7 +86,7 @@ export default function StreakDisplay({ refreshTrigger }) {
             <p className="text-xl sm:text-2xl font-black leading-tight">
               {currentStreak}
             </p>
-            <p className="text-[10px] sm:text-xs text-white/80 leading-tight font-semibold whitespace-nowrap">
+            <p className={`text-[10px] sm:text-xs leading-tight font-semibold whitespace-nowrap ${variant === 'light' ? 'text-slate-500' : 'text-white/80'}`}>
               {currentStreak === 1 ? 'Day' : 'Day Streak'}
             </p>
           </div>
