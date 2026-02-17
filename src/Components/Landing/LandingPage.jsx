@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
+import useDocumentHead from '../../hooks/useDocumentHead';
 import LandingNavbar from './LandingNavbar';
 import HeroSection from './HeroSection';
 import SocialProofBar from './SocialProofBar';
@@ -16,6 +17,24 @@ import LandingFooter from './LandingFooter';
 export default function LandingPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+
+  // SEO: Dynamic meta tags for the general landing page
+  useDocumentHead({
+    title: 'InterviewAnswers.ai - AI Interview Practice & STAR Method Coaching',
+    description: 'Practice job interviews with AI mock interviews, real-time coaching, and STAR method feedback. Build answers from your real experiences. Free to start, no credit card required.',
+    keywords: 'interview preparation, AI interview practice, mock interview, STAR method, behavioral interview questions, job interview tips, interview coaching, AI interview coach, practice interview questions, interview answers, job interview preparation, career coaching',
+    canonical: 'https://interviewanswers.ai/',
+    og: {
+      title: 'InterviewAnswers.ai - AI Interview Practice & Coaching',
+      description: 'Practice job interviews with AI. Mock interviews, STAR method coaching, real-time prompts. Build answers from your real experiences.',
+      url: 'https://interviewanswers.ai/',
+      type: 'website',
+    },
+    twitter: {
+      title: 'InterviewAnswers.ai - AI Interview Practice & Coaching',
+      description: 'Practice job interviews with AI. Mock interviews, STAR method coaching, real-time prompts. Free to start.',
+    },
+  });
 
   useEffect(() => {
     // Handle auth tokens in URL hash — pass through to /app where ProtectedRoute handles them

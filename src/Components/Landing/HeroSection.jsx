@@ -47,9 +47,9 @@ export default function HeroSection() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
             >
-              Nail Every Interview.{' '}
+              AI Interview Practice{' '}
               <span className="bg-gradient-to-r from-teal-400 to-emerald-300 bg-clip-text text-transparent">
-                Powered by AI.
+                That Gets You Hired.
               </span>
             </motion.h1>
 

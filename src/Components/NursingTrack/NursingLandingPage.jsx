@@ -10,8 +10,27 @@ import {
   ArrowRight, Stethoscope, Bot, Target, MessageSquare,
   CheckCircle, Shield, Clock, Sparkles, Heart, DollarSign
 } from 'lucide-react';
+import useDocumentHead from '../../hooks/useDocumentHead';
 
 export default function NursingLandingPage() {
+  // SEO: Dynamic meta tags for the nursing interview landing page
+  useDocumentHead({
+    title: 'NurseInterviewPro - AI Nursing Interview Practice | SBAR & STAR Coaching',
+    description: 'Practice nursing interview questions with AI coaching. SBAR communication drills, STAR method feedback, and specialty-specific questions for ED, ICU, OR, L&D, Pediatrics, and more. Built by nurses, for nurses.',
+    keywords: 'nursing interview questions, nurse interview practice, nursing job interview, SBAR interview, STAR method nursing, nursing interview tips, RN interview questions, nursing interview preparation, clinical interview questions, healthcare interview practice, ICU interview, ED interview, nurse interview coach, nursing behavioral interview, travel nurse interview',
+    canonical: 'https://interviewanswers.ai/nurse',
+    og: {
+      title: 'NurseInterviewPro - AI Nursing Interview Practice & SBAR Coaching',
+      description: 'Practice nursing interviews with AI. SBAR drills, STAR coaching, 68 clinically-sourced questions across 8 specialties. Built by nurses, for nurses.',
+      url: 'https://interviewanswers.ai/nurse',
+      type: 'website',
+    },
+    twitter: {
+      title: 'NurseInterviewPro - AI Nursing Interview Practice',
+      description: 'Practice nursing interviews with AI. SBAR drills, STAR coaching, specialty-specific questions. Built by nurses, for nurses.',
+    },
+  });
+
   return (
     <div className="min-h-screen bg-white">
       {/* ============================================================
@@ -76,9 +95,9 @@ export default function NursingLandingPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
               >
-                Land Your Dream{' '}
+                Nursing Interview Prep{' '}
                 <span className="bg-gradient-to-r from-pink-400 to-amber-300 bg-clip-text text-transparent">
-                  Nursing Job.
+                  That Lands the Job.
                 </span>
               </motion.h1>
 
