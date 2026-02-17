@@ -81,7 +81,7 @@ const SBAR_COMPONENTS = [
   { key: 'recommendation', label: 'R', fullLabel: 'Recommendation', color: 'teal', description: 'Clear action or request' },
 ];
 
-export default function NursingSBARDrill({ specialty, onBack, userData, refreshUsage, addSession }) {
+export default function NursingSBARDrill({ specialty, onBack, userData, refreshUsage, addSession, triggerStreakRefresh }) {
   // Questions — loaded from Supabase (fallback: static), filtered to SBAR only, shuffled once
   const { questions: rawQuestions, loading: questionsLoading } = useNursingQuestions(specialty.id);
   const [questions, setQuestions] = useState([]);
@@ -238,7 +238,7 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
       if (userData?.user?.id) {
         try {
           await incrementUsage(supabase, userData.user.id, 'nursingSbar');
-          updateStreakAfterSession(supabase, userData.user.id).catch(() => {}); // Phase 3 streak
+          updateStreakAfterSession(supabase, userData.user.id).then(() => triggerStreakRefresh?.()).catch(() => {}); // Phase 3 streak
           if (refreshUsage) refreshUsage();
           // Re-check credits after charge to catch hitting zero
           const recheck = canUseFeature(

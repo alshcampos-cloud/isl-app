@@ -1,4 +1,4 @@
-# Session State — Last Updated: February 16, 2026 (Late Evening)
+# Session State — Last Updated: February 16, 2026 (Night)
 
 ## What's Live on Production (www.interviewanswers.ai)
 
@@ -30,7 +30,7 @@
 - Unit 1c: Streak counter system (cfe857a) — SHIPPED ✅ (migration applied)
 - Unit 2: IRS v1 — Interview Readiness Score (b60348e) — SHIPPED ✅
 - Unit 2b: IRS v1.1 — Answer Preparedness 4th component (ec92c80) — SHIPPED ✅
-- Unit 3: Nursing dashboard wiring — NOT STARTED
+- Unit 3: Nursing dashboard wiring — CODE COMPLETE (build passes, needs commit + deploy)
 
 ### Nursing Track
 - Walled garden model: AI coaches communication, never generates clinical content
@@ -57,7 +57,7 @@
 - [x] Unit 1b: Browser detection consolidation (SHIPPED 887daca)
 - [x] Unit 1c: Streak counter system (SHIPPED cfe857a) — ✅ MIGRATION APPLIED
 - [x] Unit 2: IRS v1 (Interview Readiness Score) — SHIPPED b60348e ✅
-- [ ] Unit 3: Wire nursing dashboard to real IRS/streak data
+- [x] Unit 3: Wire nursing dashboard to real IRS/streak data — CODE COMPLETE
 - [ ] Email deliverability (SPF/DKIM/DMARC or Resend)
 
 ## Phase 3 Plan (after Phase 2 verified)

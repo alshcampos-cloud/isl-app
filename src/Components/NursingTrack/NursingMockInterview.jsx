@@ -124,7 +124,7 @@ ${question.bullets?.map(b => `- ${b}`).join('\n') || `Guide the candidate throug
 Start by asking the interview question naturally. Be a nurse manager conducting an interview — professional but warm.`;
 };
 
-export default function NursingMockInterview({ specialty, onBack, userData, refreshUsage, addSession }) {
+export default function NursingMockInterview({ specialty, onBack, userData, refreshUsage, addSession, triggerStreakRefresh }) {
   // State
   const [messages, setMessages] = useState([]);
   const [currentInput, setCurrentInput] = useState('');
@@ -305,7 +305,7 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
       if (userData?.user?.id) {
         try {
           await incrementUsage(supabase, userData.user.id, 'nursingMock');
-          updateStreakAfterSession(supabase, userData.user.id).catch(() => {}); // Phase 3 streak
+          updateStreakAfterSession(supabase, userData.user.id).then(() => triggerStreakRefresh?.()).catch(() => {}); // Phase 3 streak
           // Refresh parent's usage stats so dashboard stays current
           if (refreshUsage) refreshUsage();
           // Re-check credits after charge to catch hitting zero (prevents stale state bypass)

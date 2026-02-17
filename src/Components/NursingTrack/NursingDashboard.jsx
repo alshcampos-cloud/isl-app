@@ -14,9 +14,11 @@ import { supabase } from '../../lib/supabase';
 import { CLINICAL_FRAMEWORKS } from './nursingQuestions';
 import useNursingQuestions from './useNursingQuestions';
 import NursingLoadingSkeleton from './NursingLoadingSkeleton';
+import NursingIRSDisplay from './NursingIRSDisplay';
+import StreakDisplay from '../Streaks/StreakDisplay';
 import {
   countByMode, averageScore, averageSBARScores, averageByFramework,
-  uniqueQuestionsPracticed, scoreTrend, perQuestionStats,
+  uniqueQuestionsPracticed, scoreTrend,
 } from './nursingSessionStore';
 
 // Account dropdown menu — sign out, tier badge, settings link
@@ -85,7 +87,7 @@ function AccountMenu({ userData }) {
   );
 }
 
-export default function NursingDashboard({ specialty, onStartMode, onChangeSpecialty, onBack, userData, sessionHistory = [] }) {
+export default function NursingDashboard({ specialty, onStartMode, onChangeSpecialty, onBack, userData, sessionHistory = [], streakRefreshTrigger }) {
   const { questions, categories, loading } = useNursingQuestions(specialty.id);
 
   if (loading) return <NursingLoadingSkeleton title={`${specialty.name} Track`} onBack={onBack} />;
@@ -98,38 +100,8 @@ export default function NursingDashboard({ specialty, onStartMode, onChangeSpeci
   const trend = scoreTrend(sessionHistory, 20);
   const frameworkAvgs = averageByFramework(sessionHistory);
   const sbarAvgs = averageSBARScores(sessionHistory);
-  const qStats = perQuestionStats(sessionHistory);
-
-  // Streak calculation: consecutive days with sessions (counting backwards from today)
-  const calculateStreak = () => {
-    if (sessionHistory.length === 0) return 0;
-    const daySet = new Set(sessionHistory.map(s => new Date(s.timestamp).toDateString()));
-    let streak = 0;
-    const d = new Date();
-    // Check today first, then count backwards
-    if (!daySet.has(d.toDateString())) {
-      // Check if yesterday had a session (allow 1-day grace)
-      d.setDate(d.getDate() - 1);
-      if (!daySet.has(d.toDateString())) return 0;
-    }
-    while (daySet.has(d.toDateString())) {
-      streak++;
-      d.setDate(d.getDate() - 1);
-    }
-    return streak;
-  };
-  const streak = calculateStreak();
-
   // Recent sessions (last 5, newest first)
   const recentSessions = [...sessionHistory].sort((a, b) => b.timestamp.localeCompare(a.timestamp)).slice(0, 5);
-
-  // Readiness score (0-100) — same formula as CommandCenter
-  const coverageRatio = questions.length > 0 ? questionsUniqueCount / questions.length : 0;
-  const scoreRatio = avgScore ? avgScore / 5 : 0;
-  const masteredCount = Object.values(qStats).filter(q => q.bestScore >= 4).length;
-  const masteredRatio = questions.length > 0 ? masteredCount / questions.length : 0;
-  const volumeRatio = Math.min(totalSessions / 30, 1);
-  const readiness = Math.round((coverageRatio * 30) + (scoreRatio * 30) + (masteredRatio * 20) + (volumeRatio * 20));
 
   // Credits display — nursing track uses separate pools
   const isUnlimited = userData?.isBeta || userData?.tier === 'pro' || userData?.tier === 'beta';
@@ -265,6 +237,13 @@ export default function NursingDashboard({ specialty, onStartMode, onChangeSpeci
           </div>
         </motion.div>
 
+        {/* IRS Hero Card — Interview Readiness Score (Phase 3 Unit 3) */}
+        <NursingIRSDisplay
+          userId={userData?.user?.id}
+          specialtyId={specialty?.id}
+          refreshTrigger={streakRefreshTrigger}
+        />
+
         {/* Gradient Stats Cards — matches main app visual style */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-8">
           <div
@@ -274,7 +253,7 @@ export default function NursingDashboard({ specialty, onStartMode, onChangeSpeci
             <p className="text-xs sm:text-sm text-white/90 font-medium mb-0.5">Total Sessions</p>
             <p className="text-2xl sm:text-3xl font-black">{totalSessions}</p>
             <p className="text-[10px] sm:text-xs text-white/75 mt-0.5">
-              {totalSessions === 0 ? 'Start practicing!' : '🎯 Keep it up!'}
+              {totalSessions === 0 ? 'Start practicing!' : 'Keep it up!'}
             </p>
           </div>
           <div
@@ -284,7 +263,7 @@ export default function NursingDashboard({ specialty, onStartMode, onChangeSpeci
             <p className="text-xs sm:text-sm text-white/90 font-medium mb-0.5">Avg Score</p>
             <p className="text-2xl sm:text-3xl font-black">{avgScore ? avgScore.toFixed(1) : '--'}</p>
             <p className="text-[10px] sm:text-xs text-white/75 mt-0.5">
-              {avgScore ? (avgScore >= 4 ? '⭐ Excellent' : avgScore >= 3 ? '📈 Improving' : '💪 Building') : 'of 5.0'}
+              {avgScore ? (avgScore >= 4 ? 'Excellent' : avgScore >= 3 ? 'Improving' : 'Building') : 'of 5.0'}
             </p>
           </div>
           <div
@@ -295,16 +274,8 @@ export default function NursingDashboard({ specialty, onStartMode, onChangeSpeci
             <p className="text-2xl sm:text-3xl font-black">{questionsUniqueCount}</p>
             <p className="text-[10px] sm:text-xs text-white/75 mt-0.5">of {questions.length} questions</p>
           </div>
-          <div
-            className="bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl sm:rounded-2xl p-3 sm:p-4 text-white cursor-pointer hover:scale-[1.02] hover:shadow-lg transition-all"
-            onClick={() => onStartMode('command-center')}
-          >
-            <p className="text-xs sm:text-sm text-white/90 font-medium mb-0.5">Streak</p>
-            <p className="text-2xl sm:text-3xl font-black">{streak}</p>
-            <p className="text-[10px] sm:text-xs text-white/75 mt-0.5">
-              {streak === 0 ? 'Start today!' : streak === 1 ? '🔥 day' : `🔥 days`}
-            </p>
-          </div>
+          {/* Streak — real data from user_streaks table (Phase 3 Unit 3) */}
+          <StreakDisplay refreshTrigger={streakRefreshTrigger} />
         </div>
 
         {/* Usage Tracker — free users see remaining credits, Pro users see ∞ */}
@@ -428,29 +399,7 @@ export default function NursingDashboard({ specialty, onStartMode, onChangeSpeci
 
         {/* Progress Summary — only shows when there's data */}
         {totalSessions > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
-            {/* Readiness Score */}
-            <div className="bg-white/5 border border-white/10 rounded-xl p-4 flex items-center gap-4">
-              <div className="relative w-14 h-14 flex-shrink-0">
-                <svg className="w-14 h-14 -rotate-90" viewBox="0 0 56 56">
-                  <circle cx="28" cy="28" r="24" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="4" />
-                  <circle
-                    cx="28" cy="28" r="24" fill="none"
-                    stroke={readiness >= 70 ? '#22c55e' : readiness >= 40 ? '#eab308' : '#38bdf8'}
-                    strokeWidth="4" strokeLinecap="round"
-                    strokeDasharray={`${(readiness / 100) * 150.8} 150.8`}
-                  />
-                </svg>
-                <span className="absolute inset-0 flex items-center justify-center text-white font-bold text-sm">{readiness}</span>
-              </div>
-              <div>
-                <p className="text-white font-semibold text-sm">Interview Readiness</p>
-                <p className="text-slate-400 text-xs">
-                  {readiness >= 70 ? 'Strong — Interview Ready' : readiness >= 40 ? 'Good Progress' : 'Building Momentum'}
-                </p>
-              </div>
-            </div>
-
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
             {/* Score Trend Mini Chart */}
             {trend.length > 1 && (
               <div className="bg-white/5 border border-white/10 rounded-xl p-4">

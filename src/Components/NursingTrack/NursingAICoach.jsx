@@ -196,7 +196,7 @@ const CONVERSATION_STARTERS = [
 // ============================================================
 // COMPONENT
 // ============================================================
-export default function NursingAICoach({ specialty, onBack, userData, refreshUsage, addSession }) {
+export default function NursingAICoach({ specialty, onBack, userData, refreshUsage, addSession, triggerStreakRefresh }) {
   // Load curated questions for this specialty (walled garden — C.O.A.C.H. protocol "O")
   const specialtyQuestions = getQuestionsForSpecialty(specialty.id);
   const questionListForPrompt = specialtyQuestions.map(q =>
@@ -341,7 +341,7 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
       if (userData?.user?.id) {
         try {
           await incrementUsage(supabase, userData.user.id, 'practiceMode');
-          updateStreakAfterSession(supabase, userData.user.id).catch(() => {}); // Phase 3 streak
+          updateStreakAfterSession(supabase, userData.user.id).then(() => triggerStreakRefresh?.()).catch(() => {}); // Phase 3 streak
           if (refreshUsage) refreshUsage();
         } catch (chargeErr) {
           // Log but don't break session — AI response already succeeded

@@ -88,7 +88,7 @@ ${citationSource
 Rules: Coach communication ONLY. Never generate clinical content. Never patronizing.`;
 };
 
-export default function NursingPracticeMode({ specialty, onBack, userData, refreshUsage, addSession, startQuestionId = null }) {
+export default function NursingPracticeMode({ specialty, onBack, userData, refreshUsage, addSession, startQuestionId = null, triggerStreakRefresh }) {
   // Questions — loaded from Supabase (fallback: static), shuffled once loaded
   const { questions: rawQuestions, loading: questionsLoading } = useNursingQuestions(specialty.id);
   const [questions, setQuestions] = useState([]);
@@ -235,7 +235,7 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
       if (userData?.user?.id) {
         try {
           await incrementUsage(supabase, userData.user.id, 'nursingPractice');
-          updateStreakAfterSession(supabase, userData.user.id).catch(() => {}); // Phase 3 streak
+          updateStreakAfterSession(supabase, userData.user.id).then(() => triggerStreakRefresh?.()).catch(() => {}); // Phase 3 streak
           if (refreshUsage) refreshUsage();
           // Re-check credits after charge to catch hitting zero (prevents stale state bypass)
           const recheck = canUseFeature(

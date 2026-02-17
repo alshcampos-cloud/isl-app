@@ -6,7 +6,7 @@
 //
 // ⚠️ D.R.A.F.T. Protocol: This is a NEW file. No existing code modified.
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { isBetaUser, getUsageStats } from '../../utils/creditSystem';
@@ -49,6 +49,10 @@ export default function NursingTrackApp() {
   // Session history — loaded from Supabase when available, falls back to in-memory
   const [sessionHistory, setSessionHistory] = useState([]);
   const [sessionsLoadedFromDb, setSessionsLoadedFromDb] = useState(false);
+
+  // Streak/IRS refresh trigger — incremented after any session completes to re-fetch data
+  const [streakRefreshTrigger, setStreakRefreshTrigger] = useState(0);
+  const triggerStreakRefresh = useCallback(() => setStreakRefreshTrigger(t => t + 1), []);
 
   // User state — fetched on mount, passed as props (no Context needed yet)
   const [userData, setUserData] = useState({
@@ -275,6 +279,7 @@ export default function NursingTrackApp() {
             onBack={handleBackToApp}
             userData={userData}
             sessionHistory={sessionHistory}
+            streakRefreshTrigger={streakRefreshTrigger}
           />
         );
 
@@ -286,6 +291,7 @@ export default function NursingTrackApp() {
             userData={userData}
             refreshUsage={refreshUsage}
             addSession={addSession}
+            triggerStreakRefresh={triggerStreakRefresh}
           />
         );
 
@@ -298,6 +304,7 @@ export default function NursingTrackApp() {
             refreshUsage={refreshUsage}
             addSession={addSession}
             startQuestionId={targetQuestionId}
+            triggerStreakRefresh={triggerStreakRefresh}
           />
         );
 
@@ -309,6 +316,7 @@ export default function NursingTrackApp() {
             userData={userData}
             refreshUsage={refreshUsage}
             addSession={addSession}
+            triggerStreakRefresh={triggerStreakRefresh}
           />
         );
 
@@ -341,6 +349,7 @@ export default function NursingTrackApp() {
             userData={userData}
             refreshUsage={refreshUsage}
             addSession={addSession}
+            triggerStreakRefresh={triggerStreakRefresh}
           />
         );
 
