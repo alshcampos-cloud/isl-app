@@ -55,11 +55,11 @@ const ConsentDialog = ({
 
           <p className="text-xs text-gray-600 mb-4">
             By clicking "I Agree," you consent to our{' '}
-            <button onClick={() => onNavigate('privacy')} className="text-indigo-600 underline">
+            <button onClick={() => onNavigate('privacy')} className="text-teal-600 underline">
               Privacy Policy
             </button>
             {' '}and{' '}
-            <button onClick={() => onNavigate('terms')} className="text-indigo-600 underline">
+            <button onClick={() => onNavigate('terms')} className="text-teal-600 underline">
               Terms
             </button>.
           </p>
@@ -73,7 +73,7 @@ const ConsentDialog = ({
             </button>
             <button
               onClick={onAgree}
-              className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg text-sm"
+              className="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-4 rounded-lg text-sm"
             >
               I Agree
             </button>
