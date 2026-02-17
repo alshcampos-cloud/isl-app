@@ -113,7 +113,75 @@ export function getIRSLevel(score) {
 }
 
 /**
- * Get actionable growth tip targeting the weakest IRS component
+ * Build a pool of relevant growth tips based on which components have room to grow.
+ * Returns all applicable tips — caller picks which one to display (e.g., rotating).
+ *
+ * @param {number} consistency - 0-100
+ * @param {number} starAdherence - 0-100
+ * @param {number} coverage - 0-100
+ * @param {number} answerPreparedness - 0-100
+ * @returns {string[]} Array of growth tips (at least 1)
+ */
+export function getGrowthTips(consistency, starAdherence, coverage, answerPreparedness = 0) {
+  const tips = [];
+
+  // Answer preparedness tips (< 100 means room to grow)
+  if (answerPreparedness < 100) {
+    tips.push('Personalize your answers using the AI Coach to boost your preparedness.');
+    if (answerPreparedness < 50) {
+      tips.push('Your Live Prompter works best with personalized answers — not templates.');
+    }
+    if (answerPreparedness > 0 && answerPreparedness < 100) {
+      tips.push("You've started personalizing — keep going to complete your answer bank.");
+    }
+  }
+
+  // Consistency tips
+  if (consistency < 100) {
+    tips.push('Practice daily to build your consistency score.');
+    if (consistency < 30) {
+      tips.push('Even 5 minutes a day builds interview confidence over time.');
+    }
+    if (consistency >= 50) {
+      tips.push("Your streak is building momentum — don't break the chain!");
+    }
+  }
+
+  // Quality / STAR adherence tips
+  if (starAdherence < 100) {
+    tips.push('Focus on STAR structure in your answers to boost quality.');
+    if (starAdherence < 50) {
+      tips.push('Try starting answers with a specific situation to set the scene.');
+    }
+    if (starAdherence >= 50) {
+      tips.push('Your answer quality is improving — add measurable results for even higher scores.');
+    }
+  }
+
+  // Coverage tips
+  if (coverage < 100) {
+    tips.push('Try new questions to expand your coverage.');
+    if (coverage < 30) {
+      tips.push('Practicing different question types prepares you for surprises.');
+    }
+    if (coverage >= 50) {
+      tips.push("You've covered half your bank — the remaining questions could be the ones they ask.");
+    }
+  }
+
+  // Fallback if everything is at 100 (unlikely but handle it)
+  if (tips.length === 0) {
+    tips.push('Keep practicing to maintain your readiness.');
+    tips.push("You're interview ready — a quick daily session keeps you sharp.");
+  }
+
+  return tips;
+}
+
+/**
+ * Get a single growth tip (legacy compat + simple usage).
+ * Picks the tip for the weakest component.
+ *
  * @param {number} consistency - 0-100
  * @param {number} starAdherence - 0-100
  * @param {number} coverage - 0-100
@@ -121,18 +189,6 @@ export function getIRSLevel(score) {
  * @returns {string}
  */
 export function getGrowthTip(consistency, starAdherence, coverage, answerPreparedness = 0) {
-  const weakest = Math.min(consistency, starAdherence, coverage, answerPreparedness);
-  if (weakest === answerPreparedness && answerPreparedness < 100) {
-    return 'Personalize your answers using the AI Coach to boost your preparedness.';
-  }
-  if (weakest === consistency && consistency < 100) {
-    return 'Practice daily to build your consistency score.';
-  }
-  if (weakest === starAdherence) {
-    return 'Focus on STAR structure in your answers to boost quality.';
-  }
-  if (weakest === coverage) {
-    return 'Try new questions to expand your coverage.';
-  }
-  return 'Keep practicing to maintain your readiness.';
+  const tips = getGrowthTips(consistency, starAdherence, coverage, answerPreparedness);
+  return tips[0];
 }

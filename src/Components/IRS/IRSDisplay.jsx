@@ -21,7 +21,7 @@ import {
   isPersonalizedAnswer,
   calculateIRS,
   getIRSLevel,
-  getGrowthTip,
+  getGrowthTips,
 } from './irsCalculator';
 
 // ── SVG Ring Constants ──────────────────────────────────────
@@ -37,10 +37,14 @@ const LEVEL_COLORS = {
   slate:   { ring: '#94a3b8', bg: 'from-slate-400 to-slate-500', text: 'text-slate-400', barBg: 'bg-slate-500' },
 };
 
+// Tip rotation interval (ms) — cycles through growth tips
+const TIP_ROTATION_MS = 8000;
+
 export default function IRSDisplay({ refreshTrigger }) {
   const [irsData, setIrsData] = useState(null);
   const [showDetail, setShowDetail] = useState(false);
   const [animatedScore, setAnimatedScore] = useState(0);
+  const [tipIndex, setTipIndex] = useState(0);
   const prevScoreRef = useRef(0);
   const animationRef = useRef(null);
 
@@ -94,6 +98,14 @@ export default function IRSDisplay({ refreshTrigger }) {
     };
   }, [irsData]);
 
+  // Rotate through growth tips on a timer (must be above early return — rules of hooks)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTipIndex(prev => prev + 1);
+    }, TIP_ROTATION_MS);
+    return () => clearInterval(interval);
+  }, []);
+
   // Don't render anything if no data loaded yet
   if (!irsData) return null;
 
@@ -104,7 +116,8 @@ export default function IRSDisplay({ refreshTrigger }) {
   const answerPreparedness = calculateAnswerPreparedness(irsData.narratives, irsData.totalQuestions);
   const irsScore = calculateIRS(consistency, starAdherence, coverage, answerPreparedness);
   const level = getIRSLevel(irsScore);
-  const growthTip = getGrowthTip(consistency, starAdherence, coverage, answerPreparedness);
+  const tips = getGrowthTips(consistency, starAdherence, coverage, answerPreparedness);
+  const currentTip = tips[tipIndex % tips.length];
   const colors = LEVEL_COLORS[level.color] || LEVEL_COLORS.slate;
 
   // Count personalized answers for detail modal sublabel
@@ -190,10 +203,21 @@ export default function IRSDisplay({ refreshTrigger }) {
           </div>
         </div>
 
-        {/* Growth tip — subtle, below the card content */}
+        {/* Growth tip — rotates through relevant tips */}
         <div className="mt-3 pt-2 border-t border-white/10 flex items-center gap-2">
           <TrendingUp className="w-3.5 h-3.5 text-teal-400 flex-shrink-0" />
-          <p className="text-[11px] sm:text-xs text-white/60">{growthTip}</p>
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={tipIndex % tips.length}
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.3 }}
+              className="text-[11px] sm:text-xs text-white/60"
+            >
+              {currentTip}
+            </motion.p>
+          </AnimatePresence>
         </div>
       </div>
 
@@ -288,13 +312,24 @@ export default function IRSDisplay({ refreshTrigger }) {
                 />
               </div>
 
-              {/* Growth tip */}
+              {/* Growth tip — shows current rotating tip */}
               <div className="bg-white/5 border border-white/10 rounded-xl p-3 mb-4">
                 <div className="flex items-start gap-2">
                   <TrendingUp className="w-4 h-4 text-teal-400 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="text-xs font-semibold text-white mb-1">Growth Tip</p>
-                    <p className="text-xs text-slate-400">{growthTip}</p>
+                    <AnimatePresence mode="wait">
+                      <motion.p
+                        key={tipIndex % tips.length}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="text-xs text-slate-400"
+                      >
+                        {currentTip}
+                      </motion.p>
+                    </AnimatePresence>
                   </div>
                 </div>
               </div>
