@@ -19,7 +19,9 @@ import useNursingQuestions from './useNursingQuestions';
 import NursingLoadingSkeleton from './NursingLoadingSkeleton';
 import { fetchWithRetry } from '../../utils/fetchWithRetry';
 import useSpeechRecognition from './useSpeechRecognition';
+import SpeechUnavailableWarning from '../SpeechUnavailableWarning';
 import { canUseFeature, incrementUsage } from '../../utils/creditSystem';
+import { updateStreakAfterSession } from '../../utils/streakSupabase';
 import NursingSessionSummary from './NursingSessionSummary';
 import { parseScoreFromResponse, stripScoreTag, getCitationSource, validateNursingResponse } from './nursingUtils';
 import { createMockInterviewSession } from './nursingSessionStore';
@@ -122,7 +124,7 @@ ${question.bullets?.map(b => `- ${b}`).join('\n') || `Guide the candidate throug
 Start by asking the interview question naturally. Be a nurse manager conducting an interview — professional but warm.`;
 };
 
-export default function NursingMockInterview({ specialty, onBack, userData, refreshUsage, addSession }) {
+export default function NursingMockInterview({ specialty, onBack, userData, refreshUsage, addSession, triggerStreakRefresh }) {
   // State
   const [messages, setMessages] = useState([]);
   const [currentInput, setCurrentInput] = useState('');
@@ -147,7 +149,7 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
   const {
     transcript: speechTranscript,
     isListening: micActive,
-    isSupported: micSupported,
+    hasReliableSpeech,
     startSession: startMic,
     stopSession: stopMic,
     clearTranscript: clearSpeech,
@@ -303,6 +305,7 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
       if (userData?.user?.id) {
         try {
           await incrementUsage(supabase, userData.user.id, 'nursingMock');
+          updateStreakAfterSession(supabase, userData.user.id).then(() => triggerStreakRefresh?.()).catch(() => {}); // Phase 3 streak
           // Refresh parent's usage stats so dashboard stays current
           if (refreshUsage) refreshUsage();
           // Re-check credits after charge to catch hitting zero (prevents stale state bypass)
@@ -663,9 +666,10 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
           {micError && (
             <p className="text-red-400 text-xs mb-1 text-center">{micError}</p>
           )}
+          <SpeechUnavailableWarning variant="inline" darkMode className="text-center" />
           <div className="flex items-end gap-2">
             {/* Mic toggle — Battle Scar #5: must be user gesture (onClick/onTouchEnd) */}
-            {micSupported && (
+            {hasReliableSpeech && (
               <button
                 onClick={async () => {
                   if (micActive) {

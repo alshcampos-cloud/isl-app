@@ -7,12 +7,12 @@ export default function PrivacyPage() {
       <nav className="bg-white border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-600 to-emerald-600 flex items-center justify-center">
               <Brain className="w-5 h-5 text-white" />
             </div>
             <span className="font-bold text-gray-900">InterviewAnswers.ai</span>
           </Link>
-          <Link to="/" className="flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-700 font-medium">
+          <Link to="/" className="flex items-center gap-1 text-sm text-teal-600 hover:text-teal-700 font-medium">
             <ArrowLeft className="w-4 h-4" />
             Back to Home
           </Link>
@@ -92,7 +92,7 @@ export default function PrivacyPage() {
           <p>We may update this Privacy Policy from time to time. We will notify you of significant changes via email. Continued use of the Service constitutes acceptance of the updated policy.</p>
 
           <h2 className="text-xl font-bold text-gray-900 mt-8">12. Contact</h2>
-          <p>For privacy-related questions or requests, contact us at <a href="mailto:support@interviewanswers.ai" className="text-indigo-600 hover:text-indigo-700">support@interviewanswers.ai</a>.</p>
+          <p>For privacy-related questions or requests, contact us at <a href="mailto:support@interviewanswers.ai" className="text-teal-600 hover:text-teal-700">support@interviewanswers.ai</a>.</p>
         </div>
       </div>
     </div>

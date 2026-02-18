@@ -7,6 +7,7 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
   const [isSignUp, setIsSignUp] = useState(defaultMode === 'signup')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [fullName, setFullName] = useState('')
   const [message, setMessage] = useState(null)
   const [error, setError] = useState(null)
@@ -20,6 +21,12 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
     setMessage(null)
 
     try {
+      if (isSignUp && password !== confirmPassword) {
+        setError('Passwords do not match')
+        setLoading(false)
+        return
+      }
+
       if (isSignUp) {
         // Sign up
         const { data, error } = await supabase.auth.signUp({
@@ -75,7 +82,7 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-sky-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
         {/* Back link */}
         {onBack && (
@@ -125,7 +132,7 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   required={isSignUp}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                   placeholder="John Doe"
                 />
               </div>
@@ -143,7 +150,7 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 placeholder="you@example.com"
               />
             </div>
@@ -161,16 +168,57 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={8}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 placeholder="••••••••"
               />
             </div>
-            {isSignUp && (
+            {isSignUp && password.length > 0 && (
+              <div className="mt-2 space-y-1">
+                <p className={`text-xs ${password.length >= 8 ? 'text-green-600' : 'text-gray-400'}`}>
+                  {password.length >= 8 ? '✓' : '○'} At least 8 characters
+                </p>
+                <p className={`text-xs ${/[A-Z]/.test(password) ? 'text-green-600' : 'text-gray-400'}`}>
+                  {/[A-Z]/.test(password) ? '✓' : '○'} One uppercase letter
+                </p>
+                <p className={`text-xs ${/[0-9]/.test(password) ? 'text-green-600' : 'text-gray-400'}`}>
+                  {/[0-9]/.test(password) ? '✓' : '○'} One number
+                </p>
+                <p className={`text-xs ${/[^A-Za-z0-9]/.test(password) ? 'text-green-600' : 'text-gray-400'}`}>
+                  {/[^A-Za-z0-9]/.test(password) ? '✓' : '○'} One special character (recommended)
+                </p>
+              </div>
+            )}
+            {isSignUp && !password && (
               <p className="text-xs text-gray-500 mt-1">
                 At least 8 characters
               </p>
             )}
           </div>
+
+          {isSignUp && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Confirm Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  placeholder="••••••••"
+                />
+              </div>
+              {confirmPassword && password !== confirmPassword && (
+                <p className="text-xs text-red-500 mt-1">Passwords don't match</p>
+              )}
+              {confirmPassword && password === confirmPassword && confirmPassword.length > 0 && (
+                <p className="text-xs text-green-600 mt-1">✓ Passwords match</p>
+              )}
+            </div>
+          )}
 
           {isSignUp && (
             <div className="space-y-3 pt-2">
@@ -179,7 +227,7 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
                   type="checkbox"
                   checked={agreedToTerms}
                   onChange={(e) => setAgreedToTerms(e.target.checked)}
-                  className="mt-1 w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                  className="mt-1 w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
                 />
                 <span className="text-sm text-gray-600">
                   I agree to the{' '}
@@ -187,7 +235,7 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
                     href="https://interviewanswers.ai/terms"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-indigo-600 hover:text-indigo-700 underline"
+                    className="text-teal-600 hover:text-teal-700 underline"
                   >
                     Terms of Service
                   </a>{' '}
@@ -196,7 +244,7 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
                     href="https://interviewanswers.ai/privacy"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-indigo-600 hover:text-indigo-700 underline"
+                    className="text-teal-600 hover:text-teal-700 underline"
                   >
                     Privacy Policy
                   </a>
@@ -209,7 +257,7 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
 <button
             type="submit"
             disabled={loading || (isSignUp && !agreedToTerms)}
-            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-3 rounded-lg disabled:opacity-50 transition"
+            className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-bold py-3 rounded-lg disabled:opacity-50 transition shadow-md"
           >
             {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Log In'}
           </button>
@@ -219,7 +267,7 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
           <div className="mt-4 text-center">
             <button
               onClick={() => setShowPasswordReset(true)}
-              className="text-sm text-indigo-600 hover:text-indigo-700"
+              className="text-sm text-teal-600 hover:text-teal-700"
             >
               Forgot password?
             </button>
@@ -232,8 +280,9 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
               setIsSignUp(!isSignUp)
               setError(null)
               setMessage(null)
+              setConfirmPassword('')
             }}
-            className="text-indigo-600 hover:text-indigo-700 font-medium"
+            className="text-teal-600 hover:text-teal-700 font-medium"
           >
             {isSignUp
               ? 'Already have an account? Log in'

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
-export default function FirstTimeConsent({ user, onAccepted }) {
+export default function FirstTimeConsent({ user, onAccepted, onAlreadyAccepted }) {
   const [showModal, setShowModal] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
   const [activeTab, setActiveTab] = useState('summary');
@@ -32,6 +32,9 @@ export default function FirstTimeConsent({ user, onAccepted }) {
       // If no profile exists yet, or accepted_terms is false/null, show the modal
       if (!data || !data.accepted_terms) {
         setShowModal(true);
+      } else {
+        // User already accepted — notify parent so Tutorial can proceed
+        if (onAlreadyAccepted) onAlreadyAccepted();
       }
 
       setIsChecking(false);

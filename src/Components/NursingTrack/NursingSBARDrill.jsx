@@ -21,9 +21,11 @@ import useNursingQuestions from './useNursingQuestions';
 import NursingLoadingSkeleton from './NursingLoadingSkeleton';
 import { fetchWithRetry } from '../../utils/fetchWithRetry';
 import { canUseFeature, incrementUsage } from '../../utils/creditSystem';
+import { updateStreakAfterSession } from '../../utils/streakSupabase';
 import { parseSBARScores, stripSBARScoreTags, scoreColor10, scoreBg10, getCitationSource, validateNursingResponse } from './nursingUtils';
 import { createSBARDrillSession } from './nursingSessionStore';
 import useSpeechRecognition from './useSpeechRecognition';
+import SpeechUnavailableWarning from '../SpeechUnavailableWarning';
 
 const TIMER_SECONDS = 90;
 
@@ -79,7 +81,7 @@ const SBAR_COMPONENTS = [
   { key: 'recommendation', label: 'R', fullLabel: 'Recommendation', color: 'teal', description: 'Clear action or request' },
 ];
 
-export default function NursingSBARDrill({ specialty, onBack, userData, refreshUsage, addSession }) {
+export default function NursingSBARDrill({ specialty, onBack, userData, refreshUsage, addSession, triggerStreakRefresh }) {
   // Questions — loaded from Supabase (fallback: static), filtered to SBAR only, shuffled once
   const { questions: rawQuestions, loading: questionsLoading } = useNursingQuestions(specialty.id);
   const [questions, setQuestions] = useState([]);
@@ -117,7 +119,7 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
   const {
     transcript: speechTranscript,
     isListening: micActive,
-    isSupported: micSupported,
+    hasReliableSpeech,
     startSession: startMic,
     stopSession: stopMic,
     clearTranscript: clearSpeech,
@@ -236,6 +238,7 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
       if (userData?.user?.id) {
         try {
           await incrementUsage(supabase, userData.user.id, 'nursingSbar');
+          updateStreakAfterSession(supabase, userData.user.id).then(() => triggerStreakRefresh?.()).catch(() => {}); // Phase 3 streak
           if (refreshUsage) refreshUsage();
           // Re-check credits after charge to catch hitting zero
           const recheck = canUseFeature(
@@ -488,8 +491,9 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
             {!feedback ? (
               <motion.div key="input" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                 {micError && <p className="text-red-400 text-xs mb-2">{micError}</p>}
+                <SpeechUnavailableWarning variant="inline" darkMode />
                 <div className="flex items-start gap-2 mb-4">
-                  {micSupported && (
+                  {hasReliableSpeech && (
                     <button
                       onClick={async () => {
                         if (micActive) { stopMic(); } else { clearSpeech(); await startMic(); }

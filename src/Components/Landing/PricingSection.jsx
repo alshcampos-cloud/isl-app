@@ -7,9 +7,9 @@ const tiers = [
     name: 'Free',
     price: '0',
     period: '',
-    description: 'Perfect for trying out ISL',
+    description: 'Perfect for getting started',
     cta: 'Get Started Free',
-    ctaLink: '/signup',
+    ctaLink: '/onboarding',
     highlighted: false,
     features: [
       { text: '3 AI Interviewer sessions/month', included: true },
@@ -29,9 +29,9 @@ const tiers = [
     name: 'Pro',
     price: '29.99',
     period: '/month',
-    description: 'Unlimited practice for serious job seekers',
+    description: 'Unlimited everything. No limits. No worries.',
     cta: 'Start Pro',
-    ctaLink: '/signup',
+    ctaLink: '/onboarding',
     highlighted: true,
     badge: 'UNLIMITED',
     features: [
@@ -52,10 +52,10 @@ const tiers = [
 
 export default function PricingSection() {
   return (
-    <section id="pricing" className="py-20 sm:py-28 bg-gray-50">
+    <section id="pricing" className="py-16 sm:py-20 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
-          className="text-center mb-16"
+          className="text-center mb-12"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -75,7 +75,7 @@ export default function PricingSection() {
               key={tier.name}
               className={`bg-white rounded-2xl shadow-xl overflow-hidden transition-all ${
                 tier.highlighted
-                  ? 'ring-4 ring-indigo-500 ring-offset-4 md:scale-105'
+                  ? 'ring-4 ring-teal-500 ring-offset-4 md:scale-105'
                   : 'border border-gray-200'
               }`}
               initial={{ opacity: 0, y: 20 }}
@@ -85,7 +85,7 @@ export default function PricingSection() {
             >
               {/* Badge */}
               {tier.badge && (
-                <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-bold text-center py-2 flex items-center justify-center gap-2">
+                <div className="bg-gradient-to-r from-teal-600 to-emerald-600 text-white text-sm font-bold text-center py-2 flex items-center justify-center gap-2">
                   <Crown className="w-4 h-4" />
                   {tier.badge}
                 </div>
@@ -107,7 +107,7 @@ export default function PricingSection() {
                   to={tier.ctaLink}
                   className={`block w-full text-center font-bold py-3 rounded-lg transition-all ${
                     tier.highlighted
-                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg shadow-indigo-500/25'
+                      ? 'bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white shadow-lg shadow-teal-500/25'
                       : 'bg-gray-100 hover:bg-gray-200 text-gray-900'
                   }`}
                 >

@@ -20,9 +20,12 @@ import useNursingQuestions from './useNursingQuestions';
 import NursingLoadingSkeleton from './NursingLoadingSkeleton';
 import { fetchWithRetry } from '../../utils/fetchWithRetry';
 import { canUseFeature, incrementUsage } from '../../utils/creditSystem';
+import { updateStreakAfterSession } from '../../utils/streakSupabase';
 import { parseScoreFromResponse, stripScoreTag, scoreColor5, getCitationSource, validateNursingResponse } from './nursingUtils';
 import { createPracticeSession } from './nursingSessionStore';
 import useSpeechRecognition from './useSpeechRecognition';
+import SpeechUnavailableWarning from '../SpeechUnavailableWarning';
+import { buildSelfEfficacyPrompt } from '../../utils/selfEfficacyFeedback';
 
 // System prompt for quick practice — simpler than full interview
 const PRACTICE_SYSTEM_PROMPT = (specialty, question) => {
@@ -85,7 +88,7 @@ ${citationSource
 Rules: Coach communication ONLY. Never generate clinical content. Never patronizing.`;
 };
 
-export default function NursingPracticeMode({ specialty, onBack, userData, refreshUsage, addSession, startQuestionId = null }) {
+export default function NursingPracticeMode({ specialty, onBack, userData, refreshUsage, addSession, startQuestionId = null, triggerStreakRefresh }) {
   // Questions — loaded from Supabase (fallback: static), shuffled once loaded
   const { questions: rawQuestions, loading: questionsLoading } = useNursingQuestions(specialty.id);
   const [questions, setQuestions] = useState([]);
@@ -127,7 +130,7 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
   const {
     transcript: speechTranscript,
     isListening: micActive,
-    isSupported: micSupported,
+    hasReliableSpeech,
     startSession: startMic,
     stopSession: stopMic,
     clearTranscript: clearSpeech,
@@ -182,7 +185,14 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
           body: JSON.stringify({
             mode: 'nursing-coach',
             nursingFeature: 'nursingPractice',
-            systemPrompt: PRACTICE_SYSTEM_PROMPT(specialty, currentQuestion),
+            systemPrompt: PRACTICE_SYSTEM_PROMPT(specialty, currentQuestion) + '\n\n' + buildSelfEfficacyPrompt({
+              currentAnswer: userAnswer.trim(),
+              questionText: currentQuestion.question,
+              previousScores: Array.from({ length: scoredCount }, (_, i) => scoredCount > 0 ? totalScore / scoredCount : 0),
+              streakDays: 0, // TODO Phase 3: wire to streak system
+              questionsCompleted: questionsAnswered,
+              totalQuestions: questions.length,
+            }),
             conversationHistory: [],
             userMessage: userAnswer.trim(),
           }),
@@ -225,6 +235,7 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
       if (userData?.user?.id) {
         try {
           await incrementUsage(supabase, userData.user.id, 'nursingPractice');
+          updateStreakAfterSession(supabase, userData.user.id).then(() => triggerStreakRefresh?.()).catch(() => {}); // Phase 3 streak
           if (refreshUsage) refreshUsage();
           // Re-check credits after charge to catch hitting zero (prevents stale state bypass)
           const recheck = canUseFeature(
@@ -388,8 +399,9 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
                     exit={{ opacity: 0 }}
                   >
                     {micError && <p className="text-red-400 text-xs mb-2">{micError}</p>}
+                    <SpeechUnavailableWarning variant="inline" darkMode />
                     <div className="flex items-start gap-2 mb-4">
-                      {micSupported && (
+                      {hasReliableSpeech && (
                         <button
                           onClick={async () => {
                             if (micActive) { stopMic(); } else { clearSpeech(); await startMic(); }

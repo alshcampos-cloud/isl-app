@@ -23,8 +23,10 @@ import {
 import { supabase } from '../../lib/supabase';
 import { fetchWithRetry } from '../../utils/fetchWithRetry';
 import { canUseFeature, incrementUsage } from '../../utils/creditSystem';
-import { CLINICAL_FRAMEWORKS } from './nursingQuestions';
+import { updateStreakAfterSession } from '../../utils/streakSupabase';
+import { CLINICAL_FRAMEWORKS, getQuestionsForSpecialty } from './nursingQuestions';
 import useSpeechRecognition from './useSpeechRecognition';
+import SpeechUnavailableWarning from '../SpeechUnavailableWarning';
 
 // ============================================================
 // THE WALLED GARDEN SYSTEM PROMPT — AIRTIGHT
@@ -33,7 +35,7 @@ import useSpeechRecognition from './useSpeechRecognition';
 // It is the single most important piece of text in this component.
 // ============================================================
 
-const AI_COACH_SYSTEM_PROMPT = (specialty) => `You are a nursing interview strategy coach. You help nurses prepare for interviews at ${specialty.name} (${specialty.shortName}) positions.
+const AI_COACH_SYSTEM_PROMPT = (specialty, questionList) => `You are a nursing interview strategy coach. You help nurses prepare for interviews at ${specialty.name} (${specialty.shortName}) positions.
 
 === YOUR ROLE ===
 You are a career coach who specializes in helping nurses succeed in job interviews. You coach COMMUNICATION, STRATEGY, and DELIVERY. You do NOT provide clinical education, medical advice, or act as a clinical reference.
@@ -134,15 +136,34 @@ When you reference a framework, cite it naturally:
 - "The STAR method works well here — let's walk through each component..."
 - "This is a great example of clinical judgment — the NCSBN Clinical Judgment Model (NCSBN) describes this as recognizing and analyzing cues..."
 
-Remember: You coach HOW nurses tell their stories. You don't write the stories, evaluate the clinical content, or serve as a medical reference. The clinical knowledge lives in the nurse — you help them COMMUNICATE it effectively.`;
+Remember: You coach HOW nurses tell their stories. You don't write the stories, evaluate the clinical content, or serve as a medical reference. The clinical knowledge lives in the nurse — you help them COMMUNICATE it effectively.
+
+=== CURATED QUESTION LIBRARY ===
+
+You DO work from a curated, clinically-reviewed question library. When a user asks for questions to practice, asks "what questions do you have?", or wants you to quiz them, ALWAYS offer questions from this library. NEVER make up your own interview questions.
+
+Here are the available questions for ${specialty.name}:
+
+${questionList}
+
+When offering questions:
+- Present 3-5 at a time, grouped by category
+- Let the user choose which one they want to work on
+- When they pick one, help them structure their answer using the appropriate framework (STAR for behavioral, SBAR for clinical scenarios)
+- After they answer, evaluate their COMMUNICATION (structure, specificity, clarity, confidence) — NOT clinical accuracy
+- Use the evaluation rubric (bullets) for each question to guide your coaching
+- Suggest follow-up questions from the library when appropriate
+
+If they ask for a question you DON'T have in the library, say: "I don't have that specific question in our reviewed library, but I can help you workshop your answer to it using STAR or SBAR structure. Want to give me your draft answer and I'll help you strengthen it?"`;
+
 
 // ============================================================
 // SUGGESTED CONVERSATION STARTERS
 // ============================================================
 const CONVERSATION_STARTERS = [
   {
-    label: 'Structure my answer',
-    prompt: "I have an interview next week and I'm not sure how to structure my answers. Can you walk me through when to use SBAR vs STAR?",
+    label: 'Show me practice questions',
+    prompt: "What interview questions do you have for me to practice? Show me what's available by category.",
     icon: BookOpen,
   },
   {
@@ -175,7 +196,13 @@ const CONVERSATION_STARTERS = [
 // ============================================================
 // COMPONENT
 // ============================================================
-export default function NursingAICoach({ specialty, onBack, userData, refreshUsage, addSession }) {
+export default function NursingAICoach({ specialty, onBack, userData, refreshUsage, addSession, triggerStreakRefresh }) {
+  // Load curated questions for this specialty (walled garden — C.O.A.C.H. protocol "O")
+  const specialtyQuestions = getQuestionsForSpecialty(specialty.id);
+  const questionListForPrompt = specialtyQuestions.map(q =>
+    `- [${q.category}] [${q.difficulty}] "${q.question}" (Framework: ${q.responseFramework?.toUpperCase() || 'STAR'})${q.bullets?.length ? '\n  Evaluation rubric: ' + q.bullets.join(' | ') : ''}${q.followUps?.length ? '\n  Follow-ups: ' + q.followUps.join(' / ') : ''}`
+  ).join('\n');
+
   // Chat state
   const [messages, setMessages] = useState([]);
   const [currentInput, setCurrentInput] = useState('');
@@ -193,7 +220,7 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
   const {
     transcript: speechTranscript,
     isListening: micActive,
-    isSupported: micSupported,
+    hasReliableSpeech,
     startSession: startMic,
     stopSession: stopMic,
     clearTranscript: clearSpeech,
@@ -284,7 +311,7 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
           },
           body: JSON.stringify({
             mode: 'nursing-coach',
-            systemPrompt: AI_COACH_SYSTEM_PROMPT(specialty),
+            systemPrompt: AI_COACH_SYSTEM_PROMPT(specialty, questionListForPrompt),
             conversationHistory: conversationHistory,
             userMessage: userMessage,
           }),
@@ -314,6 +341,7 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
       if (userData?.user?.id) {
         try {
           await incrementUsage(supabase, userData.user.id, 'practiceMode');
+          updateStreakAfterSession(supabase, userData.user.id).then(() => triggerStreakRefresh?.()).catch(() => {}); // Phase 3 streak
           if (refreshUsage) refreshUsage();
         } catch (chargeErr) {
           // Log but don't break session — AI response already succeeded
@@ -574,8 +602,9 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
             {!creditBlocked && (
               <>
                 {micError && <p className="text-red-400 text-xs mb-1 text-center">{micError}</p>}
+                <SpeechUnavailableWarning variant="inline" darkMode className="text-center" />
                 <div className="flex items-end gap-2">
-                  {micSupported && (
+                  {hasReliableSpeech && (
                     <button
                       onClick={async () => {
                         if (micActive) { stopMic(); } else { clearSpeech(); await startMic(); }
@@ -753,8 +782,9 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
       <div className="bg-slate-900/95 backdrop-blur-lg border-t border-white/10 p-4">
         <div className="max-w-3xl mx-auto">
           {micError && <p className="text-red-400 text-xs mb-1 text-center">{micError}</p>}
+          <SpeechUnavailableWarning variant="inline" darkMode className="text-center" />
           <div className="flex items-end gap-2">
-            {micSupported && !creditBlocked && (
+            {hasReliableSpeech && !creditBlocked && (
               <button
                 onClick={async () => {
                   if (micActive) { stopMic(); } else { clearSpeech(); await startMic(); }

@@ -39,3 +39,14 @@ pnpm-debug.log*
 .cache
 .turbo
 .env*.local
+
+# Local config and tools
+.mcp.json
+claude-talk-to-figma-mcp/
+
+# Platform builds (not managed in this repo)
+android/
+ios/
+
+# Ad creatives (separate workflow)
+ads/

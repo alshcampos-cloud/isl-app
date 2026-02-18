@@ -1,5 +1,11 @@
 // stripe-webhook/index.ts
 // Handles Stripe webhook events and updates user tier
+//
+// IMPORTANT: The app's user_profiles table uses TWO id columns:
+//   - id: random UUID (auto-generated primary key)
+//   - user_id: auth.uid() (the Supabase auth user ID)
+// The frontend queries by .eq('user_id', user.id) everywhere.
+// This webhook MUST also use .eq('user_id', userId) to match.
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import Stripe from 'https://esm.sh/stripe@14.21.0?target=deno';
@@ -81,7 +87,7 @@ serve(async (req: Request) => {
         const session = event.data.object as Stripe.Checkout.Session;
         console.log('💳 Checkout session completed:', session.id);
 
-        // Get userId from metadata
+        // Get userId from metadata (this is auth.uid(), stored in user_profiles.user_id)
         const userId = session.metadata?.userId;
         const customerEmail = session.customer_email || session.metadata?.email;
 
@@ -101,7 +107,8 @@ serve(async (req: Request) => {
         console.log('🏷️ Customer ID:', customerId);
 
         // Update user_profiles to Pro tier
-        const { error: updateError } = await supabase
+        // App uses .eq('user_id', user.id) — user_id column holds auth.uid()
+        const { data: updateData, error: updateError } = await supabase
           .from('user_profiles')
           .update({
             tier: 'pro',
@@ -110,7 +117,8 @@ serve(async (req: Request) => {
             subscription_status: 'active',
             updated_at: new Date().toISOString(),
           })
-          .eq('user_id', userId);
+          .eq('user_id', userId)
+          .select('id');
 
         if (updateError) {
           console.error('❌ Failed to update user profile:', updateError);
@@ -133,6 +141,30 @@ serve(async (req: Request) => {
             console.error('❌ Failed to upsert user profile:', insertError);
             return new Response('Database update failed', { status: 500 });
           }
+          console.log('✅ Upserted user profile (insert fallback)');
+        } else if (!updateData || updateData.length === 0) {
+          // Update succeeded but matched 0 rows — profile doesn't exist yet
+          console.warn('⚠️ Update matched 0 rows for user_id:', userId, '— trying upsert');
+          const { error: insertError } = await supabase
+            .from('user_profiles')
+            .upsert({
+              user_id: userId,
+              tier: 'pro',
+              subscription_id: subscriptionId,
+              stripe_customer_id: customerId,
+              subscription_status: 'active',
+              updated_at: new Date().toISOString(),
+            }, {
+              onConflict: 'user_id'
+            });
+
+          if (insertError) {
+            console.error('❌ Failed to upsert user profile (0-row fallback):', insertError);
+            return new Response('Database update failed', { status: 500 });
+          }
+          console.log('✅ Upserted user profile via 0-row fallback');
+        } else {
+          console.log('✅ Updated', updateData.length, 'row(s) for user_id:', userId);
         }
 
         console.log('✅ User upgraded to Pro:', userId);
@@ -298,6 +330,7 @@ async function updateSubscriptionStatus(
     status = 'canceled';
   }
 
+  // user_id column holds auth.uid() — matches how the frontend queries
   const { error } = await supabase
     .from('user_profiles')
     .update({

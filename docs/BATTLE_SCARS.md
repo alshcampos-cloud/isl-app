@@ -169,3 +169,27 @@
 
 *Compiled from 3+ months of InterviewAnswers.AI development — Lucas & Claude, February 2026*
 *Every lesson here was learned the hard way. Don't repeat them.*
+
+### Battle Scar: Ideal Answer hallucination
+The Example Strong Answer prompt had no constraints on what facts the AI could use. It hallucinated HIPAA, patient data, and flu season for a fintech analytics answer because it saw 'Stanford' and assumed healthcare. Fix: added 6 IDEAL ANSWER RULES modeled on the nursing walled garden — ONLY use facts from the user's actual exchanges, NEVER invent context. Same principle as C.O.A.C.H.: constrain what the AI can generate.
+
+### Battle Scar: AI Interviewer exchangeCount is 0-indexed
+exchangeCount starts at 0, increments AFTER each response. So >= 3 check fires on the 4th user submission, not the 3rd. Self-efficacy addendum and consolidated ideal answer both fire at exchangeCount >= 3.
+
+### Battle Scar: Nursing previousScores uses averaged scores
+NursingPracticeMode.jsx line 188 creates [avg, avg, avg] instead of real per-session scores. Works for Phase 1. Replace with actual Supabase query in Phase 3 when IRS is wired up. Flagged by Erin.
+
+### Battle Scar: Supabase SQL editor autocomplete corrupts queries
+The Supabase SQL editor has aggressive autocomplete that silently modifies your SQL as you type. Column names, table names, and keywords get replaced with suggestions you didn't choose. This caused migrations to fail with cryptic errors — the SQL that ran wasn't what was written. Fix: Use the Monaco API directly (`window.monaco.editor.getModels()[n].setValue(sql)`) to inject queries, bypassing the autocomplete entirely. Also: migrations run in the SQL editor don't persist across sessions — always save migration SQL as `.sql` files in the repo, and re-run if the table doesn't exist.
+
+### Battle Scar: Supabase onboarding_events table didn't persist
+Ran the onboarding_events migration in the SQL editor during a session, got "Success", but the table wasn't there when we came back. The first full onboarding flow test failed silently (all tracking calls use try/catch with console.warn) because the table didn't exist yet. Had to re-run the migration AND re-do the entire test flow. Lesson: always verify tables exist with `SELECT * FROM information_schema.tables WHERE table_name = 'your_table'` before testing. Save migrations in docs/ and commit them.
+
+### Battle Scar: Anonymous auth users get trapped on email verification screen
+Anonymous users created via `signInAnonymously()` during onboarding have a valid Supabase session but no email. When they navigate to `/app`, ProtectedRoute checks email verification status — anonymous users have `email_confirmed_at: null` and no email to verify, creating a dead-end. Users see "Verify Your Email" with a blank email field and no way out. Fix: ProtectedRoute now checks `user.is_anonymous` before the email verification check and redirects anonymous users back to `/onboarding`. Also added guard in LandingPage.jsx to prevent anonymous sessions from being treated as authenticated. Lesson: anonymous auth is a real session with real tokens — every auth gate must explicitly handle the anonymous case.
+
+### Battle Scar: Multiple CTAs pointing to different signup routes
+Landing page had 7 CTA buttons across 5 component files. When onboarding was added at `/onboarding`, only the hero CTA was updated — the other 6 still pointed to `/signup`, bypassing the value-first onboarding entirely. Paid ad traffic landed on the landing page and most "Start Practicing Free" clicks skipped onboarding. Fix: systematic grep of all landing page components for `/signup` and bulk update. Lesson: when changing a user flow entry point, grep ALL files for the old route — not just the one you remember. Landing pages have CTAs scattered across navbar, hero, features, pricing, footer, and mobile sticky components.
+
+### Battle Scar: Always test signup end-to-end after auth flow changes
+After adding anonymous auth for onboarding + fixing the email verification trap + changing CTA routes, the full signup pipeline had 3 different entry points (landing → onboarding → signup, landing → direct signup, nursing landing → onboarding). Each path needed separate verification: clear all storage → navigate as new user → complete full flow → check Supabase for real account. Unit testing individual components doesn't catch routing/auth integration failures. Lesson: after any change to auth, routing, or onboarding — run the complete signup flow in an incognito window. Every. Single. Time.

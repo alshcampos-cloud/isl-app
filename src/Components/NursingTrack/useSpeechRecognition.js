@@ -13,6 +13,7 @@
 // ============================================================
 
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { getBrowserInfo } from '../../utils/browserDetection';
 
 /**
  * useSpeechRecognition — standalone speech-to-text hook
@@ -39,9 +40,13 @@ export default function useSpeechRecognition() {
   const accumulatedTranscript = useRef('');
   const currentInterimRef = useRef('');
 
-  // --- Browser detection ---
+  // --- Browser detection (delegated to shared utility) ---
+  const browserInfo = getBrowserInfo();
   const isSupported = typeof window !== 'undefined' &&
     ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
+  // Note: isSupported = raw API check (for startSession guard).
+  // hasReliableSpeech = actually works reliably (for UI display).
+  // These differ on iOS Chrome: isSupported=true but hasReliableSpeech=false.
 
   // --- Initialize speech recognition object ---
   const initRecognition = useCallback(() => {
@@ -272,6 +277,11 @@ export default function useSpeechRecognition() {
     transcript,
     isListening,
     isSupported,
+    hasReliableSpeech: browserInfo.hasReliableSpeech,
+    speechUnavailableReason: browserInfo.speechUnavailableReason,
+    // Backward compat (nursing components still reference these)
+    isIOSThirdParty: browserInfo.isIOSThirdParty,
+    iosThirdPartyName: browserInfo.browserName,
     startSession,
     stopSession,
     clearTranscript,

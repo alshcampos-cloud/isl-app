@@ -307,5 +307,28 @@ Engineering analysis cannot replicate domain expertise.
 
 ---
 
+# PART 8: SESSION & DEPLOY RULES
+
+## Pre-Deploy Protocol
+Before EVERY git push to main, run the smoke test protocol in /docs/SMOKE_TEST_PROTOCOL.md. All 7 critical paths must pass. No exceptions.
+
+## Session Continuity
+At the START of every session, read docs/SESSION_STATE.md for current project status. At the END of every session, update docs/SESSION_STATE.md with what was completed and what's next. Also read docs/BATTLE_SCARS.md to avoid repeating past mistakes.
+
+## Required Reading for Any Task
+Before any code changes, read these files:
+- docs/PROTOCOLS.md (development protocols)
+- docs/BATTLE_SCARS.md (lessons learned)
+- docs/SMOKE_TEST_PROTOCOL.md (pre-deploy testing)
+- docs/SESSION_STATE.md (current status)
+- docs/PRODUCT_ARCHITECTURE.md (app structure)
+- docs/REPO_MAP.md (file locations)
+
+For strategic decisions, also read:
+- docs/research/Master_Strategy_v2.docx
+- docs/PHASE2_AUDIT_REPORT.md
+
+---
+
 *This file is the single source of truth for Claude Code sessions on this project.*
-*Last updated: February 9, 2026*
+*Last updated: February 16, 2026*
