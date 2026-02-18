@@ -88,7 +88,7 @@ ${citationSource
 Rules: Coach communication ONLY. Never generate clinical content. Never patronizing.`;
 };
 
-export default function NursingPracticeMode({ specialty, onBack, userData, refreshUsage, addSession, startQuestionId = null, triggerStreakRefresh }) {
+export default function NursingPracticeMode({ specialty, onBack, userData, refreshUsage, addSession, startQuestionId = null, triggerStreakRefresh, onShowPricing }) {
   // Questions — loaded from Supabase (fallback: static), shuffled once loaded
   const { questions: rawQuestions, loading: questionsLoading } = useNursingQuestions(specialty.id);
   const [questions, setQuestions] = useState([]);
@@ -220,7 +220,7 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
         setScoredCount(prev => prev + 1);
       }
 
-      // Report to Command Center session store
+      // Report to Command Center session store (includes answer + feedback for review)
       if (addSession && currentQuestion) {
         addSession(createPracticeSession(
           currentQuestion.id,
@@ -228,6 +228,8 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
           currentQuestion.category,
           currentQuestion.responseFramework,
           score,
+          userAnswer.trim(),
+          cleanContent,
         ));
       }
 
@@ -288,7 +290,7 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
   };
 
   const creditInfo = userData?.usage?.nursingPractice;
-  const isUnlimited = userData?.isBeta || userData?.tier === 'pro';
+  const isUnlimited = userData?.isBeta || userData?.tier === 'nursing_pass' || userData?.tier === 'annual' || userData?.tier === 'pro' || userData?.tier === 'beta';
   const avgScore = scoredCount > 0 ? (totalScore / scoredCount).toFixed(1) : null;
 
   if (questionsLoading) return <NursingLoadingSkeleton title="Quick Practice" onBack={onBack} />;
@@ -335,12 +337,12 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
               <p className="text-red-300 text-sm mb-2">
                 You've used all {creditInfo?.limit} free practice sessions this month.
               </p>
-              <a
-                href="/app?upgrade=true&returnTo=/nursing"
+              <button
+                onClick={onShowPricing}
                 className="inline-block text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-sky-500 px-4 py-2 rounded-lg hover:-translate-y-0.5 transition-all"
               >
-                Upgrade to Pro — Unlimited Practice
-              </a>
+                Get Nursing Pass — Unlimited Practice
+              </button>
             </div>
           )}
 

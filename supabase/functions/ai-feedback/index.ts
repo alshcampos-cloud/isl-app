@@ -96,6 +96,62 @@ You MUST weave ALL FOUR of the following into your feedback response. Do not cre
 IMPORTANT: These four elements should feel natural and woven into your coaching voice — NOT like a checklist.`;
 }
 
+// ============================================================
+// Server-side prompt lookup (Change 8 — IP protection)
+// Onboarding system prompts moved here from client-side code.
+// Previously visible in browser bundle and DevTools Network tab.
+// ============================================================
+const ONBOARDING_PROMPTS: Record<string, string> = {
+  'onboarding-general': `You are a supportive interview coach helping someone practice for the first time.
+
+RULES:
+1. Be warm, encouraging, and specific. This is their FIRST practice ever.
+2. Start with something genuinely positive about their answer (even if small).
+3. Give ONE concrete suggestion for improvement (not three, not five — ONE).
+4. End with an encouraging statement about their potential.
+5. Keep your response under 120 words — brevity matters.
+6. Include a score from 1-10 in this exact format on its own line: [SCORE: X/10]
+7. Do NOT use clinical terminology. Keep it simple and accessible.
+8. Format your response as SHORT PARAGRAPHS, not bullet lists or JSON. Plain sentences only.
+
+TONE: Think "supportive older sibling who interviews well" — not "professor grading an essay."
+
+SCORING GUIDE (BE STRICT — this must be accurate):
+- 1-2: Single words, random text, gibberish, or completely off-topic (e.g. "test", "asdf", "hello")
+- 3-4: Very short or vague — shows minimal effort, no structure
+- 5-6: Shows effort but needs structure or more detail
+- 7-8: Good foundation with specific examples
+- 9: Strong answer with clear STAR structure
+- 10: Exceptional — rare for first attempt
+
+IMPORTANT: If the answer is a single word or clearly not a real attempt, score it 1-2. Do not inflate scores.`,
+
+  'onboarding-nursing': `You are a supportive nursing interview coach helping a nurse practice for the first time.
+
+RULES:
+1. Be warm, encouraging, and specific. This is their FIRST practice ever.
+2. Start with something genuinely positive about their answer (even if small).
+3. Give ONE concrete suggestion for improvement — frame it around the SBAR communication framework (Situation, Background, Assessment, Recommendation) if relevant to their answer.
+4. End with an encouraging statement about their potential.
+5. Keep your response under 120 words — brevity matters.
+6. Include a score from 1-10 in this exact format on its own line: [SCORE: X/10]
+7. Coach COMMUNICATION quality only — do NOT evaluate clinical accuracy.
+8. If they mention clinical details, acknowledge them but focus your feedback on how clearly they communicated, not whether the clinical content is correct.
+9. Format your response as SHORT PARAGRAPHS, not bullet lists or JSON. Plain sentences only.
+
+TONE: Think "supportive charge nurse mentoring a colleague" — warm, professional, specific.
+
+SCORING GUIDE (BE STRICT — this must be accurate):
+- 1-2: Single words, random text, gibberish, or completely off-topic (e.g. "test", "asdf", "hello")
+- 3-4: Very short or vague — shows minimal effort, no SBAR elements
+- 5-6: Shows effort but needs structure (suggest SBAR framing)
+- 7-8: Good foundation, SBAR elements partially present
+- 9: Strong answer with clear SBAR structure
+- 10: Exceptional — rare for first attempt
+
+IMPORTANT: If the answer is a single word or clearly not a real attempt, score it 1-2. Do not inflate scores.`,
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -161,10 +217,22 @@ When giving feedback, reference their specific background when relevant. Example
       }
     }
 
-    // Use Haiku for Practice Mode (fast + cheap), Sonnet for AI Interviewer and Answer Assistant (detailed)
-    const model = mode === 'practice' || mode === 'generate-bullets' 
-      ? 'claude-3-5-haiku-20241022' 
-      : 'claude-sonnet-4-20250514'
+    // Model selection (P2 — all general features on Haiku 4.5):
+    //   Haiku 3.5 → generate-bullets only (legacy extraction, cheapest)
+    //   Haiku 4.5 → ALL general features: practice, ai-interviewer, answer-assistant, onboarding
+    //   Sonnet 4  → confidence-brief (nursing tone matters), nursing-coach handled separately below
+    const haikuLegacy = 'claude-3-5-haiku-20241022';
+    const haiku45 = 'claude-haiku-4-5-20251001';
+    const sonnet4 = 'claude-sonnet-4-20250514';
+
+    let model: string;
+    if (mode === 'generate-bullets') {
+      model = haikuLegacy;       // Simple extraction — cheapest model sufficient
+    } else if (mode === 'practice' || mode === 'ai-interviewer' || mode === 'answer-assistant-start' || mode === 'answer-assistant-continue' || mode === 'onboarding-general' || mode === 'onboarding-nursing') {
+      model = haiku45;           // All general + onboarding features — Haiku 4.5 (quality at 1/3 Sonnet cost)
+    } else {
+      model = sonnet4;           // confidence-brief, any future modes needing quality
+    }
 
     // Build the prompt based on mode
     let promptContent = '';
@@ -248,6 +316,14 @@ Return ONLY the bullets in this format:
 - Fourth bullet point
 - Fifth bullet point (if relevant)`;
 
+    } else if (mode === 'onboarding-general' || mode === 'onboarding-nursing') {
+      // Onboarding practice — server-side prompt lookup (Change 8, IP protection)
+      // Previously: systemPrompt was sent from client, visible in DevTools.
+      // Now: mode identifier maps to server-side prompt. No prompt in request body.
+      maxTokens = 1500;
+      const serverPrompt = ONBOARDING_PROMPTS[mode];
+      promptContent = `${serverPrompt}\n\nUSER REQUEST: ${userMessage}`;
+
     } else if (mode === 'confidence-brief') {
       // Nursing Confidence Builder — uses systemPrompt + userMessage from client
       maxTokens = 1500;
@@ -271,23 +347,30 @@ Return ONLY the bullets in this format:
         'nursingPractice': 'nursing_practice',
         'nursingMock': 'nursing_mock',
         'nursingSbar': 'nursing_sbar',
+        'nursingCoach': 'nursing_coach',
+        'nursingOfferCoach': 'nursing_coach',   // Offer Coach shares AI Coach pool
+        'confidenceBrief': 'nursing_coach',      // Confidence Brief shares AI Coach pool
       };
 
       const dbColumn = nursingFeatureMap[nursingFeature];
 
-      // Only enforce credits for tracked features (not AI Coach which is Pro-gated at UI level)
+      // Enforce credits for all tracked features (including AI Coach now with session cap)
       if (dbColumn && !isBetaTester) {
-        // Check if user is Pro
+        // Check profile including pass expiry columns
         const { data: profile } = await supabaseClient
           .from('user_profiles')
-          .select('tier')
+          .select('tier, nursing_pass_expires, general_pass_expires')
           .eq('user_id', user.id)
           .maybeSingle();
 
-        const isPro = profile?.tier === 'pro';
+        // Determine if user has active nursing access
+        const isLegacyPro = profile?.tier === 'pro';
+        const hasNursingPass = profile?.nursing_pass_expires &&
+          new Date(profile.nursing_pass_expires) > new Date();
+        const hasUnlimitedNursing = isLegacyPro || hasNursingPass;
 
-        if (!isPro) {
-          // Check beta_testers table
+        if (!hasUnlimitedNursing) {
+          // Check beta_testers table as final fallback
           const { data: betaRow } = await supabaseClient
             .from('beta_testers')
             .select('unlimited_access')
@@ -308,20 +391,40 @@ Return ONLY the bullets in this format:
 
             const currentUsage = usageRow?.[dbColumn] || 0;
 
-            // Limits: nursing_practice=5, nursing_mock=3, nursing_sbar=3
+            // Free tier limits: practice=3, mock=1, sbar=2, coach=0
             const featureLimits: Record<string, number> = {
-              'nursing_practice': 5,
-              'nursing_mock': 3,
-              'nursing_sbar': 3,
+              'nursing_practice': 3,
+              'nursing_mock': 1,
+              'nursing_sbar': 2,
+              'nursing_coach': 0,     // Free users cannot use AI Coach
             };
-            const limit = featureLimits[dbColumn] || 5;
+            const limit = featureLimits[dbColumn] ?? 0;
 
             if (currentUsage >= limit) {
               return new Response(
-                JSON.stringify({ error: 'Monthly credit limit reached. Upgrade to Pro for unlimited access!' }),
+                JSON.stringify({ error: 'Monthly credit limit reached. Get a 30-day pass for unlimited access!' }),
                 { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
               );
             }
+          }
+        } else if (hasNursingPass && dbColumn === 'nursing_coach') {
+          // Pass holders have a 20-session AI Coach cap (cost control)
+          const now = new Date();
+          const currentPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+          const { data: usageRow } = await supabaseClient
+            .from('usage_tracking')
+            .select('nursing_coach')
+            .eq('user_id', user.id)
+            .eq('period', currentPeriod)
+            .maybeSingle();
+
+          const coachUsage = usageRow?.nursing_coach || 0;
+          if (coachUsage >= 20) {
+            return new Response(
+              JSON.stringify({ error: 'AI Coach session limit reached for this month (20 sessions). Resets next month.' }),
+              { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
           }
         }
       }
@@ -339,6 +442,14 @@ Return ONLY the bullets in this format:
       // Append the current user message
       messages.push({ role: 'user', content: userMessage || '' });
 
+      // Select model: Sonnet 4 for multi-turn (Mock Interview, AI Coach),
+      // Haiku 4.5 for single-call (Practice, SBAR, Offer Coach, Confidence Brief)
+      // Haiku 4.5 benchmarks match Sonnet 4 on single-call scoring tasks at ~1/3 cost.
+      const multiTurnFeatures = ['nursingMock', 'nursingCoach'];
+      const nursingModel = multiTurnFeatures.includes(nursingFeature)
+        ? 'claude-sonnet-4-20250514'
+        : 'claude-haiku-4-5-20251001';
+
       // Call Anthropic with system prompt as system parameter (not in messages)
       const nursingResponse = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -348,7 +459,7 @@ Return ONLY the bullets in this format:
           'content-type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: nursingModel,
           max_tokens: maxTokens,
           system: systemPrompt || '',
           messages,

@@ -37,11 +37,21 @@ export default function LandingPage() {
   });
 
   useEffect(() => {
-    // Handle auth tokens in URL hash — pass through to /app where ProtectedRoute handles them
+    // Handle auth tokens in URL hash — pass through to /app or /nursing where ProtectedRoute handles them
     // This covers: email verification (type=signup), password recovery (type=recovery), magic links
     if (window.location.hash.includes('access_token')) {
-      console.log('🔑 Auth token detected in URL hash, redirecting to /app');
-      navigate('/app' + window.location.hash, { replace: true });
+      console.log('🔑 Auth token detected in URL hash, checking user context...');
+      // Parse the hash to detect nursing users and route them correctly
+      // After email confirmation, check user metadata for onboarding_field
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        const field = session?.user?.user_metadata?.onboarding_field;
+        const dest = field === 'nursing' ? '/nursing' : '/app';
+        console.log(`🔑 Routing to ${dest} (onboarding_field: ${field || 'not set'})`);
+        navigate(dest + window.location.hash, { replace: true });
+      }).catch(() => {
+        // Fallback: if getSession fails, default to /app (safe default)
+        navigate('/app' + window.location.hash, { replace: true });
+      });
       return;
     }
 
@@ -51,12 +61,13 @@ export default function LandingPage() {
       setLoading(false);
     }, 3000);
 
-    // If already authenticated, redirect to app
+    // If already authenticated, redirect to app or nursing based on user metadata
     // BUT: anonymous users (from onboarding) should see the landing page, not get trapped
     supabase.auth.getSession().then(({ data: { session } }) => {
       clearTimeout(fallbackTimer);
       if (session && !session.user.is_anonymous) {
-        navigate('/app', { replace: true });
+        const field = session.user.user_metadata?.onboarding_field;
+        navigate(field === 'nursing' ? '/nursing' : '/app', { replace: true });
       } else {
         setLoading(false);
       }

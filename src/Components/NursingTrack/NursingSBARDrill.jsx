@@ -81,7 +81,7 @@ const SBAR_COMPONENTS = [
   { key: 'recommendation', label: 'R', fullLabel: 'Recommendation', color: 'teal', description: 'Clear action or request' },
 ];
 
-export default function NursingSBARDrill({ specialty, onBack, userData, refreshUsage, addSession, triggerStreakRefresh }) {
+export default function NursingSBARDrill({ specialty, onBack, userData, refreshUsage, addSession, triggerStreakRefresh, onShowPricing }) {
   // Questions — loaded from Supabase (fallback: static), filtered to SBAR only, shuffled once
   const { questions: rawQuestions, loading: questionsLoading } = useNursingQuestions(specialty.id);
   const [questions, setQuestions] = useState([]);
@@ -224,13 +224,15 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
         scores,
       }]);
 
-      // Report to Command Center session store
+      // Report to Command Center session store (includes answer + feedback for review)
       if (addSession && currentQuestion) {
         addSession(createSBARDrillSession(
           currentQuestion.id,
           currentQuestion.question,
           currentQuestion.category,
           scores,
+          userAnswer.trim(),
+          cleanContent,
         ));
       }
 
@@ -452,12 +454,12 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
           {creditBlocked && (
             <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-4 text-center">
               <p className="text-red-300 text-sm mb-2">Free practice limit reached this month.</p>
-              <a
-                href="/app?upgrade=true&returnTo=/nursing"
+              <button
+                onClick={onShowPricing}
                 className="inline-block text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-sky-500 px-4 py-2 rounded-lg hover:-translate-y-0.5 transition-all"
               >
-                Upgrade to Pro — Unlimited Drills
-              </a>
+                Get Nursing Pass — Unlimited Drills
+              </button>
             </div>
           )}
 

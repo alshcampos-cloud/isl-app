@@ -655,7 +655,7 @@ const UltimateCompetitiveDashboard = ({ user, supabase, userTier, onUpgrade }) =
           <div className="flex-1 text-center md:text-left">
             <h3 className="font-bold text-lg mb-1">Unlock Your Full Potential</h3>
             <p className="text-white/90 text-sm">
-              Unlimited practice, advanced analytics, and more for $29.99/month
+              Unlimited practice, advanced analytics, and more — just $14.99 for 30 days
             </p>
           </div>
           <button

@@ -79,7 +79,7 @@ export default function SubscriptionManagement({
             </h2>
             <p className="text-white/80 text-sm">
               {isBeta ? 'Unlimited access as a beta tester' :
-               isPro ? '$29.99/month' : 'Limited features'}
+               isPro ? 'Active Pass' : 'Limited features'}
             </p>
           </div>
         </div>

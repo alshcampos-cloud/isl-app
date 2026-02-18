@@ -17,10 +17,11 @@ import AnswerAssistant from './Components/AnswerAssistant';
 import TemplateLibrary from './TemplateLibrary';
 import Tutorial from './Components/Tutorial';
 import { DEFAULT_QUESTIONS } from './default_questions';
-import { canUseFeature, incrementUsage, getUsageStats, TIER_LIMITS, isBetaUser } from './utils/creditSystem';
+import { canUseFeature, incrementUsage, getUsageStats, TIER_LIMITS, isBetaUser, resolveEffectiveTier } from './utils/creditSystem';
 import { fetchWithRetry } from './utils/fetchWithRetry';
 import UsageLimitModal from './Components/UsageLimitModal';
 import PricingPage from './Components/PricingPage';
+import GeneralPricing from './Components/GeneralPricing';
 import ResetPassword from './Components/ResetPassword';
 import ConsentDialog from './Components/ConsentDialog';
 import SessionDetailsModal from './Components/SessionDetailsModal';
@@ -692,14 +693,17 @@ const ISL = () => {
     const currentUsage = parseInt(localStorage.getItem(storageKey) || '0');
     
     const isPro = usageStats?.tier === 'pro' ||
-                  usageStats?.tier === 'beta';
+                  usageStats?.tier === 'beta' ||
+                  usageStats?.tier === 'nursing_pass' ||
+                  usageStats?.tier === 'general_pass' ||
+                  usageStats?.tier === 'annual';
 
     const limit = usageStats?.tier === 'beta' ? 999999 :
-                  usageStats?.tier === 'pro' ? 40 : 5;
-    
+                  (usageStats?.tier === 'pro' || usageStats?.tier === 'general_pass' || usageStats?.tier === 'annual') ? 40 : 5;
+
     setUsageThisMonth(currentUsage);
     setUsageLimit(limit);
-    
+
     if (currentUsage >= limit && !isPro) {
       alert(`⚠️ Monthly AI Limit Reached
 
@@ -827,7 +831,7 @@ Consider upgrading to Pro for more sessions!`);
     const currentUsage = parseInt(localStorage.getItem(storageKey) || '0');
     
     const limit = usageStats?.tier === 'beta' ? 999999 :
-                  usageStats?.tier === 'pro' ? 40 : 5;
+                  (usageStats?.tier === 'pro' || usageStats?.tier === 'general_pass' || usageStats?.tier === 'annual') ? 40 : 5;
 
     setUsageThisMonth(currentUsage);
     setUsageLimit(limit);
@@ -961,7 +965,7 @@ loadPracticeHistory();
       console.log('🔍 Fetching profile for user:', user.id);
       const { data: profile, error: profileError } = await supabase
         .from('user_profiles')
-        .select('tier, subscription_status, stripe_customer_id')
+        .select('tier, subscription_status, stripe_customer_id, nursing_pass_expires, general_pass_expires')
         .eq('user_id', user.id)
         .single();
 
@@ -973,16 +977,25 @@ loadPracticeHistory();
       }
 
       if (profile) {
-        // CRITICAL: Only set tier if it's a valid non-null value
+        // CRITICAL: Use resolveEffectiveTier to determine tier from pass expiry + legacy
+        // This will be overridden by beta check below if user is in beta_testers table
         tier = profile.tier || 'free';
+        // If user has active passes, resolveEffectiveTier upgrades the tier
+        const effectiveTier = resolveEffectiveTier(profile, false);
+        if (effectiveTier !== 'free') {
+          tier = effectiveTier;
+        }
         // Store subscription status for subscription management
         if (profile.subscription_status) {
           setSubscriptionStatus(profile.subscription_status);
         }
         console.log('📋 Profile loaded:', {
           tier: profile.tier,
+          effectiveTier,
           subscription_status: profile.subscription_status,
-          stripe_customer_id: profile.stripe_customer_id
+          stripe_customer_id: profile.stripe_customer_id,
+          nursing_pass_expires: profile.nursing_pass_expires,
+          general_pass_expires: profile.general_pass_expires,
         });
       } else {
         // Create profile if doesn't exist
@@ -1118,22 +1131,25 @@ loadPracticeHistory();
         // Force fresh data - bypass any caching
         const { data: profile, error } = await supabase
           .from('user_profiles')
-          .select('tier, subscription_status, stripe_customer_id')
+          .select('tier, subscription_status, stripe_customer_id, nursing_pass_expires, general_pass_expires')
           .eq('user_id', currentUser.id)
           .single();
 
         console.log('📊 Profile data:', profile, 'Error:', error);
 
-        if (profile?.tier === 'pro' || profile?.subscription_status === 'active') {
-          console.log('🎉 Pro tier confirmed!');
+        // Check for any paid tier: legacy pro, or pass-based via resolveEffectiveTier
+        const resolvedTier = resolveEffectiveTier(profile, false);
+        if (profile?.tier === 'pro' || profile?.subscription_status === 'active' || resolvedTier !== 'free') {
+          const finalTier = resolvedTier !== 'free' ? resolvedTier : 'pro';
+          console.log('🎉 Paid tier confirmed:', finalTier);
           alreadyHandled = true;
 
           // FIX: Mark this session as handled to prevent duplicate popups
           sessionStorage.setItem(handledKey, 'true');
 
-          setUserTier('pro');
-          const stats = await getUsageStats(supabase, currentUser.id, 'pro');
-          setUsageStatsData({ ...stats, tier: 'pro' });
+          setUserTier(finalTier);
+          const stats = await getUsageStats(supabase, currentUser.id, finalTier);
+          setUsageStatsData({ ...stats, tier: finalTier });
 
           // Clean up URL parameters
           window.history.replaceState({}, document.title, window.location.pathname);
@@ -1494,7 +1510,7 @@ Upgrade to Pro for UNLIMITED:
 • Unlimited Question Generator
 • Unlimited Live Prompter
 
-Just $29.99/month - practice as much as you need!`);
+Get a 30-Day Pass for just $14.99 — no subscription!`);
       setShowPricingPage(true);
       return false;
     }
@@ -1516,9 +1532,9 @@ Just $29.99/month - practice as much as you need!`);
       return true;
     }
 
-    // Pro users have unlimited access
-    if (userTier === 'pro') {
-      console.log('👑 Pro user - unlimited access for', featureName);
+    // Pro / pass / annual users have unlimited access to general features
+    if (userTier === 'pro' || userTier === 'general_pass' || userTier === 'annual') {
+      console.log('👑 Paid user - unlimited access for', featureName);
       return true;
     }
 
@@ -1553,7 +1569,7 @@ Upgrade to Pro for UNLIMITED:
 • Unlimited Question Generator
 • Unlimited Live Prompter
 
-Just $29.99/month - practice as much as you need!`);
+Get a 30-Day Pass for just $14.99 — no subscription!`);
       setShowPricingPage(true);
       return false;
     }
@@ -1613,7 +1629,7 @@ Upgrade to Pro for UNLIMITED:
 • Unlimited Question Generator
 • Unlimited Live Prompter
 
-Just $29.99/month - practice as much as you need!`);
+Get a 30-Day Pass for just $14.99 — no subscription!`);
         setShowPricingPage(true);
         return false;
       }
@@ -1737,7 +1753,7 @@ Just $29.99/month - practice as much as you need!`);
         .from('usage_tracking')
         .select('*')
         .eq('user_id', user.id)
-        .eq('month', currentMonth)
+        .eq('period', currentMonth)
         .maybeSingle();
 
       // Return usage data with correct tier from user_profiles
@@ -4063,10 +4079,10 @@ const startPracticeMode = async () => {
                 </div>
                 <div className="min-w-0">
                   <p className="text-lg sm:text-xl font-black leading-tight">
-                    {userTier === 'pro' ? '∞' : 'View'}
+                    {(userTier === 'pro' || userTier === 'general_pass' || userTier === 'annual' || userTier === 'beta') ? '∞' : 'View'}
                   </p>
                   <p className="text-[10px] sm:text-xs text-slate-500 leading-tight font-semibold whitespace-nowrap">
-                    {userTier === 'pro' ? 'Unlimited' : 'Usage'}
+                    {(userTier === 'pro' || userTier === 'general_pass' || userTier === 'annual' || userTier === 'beta') ? 'Unlimited' : 'Usage'}
                   </p>
                 </div>
               </div>
@@ -4802,7 +4818,7 @@ const startPracticeMode = async () => {
                 
                 {/* Help Button - Below Textarea */}
                 <div className="mt-2 flex justify-center">
-                  {(usageStats?.tier === 'pro' || usageStats?.tier === 'beta') ? (
+                  {(usageStats?.tier === 'pro' || usageStats?.tier === 'beta' || usageStats?.tier === 'general_pass' || usageStats?.tier === 'annual') ? (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -4818,7 +4834,7 @@ const startPracticeMode = async () => {
                     </button>
                   ) : (
                     <button
-                      onClick={(e) => { e.stopPropagation(); alert('⭐ Pro Feature\n\nUpgrade to Pro ($29.99/month) for UNLIMITED access!\n\n✓ Unlimited AI Answer Coach sessions\n✓ Unlimited AI Interview practice\n✓ Unlimited Practice Mode\n✓ Everything unlimited - practice as much as you need!'); }}
+                      onClick={(e) => { e.stopPropagation(); alert('⭐ Pro Feature\n\nGet a 30-Day Pass ($14.99) for UNLIMITED access!\n\n✓ Unlimited AI Answer Coach sessions\n✓ Unlimited AI Interview practice\n✓ Unlimited Practice Mode\n✓ No subscription — just one payment!'); }}
                       className="text-sm bg-gradient-to-r from-yellow-100 to-amber-100 hover:from-yellow-200 hover:to-amber-200 text-yellow-800 px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2"
                     >
                       <Crown className="w-4 h-4" />
@@ -5354,7 +5370,7 @@ const startPracticeMode = async () => {
                   
                   {/* Help Button - Below Textarea */}
                   <div className="mt-2 flex justify-center">
-                    {(usageStats?.tier === 'pro' || usageStats?.tier === 'beta') ? (
+                    {(usageStats?.tier === 'pro' || usageStats?.tier === 'beta' || usageStats?.tier === 'general_pass' || usageStats?.tier === 'annual') ? (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -5370,7 +5386,7 @@ const startPracticeMode = async () => {
                       </button>
                     ) : (
                       <button
-                        onClick={(e) => { e.stopPropagation(); alert('⭐ Pro Feature\n\nUpgrade to Pro ($29.99/month) for UNLIMITED access!\n\n✓ Unlimited AI Answer Coach sessions\n✓ Unlimited AI Interview practice\n✓ Unlimited Practice Mode\n✓ Everything unlimited - practice as much as you need!'); }}
+                        onClick={(e) => { e.stopPropagation(); alert('⭐ Pro Feature\n\nGet a 30-Day Pass ($14.99) for UNLIMITED access!\n\n✓ Unlimited AI Answer Coach sessions\n✓ Unlimited AI Interview practice\n✓ Unlimited Practice Mode\n✓ No subscription — just one payment!'); }}
                         className="text-sm bg-gradient-to-r from-yellow-100 to-amber-100 hover:from-yellow-200 hover:to-amber-200 text-yellow-800 px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2"
                       >
                         <Crown className="w-4 h-4" />
@@ -7217,7 +7233,7 @@ const startPracticeMode = async () => {
                           onClick={() => setShowPricingPage(true)}
                           className="bg-gradient-to-r from-teal-600 to-sky-600 text-white px-10 py-4 rounded-lg font-bold text-lg hover:from-teal-700 hover:to-sky-700 shadow-lg transform hover:scale-105 transition"
                         >
-                          Upgrade to Pro - $29.99/month
+                          Get 30-Day Pass — $14.99
                         </button>
                       </div>
                     )}
@@ -8033,42 +8049,18 @@ const startPracticeMode = async () => {
       )}
 
       {/* ==========================================
-          PRICING PAGE MODAL - FIXED SCROLL
+          PRICING PAGE MODAL — GeneralPricing (pass-based)
+          Replaces old PricingPage (Pro $29.99/mo subscription)
           ========================================== */}
       {showPricingPage && (
-        <div
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9999] overflow-y-auto"
-          onClick={() => { setShowPricingPage(false); const r = sessionStorage.getItem('upgradeReturnTo'); if (r) { sessionStorage.removeItem('upgradeReturnTo'); window.location.href = r; } }}
-        >
-          {/* Close button - FIXED to viewport, always visible */}
-          <button
-            onClick={() => { setShowPricingPage(false); const r = sessionStorage.getItem('upgradeReturnTo'); if (r) { sessionStorage.removeItem('upgradeReturnTo'); window.location.href = r; } }}
-            className="fixed top-4 right-4 text-white hover:text-gray-300 z-[10000] bg-black/50 rounded-full p-2 backdrop-blur-sm"
-          >
-            <X className="w-8 h-8" />
-          </button>
-          
-          {/* Content wrapper - allows scrolling */}
-          <div 
-            className="min-h-screen w-full py-16 px-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <PricingPage
-              currentTier={userTier}
-              user={currentUser}
-              userEmail={currentUser?.email}
-              onSelectTier={(tier) => {
-                if (tier === 'free') {
-                  setShowPricingPage(false);
-                  const r = sessionStorage.getItem('upgradeReturnTo'); if (r) { sessionStorage.removeItem('upgradeReturnTo'); window.location.href = r; }
-                  return;
-                }
-                // Stripe checkout is now handled by StripeCheckout component
-                console.log('User selected tier:', tier);
-              }}
-            />
-          </div>
-        </div>
+        <GeneralPricing
+          userData={{ user: currentUser, tier: userTier }}
+          onClose={() => {
+            setShowPricingPage(false);
+            const r = sessionStorage.getItem('upgradeReturnTo');
+            if (r) { sessionStorage.removeItem('upgradeReturnTo'); window.location.href = r; }
+          }}
+        />
       )}
 
       {/* ==========================================

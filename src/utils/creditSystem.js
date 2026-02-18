@@ -1,50 +1,195 @@
 // Credit System for ISL - PRODUCTION VERSION
-// Proper limits with upgrade incentives
+// Supports: Free tier, 30-day passes (nursing/general), annual, legacy pro, beta
+//
+// PRICING MODEL (P2):
+//   Nursing Interview Pro:   $19.99 / 30-day pass
+//   General Interview Prep:  $14.99 / 30-day pass
+//   All-Access Annual:       $149.99 / year
+//
+// Pass expiry stored in user_profiles.nursing_pass_expires / general_pass_expires
+// Use resolveEffectiveTier() to determine active tier from profile data.
 
 export const TIER_LIMITS = {
   free: {
     name: 'Free',
     price: 0,
+    // General features (unchanged)
     ai_interviewer: 3,           // 3 full AI practice sessions (high value)
     practice_mode: 10,            // 10 quick practices (daily use for 2 weeks)
     answer_assistant: 5,          // 5 STAR coaching sessions
     question_gen: 5,              // 5 AI question generations
     live_prompter_questions: 10,  // 10 real-time prompt questions
     live_prompter_unlimited: false,
-    // Nursing Track — separate pools from main app features
-    nursing_practice: 5,          // 5 nursing quick practice sessions/month
-    nursing_mock: 3,              // 3 nursing mock interview sessions/month
-    nursing_sbar: 3,              // 3 nursing SBAR drill sessions/month
+    // Nursing Track — reduced free tier (6 AI sessions total: 3+1+2)
+    nursing_practice: 3,          // 3 nursing quick practice sessions/month
+    nursing_mock: 1,              // 1 nursing mock interview session/month
+    nursing_sbar: 2,              // 2 nursing SBAR drill sessions/month
+    nursing_coach: 0,             // AI Coach is pass-only
   },
+
+  // ── 30-Day Pass: Nursing ($19.99) ──────────────────────────
+  nursing_pass: {
+    name: 'Nursing Pass',
+    price: 19.99,
+    // General features stay at FREE-tier level (they didn't buy general)
+    ai_interviewer: 3,
+    practice_mode: 10,
+    answer_assistant: 5,
+    question_gen: 5,
+    live_prompter_questions: 10,
+    live_prompter_unlimited: false,
+    // Nursing Track — UNLIMITED (except AI Coach capped at 20)
+    nursing_practice: 999999,
+    nursing_mock: 999999,
+    nursing_sbar: 999999,
+    nursing_coach: 20,            // 20 AI Coach sessions/month (cost control)
+  },
+
+  // ── 30-Day Pass: General ($14.99) ──────────────────────────
+  general_pass: {
+    name: 'General Pass',
+    price: 14.99,
+    // General features — UNLIMITED
+    ai_interviewer: 999999,
+    practice_mode: 999999,
+    answer_assistant: 999999,
+    question_gen: 999999,
+    live_prompter_questions: 999999,
+    live_prompter_unlimited: true,
+    // Nursing Track stays at FREE-tier level (they didn't buy nursing)
+    nursing_practice: 3,
+    nursing_mock: 1,
+    nursing_sbar: 2,
+    nursing_coach: 0,
+  },
+
+  // ── Annual All-Access ($149.99/year) ───────────────────────
+  annual: {
+    name: 'Annual All-Access',
+    price: 149.99,
+    // General — UNLIMITED
+    ai_interviewer: 999999,
+    practice_mode: 999999,
+    answer_assistant: 999999,
+    question_gen: 999999,
+    live_prompter_questions: 999999,
+    live_prompter_unlimited: true,
+    // Nursing — UNLIMITED (except AI Coach capped at 20)
+    nursing_practice: 999999,
+    nursing_mock: 999999,
+    nursing_sbar: 999999,
+    nursing_coach: 20,
+  },
+
+  // ── Legacy Pro ($29.99/month subscription) — backward compat ─
   pro: {
     name: 'Pro',
     price: 29.99,
-    ai_interviewer: 999999,       // UNLIMITED AI sessions (matches pricing page)
-    practice_mode: 999999,        // UNLIMITED (most used feature)
-    answer_assistant: 999999,     // UNLIMITED coaching sessions
-    question_gen: 999999,         // UNLIMITED question generation
-    live_prompter_questions: 999999, // UNLIMITED real-time prompts
+    ai_interviewer: 999999,
+    practice_mode: 999999,
+    answer_assistant: 999999,
+    question_gen: 999999,
+    live_prompter_questions: 999999,
     live_prompter_unlimited: true,
     // Nursing Track
-    nursing_practice: 999999,     // UNLIMITED
-    nursing_mock: 999999,         // UNLIMITED
-    nursing_sbar: 999999,         // UNLIMITED
+    nursing_practice: 999999,
+    nursing_mock: 999999,
+    nursing_sbar: 999999,
+    nursing_coach: 999999,        // Legacy pro gets unlimited coach
   },
+
+  // ── Beta Testers — unlimited everything ────────────────────
   beta: {
     name: 'Beta Tester',
     price: 0,
-    ai_interviewer: 999999,       // UNLIMITED - beta testers get full Pro access
-    practice_mode: 999999,        // UNLIMITED
-    answer_assistant: 999999,     // UNLIMITED
-    question_gen: 999999,         // UNLIMITED
-    live_prompter_questions: 999999, // UNLIMITED
+    ai_interviewer: 999999,
+    practice_mode: 999999,
+    answer_assistant: 999999,
+    question_gen: 999999,
+    live_prompter_questions: 999999,
     live_prompter_unlimited: true,
     // Nursing Track
-    nursing_practice: 999999,     // UNLIMITED
-    nursing_mock: 999999,         // UNLIMITED
-    nursing_sbar: 999999,         // UNLIMITED
+    nursing_practice: 999999,
+    nursing_mock: 999999,
+    nursing_sbar: 999999,
+    nursing_coach: 999999,        // Beta gets unlimited coach
   }
 };
+
+// ============================================================================
+// TIER RESOLUTION — Determine effective tier from user profile data
+// ============================================================================
+// Call this with the user's profile row (including pass expiry columns).
+// Returns the tier key to use for TIER_LIMITS lookup.
+//
+// Priority: beta > annual (both active) > nursing_pass > general_pass > pro (legacy) > free
+
+export function resolveEffectiveTier(profile, isBeta = false) {
+  // Beta always wins
+  if (isBeta || profile?.tier === 'beta') return 'beta';
+
+  const now = new Date();
+  const nursingActive = profile?.nursing_pass_expires &&
+    new Date(profile.nursing_pass_expires) > now;
+  const generalActive = profile?.general_pass_expires &&
+    new Date(profile.general_pass_expires) > now;
+
+  // Both active = annual (or two separate passes — treat same)
+  if (nursingActive && generalActive) return 'annual';
+
+  // Single product passes
+  if (nursingActive) return 'nursing_pass';
+  if (generalActive) return 'general_pass';
+
+  // Legacy pro subscription (backward compat)
+  if (profile?.tier === 'pro' && profile?.subscription_status === 'active') return 'pro';
+
+  return 'free';
+}
+
+// Helper: Does this user have an active nursing pass (or better)?
+export function hasActiveNursingPass(profile, isBeta = false) {
+  const tier = resolveEffectiveTier(profile, isBeta);
+  return tier === 'nursing_pass' || tier === 'annual' || tier === 'pro' || tier === 'beta';
+}
+
+// Helper: Does this user have an active general pass (or better)?
+export function hasActiveGeneralPass(profile, isBeta = false) {
+  const tier = resolveEffectiveTier(profile, isBeta);
+  return tier === 'general_pass' || tier === 'annual' || tier === 'pro' || tier === 'beta';
+}
+
+// Helper: Get pass expiry info for display
+export function getPassExpiryInfo(profile) {
+  const now = new Date();
+  const result = { nursing: null, general: null };
+
+  if (profile?.nursing_pass_expires) {
+    const expires = new Date(profile.nursing_pass_expires);
+    const daysLeft = Math.ceil((expires - now) / (1000 * 60 * 60 * 24));
+    result.nursing = {
+      expires,
+      daysLeft: Math.max(0, daysLeft),
+      isActive: daysLeft > 0,
+      isExpired: daysLeft <= 0,
+      isExpiringSoon: daysLeft > 0 && daysLeft <= 5,
+    };
+  }
+
+  if (profile?.general_pass_expires) {
+    const expires = new Date(profile.general_pass_expires);
+    const daysLeft = Math.ceil((expires - now) / (1000 * 60 * 60 * 24));
+    result.general = {
+      expires,
+      daysLeft: Math.max(0, daysLeft),
+      isActive: daysLeft > 0,
+      isExpired: daysLeft <= 0,
+      isExpiringSoon: daysLeft > 0 && daysLeft <= 5,
+    };
+  }
+
+  return result;
+}
 
 // Initialize usage tracking for a new user
 export function initializeUsageTracking(userId, tier = 'free') {
@@ -57,6 +202,7 @@ export function initializeUsageTracking(userId, tier = 'free') {
     answer_assistant: 0,
     question_gen: 0,
     live_prompter_questions: 0,
+    nursing_coach: 0,
     last_reset: new Date().toISOString()
   };
   
@@ -126,6 +272,7 @@ function featureNameToDb(camelCaseName) {
     'nursingPractice': 'nursing_practice',
     'nursingMock': 'nursing_mock',
     'nursingSbar': 'nursing_sbar',
+    'nursingCoach': 'nursing_coach',
   };
   return mapping[camelCaseName] || camelCaseName;
 }
@@ -260,6 +407,12 @@ export async function getUsageStats(supabase, userId, tier) {
         remaining: Math.max(0, (limits.nursing_sbar || 0) - (usage.nursing_sbar || 0)),
         unlimited: (limits.nursing_sbar || 0) >= 999999
       },
+      nursingCoach: {
+        used: usage.nursing_coach || 0,
+        limit: limits.nursing_coach || 0,
+        remaining: Math.max(0, (limits.nursing_coach || 0) - (usage.nursing_coach || 0)),
+        unlimited: (limits.nursing_coach || 0) >= 999999
+      },
     };
   } catch (err) {
     console.error('Error in getUsageStats:', err);
@@ -336,6 +489,12 @@ export function getFeatureDisplayInfo(feature) {
       description: 'Clinical communication practice',
       icon: '📋',
       value: 'SBAR communication drill with per-component scoring'
+    },
+    nursingCoach: {
+      name: 'AI Coach',
+      description: 'Free-form interview coaching',
+      icon: '🤖',
+      value: 'Personalized AI coaching for interview preparation'
     },
   };
 

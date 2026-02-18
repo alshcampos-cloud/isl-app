@@ -9,7 +9,7 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
-import { isBetaUser, getUsageStats } from '../../utils/creditSystem';
+import { isBetaUser, getUsageStats, resolveEffectiveTier, hasActiveNursingPass } from '../../utils/creditSystem';
 import { fetchSessionHistory, insertPracticeSession } from './nursingSupabase';
 import SpecialtySelection from './SpecialtySelection';
 import NursingDashboard from './NursingDashboard';
@@ -22,6 +22,7 @@ import NursingAICoach from './NursingAICoach';
 import NursingResources from './NursingResources';
 import NursingConfidenceBuilder from './NursingConfidenceBuilder';
 import NursingOfferCoach from './NursingOfferCoach';
+import NursingPricing from './NursingPricing';
 
 // Internal view states for the nursing track
 const VIEWS = {
@@ -96,14 +97,15 @@ export default function NursingTrackApp() {
         const user = session.user;
         const userId = user.id;
 
-        // Fetch profile (name, tier) and beta status in parallel
+        // Fetch profile (name, tier, pass expiry) and beta status in parallel
         const [profileResult, betaResult] = await Promise.all([
-          supabase.from('user_profiles').select('tier').eq('user_id', userId).maybeSingle(),
+          supabase.from('user_profiles').select('first_name, last_name, tier, subscription_status, nursing_pass_expires, general_pass_expires').eq('user_id', userId).maybeSingle(),
           isBetaUser(supabase, userId),
         ]);
 
         const profile = profileResult.data;
-        const tier = betaResult ? 'beta' : (profile?.tier || 'free');
+        // Use resolveEffectiveTier to determine active tier from pass expiry + beta + legacy
+        const tier = resolveEffectiveTier(profile, betaResult);
 
         // Now fetch usage stats with resolved tier
         const usageStats = await getUsageStats(supabase, userId, tier);
@@ -114,7 +116,9 @@ export default function NursingTrackApp() {
             tier,
             isBeta: betaResult,
             usage: usageStats,
-            displayName: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Nurse',
+            displayName: profile?.first_name || user.email?.split('@')[0] || 'Nurse',
+            nursingPassExpires: profile?.nursing_pass_expires || null,
+            generalPassExpires: profile?.general_pass_expires || null,
             loading: false,
           });
         }
@@ -224,7 +228,11 @@ export default function NursingTrackApp() {
   // ============================================================
   // PRO GATE — blocks free users from premium modes
   // ============================================================
-  const isProUser = userData?.isBeta || userData?.tier === 'pro' || userData?.tier === 'beta';
+  // User has nursing access if: beta, nursing_pass, annual, or legacy pro
+  const isProUser = userData?.isBeta || userData?.tier === 'nursing_pass' || userData?.tier === 'annual' || userData?.tier === 'pro' || userData?.tier === 'beta';
+
+  // State for showing the in-app pricing modal
+  const [showPricing, setShowPricing] = useState(false);
 
   const ProGateScreen = ({ modeName, modeIcon, onBack }) => (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-sky-950 to-slate-900 flex items-center justify-center p-4">
@@ -232,16 +240,16 @@ export default function NursingTrackApp() {
         <div className="bg-white/5 border border-white/10 rounded-2xl p-8">
           <div className="text-4xl mb-4">{modeIcon}</div>
           <h2 className="text-white text-xl font-bold mb-2">{modeName}</h2>
-          <p className="text-slate-400 text-sm mb-1">This is a Pro feature.</p>
+          <p className="text-slate-400 text-sm mb-1">This feature requires a Nursing Pass.</p>
           <p className="text-slate-500 text-xs mb-6">
-            Upgrade to get unlimited access to {modeName}, plus all other nursing interview tools.
+            Get unlimited access to {modeName}, plus all other nursing interview tools.
           </p>
-          <a
-            href="/app?upgrade=true&returnTo=/nursing"
+          <button
+            onClick={() => setShowPricing(true)}
             className="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-500 text-white font-medium px-6 py-3 rounded-xl transition-colors text-sm mb-4"
           >
-            Upgrade to Pro — $29.99/mo
-          </a>
+            Get Nursing Pass — $19.99
+          </button>
           <div>
             <button
               onClick={onBack}
@@ -280,6 +288,7 @@ export default function NursingTrackApp() {
             userData={userData}
             sessionHistory={sessionHistory}
             streakRefreshTrigger={streakRefreshTrigger}
+            onShowPricing={() => setShowPricing(true)}
           />
         );
 
@@ -292,6 +301,7 @@ export default function NursingTrackApp() {
             refreshUsage={refreshUsage}
             addSession={addSession}
             triggerStreakRefresh={triggerStreakRefresh}
+            onShowPricing={() => setShowPricing(true)}
           />
         );
 
@@ -305,6 +315,7 @@ export default function NursingTrackApp() {
             addSession={addSession}
             startQuestionId={targetQuestionId}
             triggerStreakRefresh={triggerStreakRefresh}
+            onShowPricing={() => setShowPricing(true)}
           />
         );
 
@@ -317,6 +328,7 @@ export default function NursingTrackApp() {
             refreshUsage={refreshUsage}
             addSession={addSession}
             triggerStreakRefresh={triggerStreakRefresh}
+            onShowPricing={() => setShowPricing(true)}
           />
         );
 
@@ -337,6 +349,7 @@ export default function NursingTrackApp() {
             onStartMode={handleStartMode}
             sessionHistory={sessionHistory}
             userData={userData}
+            onShowPricing={() => setShowPricing(true)}
           />
         );
 
@@ -350,6 +363,7 @@ export default function NursingTrackApp() {
             refreshUsage={refreshUsage}
             addSession={addSession}
             triggerStreakRefresh={triggerStreakRefresh}
+            onShowPricing={() => setShowPricing(true)}
           />
         );
 
@@ -361,13 +375,14 @@ export default function NursingTrackApp() {
         );
 
       case VIEWS.CONFIDENCE:
-        if (!isProUser) return <ProGateScreen modeName="Confidence Builder" modeIcon="💪" onBack={handleBackToDashboard} />;
+        // Confidence Builder: Profile + Evidence + Reset are FREE; only AI Brief is gated by credits
         return (
           <NursingConfidenceBuilder
             specialty={selectedSpecialty}
             onBack={handleBackToDashboard}
             userData={userData}
             refreshUsage={refreshUsage}
+            onShowPricing={() => setShowPricing(true)}
           />
         );
 
@@ -380,6 +395,7 @@ export default function NursingTrackApp() {
             userData={userData}
             refreshUsage={refreshUsage}
             addSession={addSession}
+            onShowPricing={() => setShowPricing(true)}
           />
         );
 
@@ -393,5 +409,15 @@ export default function NursingTrackApp() {
     }
   };
 
-  return <div className="nursing-track">{renderView()}</div>;
+  return (
+    <div className="nursing-track">
+      {renderView()}
+      {showPricing && (
+        <NursingPricing
+          userData={userData}
+          onClose={() => setShowPricing(false)}
+        />
+      )}
+    </div>
+  );
 }

@@ -35,10 +35,14 @@ function AccountMenu({ userData }) {
     return () => { document.removeEventListener('mousedown', handler); document.removeEventListener('touchstart', handler); };
   }, [open]);
 
-  const tierLabel = userData?.isBeta ? 'Beta' : userData?.tier === 'pro' ? 'Pro' : 'Free';
+  const tierLabel = userData?.isBeta ? 'Beta'
+    : userData?.tier === 'annual' ? 'Annual'
+    : userData?.tier === 'nursing_pass' ? 'Nursing Pass'
+    : userData?.tier === 'pro' ? 'Pro'
+    : 'Free';
   const tierClasses = userData?.isBeta
     ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
-    : userData?.tier === 'pro'
+    : (userData?.tier === 'nursing_pass' || userData?.tier === 'annual' || userData?.tier === 'pro')
       ? 'bg-purple-500/20 text-purple-300 border-purple-500/30'
       : 'bg-white/10 text-slate-400 border-white/10';
 
@@ -87,7 +91,7 @@ function AccountMenu({ userData }) {
   );
 }
 
-export default function NursingDashboard({ specialty, onStartMode, onChangeSpecialty, onBack, userData, sessionHistory = [], streakRefreshTrigger }) {
+export default function NursingDashboard({ specialty, onStartMode, onChangeSpecialty, onBack, userData, sessionHistory = [], streakRefreshTrigger, onShowPricing }) {
   const { questions, categories, loading } = useNursingQuestions(specialty.id);
 
   if (loading) return <NursingLoadingSkeleton title={`${specialty.name} Track`} onBack={onBack} />;
@@ -104,7 +108,7 @@ export default function NursingDashboard({ specialty, onStartMode, onChangeSpeci
   const recentSessions = [...sessionHistory].sort((a, b) => b.timestamp.localeCompare(a.timestamp)).slice(0, 5);
 
   // Credits display — nursing track uses separate pools
-  const isUnlimited = userData?.isBeta || userData?.tier === 'pro' || userData?.tier === 'beta';
+  const isUnlimited = userData?.isBeta || userData?.tier === 'nursing_pass' || userData?.tier === 'annual' || userData?.tier === 'pro' || userData?.tier === 'beta';
 
   // Practice modes available in the nursing track
   const practiceModes = [
@@ -150,7 +154,7 @@ export default function NursingDashboard({ specialty, onStartMode, onChangeSpeci
       description: 'Free-form coaching — ask anything about interview prep',
       icon: Sparkles,
       color: 'from-violet-500 to-purple-500',
-      badge: isUnlimited ? null : 'Pro',
+      badge: isUnlimited ? null : 'Pass',
       detail: 'Answer workshopping, strategy, SBAR/STAR guidance, confidence coaching',
     },
     {
@@ -159,7 +163,7 @@ export default function NursingDashboard({ specialty, onStartMode, onChangeSpeci
       description: `Build your ${specialty.shortName} interview confidence with evidence from your real experience`,
       icon: Shield,
       color: 'from-amber-500 to-orange-500',
-      badge: isUnlimited ? null : 'Pro',
+      badge: null, // Profile + Evidence + Reset are free; AI Brief uses credits
       detail: 'Background profile → Evidence file → AI confidence brief → Pre-interview reset',
     },
     {
@@ -168,7 +172,7 @@ export default function NursingDashboard({ specialty, onStartMode, onChangeSpeci
       description: 'Practice negotiating salary, sign-on bonuses, and benefits with AI coaching',
       icon: DollarSign,
       color: 'from-emerald-500 to-green-500',
-      badge: isUnlimited ? null : 'Pro',
+      badge: isUnlimited ? null : 'Pass',
       detail: 'Scenario-based practice → AI evaluates communication, not dollar amounts',
     },
   ];
@@ -321,13 +325,13 @@ export default function NursingDashboard({ specialty, onStartMode, onChangeSpeci
               })}
             </div>
             <div className="flex items-center justify-between mt-3">
-              <p className="text-slate-600 text-[10px]">AI Coach, Confidence Builder, Offer Negotiation require Pro</p>
-              <a
-                href="/app?upgrade=true&returnTo=/nursing"
+              <p className="text-slate-600 text-[10px]">AI Coach, Confidence Builder, Offer Negotiation require a pass</p>
+              <button
+                onClick={onShowPricing}
                 className="text-[10px] text-sky-400 hover:text-sky-300 font-medium transition-colors"
               >
-                Upgrade to Pro →
-              </a>
+                Get Nursing Pass →
+              </button>
             </div>
           </div>
         )}
@@ -338,9 +342,16 @@ export default function NursingDashboard({ specialty, onStartMode, onChangeSpeci
             <span className="text-2xl">{userData?.tier === 'beta' ? '🎖️' : '👑'}</span>
             <div>
               <p className="text-white font-semibold text-sm">
-                {userData?.tier === 'beta' ? 'Beta Tester' : 'Pro Member'} — Unlimited Access
+                {userData?.tier === 'beta' ? 'Beta Tester'
+                  : userData?.tier === 'annual' ? 'Annual All-Access'
+                  : userData?.tier === 'nursing_pass' ? 'Nursing Pass'
+                  : 'Pro Member'} — Unlimited Access
               </p>
-              <p className="text-amber-300/70 text-xs">All modes and features are unlocked.</p>
+              <p className="text-amber-300/70 text-xs">
+                {userData?.nursingPassExpires
+                  ? `Expires ${new Date(userData.nursingPassExpires).toLocaleDateString()}`
+                  : 'All modes and features are unlocked.'}
+              </p>
             </div>
           </div>
         )}
@@ -366,15 +377,17 @@ export default function NursingDashboard({ specialty, onStartMode, onChangeSpeci
                 {/* Badge */}
                 {mode.badge && (
                   <span className={`absolute top-3 right-3 text-xs font-semibold px-2 py-0.5 rounded-full ${
-                    mode.badge === 'Pro'
+                    mode.badge === 'Pass'
                       ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
                       : mode.badge === 'New'
                         ? 'bg-green-500/20 text-green-300 border border-green-500/30'
                         : mode.badge === 'Free'
                           ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
-                          : 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                          : mode.badge === 'Most Popular'
+                            ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                            : 'bg-slate-500/20 text-slate-300 border border-slate-500/30'
                   }`}>
-                    {mode.badge === 'Pro' ? '🔒 Pro' : mode.badge}
+                    {mode.badge === 'Pass' ? '🔒 Pass' : mode.badge}
                   </span>
                 )}
 

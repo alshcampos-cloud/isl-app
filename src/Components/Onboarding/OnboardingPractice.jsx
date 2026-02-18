@@ -13,48 +13,10 @@ import { trackOnboardingEvent } from '../../utils/onboardingTracker'
  * Success at progressively harder tasks builds self-efficacy.
  */
 
-const ONBOARDING_SYSTEM_PROMPT = `You are a supportive interview coach helping someone practice for the first time.
-
-RULES:
-1. Be warm, encouraging, and specific. This is their FIRST practice ever.
-2. Start with something genuinely positive about their answer.
-3. Give ONE concrete suggestion for improvement (not three, not five — ONE).
-4. End with an encouraging statement about their potential.
-5. Keep your response under 150 words — brevity matters.
-6. Include a score from 1-10 in this exact format: [SCORE: X/10]
-7. Do NOT use clinical terminology. Keep it simple and accessible.
-
-TONE: Think "supportive older sibling who interviews well" — not "professor grading an essay."
-
-SCORING GUIDE:
-- 1-3: Answer is very vague or off-topic
-- 4-5: Shows effort but needs structure
-- 6-7: Good foundation, specific improvement available
-- 8-9: Strong answer with minor refinements
-- 10: Exceptional — rare for first attempt
-`
-
-const NURSING_ONBOARDING_SYSTEM_PROMPT = `You are a supportive nursing interview coach helping a nurse practice for the first time.
-
-RULES:
-1. Be warm, encouraging, and specific. This is their FIRST practice ever.
-2. Start with something genuinely positive about their answer.
-3. Give ONE concrete suggestion for improvement — frame it around the SBAR communication framework (Situation, Background, Assessment, Recommendation) if relevant to their answer.
-4. End with an encouraging statement about their potential.
-5. Keep your response under 150 words — brevity matters.
-6. Include a score from 1-10 in this exact format: [SCORE: X/10]
-7. Coach COMMUNICATION quality only — do NOT evaluate clinical accuracy.
-8. If they mention clinical details, acknowledge them but focus your feedback on how clearly they communicated, not whether the clinical content is correct.
-
-TONE: Think "supportive charge nurse mentoring a colleague" — warm, professional, specific.
-
-SCORING GUIDE:
-- 1-3: Answer is very vague or off-topic
-- 4-5: Shows effort but needs structure (suggest SBAR framing)
-- 6-7: Good foundation, SBAR elements partially present
-- 8-9: Strong answer with clear SBAR structure
-- 10: Exceptional — rare for first attempt
-`
+// System prompts moved server-side (Change 8 — IP protection).
+// Previously: ONBOARDING_SYSTEM_PROMPT and NURSING_ONBOARDING_SYSTEM_PROMPT were
+// hardcoded here and sent in the POST body, visible in DevTools Network tab.
+// Now: only a mode identifier is sent; the Edge Function looks up the prompt server-side.
 
 export default function OnboardingPractice({ question, anonSessionReady, onComplete, fromNursing = false }) {
   const [userAnswer, setUserAnswer] = useState('')
@@ -84,8 +46,7 @@ export default function OnboardingPractice({ question, anonSessionReady, onCompl
             'Authorization': `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
-            mode: 'confidence-brief',
-            systemPrompt: fromNursing ? NURSING_ONBOARDING_SYSTEM_PROMPT : ONBOARDING_SYSTEM_PROMPT,
+            mode: fromNursing ? 'onboarding-nursing' : 'onboarding-general',
             userMessage: `Question: ${question.question}\n\nAnswer: ${userAnswer.trim()}`,
           }),
         }
@@ -102,7 +63,7 @@ export default function OnboardingPractice({ question, anonSessionReady, onCompl
 
       // Parse score from [SCORE: X/10] format
       const scoreMatch = rawContent.match(/\[SCORE:\s*(\d+)\s*\/\s*10\]/)
-      const parsedScore = scoreMatch ? parseInt(scoreMatch[1], 10) : 6
+      const parsedScore = scoreMatch ? parseInt(scoreMatch[1], 10) : 3
 
       // Clean the score tag from visible feedback
       const cleanFeedback = rawContent.replace(/\[SCORE:\s*\d+\s*\/\s*10\]/g, '').trim()
@@ -114,7 +75,7 @@ export default function OnboardingPractice({ question, anonSessionReady, onCompl
       console.error('Practice submission error:', err)
       setError('Could not get feedback right now. You can still continue!')
       // Set a default score so they can proceed
-      setScore(6)
+      setScore(3)
       setFeedback("Great effort on your first practice! While I couldn't generate detailed feedback right now, the fact that you started practicing puts you ahead of most candidates. Keep going!")
       trackOnboardingEvent(3, 'feedback_error', { error: err.message })
     } finally {
@@ -136,6 +97,15 @@ export default function OnboardingPractice({ question, anonSessionReady, onCompl
           Don't overthink it — just say what comes to mind.
         </p>
       </div>
+
+      {/* Clinical trust badge for nursing users (Change 7) */}
+      {fromNursing && (
+        <div className="flex items-center justify-center gap-1.5 mb-2">
+          <span className="text-xs text-teal-600 bg-teal-50 px-3 py-1 rounded-full font-medium">
+            🏥 Clinically reviewed question · SBAR framework
+          </span>
+        </div>
+      )}
 
       {/* Question card */}
       <div className="bg-white rounded-2xl border border-slate-200 p-5 mb-4 shadow-sm">
@@ -198,31 +168,34 @@ export default function OnboardingPractice({ question, anonSessionReady, onCompl
         <div className="animate-fadeIn">
           {/* Score badge */}
           <div className="flex items-center justify-center mb-4">
-            <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold
-              ${score >= 7 ? 'bg-green-100 text-green-700' :
-                score >= 5 ? 'bg-amber-100 text-amber-700' :
-                'bg-slate-100 text-slate-600'
+            <div className={`inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full text-base font-bold shadow-sm
+              ${score >= 7 ? 'bg-green-100 text-green-700 border border-green-200' :
+                score >= 4 ? 'bg-amber-100 text-amber-700 border border-amber-200' :
+                'bg-red-50 text-red-600 border border-red-200'
               }`}
             >
-              <span className="text-lg">
-                {score >= 7 ? '🎯' : score >= 5 ? '👍' : '💪'}
+              <span className="text-xl">
+                {score >= 7 ? '🎯' : score >= 4 ? '👍' : '💪'}
               </span>
-              {score}/10 — {score >= 7 ? 'Great start!' : score >= 5 ? 'Solid foundation!' : 'Good effort!'}
+              {score}/10 — {score >= 7 ? 'Great start!' : score >= 4 ? 'Good first try!' : 'Let\'s build on this!'}
             </div>
           </div>
 
-          {/* Feedback text */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 mb-4 shadow-sm">
-            <p className="text-slate-600 leading-relaxed whitespace-pre-line text-sm">
-              {feedback}
-            </p>
+          {/* Feedback text — rendered as clean paragraphs */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-5 mb-4 shadow-sm space-y-3">
+            {feedback.split('\n').filter(line => line.trim()).map((paragraph, i) => (
+              <p key={i} className="text-slate-600 leading-relaxed text-sm">
+                {paragraph.trim()}
+              </p>
+            ))}
           </div>
 
-          {/* SBAR citation for nursing users */}
+          {/* SBAR citation + clinical safety disclaimer for nursing users (Change 7) */}
           {fromNursing && (
-            <p className="text-xs text-slate-400 mb-4 px-1">
-              💡 This feedback references the SBAR communication framework (Institute for Healthcare Improvement)
-            </p>
+            <div className="text-xs text-slate-400 mb-4 px-1 space-y-1">
+              <p>💡 This feedback references the SBAR communication framework (Institute for Healthcare Improvement)</p>
+              <p>🛡️ AI coaches your communication delivery — clinical content reviewed by practicing nurses</p>
+            </div>
           )}
 
           {/* Continue button */}

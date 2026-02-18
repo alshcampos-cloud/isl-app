@@ -32,7 +32,7 @@ const TABS = [
   { id: 'readiness', label: 'Readiness', icon: Shield },
 ];
 
-export default function NursingCommandCenter({ specialty, onBack, onStartMode, sessionHistory = [], userData }) {
+export default function NursingCommandCenter({ specialty, onBack, onStartMode, sessionHistory = [], userData, onShowPricing }) {
   const [activeTab, setActiveTab] = useState('progress');
 
   const { questions, categories, loading } = useNursingQuestions(specialty.id);
@@ -197,36 +197,116 @@ function ProgressTab({ sessionHistory, questions, specialty }) {
         )}
       </div>
 
-      {/* Score Trend Chart (simple visual) */}
-      {trend.length >= 2 && (
-        <div className="mb-8">
-          <h3 className="text-white font-semibold text-sm mb-3 flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-sky-400" /> Score Over Time
-          </h3>
-          <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-            <div className="flex items-end gap-1 h-24">
-              {trend.map((point, i) => {
-                const height = (point.score / 5) * 100;
-                return (
-                  <div key={i} className="flex-1 h-full flex flex-col items-center justify-end">
-                    <div
-                      className={`w-full max-w-[20px] rounded-t-sm transition-all ${
-                        point.score >= 4 ? 'bg-green-500' : point.score >= 3 ? 'bg-yellow-500' : 'bg-red-500'
-                      }`}
-                      style={{ height: `${height}%` }}
-                      title={`${point.score}/5 — ${new Date(point.timestamp).toLocaleDateString()}`}
-                    />
-                  </div>
-                );
-              })}
+      {/* Score Trend Chart — SVG line + dot chart (matches general Command Center style) */}
+      {trend.length >= 2 && (() => {
+        const pointSpacing = 60;
+        const leftPad = 50;
+        const rightPad = 30;
+        const chartW = Math.max(400, leftPad + (trend.length * pointSpacing) + rightPad);
+        const chartH = 200;
+        const plotTop = 20;
+        const plotBottom = 160;
+        const plotRange = plotBottom - plotTop; // 140px for 0-5 score range
+
+        return (
+          <div className="mb-8">
+            <h3 className="text-white font-semibold text-sm mb-3 flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-sky-400" /> Score Over Time
+            </h3>
+            <div className="bg-white/5 border border-white/10 rounded-xl p-4 overflow-x-auto">
+              <div style={{ minWidth: `${chartW}px`, height: `${chartH}px` }}>
+                <svg viewBox={`0 0 ${chartW} ${chartH}`} className="w-full h-full" preserveAspectRatio="xMinYMid meet">
+                  <defs>
+                    <linearGradient id="nursingLineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#38bdf8" />
+                      <stop offset="50%" stopColor="#0ea5e9" />
+                      <stop offset="100%" stopColor="#6366f1" />
+                    </linearGradient>
+                  </defs>
+
+                  {/* Y-axis gridlines (0-5 scale) */}
+                  {[0, 1, 2, 3, 4, 5].map(score => {
+                    const y = plotBottom - (score / 5) * plotRange;
+                    return (
+                      <g key={score}>
+                        <line x1={leftPad - 5} y1={y} x2={chartW - rightPad} y2={y}
+                          stroke="rgba(255,255,255,0.08)" strokeWidth="1" strokeDasharray={score === 0 ? '0' : '4,4'} />
+                        <text x={leftPad - 12} y={y + 4} fontSize="11" fill="#94a3b8" textAnchor="end" fontWeight="500">{score}</text>
+                      </g>
+                    );
+                  })}
+
+                  {/* Polyline connecting dots */}
+                  <polyline
+                    points={trend.map((pt, i) => {
+                      const x = leftPad + (i * pointSpacing);
+                      const y = plotBottom - (pt.score / 5) * plotRange;
+                      return `${x},${y}`;
+                    }).join(' ')}
+                    fill="none"
+                    stroke="url(#nursingLineGradient)"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+
+                  {/* Clickable dots + date labels */}
+                  {trend.map((pt, i) => {
+                    const x = leftPad + (i * pointSpacing);
+                    const y = plotBottom - (pt.score / 5) * plotRange;
+                    const dateStr = new Date(pt.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    return (
+                      <g key={i} style={{ cursor: 'pointer' }}>
+                        <circle cx={x} cy={y} r="16" fill="transparent" />
+                        <circle cx={x} cy={y} r="7" fill="#0ea5e9" stroke="white" strokeWidth="2.5"
+                          className="hover:opacity-80 transition-opacity" />
+                        <text x={x} y={plotBottom + 20} fontSize="9" fill="#64748b" textAnchor="middle"
+                          transform={`rotate(-35, ${x}, ${plotBottom + 20})`}>{dateStr}</text>
+                        {/* Score label above dot */}
+                        <text x={x} y={y - 12} fontSize="10" fill="#e2e8f0" textAnchor="middle" fontWeight="600">
+                          {pt.score.toFixed(1)}
+                        </text>
+                      </g>
+                    );
+                  })}
+
+                  {/* Axis labels */}
+                  <text x={leftPad - 12} y={12} fontSize="10" fill="#64748b" textAnchor="end" fontWeight="600">Score</text>
+                </svg>
+              </div>
+              {trend.length > 8 && (
+                <p className="text-[10px] text-slate-500 text-center mt-1">Scroll horizontally to see all {trend.length} sessions →</p>
+              )}
             </div>
-            <div className="flex justify-between mt-2">
-              <span className="text-slate-500 text-[10px]">{new Date(trend[0].timestamp).toLocaleDateString()}</span>
-              <span className="text-slate-500 text-[10px]">{new Date(trend[trend.length - 1].timestamp).toLocaleDateString()}</span>
+
+            {/* Summary stats below chart */}
+            <div className="grid grid-cols-4 gap-2 mt-3">
+              <div className="bg-white/5 rounded-lg p-2 text-center">
+                <p className="text-slate-400 text-[10px]">First</p>
+                <p className="text-white text-sm font-bold">{trend[0].score.toFixed(1)}</p>
+              </div>
+              <div className="bg-white/5 rounded-lg p-2 text-center">
+                <p className="text-slate-400 text-[10px]">Latest</p>
+                <p className="text-white text-sm font-bold">{trend[trend.length - 1].score.toFixed(1)}</p>
+              </div>
+              <div className="bg-white/5 rounded-lg p-2 text-center">
+                <p className="text-slate-400 text-[10px]">Best</p>
+                <p className="text-green-400 text-sm font-bold">{Math.max(...trend.map(t => t.score)).toFixed(1)}</p>
+              </div>
+              <div className="bg-white/5 rounded-lg p-2 text-center">
+                <p className="text-slate-400 text-[10px]">Change</p>
+                <p className={`text-sm font-bold ${
+                  trend[trend.length - 1].score > trend[0].score ? 'text-green-400' :
+                  trend[trend.length - 1].score < trend[0].score ? 'text-red-400' : 'text-yellow-400'
+                }`}>
+                  {trend[trend.length - 1].score > trend[0].score ? '+' : ''}
+                  {(trend[trend.length - 1].score - trend[0].score).toFixed(1)}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* SBAR Component Breakdown */}
       {sbarAvg && (
@@ -348,6 +428,160 @@ function ProgressTab({ sessionHistory, questions, specialty }) {
           </div>
         </div>
       )}
+
+      {/* Per-Question Progress — sparkline charts + attempt history */}
+      {sessionHistory.length > 0 && (() => {
+        // Group sessions by questionId, compute per-question stats
+        const qStats = {};
+        sessionHistory.forEach(s => {
+          if (!qStats[s.questionId]) {
+            qStats[s.questionId] = {
+              questionId: s.questionId,
+              question: s.question,
+              category: s.category,
+              sessions: [],
+            };
+          }
+          qStats[s.questionId].sessions.push(s);
+        });
+        // Sort each question's sessions chronologically
+        Object.values(qStats).forEach(q => {
+          q.sessions.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+        });
+        // Sort questions by most recently practiced
+        const sortedQs = Object.values(qStats).sort((a, b) => {
+          const aLast = a.sessions[a.sessions.length - 1].timestamp;
+          const bLast = b.sessions[b.sessions.length - 1].timestamp;
+          return bLast.localeCompare(aLast);
+        });
+
+        return (
+          <div className="mb-8">
+            <h3 className="text-white font-semibold text-sm mb-3 flex items-center gap-2">
+              <Layers className="w-4 h-4 text-sky-400" /> Progress by Question
+            </h3>
+            <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
+              {sortedQs.map(qStat => {
+                const scoredSessions = qStat.sessions.filter(s => s.score !== null);
+                const avg = scoredSessions.length > 0
+                  ? scoredSessions.reduce((sum, s) => sum + s.score, 0) / scoredSessions.length
+                  : null;
+                const best = scoredSessions.length > 0
+                  ? Math.max(...scoredSessions.map(s => s.score))
+                  : null;
+                const trendUp = scoredSessions.length >= 2
+                  ? scoredSessions[scoredSessions.length - 1].score > scoredSessions[0].score
+                  : null;
+                const trendDown = scoredSessions.length >= 2
+                  ? scoredSessions[scoredSessions.length - 1].score < scoredSessions[0].score
+                  : null;
+
+                return (
+                  <div key={qStat.questionId} className="bg-white/5 border border-white/10 rounded-xl p-4">
+                    {/* Question header */}
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white text-xs font-medium leading-snug line-clamp-2">{qStat.question}</p>
+                        <p className="text-slate-500 text-[10px] mt-0.5">{qStat.category} · {scoredSessions.length} attempt{scoredSessions.length !== 1 ? 's' : ''}</p>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {trendUp === true && <TrendingUp className="w-3.5 h-3.5 text-green-400" />}
+                        {trendDown === true && <TrendingDown className="w-3.5 h-3.5 text-red-400" />}
+                        {trendUp === false && trendDown === false && scoredSessions.length >= 2 && <Minus className="w-3.5 h-3.5 text-yellow-400" />}
+                        {avg !== null && (
+                          <span className={`text-sm font-bold ${scoreColor5(avg)}`}>
+                            {avg.toFixed(1)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Sparkline chart */}
+                    {scoredSessions.length >= 2 && (
+                      <div className="w-full overflow-x-auto">
+                        <div className="min-w-[200px] max-w-full">
+                          <svg width="100%" height="60" viewBox="0 0 260 60" preserveAspectRatio="xMidYMid meet">
+                            {/* Grid lines (0, 2.5, 5) */}
+                            {[0, 2.5, 5].map(score => (
+                              <line key={score} x1="15" y1={50 - (score / 5) * 40} x2="250" y2={50 - (score / 5) * 40}
+                                stroke="rgba(255,255,255,0.06)" strokeWidth="1" strokeDasharray="2,2" />
+                            ))}
+                            {/* Polyline */}
+                            <polyline
+                              points={scoredSessions.map((s, i) => {
+                                const x = 20 + (i / Math.max(1, scoredSessions.length - 1)) * 225;
+                                const y = 50 - (s.score / 5) * 40;
+                                return `${x},${y}`;
+                              }).join(' ')}
+                              fill="none" stroke="#0ea5e9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                            />
+                            {/* Dots */}
+                            {scoredSessions.map((s, i) => {
+                              const x = 20 + (i / Math.max(1, scoredSessions.length - 1)) * 225;
+                              const y = 50 - (s.score / 5) * 40;
+                              return (
+                                <g key={i}>
+                                  <circle cx={x} cy={y} r="5" fill="#0ea5e9" stroke="#0f172a" strokeWidth="2" />
+                                  <title>Attempt {i + 1}: {s.score}/5 — {new Date(s.timestamp).toLocaleDateString()}</title>
+                                </g>
+                              );
+                            })}
+                            {/* Y-axis labels */}
+                            <text x="10" y="14" fontSize="8" fill="#64748b" textAnchor="end">5</text>
+                            <text x="10" y="53" fontSize="8" fill="#64748b" textAnchor="end">0</text>
+                          </svg>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Attempt list with expandable answer + feedback */}
+                    {scoredSessions.length > 0 && (
+                      <div className="mt-2 space-y-1">
+                        {scoredSessions.slice().reverse().slice(0, 5).map((s, i) => {
+                          const hasDetail = s.userAnswer || s.aiFeedback;
+                          return (
+                            <details key={s.id || i} className="group rounded bg-white/[0.03] overflow-hidden">
+                              <summary className={`flex items-center justify-between text-[10px] px-2 py-1 ${hasDetail ? 'cursor-pointer hover:bg-white/[0.06]' : 'cursor-default'}`}>
+                                <span className="text-slate-500 flex items-center gap-1">
+                                  {s.mode === 'mock-interview' ? '🎙️' : s.mode === 'sbar-drill' ? '⚡' : '🎯'}{' '}
+                                  {new Date(s.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                  {' · '}
+                                  {new Date(s.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  {hasDetail && <span className="text-sky-400/60 ml-1" title="Tap to see your answer & feedback">📝</span>}
+                                </span>
+                                <span className={`font-bold ${scoreColor5(s.score)}`}>{s.score}/5</span>
+                              </summary>
+                              {hasDetail && (
+                                <div className="px-2 pb-2 pt-1 space-y-1.5 border-t border-white/5">
+                                  {s.userAnswer && (
+                                    <div>
+                                      <p className="text-[9px] text-sky-400 font-semibold uppercase tracking-wider mb-0.5">Your Answer</p>
+                                      <p className="text-[10px] text-slate-400 leading-relaxed line-clamp-4">{s.userAnswer}</p>
+                                    </div>
+                                  )}
+                                  {s.aiFeedback && (
+                                    <div>
+                                      <p className="text-[9px] text-emerald-400 font-semibold uppercase tracking-wider mb-0.5">AI Feedback</p>
+                                      <p className="text-[10px] text-slate-400 leading-relaxed line-clamp-6">{s.aiFeedback}</p>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </details>
+                          );
+                        })}
+                        {scoredSessions.length > 5 && (
+                          <p className="text-slate-500 text-[10px] text-center">+ {scoredSessions.length - 5} more attempts</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
@@ -431,10 +665,11 @@ function QuestionBankTab({ questions, categories, sessionHistory, specialty, onS
   const needsReviewCount = questions.filter(q => qStats[q.id] && (qStats[q.id].bestScore === null || qStats[q.id].bestScore < 4)).length;
   const unattemptedCount = questions.filter(q => !qStats[q.id]).length;
 
-  // Tier gating — free users see only first 3 questions fully, rest are blurred
+  // All questions are now unlocked for all users (free tier gives full question access)
+  // isPro controls premium UI features like saved answers badge
   const FREE_PREVIEW_COUNT = 3;
   const userTier = userData?.tier || 'free';
-  const isPro = userTier === 'pro' || userTier === 'beta' || userData?.isBeta;
+  const isPro = true; // All users see all questions — credit limits gate AI usage, not content
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
@@ -753,13 +988,13 @@ function QuestionBankTab({ questions, categories, sessionHistory, specialty, onS
             <p className="text-slate-500 text-xs mb-4">
               Pro members get the full question bank, key points to hit, follow-up questions, and saved answers.
             </p>
-            <a
-              href="/app?upgrade=true&returnTo=/nursing"
+            <button
+              onClick={onShowPricing}
               className="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-500 text-white font-medium px-6 py-2.5 rounded-xl transition-colors text-sm"
             >
               <Sparkles className="w-4 h-4" />
-              Upgrade to Pro — $29.99/mo
-            </a>
+              Get Nursing Pass — $19.99
+            </button>
           </div>
         </div>
       )}

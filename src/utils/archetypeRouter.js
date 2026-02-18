@@ -87,9 +87,15 @@ export function getArchetypeConfig(archetype) {
 /**
  * Get the route to navigate to after onboarding + signup.
  * @param {'urgent_seeker' | 'strategic_builder' | 'domain_specialist'} archetype
+ * @param {string} [field] — onboarding field (e.g. 'nursing', 'general')
  * @returns {string} — React Router path
  */
-export function getPostOnboardingRoute(archetype) {
+export function getPostOnboardingRoute(archetype, field) {
+  // Nursing users always go to the nursing track, regardless of archetype
+  if (field === 'nursing') {
+    return '/nursing'
+  }
+
   switch (archetype) {
     case 'urgent_seeker':
       return '/app' // Goes to main app, Practice Mode

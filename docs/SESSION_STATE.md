@@ -1,4 +1,4 @@
-# Session State — Last Updated: February 16, 2026 (Night)
+# Session State — Last Updated: February 16, 2026 (Late Night)
 
 ## What's Live on Production (www.interviewanswers.ai)
 
@@ -32,6 +32,29 @@
 - Unit 2b: IRS v1.1 — Answer Preparedness 4th component (ec92c80) — SHIPPED ✅
 - Unit 3: Nursing dashboard wiring (be63dc5) — SHIPPED ✅
 
+### Landing Page Redesign ✅
+- Teal color unification: all purple/indigo/pink → teal/emerald/cyan (commit 9ecbba3, 4726294)
+- ISL → InterviewAnswers.ai rebrand throughout all landing components
+- Copy improvements: killed AI-generated feel, sharpened headers and CTAs
+- Whitespace reduction across all sections
+- Favicon: custom IA SVG with teal gradient
+
+### SEO Optimization ✅
+- JSON-LD structured data: SoftwareApplication, FAQPage, Organization schemas in index.html
+- Custom `useDocumentHead` hook (`src/hooks/useDocumentHead.js`) — per-route dynamic meta tags
+- General landing: keyword-optimized title, description, OG, Twitter meta tags
+- Nursing landing: nursing-specific SEO keywords, SBAR/STAR targeting
+- H1 optimization: "AI Interview Practice That Gets You Hired" (general), "Nursing Interview Prep That Lands the Job" (nursing)
+- Canonical URLs on all pages
+- All URLs fixed to use www (Vercel 307-redirects non-www → www)
+- Commits: a6be784 (SEO implementation), 07061a4 (www URL fix)
+
+### Google Search Console ✅
+- Domain verified: `sc-domain:interviewanswers.ai` via DNS TXT record on Namecheap
+- Sitemap submitted: `https://www.interviewanswers.ai/sitemap.xml` — Status: Success, 6 pages discovered
+- Indexing requested for `/` and `/nurse` via URL Inspection tool
+- Expected to appear in Google search results within 24-48 hours of Feb 16
+
 ### Nursing Track
 - Walled garden model: AI coaches communication, never generates clinical content
 - 64 Erin-approved curated questions wired into AI Coach system prompt
@@ -58,7 +81,13 @@
 - [x] Unit 1c: Streak counter system (SHIPPED cfe857a) — ✅ MIGRATION APPLIED
 - [x] Unit 2: IRS v1 (Interview Readiness Score) — SHIPPED b60348e ✅
 - [x] Unit 3: Wire nursing dashboard to real IRS/streak data — SHIPPED be63dc5 ✅
+- [x] Landing page redesign — teal unification + rebrand (SHIPPED 38b7e35) ✅
+- [x] SEO optimization — JSON-LD, meta tags, H1s, canonical URLs (SHIPPED a6be784, 07061a4) ✅
+- [x] Google Search Console — verified, sitemap submitted, indexing requested ✅
 - [ ] Email deliverability (SPF/DKIM/DMARC or Resend)
+- [ ] Blog infrastructure (highest-impact free SEO strategy — discussed, not yet decided)
+- [ ] Mobile responsiveness audit
+- [ ] Known bug fixes (tutorial race condition, duplicate loadUserTierAndStats)
 
 ## Phase 3 Plan (after Phase 2 verified)
 Per strategy doc, highest-ROI features:
@@ -88,6 +117,11 @@ Per strategy doc, highest-ROI features:
 - main (production, auto-deploys via Vercel)
 
 ## Key Commits (recent)
+- 07061a4: Fix SEO URLs — use www.interviewanswers.ai to match Vercel redirect
+- a6be784: SEO — JSON-LD structured data, per-route meta tags, keyword-optimized H1s
+- 38b7e35: Landing page redesign — teal unification, rebrand to InterviewAnswers.ai, copy & SEO overhaul
+- 9ecbba3: Complete teal color unification for all remaining internal views
+- 4726294: Unify teal color system across all internal feature views
 - be63dc5: Phase 3 Unit 3 — Wire nursing dashboard to real IRS + streak data (NursingIRSDisplay, StreakDisplay)
 - ec92c80: IRS v1.1 — Answer Preparedness as 4th IRS component (template detection via regex)
 - b60348e: Phase 3 Unit 2 — IRS hero card with animated ring, breakdown bars, detail modal

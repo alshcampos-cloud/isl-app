@@ -196,7 +196,7 @@ const CONVERSATION_STARTERS = [
 // ============================================================
 // COMPONENT
 // ============================================================
-export default function NursingAICoach({ specialty, onBack, userData, refreshUsage, addSession, triggerStreakRefresh }) {
+export default function NursingAICoach({ specialty, onBack, userData, refreshUsage, addSession, triggerStreakRefresh, onShowPricing }) {
   // Load curated questions for this specialty (walled garden — C.O.A.C.H. protocol "O")
   const specialtyQuestions = getQuestionsForSpecialty(specialty.id);
   const questionListForPrompt = specialtyQuestions.map(q =>
@@ -505,7 +505,7 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
   // ============================================================
   if (messages.length === 0) {
     const creditInfo = userData?.usage?.practiceMode;
-    const isUnlimited = userData?.isBeta || userData?.tier === 'pro';
+    const isUnlimited = userData?.isBeta || userData?.tier === 'nursing_pass' || userData?.tier === 'annual' || userData?.tier === 'pro' || userData?.tier === 'beta';
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-sky-950 to-slate-900 flex flex-col">
@@ -558,9 +558,9 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
                 {creditBlocked ? (
                   <>
                     <p className="mb-2">{`You've used all ${creditInfo.limit} free coaching messages this month.`}</p>
-                    <a href="/app?upgrade=true&returnTo=/nursing" className="inline-block text-xs font-medium text-white bg-gradient-to-r from-purple-600 to-sky-500 px-3 py-1.5 rounded-lg hover:-translate-y-0.5 transition-all">
-                      Upgrade to Pro
-                    </a>
+                    <button onClick={onShowPricing} className="inline-block text-xs font-medium text-white bg-gradient-to-r from-purple-600 to-sky-500 px-3 py-1.5 rounded-lg hover:-translate-y-0.5 transition-all">
+                      Get Nursing Pass
+                    </button>
                   </>
                 ) : (
                   `${creditInfo.remaining} of ${creditInfo.limit} free messages remaining this month`
@@ -765,12 +765,12 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
               <p className="text-amber-300 text-sm mb-2">
                 You've reached your free message limit for this month.
               </p>
-              <a
-                href="/app?upgrade=true&returnTo=/nursing"
+              <button
+                onClick={onShowPricing}
                 className="inline-block text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-sky-500 px-4 py-2 rounded-lg hover:-translate-y-0.5 transition-all"
               >
-                Upgrade to Pro — Unlimited Coaching
-              </a>
+                Get Nursing Pass — Unlimited Coaching
+              </button>
             </div>
           )}
 

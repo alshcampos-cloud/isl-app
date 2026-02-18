@@ -234,6 +234,22 @@ export default function NursingLandingPage() {
         </div>
       </section>
 
+      {/* Mid-page CTA 1: After Problem section */}
+      <div className="py-8 sm:py-12 bg-gradient-to-r from-sky-50 to-teal-50">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
+          <p className="text-gray-700 font-medium text-lg mb-3">
+            See how it works — try a practice question right now
+          </p>
+          <Link
+            to="/onboarding?from=nursing"
+            className="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold px-8 py-3 rounded-xl transition-colors shadow-lg shadow-teal-600/20"
+          >
+            Try a practice question free <ArrowRight className="w-4 h-4" />
+          </Link>
+          <p className="text-gray-400 text-xs mt-2">No account needed · Takes 60 seconds</p>
+        </div>
+      </div>
+
       {/* ============================================================
           FEATURES SECTION
           ============================================================ */}
@@ -343,6 +359,22 @@ export default function NursingLandingPage() {
           </div>
         </div>
       </section>
+
+      {/* Mid-page CTA 2: After clinical credentials section */}
+      <div className="py-8 sm:py-12 bg-gradient-to-r from-teal-50 to-sky-50">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
+          <p className="text-gray-700 font-medium text-lg mb-3">
+            Ready to practice? Start your first question free
+          </p>
+          <Link
+            to="/onboarding?from=nursing"
+            className="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold px-8 py-3 rounded-xl transition-colors shadow-lg shadow-teal-600/20"
+          >
+            Start practicing now <ArrowRight className="w-4 h-4" />
+          </Link>
+          <p className="text-gray-400 text-xs mt-2">No signup required · AI feedback in seconds</p>
+        </div>
+      </div>
 
       {/* ============================================================
           TRUST / WALLED GARDEN SECTION
@@ -459,9 +491,9 @@ export default function NursingLandingPage() {
               <div className="absolute -top-3 right-4 bg-sky-600 text-white text-xs font-bold px-3 py-1 rounded-full">
                 Most Popular
               </div>
-              <h3 className="text-gray-900 font-bold text-xl mb-1">Pro</h3>
+              <h3 className="text-gray-900 font-bold text-xl mb-1">Nursing Pass</h3>
               <p className="text-gray-500 text-sm sm:text-base mb-4">Full access to all specialties</p>
-              <p className="text-4xl font-bold text-gray-900 mb-6">$29.99 <span className="text-base font-normal text-gray-400">/month</span></p>
+              <p className="text-4xl font-bold text-gray-900 mb-6">$19.99 <span className="text-base font-normal text-gray-400">/ 30 days</span></p>
               <ul className="space-y-2 mb-6">
                 {[
                   'Unlimited mock interviews',
@@ -477,8 +509,8 @@ export default function NursingLandingPage() {
                   </li>
                 ))}
               </ul>
-              <Link to="/signup?from=nursing" className="block w-full text-center bg-sky-700 hover:bg-sky-800 text-white font-medium py-3 rounded-xl transition-colors shadow-lg shadow-sky-500/20">
-                Get Pro Access
+              <Link to="/onboarding?from=nursing" className="block w-full text-center bg-sky-700 hover:bg-sky-800 text-white font-medium py-3 rounded-xl transition-colors shadow-lg shadow-sky-500/20">
+                Get Nursing Pass
               </Link>
             </div>
           </div>

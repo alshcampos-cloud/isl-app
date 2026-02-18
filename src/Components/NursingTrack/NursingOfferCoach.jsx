@@ -261,7 +261,7 @@ function averageScore(scores) {
 // ============================================================
 // MAIN COMPONENT
 // ============================================================
-export default function NursingOfferCoach({ specialty, onBack, userData, refreshUsage, addSession }) {
+export default function NursingOfferCoach({ specialty, onBack, userData, refreshUsage, addSession, onShowPricing }) {
   // State
   const [selectedScenario, setSelectedScenario] = useState(null);
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -443,7 +443,7 @@ export default function NursingOfferCoach({ specialty, onBack, userData, refresh
     }
   };
 
-  const isUnlimited = userData?.isBeta || userData?.tier === 'pro';
+  const isUnlimited = userData?.isBeta || userData?.tier === 'nursing_pass' || userData?.tier === 'annual' || userData?.tier === 'pro' || userData?.tier === 'beta';
   const creditInfo = userData?.usage?.practiceMode;
   const scenariosPracticed = new Set(history.map(h => h.scenarioId)).size;
   const historyAvg = history.length > 0
@@ -522,12 +522,12 @@ export default function NursingOfferCoach({ specialty, onBack, userData, refresh
                 <p className="text-red-300 text-sm mb-2">
                   You've used all {creditInfo?.limit} free practice sessions this month.
                 </p>
-                <a
-                  href="/app?upgrade=true&returnTo=/nursing"
+                <button
+                  onClick={onShowPricing}
                   className="inline-block text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-sky-500 px-4 py-2 rounded-lg hover:-translate-y-0.5 transition-all"
                 >
-                  Upgrade to Pro — Unlimited Practice
-                </a>
+                  Get Nursing Pass — Unlimited Practice
+                </button>
               </div>
             )}
 
@@ -729,12 +729,12 @@ export default function NursingOfferCoach({ specialty, onBack, userData, refresh
                     <p className="text-red-300 text-sm mb-2">
                       Free practice limit reached.
                     </p>
-                    <a
-                      href="/app?upgrade=true&returnTo=/nursing"
+                    <button
+                      onClick={onShowPricing}
                       className="inline-block text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-sky-500 px-4 py-2 rounded-lg hover:-translate-y-0.5 transition-all"
                     >
-                      Upgrade to Pro — Unlimited Practice
-                    </a>
+                      Get Nursing Pass — Unlimited Practice
+                    </button>
                   </div>
                 )}
               </motion.div>

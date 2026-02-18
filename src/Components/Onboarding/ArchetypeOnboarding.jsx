@@ -6,18 +6,21 @@ import { trackOnboardingEvent, startScreenTimer } from '../../utils/onboardingTr
 import BreathingExercise from './BreathingExercise'
 import OnboardingPractice from './OnboardingPractice'
 import IRSBaseline from './IRSBaseline'
+import FeaturePreview from './FeaturePreview'
 import SignUpPrompt from './SignUpPrompt'
 
 /**
- * ArchetypeOnboarding — Phase 2: 5-Screen Value-First Onboarding
+ * ArchetypeOnboarding — Phase 2: Value-First Onboarding
  *
- * Flow: Archetype Detection → Breathing → Practice → IRS Baseline → Sign Up
+ * Flow (standard):   Archetype → Breathing → Practice → IRS → Feature Preview → Sign Up (6 screens)
+ * Flow (urgent):     Archetype → Practice → IRS → Feature Preview → Sign Up (5 screens, skip breathing)
  * Uses Supabase anonymous auth so Edge Function works before real signup.
  *
- * Research basis (from PRODUCT_ARCHITECTURE.md):
- *   - VR-JIT: Early engagement predicts employment outcomes
+ * Research basis:
+ *   - Calm data: breathing exercise = #1 drop-off point (~50%), skip for urgent seekers
+ *   - Feature preview before signup: 2x engagement, 1.7x signups (HowdyGo)
+ *   - Loss-framed CTAs: 21% conversion lift (McKinsey)
  *   - Nielsen Norman: 60% abandon pre-value registration
- *   - Users achieving one outcome = 5x more likely to convert
  */
 export default function ArchetypeOnboarding() {
   const navigate = useNavigate()
@@ -94,7 +97,13 @@ export default function ArchetypeOnboarding() {
     setArchetype(detected)
     setArchetypeConfig(config)
     trackOnboardingEvent(1, 'completed', { timeline, field: field || 'general', archetype: detected })
-    setScreen(2)
+    // Urgent seekers skip breathing exercise — go straight to practice
+    // Research: Calm's breathing = ~50% drop-off. Urgent seekers want practice, not relaxation.
+    if (detected === 'urgent_seeker') {
+      setScreen(3)
+    } else {
+      setScreen(2)
+    }
   }, [timeline, field])
 
   // After breathing exercise completes
@@ -109,9 +118,14 @@ export default function ArchetypeOnboarding() {
     setScreen(4)
   }, [])
 
-  // After IRS baseline screen
+  // After IRS baseline screen → Feature Preview
   const handleIRSContinue = useCallback(() => {
     setScreen(5)
+  }, [])
+
+  // After Feature Preview → Signup
+  const handleFeaturePreviewContinue = useCallback(() => {
+    setScreen(6)
   }, [])
 
   // After signup completes
@@ -134,15 +148,20 @@ export default function ArchetypeOnboarding() {
       console.error('Failed to store archetype:', err)
     }
 
-    trackOnboardingEvent(5, 'signup_completed', { archetype })
+    trackOnboardingEvent(6, 'signup_completed', { archetype })
 
     // Navigate to appropriate post-onboarding route
-    const route = getPostOnboardingRoute(archetype)
+    // Pass field so nursing users always land on /nursing regardless of archetype
+    const route = getPostOnboardingRoute(archetype, field)
     navigate(route, { replace: true })
   }, [archetype, field, navigate])
 
-  // Progress bar
-  const progress = (screen / 5) * 100
+  // Progress bar — urgent seekers skip breathing (5 screens), others have 6
+  const totalScreens = archetype === 'urgent_seeker' ? 5 : 6
+  // Map screen numbers to progress: for urgent seekers, screen 2 (breathing) is skipped
+  // so we compute effective step position
+  const effectiveScreen = (archetype === 'urgent_seeker' && screen >= 3) ? screen - 1 : screen
+  const progress = (effectiveScreen / totalScreens) * 100
 
   if (isInitializing) {
     return (
@@ -226,9 +245,19 @@ export default function ArchetypeOnboarding() {
         )}
 
         {screen === 5 && (
+          <FeaturePreview
+            fromNursing={fromNursing}
+            practiceScore={practiceScore}
+            onContinue={handleFeaturePreviewContinue}
+          />
+        )}
+
+        {screen === 6 && (
           <SignUpPrompt
             archetype={archetype}
             archetypeConfig={archetypeConfig}
+            practiceScore={practiceScore}
+            fromNursing={fromNursing}
             onComplete={handleSignUpComplete}
           />
         )}

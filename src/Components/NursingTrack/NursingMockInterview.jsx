@@ -124,7 +124,7 @@ ${question.bullets?.map(b => `- ${b}`).join('\n') || `Guide the candidate throug
 Start by asking the interview question naturally. Be a nurse manager conducting an interview — professional but warm.`;
 };
 
-export default function NursingMockInterview({ specialty, onBack, userData, refreshUsage, addSession, triggerStreakRefresh }) {
+export default function NursingMockInterview({ specialty, onBack, userData, refreshUsage, addSession, triggerStreakRefresh, onShowPricing }) {
   // State
   const [messages, setMessages] = useState([]);
   const [currentInput, setCurrentInput] = useState('');
@@ -288,7 +288,7 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
           score, // null = "Unscored" — parsing failure doesn't break flow
         }]);
 
-        // Report to Command Center session store
+        // Report to Command Center session store (includes answer + feedback for review)
         if (addSession) {
           addSession(createMockInterviewSession({
             questionId: currentQuestion.id,
@@ -296,6 +296,8 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
             category: currentQuestion.category,
             responseFramework: currentQuestion.responseFramework,
             score,
+            userAnswer: userMessage,
+            aiFeedback: cleanContent,
           }));
         }
       }
@@ -390,7 +392,7 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
   if (!sessionStarted) {
     // Credit check gate
     const creditInfo = userData?.usage?.nursingMock;
-    const isUnlimited = userData?.isBeta || userData?.tier === 'pro';
+    const isUnlimited = userData?.isBeta || userData?.tier === 'nursing_pass' || userData?.tier === 'annual' || userData?.tier === 'pro' || userData?.tier === 'beta';
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-sky-950 to-slate-900 flex items-center justify-center p-4">
@@ -417,7 +419,7 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
                   : 'bg-sky-500/10 border border-sky-500/20 text-sky-300'
               }`}>
                 {creditBlocked
-                  ? `You've used all ${creditInfo.limit} free interview sessions this month. Upgrade to Pro for unlimited.`
+                  ? `You've used all ${creditInfo.limit} free interview sessions this month. Get a Nursing Pass for unlimited.`
                   : `${creditInfo.remaining} of ${creditInfo.limit} free sessions remaining this month`
                 }
               </div>
@@ -447,12 +449,12 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
             </div>
 
             {creditBlocked ? (
-              <a
-                href="/app?upgrade=true&returnTo=/nursing"
+              <button
+                onClick={onShowPricing}
                 className="block w-full text-center font-semibold py-3 rounded-xl transition-all bg-gradient-to-r from-purple-600 to-sky-500 text-white shadow-lg shadow-purple-500/30 hover:-translate-y-0.5"
               >
-                Upgrade to Pro — Unlimited Interviews
-              </a>
+                Get Nursing Pass — Unlimited Interviews
+              </button>
             ) : (
               <button
                 onClick={startSession}
@@ -657,9 +659,9 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
           {creditBlocked && (
             <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 mb-3 text-center">
               <p className="text-red-300 text-xs mb-1">You've used all free interview sessions this month.</p>
-              <a href="/app?upgrade=true&returnTo=/nursing" className="text-xs font-medium text-white bg-gradient-to-r from-purple-600 to-sky-500 px-3 py-1 rounded-lg inline-block">
-                Upgrade to Pro
-              </a>
+              <button onClick={onShowPricing} className="text-xs font-medium text-white bg-gradient-to-r from-purple-600 to-sky-500 px-3 py-1 rounded-lg inline-block">
+                Get Nursing Pass
+              </button>
             </div>
           )}
           {/* Input area — mic + text + send */}

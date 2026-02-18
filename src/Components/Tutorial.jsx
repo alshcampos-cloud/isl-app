@@ -237,7 +237,7 @@ export default function Tutorial({ user, isActive, onClose, onOpenTemplateLibrar
           <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg p-4 border-2 border-indigo-300">
             <p className="font-bold text-indigo-900 mb-3 flex items-center gap-2">
               <Crown className="w-5 h-5 text-yellow-600" />
-              💎 Pro Tier ($29.99/month):
+              💎 30-Day Pass ($14.99):
             </p>
             <ul className="space-y-2 text-sm text-indigo-800">
               <li className="flex items-start gap-2">

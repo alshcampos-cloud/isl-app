@@ -240,7 +240,7 @@ Warm, professional, empowering. Like a trusted mentor reviewing your prep the ni
 // ============================================================
 // MAIN COMPONENT
 // ============================================================
-export default function NursingConfidenceBuilder({ specialty, onBack, userData, refreshUsage }) {
+export default function NursingConfidenceBuilder({ specialty, onBack, userData, refreshUsage, onShowPricing }) {
   const [activeSection, setActiveSection] = useState('profile');
   const [profile, setProfile] = useState(EMPTY_PROFILE);
   const [profileSaved, setProfileSaved] = useState(false);
@@ -390,7 +390,7 @@ export default function NursingConfidenceBuilder({ specialty, onBack, userData, 
 
   // Check if profile has meaningful data
   const profileHasData = profile.yearsExperience || profile.currentRole || profile.clinicalStrengths;
-  const isUnlimited = userData?.isBeta || userData?.tier === 'pro';
+  const isUnlimited = userData?.isBeta || userData?.tier === 'nursing_pass' || userData?.tier === 'annual' || userData?.tier === 'pro' || userData?.tier === 'beta';
   const creditInfo = userData?.usage?.practiceMode;
 
   // ============================================================
@@ -809,12 +809,12 @@ function EvidenceSection({ evidenceFile, profileHasData, copied, onCopy, onEditP
         )}
 
         {creditBlocked ? (
-          <a
-            href="/app?upgrade=true&returnTo=/nursing"
+          <button
+            onClick={onShowPricing}
             className="block w-full text-center font-semibold py-3 rounded-xl text-sm transition-all bg-gradient-to-r from-purple-600 to-sky-500 text-white shadow-lg shadow-purple-500/30 hover:-translate-y-0.5"
           >
-            Upgrade to Pro — Unlimited AI Briefs
-          </a>
+            Get Nursing Pass — Unlimited AI Briefs
+          </button>
         ) : (
           <button
             onClick={onGenerateBrief}

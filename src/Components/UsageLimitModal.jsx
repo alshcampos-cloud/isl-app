@@ -153,9 +153,11 @@ const UsageLimitModal = ({ user, supabase, userTier, onUpgrade, onClose, usageSt
   }
 
   const features = getFeatureConfig();
-  // BETA FIX: Beta users should see Pro UI (they have unlimited access)
-  const isProOrBeta = userTier === 'pro' || userTier === 'beta';
-  const tierName = isProOrBeta ? 'Pro' : 'Free';
+  // Recognize all paid tiers + beta as "pro-level" (unlimited general access)
+  const isProOrBeta = userTier === 'pro' || userTier === 'beta' || userTier === 'general_pass' || userTier === 'annual';
+  const tierName = isProOrBeta
+    ? (userTier === 'beta' ? 'Beta' : userTier === 'annual' ? 'Annual' : 'Pass')
+    : 'Free';
 
   // PRO/BETA USER VIEW - Show unlimited access clearly
   if (isProOrBeta) {
@@ -167,7 +169,7 @@ const UsageLimitModal = ({ user, supabase, userTier, onUpgrade, onClose, usageSt
             <Crown className="w-16 h-16 text-amber-500" />
           </div>
           <h2 className="text-3xl font-black text-gray-900 mb-2">
-            {userTier === 'beta' ? '🎖️ Beta Tester' : '👑 Pro Member'}
+            {userTier === 'beta' ? '🎖️ Beta Tester' : userTier === 'annual' ? '⭐ Annual Member' : '👑 Pass Holder'}
           </h2>
           <p className="text-lg text-gray-600">
             You have unlimited access to everything!
@@ -202,7 +204,9 @@ const UsageLimitModal = ({ user, supabase, userTier, onUpgrade, onClose, usageSt
           <p className="text-lg font-semibold text-gray-800 mb-2">
             {userTier === 'beta'
               ? '🙏 Thank you for being a beta tester!'
-              : '🙏 Thank you for being a Pro member!'}
+              : userTier === 'annual'
+              ? '🙏 Thank you for being an Annual member!'
+              : '🙏 Thank you for your purchase!'}
           </p>
           <p className="text-gray-600 text-sm">
             Practice as much as you want - no limits, no restrictions!
@@ -315,7 +319,7 @@ const UsageLimitModal = ({ user, supabase, userTier, onUpgrade, onClose, usageSt
           Need More Sessions?
         </h3>
         <p className="text-indigo-100 text-sm mb-4">
-          Upgrade to Pro and get unlimited access to all features. Practice as much as you need!
+          Get a 30-Day Pass for unlimited access. No subscription — just one payment.
         </p>
         <ul className="space-y-1 text-sm mb-4">
           <li>• Unlimited AI Interviewer</li>
@@ -328,7 +332,7 @@ const UsageLimitModal = ({ user, supabase, userTier, onUpgrade, onClose, usageSt
           onClick={onUpgrade}
           className="w-full bg-white text-indigo-600 font-bold py-3 rounded-xl hover:bg-indigo-50 transition"
         >
-          Upgrade to Pro - $29.99/month
+          Get 30-Day Pass — $14.99
         </button>
       </div>
 
