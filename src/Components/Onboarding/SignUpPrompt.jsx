@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { trackOnboardingEvent } from '../../utils/onboardingTracker'
+import { trackSignUp } from '../../utils/googleAdsTracking'
 
 /**
  * SignUpPrompt — Screen 5: Create Account to Save Progress
@@ -75,7 +76,16 @@ export default function SignUpPrompt({ archetype, archetypeConfig, onComplete })
       // Success — signUp() sends a confirmation email.
       // email_confirmed_at will be null until the user clicks the link.
       // ProtectedRoute.jsx will block access to /app until confirmed.
-      trackOnboardingEvent(5, 'signup_completed', { archetype })
+      //
+      // IMPORTANT: Set tutorial-seen and onboarding field NOW, before the user
+      // leaves to check email. handleSignUpComplete in ArchetypeOnboarding never
+      // fires because the user navigates away to confirm their email first.
+      localStorage.setItem('isl_tutorial_seen', 'true')
+      if (fromNursing) {
+        localStorage.setItem('isl_onboarding_field', 'nursing')
+      }
+      trackOnboardingEvent(6, 'signup_completed', { archetype })
+      trackSignUp() // Google Ads conversion
       setSignUpSuccess(true)
     } catch (err) {
       console.error('Sign up error:', err)
