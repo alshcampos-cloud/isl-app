@@ -236,7 +236,7 @@ When giving feedback, reference their specific background when relevant. Example
 
     // Build the prompt based on mode
     let promptContent = '';
-    let maxTokens = 1024;
+    let maxTokens = 2000;
 
     if (mode === 'answer-assistant-start') {
       maxTokens = 500;
