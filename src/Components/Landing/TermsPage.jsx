@@ -1,7 +1,14 @@
 import { Link } from 'react-router-dom';
 import { Brain, ArrowLeft } from 'lucide-react';
+import useDocumentHead from '../../hooks/useDocumentHead';
 
 export default function TermsPage() {
+  useDocumentHead({
+    title: 'Terms of Service | InterviewAnswers.ai',
+    description: 'Terms of Service for InterviewAnswers.ai — AI-powered interview preparation platform.',
+    canonical: 'https://www.interviewanswers.ai/terms',
+  });
+
   return (
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white border-b border-gray-200">

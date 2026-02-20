@@ -16,17 +16,26 @@ export default function LandingFooter() {
 
           {/* Links */}
           <div className="flex flex-wrap items-center justify-center gap-6 text-sm">
+            <Link to="/star-method-guide" className="hover:text-white transition-colors">
+              STAR Method Guide
+            </Link>
+            <Link to="/behavioral-interview-questions" className="hover:text-white transition-colors">
+              Behavioral Questions
+            </Link>
+            <Link to="/nursing-interview-questions" className="hover:text-white transition-colors">
+              Nursing Questions
+            </Link>
             <Link to="/nurse" className="hover:text-white transition-colors">
-              🩺 Nursing Interviews
+              🩺 NurseInterviewPro
             </Link>
             <a href="mailto:support@interviewanswers.ai" className="hover:text-white transition-colors">
               Contact
             </a>
             <Link to="/terms" className="hover:text-white transition-colors">
-              Terms of Service
+              Terms
             </Link>
             <Link to="/privacy" className="hover:text-white transition-colors">
-              Privacy Policy
+              Privacy
             </Link>
           </div>
 

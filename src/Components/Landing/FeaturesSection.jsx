@@ -6,8 +6,8 @@ const features = [
     icon: Mic,
     name: 'Live Prompter',
     gradient: 'from-teal-500 to-emerald-500',
-    description: 'Get real-time bullet points during your actual interview. Just hold SPACEBAR and get real-time guidance as you speak.',
-    highlights: ['Works with Zoom, Teams & more', 'Matches questions to your answers', 'Your answers are never recorded'],
+    description: 'Fuzzy logic identifies the question being asked and pulls your personalized bullet points in real-time during practice. Train your brain to hit every point before the real thing.',
+    highlights: ['Identifies questions automatically', 'Matches questions to your answers', 'Your answers are never recorded'],
   },
   {
     icon: Bot,
@@ -65,7 +65,7 @@ export default function FeaturesSection() {
             From Preparation to Performance
           </h2>
           <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-            Build answers from your real experiences, practice until they're second nature, then get real-time help during the actual interview.
+            Build answers from your real experiences, practice until they're second nature, and walk in ready.
           </p>
         </motion.div>
 

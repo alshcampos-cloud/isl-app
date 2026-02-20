@@ -65,7 +65,7 @@ export default function PricingSection() {
             Simple, Transparent Pricing
           </h2>
           <p className="mt-4 text-lg text-gray-600">
-            Start free. Upgrade when you're ready. Cancel anytime.
+            Start free. Upgrade when you're ready. No subscription required.
           </p>
         </motion.div>
 
@@ -140,7 +140,7 @@ export default function PricingSection() {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
         >
-          No credit card required for free tier. Cancel Pro anytime.
+          No credit card required for free tier. No auto-renew on 30-Day Pass.
         </motion.p>
       </div>
     </section>

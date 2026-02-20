@@ -1,7 +1,14 @@
 import { Link } from 'react-router-dom';
 import { Brain, ArrowLeft } from 'lucide-react';
+import useDocumentHead from '../../hooks/useDocumentHead';
 
 export default function PrivacyPage() {
+  useDocumentHead({
+    title: 'Privacy Policy | InterviewAnswers.ai',
+    description: 'Privacy Policy for InterviewAnswers.ai — how we protect your data, handle your information, and ensure your interview practice stays private.',
+    canonical: 'https://www.interviewanswers.ai/privacy',
+  });
+
   return (
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white border-b border-gray-200">

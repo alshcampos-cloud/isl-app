@@ -20,8 +20,8 @@ const faqs = [
     a: 'Absolutely. Your data is encrypted with AES-256. We use Supabase for secure authentication and storage. Your practice sessions and answers are private to your account. We never share your data with third parties.',
   },
   {
-    q: 'Can I cancel anytime?',
-    a: 'Yes. There are no contracts or commitments. You can cancel your Pro subscription at any time and continue using it until the end of your billing period. You can also downgrade to the free tier.',
+    q: 'How does pricing work?',
+    a: 'Start free with generous monthly limits. When you\'re ready for unlimited practice, grab a 30-Day Pass starting at $14.99 — no subscription, no auto-renew. Or save with the Annual All-Access at $149.99/year for the best value.',
   },
 ];
 
