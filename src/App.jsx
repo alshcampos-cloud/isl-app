@@ -33,6 +33,7 @@ import StreakDisplay from './Components/Streaks/StreakDisplay';
 import MilestoneToast from './Components/Streaks/MilestoneToast';
 import IRSDisplay from './Components/IRS/IRSDisplay';
 import { updateStreakAfterSession } from './utils/streakSupabase';
+import { trackPurchase } from './utils/googleAdsTracking';
 
 // CSS string is OK at top-level
 const styles = `
@@ -1153,6 +1154,9 @@ loadPracticeHistory();
 
           // Clean up URL parameters
           window.history.replaceState({}, document.title, window.location.pathname);
+
+          // Google Ads purchase conversion tracking
+          trackPurchase(14.99, sessionId);
 
           // Show success message
           alert('🎉 Welcome to Pro! Your subscription is now active.');
@@ -8161,6 +8165,9 @@ const PrivacyPage = lazy(() => import('./Components/Landing/PrivacyPage'));
 const NursingTrackApp = lazy(() => import('./Components/NursingTrack/NursingTrackApp'));
 const NursingLandingPage = lazy(() => import('./Components/NursingTrack/NursingLandingPage'));
 const ArchetypeOnboarding = lazy(() => import('./Components/Onboarding/ArchetypeOnboarding'));
+const STARMethodGuidePage = lazy(() => import('./Components/Landing/STARMethodGuidePage'));
+const BehavioralInterviewQuestionsPage = lazy(() => import('./Components/Landing/BehavioralInterviewQuestionsPage'));
+const NursingInterviewQuestionsPage = lazy(() => import('./Components/Landing/NursingInterviewQuestionsPage'));
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-sky-50 flex items-center justify-center">
@@ -8183,6 +8190,9 @@ function App() {
         <Route path="/app" element={<ProtectedRoute><ISL /></ProtectedRoute>} />
         <Route path="/nursing" element={<ProtectedRoute><NursingTrackApp /></ProtectedRoute>} />
         <Route path="/nurse" element={<NursingLandingPage />} />
+        <Route path="/star-method-guide" element={<STARMethodGuidePage />} />
+        <Route path="/behavioral-interview-questions" element={<BehavioralInterviewQuestionsPage />} />
+        <Route path="/nursing-interview-questions" element={<NursingInterviewQuestionsPage />} />
         <Route path="/onboarding" element={<ArchetypeOnboarding />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

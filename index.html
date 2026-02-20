@@ -47,10 +47,24 @@
         },
         {
           "@type": "Offer",
-          "price": "29.99",
+          "price": "14.99",
           "priceCurrency": "USD",
-          "name": "Pro Plan",
-          "description": "Unlimited AI mock interviews, live prompter, answer assistant, and full analytics dashboard"
+          "name": "30-Day Pass",
+          "description": "Unlimited AI mock interviews, live prompter, answer assistant, and STAR method coaching for 30 days"
+        },
+        {
+          "@type": "Offer",
+          "price": "19.99",
+          "priceCurrency": "USD",
+          "name": "30-Day Nursing Pass",
+          "description": "Unlimited nursing mock interviews, SBAR drills, specialty-specific questions, and AI coaching for 30 days"
+        },
+        {
+          "@type": "Offer",
+          "price": "149.99",
+          "priceCurrency": "USD",
+          "name": "Annual All-Access",
+          "description": "Full access to all features including general and nursing interview tracks for one year"
         }
       ],
       "featureList": [
@@ -83,7 +97,7 @@
           "name": "Is InterviewAnswers.ai free to use?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Yes. The free plan includes mock interview sessions, STAR method coaching, and flashcards. The Pro plan at $29.99/month unlocks unlimited practice, the live prompter, answer assistant, and full analytics."
+            "text": "Yes. The free plan includes mock interview sessions, STAR method coaching, and flashcards. Upgrade to a 30-Day Pass starting at $14.99 for unlimited practice, or get the Annual All-Access for $149.99/year."
           }
         },
         {
@@ -114,8 +128,45 @@
       "name": "InterviewAnswers.ai",
       "url": "https://www.interviewanswers.ai",
       "logo": "https://www.interviewanswers.ai/favicon.svg",
+      "description": "AI-powered interview preparation platform with mock interviews, STAR method coaching, and nursing interview specialty track.",
       "sameAs": []
     }
+    </script>
+
+    <!-- JSON-LD Structured Data: WebSite (enables sitelinks search) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "InterviewAnswers.ai",
+      "url": "https://www.interviewanswers.ai",
+      "description": "AI-powered interview preparation with mock interviews, STAR method coaching, and real-time feedback."
+    }
+    </script>
+
+    <!-- Google Ads Conversion Tracking -->
+    <!-- SETUP INSTRUCTIONS:
+         1. Create Google Ads account at ads.google.com
+         2. Go to Tools → Conversions → New conversion action → Website
+         3. Get your Conversion ID (looks like: AW-123456789)
+         4. Replace AW-XXXXXXXXX below with your real ID
+         5. Uncomment the two script tags below
+    -->
+    <!-- UNCOMMENT THESE WHEN YOU HAVE YOUR GOOGLE ADS ID:
+    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-XXXXXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'AW-XXXXXXXXX');
+    </script>
+    -->
+    <!-- gtag stub so conversion calls don't error before ads are set up -->
+    <script>
+      if (typeof window.gtag !== 'function') {
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function(){dataLayer.push(arguments);};
+      }
     </script>
 
     <!-- Mobile App Tags -->

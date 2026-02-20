@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App.jsx'
 import ErrorBoundary from './Components/ErrorBoundary.jsx'
+import ScrollToTop from './Components/ScrollToTop.jsx'
 import './index.css'
 import { isNativeApp } from './utils/platform'
 
@@ -44,6 +45,7 @@ if (isNativeApp()) {
 ReactDOM.createRoot(document.getElementById('root')).render(
   <ErrorBoundary>
     <BrowserRouter>
+      <ScrollToTop />
       <App />
     </BrowserRouter>
   </ErrorBoundary>,
