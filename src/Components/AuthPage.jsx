@@ -2,8 +2,14 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import Auth from '../Auth';
+import useDocumentHead from '../hooks/useDocumentHead';
 
 export default function AuthPage({ mode = 'login' }) {
+  useDocumentHead({
+    title: mode === 'login' ? 'Log In | InterviewAnswers.ai' : 'Sign Up | InterviewAnswers.ai',
+    description: mode === 'login' ? 'Log in to your InterviewAnswers.ai account.' : 'Create your free InterviewAnswers.ai account.',
+    robots: 'noindex, nofollow',
+  });
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);

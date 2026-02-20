@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from './lib/supabase'
 import { Mail, Lock, User, AlertCircle, CheckCircle } from 'lucide-react'
+import { trackSignUp } from './utils/googleAdsTracking'
 
 function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing = false }) {
   const [loading, setLoading] = useState(false)
@@ -41,6 +42,7 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
 
         if (error) throw error
 
+        trackSignUp() // Google Ads conversion
         setMessage('Check your email for the verification link!')
       } else {
         // Login

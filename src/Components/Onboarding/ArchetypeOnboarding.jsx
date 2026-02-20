@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { getArchetype, getArchetypeConfig, getPostOnboardingRoute, TIMELINE_OPTIONS, FIELD_OPTIONS, NURSING_FIRST_QUESTION } from '../../utils/archetypeRouter'
 import { trackOnboardingEvent, startScreenTimer } from '../../utils/onboardingTracker'
+import useDocumentHead from '../../hooks/useDocumentHead'
 import BreathingExercise from './BreathingExercise'
 import OnboardingPractice from './OnboardingPractice'
 import IRSBaseline from './IRSBaseline'
@@ -23,6 +24,12 @@ import SignUpPrompt from './SignUpPrompt'
  *   - Nielsen Norman: 60% abandon pre-value registration
  */
 export default function ArchetypeOnboarding() {
+  useDocumentHead({
+    title: 'Get Started | InterviewAnswers.ai',
+    description: 'Start your personalized interview preparation journey with AI coaching.',
+    robots: 'noindex, nofollow',
+  })
+
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const fromNursing = searchParams.get('from') === 'nursing'

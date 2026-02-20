@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { trackOnboardingEvent } from '../../utils/onboardingTracker'
+import { trackSignUp } from '../../utils/googleAdsTracking'
 
 /**
  * SignUpPrompt — Screen 6: Create Account to Save Progress
@@ -89,6 +90,7 @@ export default function SignUpPrompt({ archetype, archetypeConfig, practiceScore
         localStorage.setItem('isl_onboarding_field', 'nursing')
       }
       trackOnboardingEvent(6, 'signup_completed', { archetype })
+      trackSignUp() // Google Ads conversion
       setSignUpSuccess(true)
     } catch (err) {
       console.error('Sign up error:', err)
