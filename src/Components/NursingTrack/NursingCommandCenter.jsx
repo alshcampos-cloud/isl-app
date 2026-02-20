@@ -8,14 +8,16 @@
 //
 // ⚠️ D.R.A.F.T. Protocol: NEW file. No existing code modified.
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, BarChart3, BookOpen, Shield, Target, Bot,
   MessageSquare, Zap, CheckCircle, AlertCircle, TrendingUp,
   TrendingDown, Minus, Clock, Award, Layers, ChevronRight,
-  ChevronDown, ChevronUp, Save, Edit3, Lock, Sparkles
+  ChevronDown, ChevronUp, Save, Edit3, Lock, Sparkles, Stethoscope
 } from 'lucide-react';
+
+const NursingAnswerAssistant = lazy(() => import('./NursingAnswerAssistant'));
 import { getCategories, getFrameworkDetails, CLINICAL_FRAMEWORKS } from './nursingQuestions';
 import useNursingQuestions from './useNursingQuestions';
 import NursingLoadingSkeleton from './NursingLoadingSkeleton';
@@ -105,6 +107,7 @@ export default function NursingCommandCenter({ specialty, onBack, onStartMode, s
                 specialty={specialty}
                 onStartMode={onStartMode}
                 userData={userData}
+                onShowPricing={onShowPricing}
               />
             </motion.div>
           )}
@@ -589,7 +592,7 @@ function ProgressTab({ sessionHistory, questions, specialty }) {
 // ============================================================
 // TAB 2: QUESTION BANK
 // ============================================================
-function QuestionBankTab({ questions, categories, sessionHistory, specialty, onStartMode, userData }) {
+function QuestionBankTab({ questions, categories, sessionHistory, specialty, onStartMode, userData, onShowPricing }) {
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterFramework, setFilterFramework] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all'); // all, mastered, needs-review, unattempted
@@ -600,6 +603,9 @@ function QuestionBankTab({ questions, categories, sessionHistory, specialty, onS
   const [editingAnswer, setEditingAnswer] = useState(null); // question ID being edited
   const [draftAnswer, setDraftAnswer] = useState('');
   const [savingAnswer, setSavingAnswer] = useState(false);
+
+  // AI Answer Coach state
+  const [coachingQuestion, setCoachingQuestion] = useState(null); // full question object or null
 
   const userId = userData?.user?.id;
 
@@ -901,16 +907,28 @@ function QuestionBankTab({ questions, categories, sessionHistory, specialty, onS
                               <Save className="w-3 h-3" /> My Best Answer
                             </p>
                             {savedAnswers[q.id] && editingAnswer !== q.id && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setEditingAnswer(q.id);
-                                  setDraftAnswer(savedAnswers[q.id]);
-                                }}
-                                className="text-slate-500 hover:text-slate-300 transition-colors"
-                              >
-                                <Edit3 className="w-3 h-3" />
-                              </button>
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setCoachingQuestion(q);
+                                  }}
+                                  className="text-[10px] text-sky-400 hover:text-sky-300 bg-sky-500/10 border border-sky-500/20 px-2 py-0.5 rounded-md transition-colors flex items-center gap-1"
+                                  title="Refine with AI Coach"
+                                >
+                                  <Stethoscope className="w-2.5 h-2.5" /> Refine
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditingAnswer(q.id);
+                                    setDraftAnswer(savedAnswers[q.id]);
+                                  }}
+                                  className="text-slate-500 hover:text-slate-300 transition-colors"
+                                >
+                                  <Edit3 className="w-3 h-3" />
+                                </button>
+                              </div>
                             )}
                           </div>
 
@@ -946,19 +964,24 @@ function QuestionBankTab({ questions, categories, sessionHistory, specialty, onS
                             // Display saved answer
                             <p className="text-slate-400 text-xs leading-relaxed whitespace-pre-wrap">{savedAnswers[q.id]}</p>
                           ) : (
-                            // Empty state — prompt to add
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setEditingAnswer(q.id);
-                                setDraftAnswer('');
-                              }}
-                              className="w-full text-center py-4 text-slate-600 hover:text-slate-400 transition-colors"
-                            >
-                              <Edit3 className="w-5 h-5 mx-auto mb-1 opacity-50" />
-                              <p className="text-xs">Save your best answer</p>
-                              <p className="text-[10px] mt-0.5 opacity-70">Review it before interviews</p>
-                            </button>
+                            // Empty state — prompt to add (manual or AI Coach)
+                            <div className="py-3 space-y-2" onClick={(e) => e.stopPropagation()}>
+                              <button
+                                onClick={() => setCoachingQuestion(q)}
+                                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-sky-500/10 border border-sky-500/20 text-sky-300 text-xs font-medium hover:bg-sky-500/20 transition-all"
+                              >
+                                <Stethoscope className="w-3.5 h-3.5" /> Craft with AI Coach
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setEditingAnswer(q.id);
+                                  setDraftAnswer('');
+                                }}
+                                className="w-full text-center py-1.5 text-slate-600 hover:text-slate-400 text-[10px] transition-colors"
+                              >
+                                or write manually
+                              </button>
+                            </div>
                           )}
                         </div>
                       </div>
@@ -997,6 +1020,29 @@ function QuestionBankTab({ questions, categories, sessionHistory, specialty, onS
             </button>
           </div>
         </div>
+      )}
+
+      {/* AI Answer Coach Modal */}
+      {coachingQuestion && (
+        <Suspense fallback={null}>
+          <NursingAnswerAssistant
+            question={coachingQuestion}
+            specialty={specialty}
+            userData={userData}
+            existingAnswer={savedAnswers[coachingQuestion.id] || ''}
+            onAnswerSaved={({ answerText }) => {
+              // Update local state immediately
+              setSavedAnswers(prev => {
+                const next = { ...prev, [coachingQuestion.id]: answerText };
+                try { localStorage.setItem(`nursing_saved_answers_${userData?.user?.id}`, JSON.stringify(next)); } catch { /* ignore */ }
+                return next;
+              });
+              setCoachingQuestion(null);
+            }}
+            onClose={() => setCoachingQuestion(null)}
+            onShowPricing={onShowPricing}
+          />
+        </Suspense>
       )}
     </div>
   );

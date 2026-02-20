@@ -87,10 +87,11 @@ ${assessSection}
 IMPORTANT: NEVER evaluate clinical accuracy. You assess HOW they communicate, not WHETHER their clinical decisions were correct.
 
 [C] COACH WITH LAYERS — After the user answers, ALWAYS give feedback in this order:
-1. WHAT WAS STRONG — Name one specific thing they did well. Be genuine, not generic.
-2. WHAT TO IMPROVE — Name one specific area to strengthen. Frame as opportunity, never criticism.
+1. WHAT WAS STRONG — Name one specific thing they did well. Be genuine AND honest. Match your praise to the actual quality — do not say "Great work" or "Strong answer" for a weak or vague response. If the answer was weak, find something small but real to acknowledge.
+2. WHAT TO IMPROVE — Name one specific area to strengthen. Frame as opportunity, never criticism. Be concrete about WHAT was missing.
 3. OFFER RETRY — Ask: "Would you like to try that answer again incorporating [specific suggestion]?"
 ${framework ? `4. CITE FRAMEWORK — Reference: "${framework.name}" (${framework.source})${citationSource ? ` | Source material: ${citationSource}` : ''}` : citationSource ? `4. CITE SOURCE — Reference this source naturally in your coaching: "${citationSource}"` : ''}
+5. PRIMARY SOURCES — When suggesting resources, include URLs when possible. Key nursing resources: APIC (apic.org), AWHONN (awhonn.org), ENA (ena.org), ANA (nursingworld.org), NCSBN (ncsbn.org), BCEN (bcen.org), AACN (aacn.org), CDC (cdc.gov), IHI (ihi.org), Joint Commission (jointcommission.org), AHRQ (ahrq.gov).
 
 SCORING: At the very end of your feedback response, include a score on a new line in EXACTLY this format:
 [SCORE: X/5]
@@ -101,6 +102,31 @@ where X is 1-5 based on overall communication quality. This helps us track progr
   Example: "You mentioned you called a rapid response. Walk me through what you saw that triggered that decision."
 - Follow-ups should probe the answer they gave, not introduce new clinical territory.
 - Suggested follow-ups from the question library: ${question.followUps?.map(f => `"${f}"`).join(', ') || 'Use your judgment based on their answer.'}
+
+DUPLICATE DETECTION — READ CAREFULLY:
+Each question in this interview is DIFFERENT. The user is answering a NEW question each time.
+Do NOT compare their current answer to previous answers in the conversation.
+Do NOT say their response was "duplicated," "repeated," "similar to a previous answer," or any variant.
+Every answer is unique because it addresses a different question. Themes or storytelling patterns may recur — that is NORMAL and should not be flagged.
+
+QUESTION TYPE AWARENESS:
+Some questions are BEHAVIORAL ("Tell me about a time...") — evaluate using ${frameworkLabel} structure.
+Some questions are THEORY/KNOWLEDGE-BASED ("How do you decide...", "What is your approach to...", "Describe your process for...") — these ask about methodology, not a specific past experience.
+For THEORY questions: Do NOT penalize for missing ${frameworkLabel} structure. Instead, evaluate:
+1. Clarity of their reasoning/approach
+2. Specificity of their methodology (concrete steps, not vague platitudes)
+3. Evidence of real-world application (brief examples welcomed but not required)
+4. Completeness — did they address all parts of the question?
+Recognize the question type and adapt your feedback accordingly. Never force a behavioral framework on a knowledge question.
+
+RESULT EVALUATION — IMPORTANT:
+When assessing the "Result" component of STAR, accept ALL of these as valid results:
+- Measurable outcomes (numbers, percentages, timelines)
+- Patient/team outcomes (improved care, resolved conflict, safer environment)
+- Closure and reflection ("I learned...", "Looking back...", "I believe this was the right course of action because...")
+- Values-based outcomes ("I have faith that...", "This reinforced my commitment to...")
+- Process improvements adopted by the team
+Do NOT mark a Result as "Incomplete" just because it lacks hard numbers. Reflection, closure, and values-based conclusions ARE valid results in nursing interviews.
 
 WALLED GARDEN RULES (ABSOLUTE — NEVER BREAK):
 - NEVER generate clinical scenarios from your training data
@@ -332,23 +358,36 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
     }
   }, [currentInput, isLoading, messages, specialty, currentQuestion, userData, refreshUsage]);
 
+  // Score-aware transition messages (Bug fix: Erin feedback — "Great work" regardless of score was misleading)
+  const getTransitionMessage = (lastScore) => {
+    if (lastScore === null) return "Let's keep going.";
+    if (lastScore >= 4) return "Strong answer — let's keep that momentum going.";
+    if (lastScore >= 3) return "Good effort on that one. Let's try the next question.";
+    return "Let's move on — each question is a fresh opportunity.";
+  };
+
   // Move to next question
   const nextQuestion = useCallback(() => {
     const nextIdx = questionIndex + 1;
     if (nextIdx < questions.length) {
       const nextQ = questions[nextIdx];
+      // Get the most recent score from session results for a contextual transition
+      const lastResult = sessionResults[sessionResults.length - 1];
+      const lastScore = lastResult?.score ?? null;
+      const transition = getTransitionMessage(lastScore);
+
       setQuestionIndex(nextIdx);
       setCurrentQuestion(nextQ);
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: `Great work on that one. Let's move to the next question.\n\n**${nextQ.question}**`,
+        content: `${transition}\n\n**${nextQ.question}**`,
         timestamp: new Date(),
       }]);
     } else {
       // All questions done → show session summary
       setSessionComplete(true);
     }
-  }, [questionIndex, questions]);
+  }, [questionIndex, questions, sessionResults]);
 
   // End session early (user clicks "End Session")
   const endSessionEarly = useCallback(() => {
@@ -371,6 +410,7 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
       <NursingSessionSummary
         specialty={specialty}
         sessionResults={sessionResults}
+        userData={userData}
         onRetry={() => {
           // Reset everything for a new session
           setMessages([]);

@@ -12,7 +12,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, Send, Loader2, Stethoscope, AlertCircle,
   CheckCircle, XCircle, Shuffle, ChevronRight, Target,
-  RotateCcw, BookOpen, Mic, MicOff
+  RotateCcw, BookOpen, Mic, MicOff, Save
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { getFrameworkDetails } from './nursingQuestions';
@@ -23,6 +23,7 @@ import { canUseFeature, incrementUsage } from '../../utils/creditSystem';
 import { updateStreakAfterSession } from '../../utils/streakSupabase';
 import { parseScoreFromResponse, stripScoreTag, scoreColor5, getCitationSource, validateNursingResponse } from './nursingUtils';
 import { createPracticeSession } from './nursingSessionStore';
+import { upsertSavedAnswer } from './nursingSupabase';
 import useSpeechRecognition from './useSpeechRecognition';
 import SpeechUnavailableWarning from '../SpeechUnavailableWarning';
 import { buildSelfEfficacyPrompt } from '../../utils/selfEfficacyFeedback';
@@ -55,22 +56,39 @@ const PRACTICE_SYSTEM_PROMPT = (specialty, question) => {
     ? `\nKEY POINTS this answer should cover:\n${question.bullets.map((b, i) => `${i + 1}. ${b}`).join('\n')}`
     : '';
 
+  // Detect theory/knowledge questions vs behavioral
+  const isTheoryQuestion = /^(How do you|What is your|Describe your|What steps|What factors|What approach|How would you|What do you consider)/i.test(question.question);
+
   return `Nursing interview coach for ${specialty.shortName}. Question: "${question.question}" | Category: ${question.category} | Framework: ${frameworkLabel}${frameworkContext}${bulletPoints}
 
-${evalCriteria}
+QUESTION TYPE: ${isTheoryQuestion ? 'THEORY/KNOWLEDGE — This asks about approach/methodology, NOT a specific past experience. Do NOT penalize for missing ' + frameworkLabel + ' structure. Evaluate clarity of reasoning, specificity of methodology, and evidence of real-world application instead.' : 'BEHAVIORAL — Evaluate using ' + frameworkLabel + ' structure.'}
+
+${isTheoryQuestion ? `Evaluate their response for:
+1. Clarity of reasoning — Is their approach well-explained?
+2. Specificity — Do they describe concrete steps/methods, or just vague platitudes?
+3. Real-world grounding — Do they reference actual experience or protocols?
+4. Completeness — Did they address all parts of the question?` : evalCriteria}
+
+RESULT EVALUATION — When assessing Results:
+Accept ALL of these as valid: measurable outcomes (numbers, timelines), patient/team outcomes, closure and reflection ("I learned...", "I believe..."), values-based conclusions, and process improvements. Do NOT mark Result as "Incomplete" just because it lacks hard numbers.
 
 RESPOND WITH ALL 4 SECTIONS BELOW. Every section is MANDATORY — do not skip any.
 
 **Feedback:**
-2-3 sentences on what they did well and what to improve. Be specific. Frame improvements as opportunities.
+2-3 sentences on what they did well and what to improve. Be specific and genuine — match your praise to the actual quality of their answer. If the answer is weak, acknowledge what they got right but be honest about what needs work. If the answer is strong, say why specifically. Never say "Great work" for a weak answer.
 
-**${frameworkLabel} Breakdown:**
-${isSBAR
-  ? `- S (Situation): [What they said or "Missing"]
+**${isTheoryQuestion ? 'Approach' : frameworkLabel} Breakdown:**
+${isTheoryQuestion
+  ? `- Reasoning: [How well did they explain their approach?]
+- Specificity: [Did they give concrete steps or stay vague?]
+- Application: [Did they ground it in real experience?]
+- Completeness: [Did they address the full question?]`
+  : isSBAR
+    ? `- S (Situation): [What they said or "Missing"]
 - B (Background): [What they said or "Missing"]
 - A (Assessment): [What they said or "Missing"]
 - R (Recommendation): [What they said or "Missing"]`
-  : `- S (Situation): [What they said or "Missing"]
+    : `- S (Situation): [What they said or "Missing"]
 - T (Task): [What they said or "Missing"]
 - A (Action): [What they said or "Missing"]
 - R (Result): [What they said or "Missing"]`}
@@ -80,12 +98,12 @@ ${isSBAR
 
 **Resources to Review:**
 ${citationSource
-  ? `📚 Cite this source: "${citationSource}" — one sentence on how it relates to this question.`
-  : `📚 [Pick ONE from: SBAR Toolkit (IHI), TeamSTEPPS (AHRQ), NCSBN Clinical Judgment Model, ANA Code of Ethics, Joint Commission Safety Goals, CDC Infection Control] — one sentence why it helps.`}
+  ? `📚 "${citationSource}" — one sentence on how it relates to this question. Include the URL if it's one of these: APIC (apic.org), AWHONN (awhonn.org), ENA (ena.org), ANA (nursingworld.org), NCSBN (ncsbn.org), BCEN (bcen.org), AACN (aacn.org), CDC (cdc.gov), IHI (ihi.org), Joint Commission (jointcommission.org), AHRQ (ahrq.gov).`
+  : `📚 [Pick ONE from: SBAR Toolkit — ihi.org, TeamSTEPPS — ahrq.gov, NCSBN Clinical Judgment Model — ncsbn.org, ANA Code of Ethics — nursingworld.org, Joint Commission Safety Goals — jointcommission.org, CDC Infection Control — cdc.gov, APIC — apic.org, AWHONN — awhonn.org] — one sentence why it helps and include the URL.`}
 
 [SCORE: X/5]
 
-Rules: Coach communication ONLY. Never generate clinical content. Never patronizing.`;
+Rules: Coach communication ONLY. Never generate clinical content. Never patronizing. Match praise to actual answer quality.`;
 };
 
 export default function NursingPracticeMode({ specialty, onBack, userData, refreshUsage, addSession, startQuestionId = null, triggerStreakRefresh, onShowPricing }) {
@@ -123,6 +141,8 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
   const [questionsAnswered, setQuestionsAnswered] = useState(0);
   const [totalScore, setTotalScore] = useState(0);
   const [scoredCount, setScoredCount] = useState(0);
+  const [savedAsBest, setSavedAsBest] = useState(false); // "Save as Best Answer" per-question indicator
+  const [savingBest, setSavingBest] = useState(false);
 
   const inputRef = useRef(null);
 
@@ -266,6 +286,7 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
     setFeedback(null);
     setValidationFlags(null);
     setError(null);
+    setSavedAsBest(false);
   }, [questionIndex, questions.length]);
 
   // Shuffle to random question
@@ -279,6 +300,7 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
     setFeedback(null);
     setValidationFlags(null);
     setError(null);
+    setSavedAsBest(false);
   }, [questionIndex, questions.length]);
 
   // Handle Enter
@@ -596,10 +618,73 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
                       </div>
                     )}
 
+                    {/* Save as Best Answer */}
+                    {userData?.user?.id && currentQuestion && (
+                      <div className="mb-3">
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            if (savedAsBest || savingBest) return;
+                            setSavingBest(true);
+                            try {
+                              const result = await upsertSavedAnswer(userData.user.id, currentQuestion.id, userAnswer.trim());
+                              if (result.success) {
+                                setSavedAsBest(true);
+                                // Also persist to localStorage as fallback
+                                try {
+                                  const local = JSON.parse(localStorage.getItem(`nursing_saved_answers_${userData.user.id}`) || '{}');
+                                  local[currentQuestion.id] = userAnswer.trim();
+                                  localStorage.setItem(`nursing_saved_answers_${userData.user.id}`, JSON.stringify(local));
+                                } catch { /* ignore */ }
+                              }
+                            } catch (err) {
+                              console.warn('⚠️ Save best answer failed:', err);
+                            } finally {
+                              setSavingBest(false);
+                            }
+                          }}
+                          onTouchEnd={async (e) => {
+                            e.preventDefault();
+                            if (savedAsBest || savingBest) return;
+                            setSavingBest(true);
+                            try {
+                              const result = await upsertSavedAnswer(userData.user.id, currentQuestion.id, userAnswer.trim());
+                              if (result.success) {
+                                setSavedAsBest(true);
+                                try {
+                                  const local = JSON.parse(localStorage.getItem(`nursing_saved_answers_${userData.user.id}`) || '{}');
+                                  local[currentQuestion.id] = userAnswer.trim();
+                                  localStorage.setItem(`nursing_saved_answers_${userData.user.id}`, JSON.stringify(local));
+                                } catch { /* ignore */ }
+                              }
+                            } catch (err) {
+                              console.warn('⚠️ Save best answer failed:', err);
+                            } finally {
+                              setSavingBest(false);
+                            }
+                          }}
+                          disabled={savedAsBest || savingBest}
+                          className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                            savedAsBest
+                              ? 'bg-green-500/10 border border-green-500/20 text-green-300 cursor-default'
+                              : 'bg-amber-500/10 border border-amber-500/20 text-amber-300 hover:bg-amber-500/20'
+                          }`}
+                        >
+                          {savingBest ? (
+                            <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving...</>
+                          ) : savedAsBest ? (
+                            <><CheckCircle className="w-3.5 h-3.5" /> Saved as Best Answer</>
+                          ) : (
+                            <><Save className="w-3.5 h-3.5" /> Save as My Best Answer</>
+                          )}
+                        </button>
+                      </div>
+                    )}
+
                     {/* Actions */}
                     <div className="flex gap-3">
                       <button
-                        onClick={() => { setUserAnswer(''); setFeedback(null); setValidationFlags(null); }}
+                        onClick={() => { setUserAnswer(''); setFeedback(null); setValidationFlags(null); setSavedAsBest(false); }}
                         className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-sm hover:bg-white/20 transition-all"
                       >
                         <RotateCcw className="w-4 h-4" /> Try Again

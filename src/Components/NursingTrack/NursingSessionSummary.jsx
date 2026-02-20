@@ -7,13 +7,41 @@
 //
 // ⚠️ D.R.A.F.T. Protocol: NEW file. No existing code modified.
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft, RotateCcw, BarChart3, CheckCircle, AlertCircle,
-  BookOpen, Stethoscope, Target, TrendingUp
+  BookOpen, Stethoscope, Target, TrendingUp, Save, Loader2
 } from 'lucide-react';
+import { upsertSavedAnswer } from './nursingSupabase';
 
-export default function NursingSessionSummary({ specialty, sessionResults, onRetry, onBack }) {
+export default function NursingSessionSummary({ specialty, sessionResults, onRetry, onBack, userData }) {
+  // Track which questions have been saved as "Best Answer" in this session
+  const [savedQuestions, setSavedQuestions] = useState({}); // { [questionId]: true }
+  const [savingQuestion, setSavingQuestion] = useState(null); // questionId being saved
+
+  const userId = userData?.user?.id;
+
+  const handleSaveBestAnswer = async (questionId, answerText) => {
+    if (!userId || !answerText?.trim() || savingQuestion) return;
+    setSavingQuestion(questionId);
+    try {
+      const result = await upsertSavedAnswer(userId, questionId, answerText.trim());
+      if (result.success) {
+        setSavedQuestions(prev => ({ ...prev, [questionId]: true }));
+        // localStorage fallback
+        try {
+          const local = JSON.parse(localStorage.getItem(`nursing_saved_answers_${userId}`) || '{}');
+          local[questionId] = answerText.trim();
+          localStorage.setItem(`nursing_saved_answers_${userId}`, JSON.stringify(local));
+        } catch { /* ignore */ }
+      }
+    } catch (err) {
+      console.warn('⚠️ Save best answer from summary failed:', err);
+    } finally {
+      setSavingQuestion(null);
+    }
+  };
   // ============================================================
   // COMPUTE SUMMARY STATS
   // ============================================================
@@ -130,32 +158,38 @@ export default function NursingSessionSummary({ specialty, sessionResults, onRet
           )}
         </motion.div>
 
-        {/* Framework Breakdown */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="grid grid-cols-2 gap-3 mb-6"
-        >
-          <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
-            <div className="text-green-400 text-xs font-semibold mb-1">SBAR</div>
-            <div className="text-white text-xl font-bold">
-              {sbarAvg !== null ? sbarAvg : '--'}
-            </div>
-            <div className="text-slate-500 text-xs mt-1">
-              {sbarResults.length} clinical question{sbarResults.length !== 1 ? 's' : ''}
-            </div>
-          </div>
-          <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
-            <div className="text-purple-400 text-xs font-semibold mb-1">STAR</div>
-            <div className="text-white text-xl font-bold">
-              {starAvg !== null ? starAvg : '--'}
-            </div>
-            <div className="text-slate-500 text-xs mt-1">
-              {starResults.length} behavioral question{starResults.length !== 1 ? 's' : ''}
-            </div>
-          </div>
-        </motion.div>
+        {/* Framework Breakdown — only show if BOTH frameworks have questions, or just show the one that does */}
+        {(sbarResults.length > 0 || starResults.length > 0) && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className={`grid gap-3 mb-6 ${sbarResults.length > 0 && starResults.length > 0 ? 'grid-cols-2' : 'grid-cols-1'}`}
+          >
+            {sbarResults.length > 0 && (
+              <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
+                <div className="text-green-400 text-xs font-semibold mb-1">SBAR</div>
+                <div className="text-white text-xl font-bold">
+                  {sbarAvg !== null ? sbarAvg : '--'}
+                </div>
+                <div className="text-slate-500 text-xs mt-1">
+                  {sbarResults.length} clinical question{sbarResults.length !== 1 ? 's' : ''}
+                </div>
+              </div>
+            )}
+            {starResults.length > 0 && (
+              <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
+                <div className="text-purple-400 text-xs font-semibold mb-1">STAR</div>
+                <div className="text-white text-xl font-bold">
+                  {starAvg !== null ? starAvg : '--'}
+                </div>
+                <div className="text-slate-500 text-xs mt-1">
+                  {starResults.length} behavioral question{starResults.length !== 1 ? 's' : ''}
+                </div>
+              </div>
+            )}
+          </motion.div>
+        )}
 
         {/* Strengths */}
         {strengths.length > 0 && (
@@ -238,23 +272,48 @@ export default function NursingSessionSummary({ specialty, sessionResults, onRet
           </h3>
           <div className="space-y-2">
             {sessionResults.map((result, i) => (
-              <div key={i} className={`border rounded-xl p-3 flex items-center gap-3 ${scoreBg(result.score)}`}>
-                <div className="text-slate-500 text-xs font-mono w-5 flex-shrink-0">
-                  {i + 1}.
+              <div key={i} className={`border rounded-xl p-3 ${scoreBg(result.score)}`}>
+                <div className="flex items-center gap-3">
+                  <div className="text-slate-500 text-xs font-mono w-5 flex-shrink-0">
+                    {i + 1}.
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white text-xs truncate">{result.question}</p>
+                  </div>
+                  <span className={`text-xs px-1.5 py-0.5 rounded-full flex-shrink-0 ${
+                    result.responseFramework === 'sbar'
+                      ? 'bg-green-500/20 text-green-300'
+                      : 'bg-purple-500/20 text-purple-300'
+                  }`}>
+                    {result.responseFramework === 'sbar' ? 'SBAR' : 'STAR'}
+                  </span>
+                  <div className={`text-sm font-bold flex-shrink-0 ${scoreColor(result.score)}`}>
+                    {result.score !== null ? `${result.score}/5` : 'Unscored'}
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-white text-xs truncate">{result.question}</p>
-                </div>
-                <span className={`text-xs px-1.5 py-0.5 rounded-full flex-shrink-0 ${
-                  result.responseFramework === 'sbar'
-                    ? 'bg-green-500/20 text-green-300'
-                    : 'bg-purple-500/20 text-purple-300'
-                }`}>
-                  {result.responseFramework === 'sbar' ? 'SBAR' : 'STAR'}
-                </span>
-                <div className={`text-sm font-bold flex-shrink-0 ${scoreColor(result.score)}`}>
-                  {result.score !== null ? `${result.score}/5` : 'Unscored'}
-                </div>
+                {/* Save as Best Answer — shown when user has an answer and is authenticated */}
+                {userId && result.userAnswer && result.questionId && (
+                  <div className="mt-2 pl-8">
+                    <button
+                      onClick={() => handleSaveBestAnswer(result.questionId, result.userAnswer)}
+                      onTouchEnd={(e) => { e.preventDefault(); handleSaveBestAnswer(result.questionId, result.userAnswer); }}
+                      disabled={!!savedQuestions[result.questionId] || savingQuestion === result.questionId}
+                      className={`flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-lg transition-all ${
+                        savedQuestions[result.questionId]
+                          ? 'bg-green-500/10 border border-green-500/20 text-green-300 cursor-default'
+                          : 'bg-amber-500/10 border border-amber-500/20 text-amber-300 hover:bg-amber-500/20'
+                      }`}
+                    >
+                      {savingQuestion === result.questionId ? (
+                        <><Loader2 className="w-2.5 h-2.5 animate-spin" /> Saving...</>
+                      ) : savedQuestions[result.questionId] ? (
+                        <><CheckCircle className="w-2.5 h-2.5" /> Saved</>
+                      ) : (
+                        <><Save className="w-2.5 h-2.5" /> Save as Best Answer</>
+                      )}
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
