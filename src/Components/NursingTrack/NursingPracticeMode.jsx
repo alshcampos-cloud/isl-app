@@ -226,6 +226,17 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
       }
 
       const data = await response.json();
+
+      // Detect Anthropic API errors passed through Edge Function (overloaded, rate limit, etc.)
+      if (data.type === 'error' && data.error) {
+        const errType = data.error.type || 'unknown';
+        const errMsg = data.error.message || 'AI service error';
+        console.error('❌ Anthropic API error:', errType, errMsg);
+        throw new Error(errType === 'overloaded_error'
+          ? 'AI service is temporarily busy. Please try again in a moment.'
+          : `AI error: ${errMsg}`);
+      }
+
       const rawContent = data.content?.[0]?.text || data.response || data.feedback || 'Good effort! Keep practicing.';
 
       const score = parseScoreFromResponse(rawContent);

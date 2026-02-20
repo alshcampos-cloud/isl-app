@@ -339,6 +339,17 @@ export default function NursingConfidenceBuilder({ specialty, onBack, userData, 
       }
 
       const data = await response.json();
+
+      // Detect Anthropic API errors passed through Edge Function (overloaded, rate limit, etc.)
+      if (data.type === 'error' && data.error) {
+        const errType = data.error.type || 'unknown';
+        const errMsg = data.error.message || 'AI service error';
+        console.error('❌ Anthropic API error:', errType, errMsg);
+        throw new Error(errType === 'overloaded_error'
+          ? 'AI service is temporarily busy. Please try again in a moment.'
+          : `AI error: ${errMsg}`);
+      }
+
       // Anthropic API returns { content: [{ type: 'text', text: '...' }] }
       const briefContent = data.content?.[0]?.text || data.response || data.feedback || 'Unable to generate brief. Please try again.';
 

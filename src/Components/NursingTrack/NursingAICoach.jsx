@@ -325,6 +325,17 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
       }
 
       const data = await response.json();
+
+      // Detect Anthropic API errors passed through Edge Function (overloaded, rate limit, etc.)
+      if (data.type === 'error' && data.error) {
+        const errType = data.error.type || 'unknown';
+        const errMsg = data.error.message || 'AI service error';
+        console.error('❌ Anthropic API error:', errType, errMsg);
+        throw new Error(errType === 'overloaded_error'
+          ? 'AI service is temporarily busy. Please try again in a moment.'
+          : `AI error: ${errMsg}`);
+      }
+
       const aiContent = data.content?.[0]?.text || data.response || data.feedback || "I'm here to help you prepare for your nursing interview. What would you like to work on?";
 
       // Add AI response to chat
