@@ -22,6 +22,7 @@ import { fetchWithRetry } from '../../utils/fetchWithRetry';
 import { canUseFeature, incrementUsage } from '../../utils/creditSystem';
 import { updateStreakAfterSession } from '../../utils/streakSupabase';
 import { parseScoreFromResponse, stripScoreTag, scoreColor5, getCitationSource, validateNursingResponse } from './nursingUtils';
+import { trackBeginPractice } from '../../utils/googleAdsTracking';
 import { createPracticeSession } from './nursingSessionStore';
 import { upsertSavedAnswer } from './nursingSupabase';
 import useSpeechRecognition from './useSpeechRecognition';
@@ -145,6 +146,7 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
   const [savingBest, setSavingBest] = useState(false);
 
   const inputRef = useRef(null);
+  const hasTrackedPracticeRef = useRef(false); // Google Ads: fire trackBeginPractice once per mount
 
   // Speech recognition (Battle Scars #4-7)
   const {
@@ -280,6 +282,12 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
         } catch (chargeErr) {
           console.warn('⚠️ Practice usage increment failed (non-blocking):', chargeErr);
         }
+      }
+
+      // Google Ads: track first practice session (fire once per mount)
+      if (!hasTrackedPracticeRef.current) {
+        hasTrackedPracticeRef.current = true;
+        trackBeginPractice();
       }
     } catch (err) {
       console.error('❌ Practice error:', err);
