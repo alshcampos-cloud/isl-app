@@ -6,7 +6,7 @@ const tiers = [
   {
     name: 'Free',
     price: '0',
-    period: '',
+    period: '/month',
     description: 'Perfect for getting started',
     cta: 'Get Started Free',
     ctaLink: '/onboarding',
@@ -21,31 +21,44 @@ const tiers = [
       { text: 'Speech recognition', included: true },
       { text: 'Session history & analytics', included: true },
       { text: 'Template library access', included: true },
-      { text: 'Export practice sessions', included: false },
-      { text: 'Priority feature updates', included: false },
     ],
   },
   {
-    name: 'Pro',
-    price: '29.99',
-    period: '/month',
-    description: 'Unlimited everything. No limits. No worries.',
-    cta: 'Start Pro',
+    name: '30-Day Pass',
+    price: '14.99',
+    period: '/ 30 days',
+    subtitle: 'One-time payment · No subscription · No auto-renewal',
+    description: 'Full access for 30 days. Pay when you need it.',
+    cta: 'Get 30-Day Pass',
     ctaLink: '/onboarding',
     highlighted: true,
-    badge: 'UNLIMITED',
+    badge: 'MOST POPULAR',
     features: [
-      { text: 'UNLIMITED AI Interviewer sessions', included: true },
-      { text: 'UNLIMITED Practice Mode', included: true },
-      { text: 'UNLIMITED Answer Assistant', included: true },
-      { text: 'UNLIMITED Question Generator', included: true },
-      { text: 'UNLIMITED Live Prompter', included: true },
-      { text: 'Unlimited question bank storage', included: true },
-      { text: 'Speech recognition', included: true },
+      { text: 'Unlimited AI mock interviews', included: true },
+      { text: 'Unlimited practice sessions', included: true },
+      { text: 'Unlimited answer coaching (STAR method)', included: true },
+      { text: 'Unlimited question generation', included: true },
+      { text: 'Unlimited Live Prompter', included: true },
+      { text: 'Full question bank access', included: true },
       { text: 'Session history & analytics', included: true },
-      { text: 'Template library access', included: true },
-      { text: 'Export practice sessions', included: true },
-      { text: 'Priority feature updates', included: true },
+    ],
+  },
+  {
+    name: 'Annual All-Access',
+    price: '149.99',
+    period: '/year',
+    subtitle: '~$12.50/mo · General + Nursing tracks',
+    description: 'Best value. Everything included, all year.',
+    cta: 'Get Annual All-Access',
+    ctaLink: '/onboarding',
+    highlighted: false,
+    badge: 'BEST VALUE',
+    features: [
+      { text: 'Everything in 30-Day Pass', included: true },
+      { text: 'Full Nursing Interview Track', included: true },
+      { text: 'AI Coach (20 sessions/month)', included: true },
+      { text: 'Year-round access', included: true },
+      { text: 'Priority support', included: true },
     ],
   },
 ];
@@ -69,7 +82,7 @@ export default function PricingSection() {
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
           {tiers.map((tier, i) => (
             <motion.div
               key={tier.name}
@@ -85,22 +98,29 @@ export default function PricingSection() {
             >
               {/* Badge */}
               {tier.badge && (
-                <div className="bg-gradient-to-r from-teal-600 to-emerald-600 text-white text-sm font-bold text-center py-2 flex items-center justify-center gap-2">
+                <div className={`text-white text-sm font-bold text-center py-2 flex items-center justify-center gap-2 ${
+                  tier.badge === 'BEST VALUE'
+                    ? 'bg-gradient-to-r from-amber-500 to-orange-500'
+                    : 'bg-gradient-to-r from-teal-600 to-emerald-600'
+                }`}>
                   <Crown className="w-4 h-4" />
                   {tier.badge}
                 </div>
               )}
 
-              <div className="p-8">
+              <div className="p-6 sm:p-8">
                 {/* Plan name */}
                 <h3 className="text-xl font-bold text-gray-900 mb-2">{tier.name}</h3>
 
                 {/* Price */}
-                <div className="flex items-baseline gap-1 mb-2">
-                  <span className="text-5xl font-bold text-gray-900">${tier.price}</span>
-                  {tier.period && <span className="text-gray-600 text-lg">{tier.period}</span>}
+                <div className="flex items-baseline gap-1 mb-1">
+                  <span className="text-4xl sm:text-5xl font-bold text-gray-900">${tier.price}</span>
+                  {tier.period && <span className="text-gray-600 text-base sm:text-lg">{tier.period}</span>}
                 </div>
-                <p className="text-gray-500 mb-6">{tier.description}</p>
+                {tier.subtitle && (
+                  <p className="text-green-600 text-sm font-medium mb-2">{tier.subtitle}</p>
+                )}
+                <p className="text-gray-500 text-sm mb-6">{tier.description}</p>
 
                 {/* CTA */}
                 <Link
@@ -108,22 +128,20 @@ export default function PricingSection() {
                   className={`block w-full text-center font-bold py-3 rounded-lg transition-all ${
                     tier.highlighted
                       ? 'bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white shadow-lg shadow-teal-500/25'
-                      : 'bg-gray-100 hover:bg-gray-200 text-gray-900'
+                      : tier.badge === 'BEST VALUE'
+                        ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg shadow-amber-500/25'
+                        : 'bg-gray-100 hover:bg-gray-200 text-gray-900'
                   }`}
                 >
                   {tier.cta}
                 </Link>
 
                 {/* Features */}
-                <ul className="mt-8 space-y-3">
+                <ul className="mt-6 space-y-3">
                   {tier.features.map((f) => (
                     <li key={f.text} className="flex items-start gap-3">
-                      {f.included ? (
-                        <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                      ) : (
-                        <X className="w-5 h-5 text-gray-300 flex-shrink-0 mt-0.5" />
-                      )}
-                      <span className={f.included ? 'text-gray-700' : 'text-gray-400'}>
+                      <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                      <span className="text-gray-700 text-sm">
                         {f.text}
                       </span>
                     </li>
@@ -140,7 +158,7 @@ export default function PricingSection() {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
         >
-          No credit card required for free tier. Cancel Pro anytime.
+          No credit card required for free tier. All passes are one-time payments — no subscriptions.
         </motion.p>
       </div>
     </section>
