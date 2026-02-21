@@ -11,6 +11,7 @@ import {
   CheckCircle, Shield, Clock, Sparkles, Heart, DollarSign
 } from 'lucide-react';
 import useDocumentHead from '../../hooks/useDocumentHead';
+import { trackPricingView } from '../../utils/googleAdsTracking';
 
 export default function NursingLandingPage() {
   // SEO: Dynamic meta tags for the nursing interview landing page
@@ -49,7 +50,7 @@ export default function NursingLandingPage() {
           <div className="flex items-center gap-4">
             <Link to="/" className="text-gray-500 hover:text-indigo-600 text-sm hidden sm:block transition-colors">General Interviews</Link>
             <a href="#features" className="text-gray-600 hover:text-gray-900 text-sm hidden sm:block">Features</a>
-            <a href="#pricing" className="text-gray-600 hover:text-gray-900 text-sm hidden sm:block">Pricing</a>
+            <a href="#pricing" onClick={trackPricingView} className="text-gray-600 hover:text-gray-900 text-sm hidden sm:block">Pricing</a>
             <Link
               to="/login?from=nursing"
               className="text-gray-600 hover:text-gray-900 text-sm"

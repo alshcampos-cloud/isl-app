@@ -118,6 +118,40 @@
     }
     </script>
 
+    <!-- JSON-LD Structured Data: WebSite (enables sitelinks search) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "InterviewAnswers.ai",
+      "url": "https://www.interviewanswers.ai",
+      "description": "AI-powered interview preparation with mock interviews, STAR method coaching, and real-time feedback."
+    }
+    </script>
+
+    <!-- Google Ads Conversion Tracking -->
+    <!-- SETUP INSTRUCTIONS:
+         1. Create Google Ads account at ads.google.com
+         2. Go to Tools → Conversions → New conversion action → Website
+         3. Get your Conversion ID (looks like: AW-123456789)
+         4. Replace AW-XXXXXXXXX below with your real ID
+         5. Uncomment the two script tags below
+    -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17966963623"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'AW-17966963623');
+    </script>
+    <!-- gtag stub so conversion calls don't error before ads are set up -->
+    <script>
+      if (typeof window.gtag !== 'function') {
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function(){dataLayer.push(arguments);};
+      }
+    </script>
+
     <!-- Mobile App Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
