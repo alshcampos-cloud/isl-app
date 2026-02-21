@@ -63,7 +63,15 @@ export default function OnboardingPractice({ question, anonSessionReady, onCompl
 
       // Parse score from [SCORE: X/10] format
       const scoreMatch = rawContent.match(/\[SCORE:\s*(\d+)\s*\/\s*10\]/)
-      const parsedScore = scoreMatch ? parseInt(scoreMatch[1], 10) : 3
+      let parsedScore = scoreMatch ? parseInt(scoreMatch[1], 10) : 3
+
+      // Client-side guardrail: trivial answers (≤3 words) can never score above 2
+      // Belt-and-suspenders with the Edge Function prompt's CRITICAL PRE-CHECK
+      const wordCount = userAnswer.trim().split(/\s+/).filter(Boolean).length
+      if (wordCount <= 3 && parsedScore > 2) {
+        console.warn(`[Scoring guardrail] Capped score from ${parsedScore} to 2 (answer was ${wordCount} words)`)
+        parsedScore = 2
+      }
 
       // Clean the score tag from visible feedback
       const cleanFeedback = rawContent.replace(/\[SCORE:\s*\d+\s*\/\s*10\]/g, '').trim()
