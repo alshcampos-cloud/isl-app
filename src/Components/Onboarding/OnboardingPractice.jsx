@@ -26,12 +26,18 @@ RULES:
 
 TONE: Think "supportive older sibling who interviews well" — not "professor grading an essay."
 
-SCORING GUIDE:
-- 1-3: Answer is very vague or off-topic
-- 4-5: Shows effort but needs structure
-- 6-7: Good foundation, specific improvement available
-- 8-9: Strong answer with minor refinements
+CRITICAL PRE-CHECK (do this FIRST before writing anything):
+Count the words in the user's answer. If the answer has 3 or fewer words, OR is gibberish/random text (e.g. "test", "asdf", "hello", "idk", "yes"), you MUST score it 1 or 2. No exceptions. Do not be charitable. A 1-3 word answer is NEVER worth more than 2/10.
+
+SCORING GUIDE (BE STRICT — this must be accurate):
+- 1-2: 3 or fewer words, random text, gibberish, or completely off-topic (e.g. "test", "asdf", "hello")
+- 3-4: Very short or vague — shows minimal effort, no structure
+- 5-6: Shows effort but needs structure or more detail
+- 7-8: Good foundation with specific examples
+- 9: Strong answer with clear STAR structure
 - 10: Exceptional — rare for first attempt
+
+IMPORTANT: If the answer is 3 words or fewer, score it 1-2. Period. Do not inflate scores.
 `
 
 const NURSING_ONBOARDING_SYSTEM_PROMPT = `You are a supportive nursing interview coach helping a nurse practice for the first time.
@@ -48,12 +54,18 @@ RULES:
 
 TONE: Think "supportive charge nurse mentoring a colleague" — warm, professional, specific.
 
-SCORING GUIDE:
-- 1-3: Answer is very vague or off-topic
-- 4-5: Shows effort but needs structure (suggest SBAR framing)
-- 6-7: Good foundation, SBAR elements partially present
-- 8-9: Strong answer with clear SBAR structure
+CRITICAL PRE-CHECK (do this FIRST before writing anything):
+Count the words in the user's answer. If the answer has 3 or fewer words, OR is gibberish/random text (e.g. "test", "asdf", "hello", "idk", "yes"), you MUST score it 1 or 2. No exceptions. Do not be charitable. A 1-3 word answer is NEVER worth more than 2/10.
+
+SCORING GUIDE (BE STRICT — this must be accurate):
+- 1-2: 3 or fewer words, random text, gibberish, or completely off-topic (e.g. "test", "asdf", "hello")
+- 3-4: Very short or vague — shows minimal effort, no SBAR elements
+- 5-6: Shows effort but needs structure (suggest SBAR framing)
+- 7-8: Good foundation, SBAR elements partially present
+- 9: Strong answer with clear SBAR structure
 - 10: Exceptional — rare for first attempt
+
+IMPORTANT: If the answer is 3 words or fewer, score it 1-2. Period. Do not inflate scores.
 `
 
 export default function OnboardingPractice({ question, anonSessionReady, onComplete, fromNursing = false }) {
@@ -102,7 +114,15 @@ export default function OnboardingPractice({ question, anonSessionReady, onCompl
 
       // Parse score from [SCORE: X/10] format
       const scoreMatch = rawContent.match(/\[SCORE:\s*(\d+)\s*\/\s*10\]/)
-      const parsedScore = scoreMatch ? parseInt(scoreMatch[1], 10) : 6
+      let parsedScore = scoreMatch ? parseInt(scoreMatch[1], 10) : 3
+
+      // Client-side guardrail: trivial answers (≤3 words) can never score above 2
+      // Belt-and-suspenders with the prompt's CRITICAL PRE-CHECK
+      const wordCount = userAnswer.trim().split(/\s+/).filter(Boolean).length
+      if (wordCount <= 3 && parsedScore > 2) {
+        console.warn(`[Scoring guardrail] Capped score from ${parsedScore} to 2 (answer was ${wordCount} words)`)
+        parsedScore = 2
+      }
 
       // Clean the score tag from visible feedback
       const cleanFeedback = rawContent.replace(/\[SCORE:\s*\d+\s*\/\s*10\]/g, '').trim()
@@ -114,7 +134,7 @@ export default function OnboardingPractice({ question, anonSessionReady, onCompl
       console.error('Practice submission error:', err)
       setError('Could not get feedback right now. You can still continue!')
       // Set a default score so they can proceed
-      setScore(6)
+      setScore(3)
       setFeedback("Great effort on your first practice! While I couldn't generate detailed feedback right now, the fact that you started practicing puts you ahead of most candidates. Keep going!")
       trackOnboardingEvent(3, 'feedback_error', { error: err.message })
     } finally {
