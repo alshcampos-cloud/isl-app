@@ -58,12 +58,14 @@ const ROUTES = {
     description: 'Privacy policy for InterviewAnswers.ai. Learn how we protect your data and interview practice history.',
     canonical: 'https://www.interviewanswers.ai/privacy',
     keywords: 'privacy policy, data protection',
+    robots: 'noindex, follow',
   },
   '/terms': {
     title: 'Terms of Service — InterviewAnswers.ai',
     description: 'Terms of service for InterviewAnswers.ai interview preparation platform.',
     canonical: 'https://www.interviewanswers.ai/terms',
     keywords: 'terms of service, terms and conditions',
+    robots: 'noindex, follow',
   },
   '/login': {
     title: 'Sign In — InterviewAnswers.ai',

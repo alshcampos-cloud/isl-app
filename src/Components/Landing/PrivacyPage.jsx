@@ -7,6 +7,7 @@ export default function PrivacyPage() {
     title: 'Privacy Policy | InterviewAnswers.ai',
     description: 'Privacy Policy for InterviewAnswers.ai — how we protect your data, handle your information, and ensure your interview practice stays private.',
     canonical: 'https://www.interviewanswers.ai/privacy',
+    robots: 'noindex, follow',
   });
 
   return (

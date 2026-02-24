@@ -7,6 +7,7 @@ export default function TermsPage() {
     title: 'Terms of Service | InterviewAnswers.ai',
     description: 'Terms of Service for InterviewAnswers.ai — AI-powered interview preparation platform.',
     canonical: 'https://www.interviewanswers.ai/terms',
+    robots: 'noindex, follow',
   });
 
   return (
