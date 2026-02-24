@@ -8168,6 +8168,7 @@ const ArchetypeOnboarding = lazy(() => import('./Components/Onboarding/Archetype
 const STARMethodGuidePage = lazy(() => import('./Components/Landing/STARMethodGuidePage'));
 const BehavioralInterviewQuestionsPage = lazy(() => import('./Components/Landing/BehavioralInterviewQuestionsPage'));
 const NursingInterviewQuestionsPage = lazy(() => import('./Components/Landing/NursingInterviewQuestionsPage'));
+const AuthConfirm = lazy(() => import('./Components/AuthConfirm'));
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-sky-50 flex items-center justify-center">
@@ -8185,6 +8186,7 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<AuthPage mode="login" />} />
         <Route path="/signup" element={<AuthPage mode="signup" />} />
+        <Route path="/auth/confirm" element={<AuthConfirm />} />
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/app" element={<ProtectedRoute><ISL /></ProtectedRoute>} />
