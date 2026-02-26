@@ -1,80 +1,147 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 
 /**
- * AuthConfirm — handles email confirmation links that use token_hash (PKCE flow).
+ * AuthConfirm — handles email confirmation redirects.
  *
- * This component processes URLs like:
- *   /auth/confirm?token_hash=xxx&type=signup
- *   /auth/confirm?token_hash=xxx&type=recovery
- *   /auth/confirm?token_hash=xxx&type=email_change
+ * KEY INSIGHT: We use {{ .ConfirmationURL }} in the email template, which means
+ * the Supabase server confirms the email BEFORE redirecting to this page.
+ * If the user reaches /auth/confirm at all, their email IS confirmed.
  *
- * By using token_hash links instead of the default Supabase ConfirmationURL,
- * the email contains links to OUR domain (interviewanswers.ai) instead of
- * the Supabase domain (supabase.co). This prevents spam filters from flagging
- * the email due to domain mismatch between sender and link URLs.
+ * We try to establish a session (best UX = auto-login), but if we can't
+ * (e.g., Safari stripping hash fragments, cross-browser issues), we show
+ * a success message and redirect to login instead of an error.
  *
- * Created: Feb 22, 2026
- * Reason: Fix email deliverability — Resend flagged domain mismatch as spam trigger
+ * Session detection strategies (in order):
+ * 1. getSession() — Supabase client may have already processed #access_token=
+ * 2. Retry getSession() after delay — timing race with detectSessionInUrl
+ * 3. PKCE code exchange — ?code=xxx in query params
+ * 4. Legacy verifyOtp — ?token_hash=xxx&type=signup from old email templates
+ * 5. onAuthStateChange listener — catch late session events
+ * 6. Graceful fallback — email IS confirmed, redirect to login
  */
 export default function AuthConfirm() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [status, setStatus] = useState('verifying'); // verifying | success | error
+  const [status, setStatus] = useState('verifying');
   const [errorMsg, setErrorMsg] = useState('');
+  const statusRef = useRef('verifying');
 
   useEffect(() => {
     const tokenHash = searchParams.get('token_hash');
     const type = searchParams.get('type');
+    const code = searchParams.get('code');
 
-    if (!tokenHash || !type) {
-      setStatus('error');
-      setErrorMsg('Invalid confirmation link. Missing required parameters.');
-      return;
-    }
+    const setStatusSafe = (newStatus, msg) => {
+      if (statusRef.current === 'success' || statusRef.current === 'confirmed') return;
+      statusRef.current = newStatus;
+      setStatus(newStatus);
+      if (msg) setErrorMsg(msg);
+    };
 
-    const verify = async () => {
+    const redirectToApp = (user) => {
+      const onboardingField = user?.user_metadata?.onboarding_field;
+      const nursingLocal = localStorage.getItem('isl_onboarding_field');
+      const dest = (onboardingField === 'nursing' || nursingLocal === 'nursing') ? '/nursing' : '/app';
+      setTimeout(() => navigate(dest, { replace: true }), 1500);
+    };
+
+    const handleConfirmation = async () => {
       try {
-        const { data, error } = await supabase.auth.verifyOtp({
-          token_hash: tokenHash,
-          type: type, // 'signup', 'recovery', 'email_change'
-        });
+        // Strategy 1: Check if Supabase client already established a session
+        const { data: { session } } = await supabase.auth.getSession();
 
-        if (error) {
-          console.error('Email verification error:', error);
-          setStatus('error');
-          setErrorMsg(error.message || 'Verification failed. The link may have expired.');
+        if (session?.user) {
+          console.log('AuthConfirm: Session found on first check');
+          setStatusSafe('success');
+          redirectToApp(session.user);
           return;
         }
 
-        // Verification successful
-        setStatus('success');
+        // Strategy 2: Wait 2 seconds and retry — detectSessionInUrl may still be processing
+        await new Promise(r => setTimeout(r, 2000));
+        const { data: { session: retrySession } } = await supabase.auth.getSession();
 
-        // Determine where to redirect based on user profile
-        const user = data?.user || data?.session?.user;
-        if (user) {
-          const onboardingField = user.user_metadata?.onboarding_field;
-          const dest = onboardingField === 'nursing' ? '/nursing' : '/app';
-
-          // Short delay so user sees success message, then redirect
-          setTimeout(() => {
-            navigate(dest, { replace: true });
-          }, 1500);
-        } else {
-          // No user data — redirect to login
-          setTimeout(() => {
-            navigate('/login', { replace: true });
-          }, 2000);
+        if (retrySession?.user) {
+          console.log('AuthConfirm: Session found on retry');
+          setStatusSafe('success');
+          redirectToApp(retrySession.user);
+          return;
         }
+
+        // Strategy 3: PKCE code exchange
+        if (code) {
+          console.log('AuthConfirm: PKCE code detected, exchanging...');
+          try {
+            const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+            if (!error && data?.session?.user) {
+              setStatusSafe('success');
+              redirectToApp(data.session.user);
+              return;
+            }
+            if (error) console.error('AuthConfirm: code exchange error:', error);
+          } catch (e) {
+            console.error('AuthConfirm: code exchange exception:', e);
+          }
+        }
+
+        // Strategy 4: Legacy token_hash flow
+        if (tokenHash && type) {
+          console.log('AuthConfirm: token_hash flow detected');
+          try {
+            const { data, error } = await supabase.auth.verifyOtp({
+              token_hash: tokenHash,
+              type: type,
+            });
+            if (!error) {
+              setStatusSafe('success');
+              const user = data?.user || data?.session?.user;
+              if (user) {
+                redirectToApp(user);
+              } else {
+                setTimeout(() => navigate('/login', { replace: true }), 2000);
+              }
+              return;
+            }
+            console.error('AuthConfirm: verifyOtp error:', error);
+          } catch (e) {
+            console.error('AuthConfirm: verifyOtp exception:', e);
+          }
+        }
+
+        // Strategy 5: Listen for auth state change
+        console.log('AuthConfirm: Listening for auth state change...');
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
+          if (event === 'SIGNED_IN' && newSession?.user) {
+            console.log('AuthConfirm: SIGNED_IN event received');
+            setStatusSafe('success');
+            redirectToApp(newSession.user);
+            subscription.unsubscribe();
+          }
+        });
+
+        // Strategy 6: Graceful fallback after 5 seconds
+        // Since we use {{ .ConfirmationURL }}, the email was confirmed server-side
+        // BEFORE Supabase redirected here. If we can't establish a session
+        // (e.g., Safari hash fragment issues), still show success and redirect to login.
+        setTimeout(() => {
+          subscription.unsubscribe();
+          if (statusRef.current === 'verifying') {
+            console.log('AuthConfirm: Timeout — showing confirmed, redirecting to login');
+            setStatusSafe('confirmed');
+            setTimeout(() => navigate('/login', { replace: true }), 2500);
+          }
+        }, 5000);
       } catch (err) {
-        console.error('Email verification exception:', err);
-        setStatus('error');
-        setErrorMsg('Something went wrong. Please try signing up again.');
+        console.error('AuthConfirm exception:', err);
+        // Even on exception, the email was likely confirmed server-side
+        setStatusSafe('confirmed');
+        setTimeout(() => navigate('/login', { replace: true }), 2500);
       }
     };
 
-    verify();
+    handleConfirmation();
   }, [searchParams, navigate]);
 
   return (
@@ -97,6 +164,18 @@ export default function AuthConfirm() {
             </div>
             <h2 className="text-xl font-semibold text-slate-800 mb-2">Email confirmed!</h2>
             <p className="text-slate-500">Redirecting you to the app...</p>
+          </>
+        )}
+
+        {status === 'confirmed' && (
+          <>
+            <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-semibold text-slate-800 mb-2">Email confirmed!</h2>
+            <p className="text-slate-500">Redirecting you to sign in...</p>
           </>
         )}
 

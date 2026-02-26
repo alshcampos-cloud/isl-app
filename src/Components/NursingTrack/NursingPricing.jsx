@@ -99,7 +99,7 @@ export default function NursingPricing({ userData, onClose }) {
           </div>
           <button
             onClick={onClose}
-            className="text-slate-500 hover:text-white transition-colors p-1"
+            className="text-slate-500 hover:text-white transition-colors p-2.5"
           >
             <X className="w-5 h-5" />
           </button>
@@ -132,7 +132,7 @@ export default function NursingPricing({ userData, onClose }) {
                 'Unlimited mock interviews',
                 'Unlimited practice sessions',
                 'Unlimited SBAR drills',
-                'AI Coach (20 sessions/month)',
+                'Unlimited AI Coach',
                 'Confidence Builder AI Brief',
                 'Offer Negotiation Coach',
                 'All 70 questions + flashcards',
@@ -208,7 +208,7 @@ export default function NursingPricing({ userData, onClose }) {
               {[
                 'Everything in Nursing Pass',
                 'General Interview Prep included',
-                'AI Coach (20 sessions/month)',
+                'Unlimited AI Coach',
                 'Year-round access',
                 'Priority support',
               ].map((item) => (

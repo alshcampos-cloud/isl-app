@@ -1,8 +1,8 @@
-# Session State — Last Updated: February 20, 2026 (Morning)
+# Session State — Last Updated: February 26, 2026
 
 ---
 
-## ⚠️ NEW SESSION STARTUP — READ THESE BEFORE WRITING ANY CODE
+## NEW SESSION STARTUP — READ THESE BEFORE WRITING ANY CODE
 
 ### Required Reading (in order):
 1. `CLAUDE.md` — Master operating instructions (auto-loaded). Project context, tech stack, walled garden model, Erin's constraints, product decisions, D.R.A.F.T. + V.S.A.F.E.R.-M protocols, 20 battle scars, pattern reference.
@@ -22,7 +22,7 @@
 - `docs/GOOGLE_ADS_PLAYBOOK.md` — Google Ads campaign setup guide
 - `docs/LINKEDIN_LAUNCH_KIT.md` — Launch post, headline, about section, team structure
 - `docs/NURSING_TRACK_REMAINING_WORK.md` — Engineering-to-clinical handoff archive
-- `docs/erin-question-drafts-v2.md` — ~68 questions for Erin's clinical review
+- `docs/erin-question-drafts-v2.md` — ~68 questions (ALL APPROVED by Erin 2/12/26)
 - `docs/ERIN_REVIEW_FORM.md` — Formatted review form with all 68 questions
 - `docs/erin-testing-guide.md` — Step-by-step testing guide + MI questions
 - `docs/qa-checklist-nursing-track.md` — Pre-merge QA checklist (60+ items)
@@ -38,99 +38,72 @@ If you need to change shared utilities, global config, routing architecture, app
 
 ---
 
-## IMMEDIATE NEXT STEPS
+## CURRENT PRIORITIES (as of Feb 23, 2026)
 
-### 1. "My Best Answer" Populate Feature — JUST SHIPPED (Feb 20)
-**Commit:** `8ae02fa` on `feature/nursing-track`
+### 1. ACTIVE — Google Search Console "Page with redirect" Indexing Issue
+**Status:** Google validated fix attempt and FAILED — some pages still affected.
+**Error:** "Page with redirect" — Google is finding URLs that redirect and refusing to index them.
+**Likely causes:**
+- `interviewanswers.ai` → `www.interviewanswers.ai` redirects (Vercel config)
+- Possibly the new `/auth/confirm` route we just added
+- Need to check which specific URLs are flagged in Search Console
+**Action:** Open Search Console, identify affected URLs, fix redirect chain issues.
 
-**What shipped:**
-- **Path 1A:** "Save as Best Answer" button in Practice Mode feedback area — ✅ BROWSER TESTED, PASSING
-- **Path 1B:** Per-question "Save as Best Answer" in Mock Interview session summary — ✅ BROWSER TESTED, PASSING
-- **Path 2A:** New `NursingAnswerAssistant.jsx` (804 lines) — MI-guided answer crafting with C.O.A.C.H. protocol, walled garden enforcement, Anthropic overloaded_error detection
-- **Path 2B:** "Craft with AI Coach" button wired into Command Center Question Bank
+### 2. ACTIVE — Google Ads Campaign Running
+**Status:** Campaign re-enabled Feb 22, $10/day budget, live.
+**Stats (as of Feb 22):** 170 impressions, $31.60 spent, 0 conversions, $2.43 avg CPC.
+**Conversion tracking:** Correctly wired — trackSignUp() fires after successful supabase.auth.signUp(). Has never fired because no one has completed signup yet.
+**Fixes deployed before re-enabling:**
+- Email deliverability fixed (AuthConfirm.jsx + Supabase template change)
+- Manually confirmed stuck user (that1girldora@gmail.com)
+- Onboarding funnel audit completed (CTA visibility issue identified but not yet fixed)
 
-**Browser test results (Feb 20):**
-- Path 1A: Practice → feedback → "Save as Best Answer" → gold button → green checkmark → IRS updates (32→35) → verified in Command Center Question Bank ✅
-- Path 1B: Mock Interview → End Session → Summary → per-question "Save as Best Answer" → green checkmark ✅
-- Path 2A+2B: ✅ **FULLY TESTED AND PASSING** (Feb 20, after Anthropic outage resolved)
-  - AI Coach modal opens from Question Bank "Craft with AI Coach" button ✅
-  - Intro stage renders with question, Theory/Communication tags, MI explanation ✅
-  - "Let's Get Started" fires `startConversation` → AI returns probing question ✅
-  - 3-exchange MI conversation: AI uses affirmations, asks deepening follow-ups, draws out user experience ✅
-  - Exchange counter updates correctly: "1 exchange", "2 exchanges", "3 exchanges" ✅
-  - "Quick Synthesis" appears after 1 exchange, "Create Polished Answer" after 3 ✅
-  - Synthesis produces 2-paragraph polished answer using ONLY user-provided facts ✅
-  - **Walled garden compliance verified:** AI never generated clinical content, drug dosages, or protocols ✅
-  - Self-efficacy message: "Take a deep breath. You just crafted a polished answer from your real experience — that's a real accomplishment." ✅
-  - "Save as Best Answer" → answer appears immediately in Question Bank with "Refine" button ✅
-  - DB verified: 3 rows in `nursing_saved_answers` (ned_1, ng_11, ned_3) — no duplicates ✅
-- Upsert: DB has UNIQUE(user_id, question_code) constraint, code uses `onConflict`, 3 saved answers in DB (no duplicates) ✅
-- Credit charging: Beta tester has unlimited access (beta_testers table bypasses limits). Credit flow uses existing `nursing_coach` pool via `nursingFeature: 'nursingCoach'` ✅
+### 3. ACTIVE — Organic Social Media Video Content
+**Plan:** App demo videos with AI voiceover, posted to TikTok + Instagram Reels + Facebook Reels + YouTube Shorts.
+**First video:** "Practice Mode → AI Feedback" targeting new grad nurses.
+**Production stack:** CapCut (free, editing + captions) + ElevenLabs (free tier, natural AI voiceover) + iPhone screen recording.
+**Script written:** 30-45 second hook-based video with shot list.
+**Status:** Need to record screen recordings of app, then edit in CapCut.
 
-**Bug found & fixed during testing (earlier in session):**
-- Edge Function returns HTTP 200 for Anthropic `overloaded_error`, bypassing `fetchWithRetry`. Added `data.type === 'error'` detection in all 3 AI call functions (startConversation, sendMessage, synthesizeAnswer) with user-friendly messages.
+### 4. ACTIVE — University Outreach Emails
+**USF:** Joint email from Erin Spink + Lucas Campos sent to Stacey Kohut (sekohut1@usfca.edu), Director of Undergraduate Student Services, School of Nursing. **No response yet (12 hours in).**
+**Hopkins:** Target identified — Laura Arthur, Director of Career Lab (nursing-specific career services for 1,100+ students). Find email via LinkedIn or try larthur@jhu.edu. CC Jennifer Dotzenrod (jdotzen1@jhu.edu), Associate Dean for Enrollment Management & Student Services.
+**USC:** Lucas solo email to career center (not yet sent).
+**Positioning:** B2C resource recommendation to students, NOT B2B sales to schools. Aligned with Erin's constraints.
 
-**ALL PATHS TESTED AND PASSING.** Feature is ready for merge review.
+---
 
-### 2. AI Quality Testing & Documentation
-**Context:** User wants a structured quality audit of every AI-powered feature before running ads. Test each feature, document the AI responses, and build a data set that demonstrates quality.
+## RECENTLY COMPLETED (Feb 22-23, 2026)
 
-**What's ready:**
-- `docs/AI_QUALITY_CRITERIA.md` — Comprehensive research document covering hiring manager evaluation criteria, STAR/SBAR effectiveness, rubrics (Google re:Work, BARS, Amazon), red flags, AI feedback design, nursing-specific criteria (NCSBN Clinical Judgment Model), and synthesis.
-- Erin (Chief Quality Officer) needs to review this document
-- Erin will also run her own live tests
+### Email Deliverability Fix — DEPLOYED ✅
+**Problem:** Confirmation emails from support@interviewanswers.ai contained links to tzrlpwtkrtvjpdhcaayu.supabase.co — domain mismatch triggered Gmail spam filters.
+**Fix:**
+1. Created `src/Components/AuthConfirm.jsx` (NEW FILE) — handles `/auth/confirm?token_hash=xxx&type=signup` via `supabase.auth.verifyOtp()`
+2. Added 2 lines to `src/App.jsx`:
+   - Lazy import: `const AuthConfirm = lazy(() => import('./Components/AuthConfirm'));`
+   - Route: `<Route path="/auth/confirm" element={<AuthConfirm />} />`
+3. Updated Supabase email template: Changed from `{{ .ConfirmationURL }}` to `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup`
+4. Built and deployed to Vercel production
+5. Tested: `/auth/confirm?token_hash=test&type=signup` correctly shows error for invalid token
 
-**Potential model downgrades to test:**
-- Question Generator: Sonnet 4 → Haiku 4.5 (currently expensive for single-call)
-- General Confidence Brief: Sonnet 4 → Haiku 4.5 (currently expensive for single-call)
-- Decision: Test quality FIRST, then downgrade if quality holds
+### User Recovery — that1girldora@gmail.com ✅
+- Manually confirmed via SQL: `UPDATE auth.users SET email_confirmed_at = now() WHERE email = 'that1girldora@gmail.com'`
+- Verified: email_confirmed_at = 2026-02-22 21:07:03.321885+00
 
-### 2. Erin's Review Queue
-- `docs/AI_QUALITY_CRITERIA.md` — needs her review (especially Section 6: Nursing-Specific Criteria)
-- `docs/erin-question-drafts-v2.md` — ~68 questions still pending clinical review
-- `docs/ERIN_REVIEW_FORM.md` — Formatted review form
-- `docs/erin-testing-guide.md` — Testing guide for her
-- Live app testing — she will run her own tests
+### Google Ads Re-enabled ✅
+- Campaign #1 unpaused, $10/day, live as of Feb 22
 
-### 3. Uncommitted Changes (Current)
-These files are modified or new but NOT committed on `feature/nursing-track`:
+### Onboarding Funnel Audit — COMPLETED (not yet fixed) ✅
+**Finding:** 50% dropout between feedback_received and IRS screen.
+**Root cause:** "See your Interview Readiness Score" button only appears AFTER feedback loads (3-5 second API wait + 0.4s animation), no auto-scroll, button may be off-screen on mobile.
+**Fix needed:** Sticky CTA button, auto-scroll to button after feedback, pulse animation. Files: `OnboardingPractice.jsx` line 175 (conditional render), line 211 (button).
+**Status:** Identified but NOT implemented yet.
 
-**Modified (16 files) — from previous sessions, still uncommitted:**
-- `docs/SESSION_STATE.md` — This file
-- `index.html` — SEO structured data
-- `public/sitemap.xml` — Sitemap updates
-- `src/App.jsx` — SEO page routes, ScrollToTop
-- `src/Auth.jsx` — Auth changes
-- `src/Components/AuthPage.jsx` — Auth page updates
-- `src/Components/Landing/FAQSection.jsx` — FAQ updates
-- `src/Components/Landing/FeaturesSection.jsx` — Live Prompter rewrite (Feb 19)
-- `src/Components/Landing/LandingFooter.jsx` — Footer updates
-- `src/Components/Landing/PricingSection.jsx` — Pricing updates
-- `src/Components/Landing/PrivacyPage.jsx` — Privacy page
-- `src/Components/Landing/TermsPage.jsx` — Terms page
-- `src/Components/Onboarding/ArchetypeOnboarding.jsx` — Onboarding changes
-- `src/Components/Onboarding/SignUpPrompt.jsx` — Signup changes
-- `src/hooks/useDocumentHead.js` — SEO meta tags hook
-- `src/main.jsx` — Main entry changes
-- `supabase/functions/ai-feedback/index.ts` — Edge Function changes
-
-**New/Untracked (9 files):**
-- `docs/AI_QUALITY_CRITERIA.md` — Interview quality research document (NEW Feb 19)
-- `docs/AI_QUALITY_TEST_RESULTS.md` — Test results document
-- `docs/GOOGLE_ADS_PLAYBOOK.md` — Google Ads campaign guide
-- `docs/LINKEDIN_LAUNCH_KIT.md` — LinkedIn launch materials
-- `src/Components/Landing/BehavioralInterviewQuestionsPage.jsx` — SEO page
-- `src/Components/Landing/NursingInterviewQuestionsPage.jsx` — SEO page
-- `src/Components/Landing/STARMethodGuidePage.jsx` — SEO page
-- `src/Components/ScrollToTop.jsx` — Scroll-to-top utility
-- `src/utils/googleAdsTracking.js` — Google Ads conversion tracking
-
-**Just committed (Feb 20) — `8ae02fa`:**
-- `src/Components/NursingTrack/NursingAnswerAssistant.jsx` — NEW (804 lines)
-- `src/Components/NursingTrack/NursingCommandCenter.jsx` — AI Coach button + modal wiring
-- `src/Components/NursingTrack/NursingMockInterview.jsx` — Pass userData to SessionSummary
-- `src/Components/NursingTrack/NursingPracticeMode.jsx` — Save as Best Answer button
-- `src/Components/NursingTrack/NursingSessionSummary.jsx` — Per-question save buttons
+### Pricing Correction ✅
+**IMPORTANT:** There is NO "$29.99 Pro tier" anymore. Correct pricing:
+- **Nursing 30-Day Pass:** $19.99
+- **General 30-Day Pass:** $14.99
+- Pass-based credit system, not monthly subscription
 
 ---
 
@@ -138,52 +111,34 @@ These files are modified or new but NOT committed on `feature/nursing-track`:
 
 ```
 Branch: feature/nursing-track
-Last commit: 8ae02fa (feat: My Best Answer populate — save from practice/mock + AI Coach component)
-Main branch HEAD: 07061a4 (Fix SEO URLs)
+Last commit: 0a973df (pushed to origin Feb 22, 58 commits ahead of main)
+Main branch HEAD: 6a28236 (fix: prevent inflated scores for trivial onboarding answers)
+origin/main: IN SYNC with local main
 
-Stashes:
-  stash@{0}: WIP on feature/nursing-track (Phase 9 UX polish — old)
-  stash@{1}: P1 changes on main - uncommitted
-  stash@{2}: P1 changes on main - uncommitted
-
-Recent commits on feature/nursing-track:
-  8ae02fa feat: My Best Answer populate — save from practice/mock + AI Coach component
-  1567d28 P1 conversion optimization, P2 pass pricing, answer persistence, email routing fix
-  71325b6 Merge main into feature/nursing-track
-  07061a4 Fix SEO URLs: use www.interviewanswers.ai to match Vercel redirect
-  a6be784 SEO: JSON-LD structured data, per-route meta tags, keyword-optimized H1s
-  38b7e35 Landing page redesign: teal unification, rebrand to InterviewAnswers.ai
+Production deployed from: feature/nursing-track via `npx vercel --prod` (redeployed Feb 22 with all env vars + AuthConfirm fix)
 ```
 
 ---
 
 ## WHAT'S LIVE ON PRODUCTION (www.interviewanswers.ai)
 
-**IMPORTANT:** Production is currently deployed from `feature/nursing-track` (uncommitted state) via `npx vercel --prod`, NOT from main branch auto-deploy.
+**IMPORTANT:** Production is currently deployed from `feature/nursing-track` via `npx vercel --prod`, NOT from main branch auto-deploy.
 
 ### Vercel
 - Production URL: www.interviewanswers.ai
-- Auto-deploys from main are configured, but current production includes feature/nursing-track work
-- Last deploy includes: conversion optimization, pass pricing, SEO pages, landing page changes
+- Last deploy: Feb 22 — includes AuthConfirm.jsx, email deliverability fix, all prior nursing track work
 
 ### Supabase Edge Functions (all deployed):
 - `ai-feedback` (v29) — nursing-coach mode, server-side credit validation, server-side onboarding prompts, pass-based pricing
-- `create-checkout-session` (v14) — supports both general Pro ($29.99/mo) and nursing 30-day pass ($19.99)
+- `create-checkout-session` (v14) — supports general 30-day pass ($14.99) and nursing 30-day pass ($19.99)
 - `stripe-webhook` (v14) — handles pass expiry columns, both subscription and pass checkout types
 - `generate-question` (v14) — question generation from job descriptions
 - `create-portal-session` (v9) — Stripe customer portal
 - `check-usage` (v4) — usage tracking
 
-### Supabase Migrations Applied:
-- `20260217000002_add_session_answer_feedback.sql` — user_answer, ai_feedback TEXT columns in nursing_practice_sessions
-- `20260217000001_add_pass_columns.sql` — nursing_pass_expires, general_pass_expires in user_profiles
-- `20260216000002_user_streaks.sql` — User streaks table
-- All earlier nursing track migrations (tables, seed data, saved answers, archetype columns)
-- **Feb 19:** Dropped `nursing_questions_full` view (SECURITY DEFINER vulnerability — was unused)
-
-### Supabase Security:
-- Security Advisor: 0 errors (as of Feb 19)
-- All 3 nursing tables (nursing_questions, nursing_specialties, clinical_frameworks) have RLS enabled with SELECT policies for authenticated users
+### Supabase Email Template:
+- **CHANGED Feb 22:** Confirmation email now uses `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup` instead of `{{ .ConfirmationURL }}`
+- This routes confirmation through our domain (interviewanswers.ai) instead of supabase.co
 
 ---
 
@@ -199,84 +154,35 @@ Recent commits on feature/nursing-track:
 | nursingPractice | Haiku 4.5 | $$ Medium | ai-feedback/ | Single-call nursing scoring |
 | nursingMock | Sonnet 4 | $$$ Expensive | ai-feedback/ | Multi-turn nursing interview |
 | nursingCoach | Sonnet 4 | $$$ Expensive | ai-feedback/ | Multi-turn clinical coaching |
-| question-generator | Sonnet 4 | $$$ Expensive | generate-question/ | **Potential downgrade → Haiku 4.5** |
-| confidence-brief | Sonnet 4 | $$$ Expensive | ai-feedback/ | **Potential downgrade → Haiku 4.5** |
+| question-generator | Sonnet 4 | $$$ Expensive | generate-question/ | **Potential downgrade to Haiku 4.5** |
+| confidence-brief | Sonnet 4 | $$$ Expensive | ai-feedback/ | **Potential downgrade to Haiku 4.5** |
 
 ---
 
 ## SHIPPED FEATURES
 
 ### Phase 1: Self-Efficacy Feedback Redesign ✅
-- Three-path feedback (main practice, AI interviewer, nursing)
-- "Example Strong Answer" constrained to user's actual content
-- Bandura-aligned coaching language
-
 ### Phase 2: Onboarding + Funnel ✅
-- 5-screen onboarding flow (archetype → breathing → practice → IRS → signup)
-- Anonymous auth routing fixed
-- All landing CTAs → /onboarding; nursing CTAs → /onboarding?from=nursing
-- Nursing visitors: field selection auto-skipped, nursing practice question, SBAR citation
-- Funnel tracking: 25 onboarding_events recorded
-- E2E signup tested on iPhone Chrome — works (email goes to spam)
-
 ### Phase 3: IRS + Streaks ✅
-- IRS v1 hero card with animated ring, breakdown bars, detail modal
-- IRS v1.1 — Answer Preparedness as 4th component
-- Streak counter with Supabase persistence + milestone toasts
-- Nursing dashboard wired to real IRS/streak data
-
-### P1 Conversion Optimization (Feb 17-18) ✅
-- Fix Pro pricing CTA bug
-- Mid-page CTAs on NursingLandingPage
-- Skip breathing exercise for urgent seekers
-- Loss-framed signup copy with real feature list
-- IRS trajectory visualization on IRSBaseline screen
-- Feature Preview screen between IRS and Signup
-- Clinical credibility signals for nursing onboarding
-- Server-side onboarding prompts (IP protection)
-
-### P2 Pass Pricing (Feb 17-18) ✅
-- Separate pricing: GeneralPricing.jsx, NursingPricing.jsx
-- creditSystem.js overhaul for pass-based access
-- create-checkout-session pass mode
-- stripe-webhook pass fulfillment
-- Server-side credit validation (pass-aware)
-- All upgrade links include `&returnTo=/nursing`
-
-### Answer/Feedback Persistence (Feb 18) ✅
-- user_answer + ai_feedback stored in nursing_practice_sessions
-- Expandable details in NursingCommandCenter
-
-### Email Confirmation Routing Fix (Feb 18) ✅
-- 5-point chain fix: signUp metadata, login links, LandingPage redirect, localStorage flags
-
+### P1 Conversion Optimization ✅
+### P2 Pass Pricing ✅
+### Answer/Feedback Persistence ✅
+### Email Confirmation Routing Fix ✅
 ### Landing Page ✅
-- Teal color unification
-- ISL → InterviewAnswers.ai rebrand
-- **Live Prompter section updated (Feb 19):** Rewrote to explain fuzzy logic question matching during practice (was incorrectly telling users to use during real interviews)
-
 ### SEO Optimization ✅
-- JSON-LD structured data (SoftwareApplication, FAQPage, Organization)
-- Per-route dynamic meta tags via useDocumentHead hook
-- 3 SEO content pages (Behavioral Questions, Nursing Questions, STAR Method Guide)
-- H1 optimization, canonical URLs, sitemap
-
-### Google Search Console ✅
-- Domain verified via DNS TXT
-- Sitemap submitted: 6 pages discovered
-- **Status Feb 19:** 3 pages indexed (/, /nurse, http redirect), 5 SEO pages still "Discovered - not indexed" (normal — 1-2 weeks)
-
+### Google Search Console ✅ (but redirect issue now flagged)
 ### LinkedIn Launch ✅
-- Post published with video
-- `docs/LINKEDIN_LAUNCH_KIT.md` has headline, about section, experience entry, post, team structure, checklist
-
-### Nursing Track
-- Walled garden model: AI coaches communication, never generates clinical content
-- 64 Erin-approved curated questions wired into AI Coach system prompt
-- 7 practice modes functional
-- Credit system with triple protection (UI + guard function + server-side)
-- Enriched feedback: 4 sections (Feedback, STAR/SBAR Breakdown, Ideal Answer, Resources)
-- **"My Best Answer" Populate (Feb 20):** Save from Practice Mode, Mock Interview summary, and AI Answer Coach. NursingAnswerAssistant component (804 lines) with MI-guided crafting, C.O.A.C.H. protocol, walled garden enforcement. Overloaded_error detection added.
+### Nursing Track (all features) ✅
+### "My Best Answer" Populate ✅
+### Email Deliverability Fix (Feb 22) ✅
+### Google Ads Conversion Tracking ✅
+### Mock Interview Phase-Based Question Selection (Feb 26) ✅
+### Mock Interview Per-Session Credit Model (Feb 26) ✅
+### Mock Interview "Any Questions for Me?" Closing (Feb 26) ✅
+### Mock Interview Continue Option + Exit Popup (Feb 26) ✅
+### Mock Interview AI Session Debrief (Feb 26) ✅
+### AI Coach Unlimited for Pass Holders (Feb 26) ✅
+### Nursing Tutorial 7-Step Rewrite (Feb 26) ✅
 
 ---
 
@@ -290,64 +196,135 @@ Recent commits on feature/nursing-track:
 | `/onboarding?from=nursing` | ArchetypeOnboarding | Nursing-specific onboarding flow |
 | `/login` | AuthPage | Login |
 | `/login?from=nursing` | AuthPage | Login with nursing redirect |
+| `/signup` | AuthPage | Signup |
+| `/auth/confirm` | AuthConfirm | **NEW (Feb 22)** Email confirmation token verification |
 | `/app` | App.jsx (monolith) | General track dashboard |
 | `/nursing` | NursingTrackApp | Nursing track (protected) |
+| `/behavioral-interview-questions` | SEO page | |
+| `/nursing-interview-questions` | SEO page | |
+| `/star-method-guide` | SEO page | |
+| `/terms` | TermsPage | |
+| `/privacy` | PrivacyPage | |
 
 ## PRICING MODEL
 
-| Product | Price | Type | Stripe Price ID |
-|---------|-------|------|-----------------|
-| General Pro | $29.99/mo | Subscription | (existing) |
-| Nursing 30-Day Pass | $19.99 | One-time | price_1Sxe9LJtT6sejUOK1JKSxVqA |
+| Product | Price | Type |
+|---------|-------|------|
+| General 30-Day Pass | $14.99 | One-time |
+| Nursing 30-Day Pass | $19.99 | One-time (Stripe Price ID: price_1Sxe9LJtT6sejUOK1JKSxVqA) |
+
+**NOTE:** There is NO monthly Pro subscription anymore. It's pass-based.
 
 ## CREDIT SYSTEM (Nursing Track)
 
-| Feature | Free | Pass |
-|---------|------|------|
-| Quick Practice | 3/mo | Unlimited |
-| Mock Interview | 1/mo | Unlimited |
-| SBAR Drill | 2/mo | Unlimited |
-| AI Coach | 0 (Pro only) | 20/mo cap |
-| Offer Coach | 0 (Pro only) | Unlimited |
-| Confidence Builder | 0 (Pro only) | Unlimited |
-| Flashcards | Unlimited | Unlimited |
+| Feature | Free | Pass | Charging Model |
+|---------|------|------|----------------|
+| Quick Practice | 3/mo | Unlimited | Per-question (each question = 1 credit) |
+| Mock Interview | 2/mo | Unlimited | Per-session (7-question interview = 1 credit, Continue = +1 credit) |
+| SBAR Drill | 2/mo | Unlimited | Per-question |
+| AI Coach | 0 (Pass only) | Unlimited | Per-message |
+| Offer Coach | 0 (Pass only) | Unlimited | Per-session |
+| Confidence Builder | 0 (Pass only) | Unlimited | Per-session |
+| Flashcards | Unlimited | Unlimited | Free (no credits) |
+
+**Mock Interview credit details (updated Feb 26):**
+- 1 credit charged on FIRST answer (not on session open)
+- Exit without answering = 0 credits charged (free users see reassuring popup)
+- "Continue with More Questions" after initial 7 = costs 1 additional credit for free tier
+- Session debrief on summary screen does NOT cost a credit (part of session they already paid for)
 
 ---
 
-## KNOWN BUGS / UNVERIFIED ITEMS
-1. **Email goes to spam** — SPF/DKIM/DMARC not configured. Needs Resend or DNS fix.
-2. **Mobile responsiveness NOT tested** — No real device testing done.
-3. **Tutorial race condition** — hasAcceptedFirstTimeTerms never initialized from DB (pre-existing).
-4. **Duplicate loadUserTierAndStats calls** — Runs twice on page load. Not user-facing.
-5. **~68 questions pending Erin's clinical review** before merge to main.
-6. **No nursing-specific tutorial** — General tutorial suppressed for nursing users, no replacement.
+## UNDEPLOYED CHANGES (as of Feb 26)
+
+**These changes are built and build-verified on `feature/nursing-track` but NOT yet deployed:**
+
+| File | Change | Sessions Ago |
+|------|--------|-------------|
+| `NursingMockInterview.jsx` | Phase-based questions, per-session credits, candidate Qs, continue, exit popup | Feb 26 |
+| `NursingSessionSummary.jsx` | AI session debrief | Feb 26 |
+| `creditSystem.js` | nursing_mock: 1→2, nursing_coach: 999999 | Feb 26 |
+| `NursingTutorial.jsx` | 7-step rewrite | Feb 25 |
+| `NursingAICoach.jsx` | Credit bug fix (was blocking coach) | Feb 25 |
+| `NursingTrackApp.jsx` | Removed first_name/last_name + added triggerStreakRefresh to OfferCoach | Feb 25-26 |
+| `NursingResources.jsx` | Scroll-to-top fix | Feb 25 |
+| `NursingDashboard.jsx` | Reordered sections | Feb 25 |
+| `ai-feedback/index.ts` | Removed 20-session AI Coach cap | Feb 25 |
+
+**To deploy:** `supabase functions deploy ai-feedback` THEN `npm run build && npx vercel --prod`
+
+---
+
+## KNOWN BUGS / ACTIVE ISSUES
+
+1. **Google Search Console "Page with redirect"** — Validation failed. Some pages still affected. NEEDS INVESTIGATION.
+2. **Onboarding CTA button visibility** — 50% dropout. Button hidden until feedback loads, no auto-scroll. IDENTIFIED, NOT FIXED.
+3. **Mobile responsiveness NOT tested** — No real device testing done.
+4. **Tutorial race condition** — hasAcceptedFirstTimeTerms never initialized from DB (pre-existing).
+5. **Nursing purchase tracking** — App.jsx hardcodes $14.99 for trackPurchase, should be $19.99 for nursing. DON'T touch App.jsx per Battle Scar #1.
 
 ## THINGS NOT TO TOUCH (recently fixed, fragile):
-- Email confirmation routing (5-point fix just deployed)
+- Email confirmation flow (AuthConfirm.jsx + Supabase template — just deployed Feb 22)
 - Credit system (triple protection: UI + guard function + server-side)
 - Speech recognition lifecycle (months of iOS Safari fixes)
 - Anonymous auth flow in onboarding
+- Onboarding scoring (belt-and-suspenders client + server-side)
+
+---
+
+## GOOGLE ADS DETAILS
+
+- **Account:** 867-867-9900
+- **Conversion ID:** AW-17966963623
+- **Conversion Labels:**
+  - Sign-up: `pjnhCIauovwbEKe3qPdC`
+  - Purchase: `vZMFCOGGpfwbEKe3qPdC`
+  - Begin Practice: `b1ZICJ_C0PwbEKe3qPdC`
+  - Pricing Page View: `6KM0CJzC0PwbEKe3qPdC`
+- **Budget:** $10/day
+- **Status (Feb 23):** LIVE. Campaign re-enabled Feb 22 after funnel fixes deployed.
+
+## UNIVERSITY OUTREACH
+
+| School | Contact | Email | Status |
+|--------|---------|-------|--------|
+| USF | Stacey Kohut (Dir. Undergrad Student Services, Nursing) | sekohut1@usfca.edu | Sent, no response (12 hrs) |
+| Hopkins | Laura Arthur (Dir. Career Lab, Nursing) | LinkedIn / larthur@jhu.edu (try) | Email drafted, not sent yet |
+| Hopkins CC | Jennifer Dotzenrod (Assoc Dean, Enrollment & Student Services) | jdotzen1@jhu.edu | CC on Laura's email |
+| USC | Career Center (Lucas solo) | Not yet identified | Not sent |
 
 ---
 
 ## WHAT'S NEXT (Priority Order)
-1. **AI Quality Testing** — Document AI responses across all features, evaluate against criteria
-2. **Erin's Review** — AI_QUALITY_CRITERIA.md + live testing + question review
-3. **Model Downgrades** — Test then potentially downgrade Question Generator + Confidence Brief
-4. **Commit uncommitted changes** — 16 modified + 8 new files on feature/nursing-track
-5. **Email deliverability** (SPF/DKIM/DMARC or Resend)
-6. **Mobile responsiveness audit**
-7. **Google Ads** — Conversion tracking infrastructure ready, GOOGLE_ADS_PLAYBOOK.md has full setup guide. Waiting on quality verification + more indexed pages.
+
+1. **Fix Google Search Console redirect issue** — Investigate which URLs are flagged, fix redirect chains
+2. **Send Hopkins email** — Laura Arthur via LinkedIn or email
+3. **Record app screen recordings** for video content (iPhone)
+4. **Create first TikTok/Reels video** — Practice Mode → AI Feedback, targeting new grads
+5. **Fix onboarding CTA visibility** — Auto-scroll, sticky button, pulse animation
+6. **Merge feature/nursing-track → main** — 58 files different, origin now in sync
+7. **Mobile responsiveness audit** — Zero real device testing done
+8. **Check Apple** — User mentioned "we haven't checked Apple in quite some time"
 
 ## KEY DECISIONS MADE
-- Live Prompter landing copy must emphasize PRACTICE, not real interview use ("wire those neurons")
-- Dropped unused `nursing_questions_full` view for security (Feb 19)
-- LinkedIn post published — monitor engagement before running ads
-- AI quality criteria research completed — Erin to review before any prompt changes
-- Model downgrades: test first, then decide
-- No B2B to schools or hospitals (Erin rejected)
-- No specialty matching feature (Erin rejected)
-- Nursing is a module inside InterviewAnswers.AI, NOT a separate app
+- Pricing is PASS-BASED, not subscription. Nursing $19.99, General $14.99. No Pro tier.
+- University outreach positioned as B2C resource recommendation, NOT B2B sales
+- Organic social media (TikTok/Reels/Shorts) before paid TikTok ads ($50/day minimum too expensive)
+- Video production: CapCut (free editing) + ElevenLabs (free AI voiceover) + iPhone screen recording
+- Email deliverability fixed via PKCE token_hash flow through own domain (not supabase.co redirects)
+- Erin's correct credentials: Erin Spink, MPH, BSN, RN, CIC
+- Lucas's credentials: Lucas Campos, MSEM, BAP
+- Lucas works in Patient Experience at Stanford Health Care
+- Erin works in Infection Prevention at Stanford Health Care
+
+## CONTENT SOURCES (for nursing track)
+The nursing track was built using published competency standards:
+- **Licensing:** NCSBN Clinical Judgment Measurement Model, NCLEX-RN Test Plan, Nurse Licensure Compact
+- **Certification bodies:** BCEN (CEN), AACN (CCRN), AORN/CCI (CNOR), NCC (RNC-OB), PNCB (CPN), ANCC (PMH-BC, MEDSURG-BC), MSNCB (CMSRN)
+- **Professional associations:** ANA, ENA, AWHONN, APNA, AMSN, SPN, NATHO, AORN
+- **Regulatory:** Joint Commission (NPSG), AHRQ (TeamSTEPPS), CDC, CMS (SEP-1), IHI (SBAR), APIC
+- **Clinical frameworks:** SBAR, NCSBN CJM, Nursing Process (ADPIE), Maslow's, ABC, NICHD 3-Tier, CUS
+- All 68 questions reviewed and approved by Erin (2/12/26): 64 approved, 3 rewritten, 0 rejected
 
 ## TEST ACCOUNT
 - Email: alshcampos@gmail.com

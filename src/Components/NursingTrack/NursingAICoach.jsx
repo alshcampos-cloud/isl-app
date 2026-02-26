@@ -10,7 +10,7 @@
 //   #9  — Beta users bypass limits
 //   #19 — AI NEVER generates clinical content (THE #1 risk)
 //
-// Credit feature: 'practiceMode' (shares with Practice + SBAR Drill)
+// Credit feature: 'nursingCoach' (pass-only, unlimited for pass holders)
 // ============================================================
 
 import { useState, useRef, useEffect, useCallback } from 'react';
@@ -234,13 +234,13 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
     }
   }, [speechTranscript, micActive]);
 
-  // Credit check on mount (shares 'practiceMode' credits)
+  // Credit check on mount — uses nursingCoach credits (pass-only, unlimited for pass holders)
   useEffect(() => {
     if (userData && !userData.loading && userData.usage) {
       const check = canUseFeature(
-        { practice_mode: userData.usage.practiceMode?.used || 0 },
+        { nursing_coach: userData.usage.nursingCoach?.used || 0 },
         userData.tier,
-        'practiceMode'
+        'nursingCoach'
       );
       if (!check.allowed) {
         setCreditBlocked(true);
@@ -348,10 +348,10 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
       setMessageCount(prev => prev + 1);
 
       // CHARGE AFTER SUCCESS (Battle Scar #8)
-      // Each AI response = 1 credit on 'practiceMode'
+      // Each AI response = 1 credit on 'nursingCoach'
       if (userData?.user?.id) {
         try {
-          await incrementUsage(supabase, userData.user.id, 'practiceMode');
+          await incrementUsage(supabase, userData.user.id, 'nursingCoach');
           updateStreakAfterSession(supabase, userData.user.id).then(() => triggerStreakRefresh?.()).catch(() => {}); // Phase 3 streak
           if (refreshUsage) refreshUsage();
         } catch (chargeErr) {
@@ -362,9 +362,9 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
 
       // Re-check credits after charging
       if (userData?.usage && !userData?.isBeta && userData?.tier !== 'pro') {
-        const currentUsed = (userData.usage.practiceMode?.used || 0) + messageCount + 1;
-        const limit = userData.usage.practiceMode?.limit || 10;
-        if (currentUsed >= limit) {
+        const currentUsed = (userData.usage.nursingCoach?.used || 0) + messageCount + 1;
+        const limit = userData.usage.nursingCoach?.limit || 0;
+        if (limit < 999999 && currentUsed >= limit) {
           setCreditBlocked(true);
         }
       }
@@ -515,7 +515,7 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
   // EMPTY STATE — No messages yet (show starters)
   // ============================================================
   if (messages.length === 0) {
-    const creditInfo = userData?.usage?.practiceMode;
+    const creditInfo = userData?.usage?.nursingCoach;
     const isUnlimited = userData?.isBeta || userData?.tier === 'nursing_pass' || userData?.tier === 'annual' || userData?.tier === 'pro' || userData?.tier === 'beta';
 
     return (

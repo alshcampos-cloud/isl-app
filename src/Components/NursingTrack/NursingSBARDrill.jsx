@@ -44,12 +44,21 @@ The scenario question is:
 "${question.question}"
 Category: ${question.category}${frameworkContext}${citationLine}
 
+CRITICAL PRE-CHECK (do this FIRST):
+Count the words in the candidate's response. If 3 or fewer words, gibberish, off-topic, or a non-answer like "I don't know", score ALL components 1/10. Keep feedback brief and encouraging: "Let's try again — walk through what's happening with the patient, the relevant history, your assessment, and your recommendation."
+
 The candidate just gave their SBAR-structured response. Score EACH component individually on a scale of 1-10:
 
 SITUATION (1-10): Did they clearly state what is happening RIGHT NOW with the patient? Specific, concise, no excessive background.
 BACKGROUND (1-10): Did they provide relevant clinical history, pertinent findings, and context that informs the current situation?
 ASSESSMENT (1-10): Did they share their clinical reasoning — what they believe is occurring and why?
 RECOMMENDATION (1-10): Did they state a clear recommendation, specific action taken or requested, with follow-up plan?
+
+SCORING ANCHORS (apply to each component):
+1-3/10 — Missing or a single vague sentence with no useful detail
+4-6/10 — Present but generic, lacks specificity or clinical grounding
+7-8/10 — Specific, relevant, well-structured for this component
+9-10/10 — Exceptional detail, natural delivery, ready for a real clinical handoff
 
 Give brief feedback (2-3 sentences per component). Label each section with S:, B:, A:, R: for parsing, but your coaching MUST follow this critical rule:
 
@@ -436,7 +445,7 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
           {/* Timer toggle */}
           <button
             onClick={() => setTimedMode(prev => !prev)}
-            className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full transition-colors ${
+            className={`flex items-center gap-1 text-xs px-3 py-2 rounded-full transition-colors ${
               timedMode ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'text-slate-400 hover:text-white'
             }`}
           >
@@ -490,7 +499,7 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
 
           {/* SBAR structure hint */}
           {!feedback && (
-            <div className="grid grid-cols-4 gap-2 mb-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
               {SBAR_COMPONENTS.map(comp => (
                 <div key={comp.key} className="bg-green-500/5 border border-green-500/10 rounded-lg p-2 text-center">
                   <div className="text-green-400 text-xs font-bold">{comp.label}</div>

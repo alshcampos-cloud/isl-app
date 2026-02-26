@@ -61,6 +61,7 @@ export default function SignUpPrompt({ archetype, archetypeConfig, practiceScore
         email: email.trim(),
         password: password.trim(),
         options: {
+          emailRedirectTo: `${window.location.origin}/auth/confirm`,
           data: {
             full_name: fullName.trim() || undefined,
             archetype: archetype,

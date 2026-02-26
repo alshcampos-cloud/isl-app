@@ -18,17 +18,17 @@ export default function Tutorial({ user, isActive, onClose, onOpenTemplateLibrar
 
   const steps = [
     {
-      title: "Welcome to ISL! 🎉",
+      title: "Welcome to InterviewAnswers.ai!",
       icon: <Brain className="w-16 h-16 text-indigo-600" />,
       content: (
         <div className="text-left space-y-4">
           <p className="text-gray-700 leading-relaxed">
-            <strong>Interview as a Second Language</strong> helps you master interviews using proven techniques from motivational interviewing and cognitive psychology.
+            <strong>InterviewAnswers.ai</strong> helps you master interviews using proven techniques from motivational interviewing and cognitive psychology.
           </p>
           <div className="bg-indigo-50 rounded-lg p-4 border-2 border-indigo-200">
             <p className="font-semibold text-indigo-900 mb-2">🎯 Our Philosophy:</p>
             <p className="text-sm text-indigo-800">
-              Great interview answers come from YOUR real experiences - not generic scripts. ISL helps you discover, structure, and practice telling your authentic stories effectively.
+              Great interview answers come from YOUR real experiences - not generic scripts. InterviewAnswers.ai helps you discover, structure, and practice telling your authentic stories effectively.
             </p>
           </div>
         </div>

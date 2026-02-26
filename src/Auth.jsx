@@ -34,6 +34,7 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
           email,
           password,
           options: {
+            emailRedirectTo: `${window.location.origin}/auth/confirm`,
             data: {
               full_name: fullName
             }

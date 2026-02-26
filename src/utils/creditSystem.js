@@ -22,7 +22,7 @@ export const TIER_LIMITS = {
     live_prompter_unlimited: false,
     // Nursing Track — reduced free tier (6 AI sessions total: 3+1+2)
     nursing_practice: 3,          // 3 nursing quick practice sessions/month
-    nursing_mock: 1,              // 1 nursing mock interview session/month
+    nursing_mock: 2,              // 2 free full mock interview sessions/month
     nursing_sbar: 2,              // 2 nursing SBAR drill sessions/month
     nursing_coach: 0,             // AI Coach is pass-only
   },
@@ -38,11 +38,11 @@ export const TIER_LIMITS = {
     question_gen: 5,
     live_prompter_questions: 10,
     live_prompter_unlimited: false,
-    // Nursing Track — UNLIMITED (except AI Coach capped at 20)
+    // Nursing Track — ALL UNLIMITED
     nursing_practice: 999999,
     nursing_mock: 999999,
     nursing_sbar: 999999,
-    nursing_coach: 20,            // 20 AI Coach sessions/month (cost control)
+    nursing_coach: 999999,        // Unlimited AI Coach (~$0.011/msg, cost negligible)
   },
 
   // ── 30-Day Pass: General ($14.99) ──────────────────────────
@@ -58,7 +58,7 @@ export const TIER_LIMITS = {
     live_prompter_unlimited: true,
     // Nursing Track stays at FREE-tier level (they didn't buy nursing)
     nursing_practice: 3,
-    nursing_mock: 1,
+    nursing_mock: 2,
     nursing_sbar: 2,
     nursing_coach: 0,
   },
@@ -74,11 +74,11 @@ export const TIER_LIMITS = {
     question_gen: 999999,
     live_prompter_questions: 999999,
     live_prompter_unlimited: true,
-    // Nursing — UNLIMITED (except AI Coach capped at 20)
+    // Nursing — ALL UNLIMITED
     nursing_practice: 999999,
     nursing_mock: 999999,
     nursing_sbar: 999999,
-    nursing_coach: 20,
+    nursing_coach: 999999,
   },
 
   // ── Legacy Pro ($29.99/month subscription) — backward compat ─

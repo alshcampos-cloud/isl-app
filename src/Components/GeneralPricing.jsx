@@ -213,7 +213,7 @@ export default function GeneralPricing({ userData, onClose }) {
               {[
                 'Everything in General Pass',
                 'Full Nursing Interview Track',
-                'AI Coach (20 sessions/month)',
+                'Unlimited AI Coach',
                 'Year-round access',
                 'Priority support',
               ].map((item) => (

@@ -176,14 +176,14 @@ export default function NursingFlashcards({ specialty, onBack, userData }) {
                   <div className="flex flex-wrap gap-1.5">
                     <button
                       onClick={() => { setFilterCategory('all'); setCurrentIndex(0); setIsFlipped(false); }}
-                      className={`text-xs px-2 py-1 rounded-full transition-colors ${
+                      className={`text-xs px-2 py-1.5 rounded-full transition-colors ${
                         filterCategory === 'all' ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30' : 'text-slate-400 bg-white/5 border border-white/10'
                       }`}
                     >All</button>
                     {categories.map(cat => (
                       <button key={cat}
                         onClick={() => { setFilterCategory(cat); setCurrentIndex(0); setIsFlipped(false); }}
-                        className={`text-xs px-2 py-1 rounded-full transition-colors ${
+                        className={`text-xs px-2 py-1.5 rounded-full transition-colors ${
                           filterCategory === cat ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30' : 'text-slate-400 bg-white/5 border border-white/10'
                         }`}
                       >{cat}</button>
@@ -323,16 +323,16 @@ export default function NursingFlashcards({ specialty, onBack, userData }) {
             {/* Nav */}
             <div className="flex items-center gap-2">
               <button onClick={goPrev}
-                className="p-2 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all">
+                className="p-3 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all">
                 <ChevronLeft className="w-5 h-5" />
               </button>
               <button onClick={goShuffle}
-                className="p-2 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all"
+                className="p-3 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all"
                 title="Shuffle (need-practice cards appear more often)">
                 <Shuffle className="w-5 h-5" />
               </button>
               <button onClick={goNext}
-                className="p-2 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all">
+                className="p-3 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all">
                 <ChevronRight className="w-5 h-5" />
               </button>
             </div>
@@ -341,7 +341,7 @@ export default function NursingFlashcards({ specialty, onBack, userData }) {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => markCard('need-practice')}
-                className={`flex items-center gap-1 text-xs px-3 py-2 rounded-xl transition-all ${
+                className={`flex items-center gap-1 text-xs px-3 py-2.5 rounded-xl transition-all ${
                   status === 'need-practice'
                     ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
                     : 'bg-white/5 border border-white/10 text-slate-400 hover:text-amber-300'
@@ -351,7 +351,7 @@ export default function NursingFlashcards({ specialty, onBack, userData }) {
               </button>
               <button
                 onClick={() => markCard('got-it')}
-                className={`flex items-center gap-1 text-xs px-3 py-2 rounded-xl transition-all ${
+                className={`flex items-center gap-1 text-xs px-3 py-2.5 rounded-xl transition-all ${
                   status === 'got-it'
                     ? 'bg-green-500/20 text-green-300 border border-green-500/30'
                     : 'bg-white/5 border border-white/10 text-slate-400 hover:text-green-300'

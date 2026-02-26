@@ -6,6 +6,7 @@
 // ⚠️ D.R.A.F.T. Protocol: NEW file. No existing code modified.
 // All links are to free, publicly available resources.
 
+import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ExternalLink, BookOpen, Stethoscope, Shield, FileText, Globe, Award } from 'lucide-react';
 
@@ -160,6 +161,11 @@ const RESOURCE_CATEGORIES = [
 ];
 
 export default function NursingResources({ onBack }) {
+  // Scroll to top when component mounts (fixes staying at dashboard scroll position)
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-sky-950 to-slate-900">
       {/* Header */}

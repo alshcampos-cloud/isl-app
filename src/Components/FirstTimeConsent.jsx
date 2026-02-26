@@ -81,7 +81,7 @@ export default function FirstTimeConsent({ user, onAccepted, onAlreadyAccepted }
   };
 
   const handleReject = async () => {
-    if (window.confirm('You must accept the Terms and Privacy Policy to use ISL. Sign out?')) {
+    if (window.confirm('You must accept the Terms and Privacy Policy to use InterviewAnswers.ai. Sign out?')) {
       await supabase.auth.signOut();
       window.location.reload();
     }
@@ -96,7 +96,7 @@ export default function FirstTimeConsent({ user, onAccepted, onAlreadyAccepted }
         onClick={(e) => e.stopPropagation()}
       >
         <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome to ISL</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome to InterviewAnswers.ai</h2>
           <p className="text-gray-600">Before we begin, please review our policies</p>
         </div>
 

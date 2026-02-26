@@ -476,7 +476,7 @@ export default function NursingLandingPage() {
               <p className="text-gray-500 text-sm sm:text-base mb-4">Get started with basic practice</p>
               <p className="text-4xl font-bold text-gray-900 mb-6">$0 <span className="text-base font-normal text-gray-400">/month</span></p>
               <ul className="space-y-2 mb-6">
-                {['3 mock interview sessions/month', 'General nursing questions', 'STAR coaching', 'Flashcards'].map(f => (
+                {['2 mock interview sessions/month', 'General nursing questions', 'STAR coaching', 'Flashcards'].map(f => (
                   <li key={f} className="flex items-center gap-2 text-sm sm:text-base text-gray-600">
                     <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />{f}
                   </li>

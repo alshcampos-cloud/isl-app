@@ -4,7 +4,7 @@
 // Pattern: follows ArchetypeCTA.jsx — fetches its own data, renders nothing on error.
 // Designed to drop into the existing stats grid as a 5th card.
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Flame, Snowflake, Trophy, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
@@ -22,6 +22,10 @@ export default function StreakDisplay({ refreshTrigger, variant = 'dark' }) {
   const [streak, setStreak] = useState(null);
   const [showPopover, setShowPopover] = useState(false);
   const [freezeLoading, setFreezeLoading] = useState(false);
+
+  // Track touch start position to distinguish taps from scrolls
+  // Bug fix: onTouchEnd fires on scroll, causing popover to open while scrolling
+  const touchStartY = useRef(null);
 
   const loadStreak = useCallback(async () => {
     try {
@@ -76,7 +80,16 @@ export default function StreakDisplay({ refreshTrigger, variant = 'dark' }) {
             : 'bg-white/10 backdrop-blur-lg text-white border border-white/20 hover:bg-white/15'
         }`}
         onClick={() => setShowPopover(true)}
-        onTouchEnd={(e) => { e.preventDefault(); setShowPopover(true); }}
+        onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }}
+        onTouchEnd={(e) => {
+          // Only open on actual taps, not scrolls (delta < 10px)
+          const endY = e.changedTouches[0].clientY;
+          if (touchStartY.current !== null && Math.abs(endY - touchStartY.current) < 10) {
+            e.preventDefault();
+            setShowPopover(true);
+          }
+          touchStartY.current = null;
+        }}
       >
         <div className="flex items-center gap-2 sm:gap-3">
           <div className={`w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br ${gradientFrom} ${gradientTo} rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 shadow-md`}>

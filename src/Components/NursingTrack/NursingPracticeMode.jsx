@@ -102,7 +102,19 @@ ${citationSource
   ? `📚 "${citationSource}" — one sentence on how it relates to this question. Include the URL if it's one of these: APIC (apic.org), AWHONN (awhonn.org), ENA (ena.org), ANA (nursingworld.org), NCSBN (ncsbn.org), BCEN (bcen.org), AACN (aacn.org), CDC (cdc.gov), IHI (ihi.org), Joint Commission (jointcommission.org), AHRQ (ahrq.gov).`
   : `📚 [Pick ONE from: SBAR Toolkit — ihi.org, TeamSTEPPS — ahrq.gov, NCSBN Clinical Judgment Model — ncsbn.org, ANA Code of Ethics — nursingworld.org, Joint Commission Safety Goals — jointcommission.org, CDC Infection Control — cdc.gov, APIC — apic.org, AWHONN — awhonn.org] — one sentence why it helps and include the URL.`}
 
+CRITICAL PRE-CHECK (do this FIRST before writing feedback):
+Count the words in the user's answer. If the answer has 3 or fewer words, OR is gibberish, off-topic, or a non-answer like "I don't know" or "pass", you MUST score 1/5 and keep all sections brief. No exceptions.
+
+SCORING GUIDE (BE STRICT — do not default to 3-4):
+1/5 — Minimal: 3 or fewer words, "I don't know", off-topic, gibberish, or non-answer
+2/5 — Vague: Shows some awareness but no structure, generic platitudes, lacks any specific detail
+3/5 — Developing: Attempted ${frameworkLabel} structure but missing key components or vague on details
+4/5 — Strong: Clear ${frameworkLabel} structure, specific real details, demonstrates genuine experience
+5/5 — Exceptional: Complete ${frameworkLabel}, vivid specifics, authentic reflection, would impress a hiring manager
+
+At the very end, include the score on a new line in EXACTLY this format:
 [SCORE: X/5]
+The score line should be the LAST line of your response.
 
 Rules: Coach communication ONLY. Never generate clinical content. Never patronizing. Match praise to actual answer quality.`;
 };

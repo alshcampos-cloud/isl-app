@@ -413,26 +413,8 @@ Return ONLY the bullets in this format:
               );
             }
           }
-        } else if (hasNursingPass && dbColumn === 'nursing_coach') {
-          // Pass holders have a 20-session AI Coach cap (cost control)
-          const now = new Date();
-          const currentPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-
-          const { data: usageRow } = await supabaseClient
-            .from('usage_tracking')
-            .select('nursing_coach')
-            .eq('user_id', user.id)
-            .eq('period', currentPeriod)
-            .maybeSingle();
-
-          const coachUsage = usageRow?.nursing_coach || 0;
-          if (coachUsage >= 20) {
-            return new Response(
-              JSON.stringify({ error: 'AI Coach session limit reached for this month (20 sessions). Resets next month.' }),
-              { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            );
-          }
         }
+        // Pass holders: AI Coach is unlimited (no server-side cap needed)
       }
 
       // Build Anthropic messages array from conversation history

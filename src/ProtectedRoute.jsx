@@ -78,9 +78,11 @@ function ProtectedRoute({ children }) {
 
     // Fallback: If getSession doesn't trigger PASSWORD_RECOVERY within 3 seconds
     // but we have a recovery token, show the modal anyway
+    // Check both hash (implicit flow) and query params (PKCE flow)
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    if (hashParams.get('type') === 'recovery') {
-      console.log('🔑 Recovery token detected in URL');
+    const queryCode = new URLSearchParams(window.location.search).get('code');
+    if (hashParams.get('type') === 'recovery' || queryCode) {
+      console.log('🔑 Recovery token detected in URL (hash or PKCE code)');
       const fallbackTimer = setTimeout(() => {
         if (loading) {
           console.log('⚠️ Fallback: showing reset modal after timeout');

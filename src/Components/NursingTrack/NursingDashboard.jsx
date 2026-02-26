@@ -524,6 +524,36 @@ export default function NursingDashboard({ specialty, onStartMode, onChangeSpeci
           </div>
         )}
 
+        {/* Command Center — moved up for visibility */}
+        <button
+          onClick={() => onStartMode('command-center')}
+          className="w-full bg-gradient-to-r from-sky-600/20 to-cyan-500/20 border border-sky-500/30 rounded-xl p-4 mb-4 flex items-center justify-between hover:from-sky-600/30 hover:to-cyan-500/30 transition-all group text-left"
+        >
+          <div className="flex items-center gap-3">
+            <BarChart3 className="w-5 h-5 text-sky-400" />
+            <div>
+              <p className="text-white font-medium text-sm">Command Center</p>
+              <p className="text-slate-400 text-xs">Track progress, browse questions, and assess your readiness</p>
+            </div>
+          </div>
+          <ChevronRight className="w-5 h-5 text-sky-400 group-hover:translate-x-1 transition-all flex-shrink-0" />
+        </button>
+
+        {/* Resources Link — moved up for visibility */}
+        <button
+          onClick={() => onStartMode('resources')}
+          className="w-full bg-white/5 border border-white/10 rounded-xl p-4 mb-8 flex items-center justify-between hover:bg-white/10 hover:border-white/20 transition-all group text-left"
+        >
+          <div className="flex items-center gap-3">
+            <BookOpen className="w-5 h-5 text-sky-400" />
+            <div>
+              <p className="text-white font-medium text-sm">Clinical Resources & References</p>
+              <p className="text-slate-400 text-xs">Free public sources for clinical knowledge — NCSBN, CDC, IHI, and more</p>
+            </div>
+          </div>
+          <ChevronRight className="w-5 h-5 text-slate-600 group-hover:text-slate-400 group-hover:translate-x-1 transition-all flex-shrink-0" />
+        </button>
+
         {/* Clinical Frameworks Reference */}
         <h2 className="text-white font-semibold text-lg mb-4 flex items-center gap-2">
           <BookOpen className="w-5 h-5 text-sky-400" />
@@ -553,36 +583,6 @@ export default function NursingDashboard({ specialty, onStartMode, onChangeSpeci
             </span>
           ))}
         </div>
-
-        {/* Command Center */}
-        <button
-          onClick={() => onStartMode('command-center')}
-          className="w-full bg-gradient-to-r from-sky-600/20 to-cyan-500/20 border border-sky-500/30 rounded-xl p-4 mb-4 flex items-center justify-between hover:from-sky-600/30 hover:to-cyan-500/30 transition-all group text-left"
-        >
-          <div className="flex items-center gap-3">
-            <BarChart3 className="w-5 h-5 text-sky-400" />
-            <div>
-              <p className="text-white font-medium text-sm">Command Center</p>
-              <p className="text-slate-400 text-xs">Track progress, browse questions, and assess your readiness</p>
-            </div>
-          </div>
-          <ChevronRight className="w-5 h-5 text-sky-400 group-hover:translate-x-1 transition-all flex-shrink-0" />
-        </button>
-
-        {/* Resources Link */}
-        <button
-          onClick={() => onStartMode('resources')}
-          className="w-full bg-white/5 border border-white/10 rounded-xl p-4 mb-8 flex items-center justify-between hover:bg-white/10 hover:border-white/20 transition-all group text-left"
-        >
-          <div className="flex items-center gap-3">
-            <BookOpen className="w-5 h-5 text-sky-400" />
-            <div>
-              <p className="text-white font-medium text-sm">Clinical Resources & References</p>
-              <p className="text-slate-400 text-xs">Free public sources for clinical knowledge — NCSBN, CDC, IHI, and more</p>
-            </div>
-          </div>
-          <ChevronRight className="w-5 h-5 text-slate-600 group-hover:text-slate-400 group-hover:translate-x-1 transition-all flex-shrink-0" />
-        </button>
 
         {/* Walled Garden Notice */}
         <div className="bg-sky-500/10 border border-sky-400/20 rounded-xl p-4 mb-8">
