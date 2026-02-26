@@ -22,7 +22,7 @@ export default function NursingLandingPage() {
     canonical: 'https://www.interviewanswers.ai/nurse',
     og: {
       title: 'NurseInterviewPro - AI Nursing Interview Practice & SBAR Coaching',
-      description: 'Practice nursing interviews with AI. SBAR drills, STAR coaching, 68 clinically-sourced questions across 8 specialties. Built by nurses, for nurses.',
+      description: 'Practice nursing interviews with AI. SBAR drills, STAR coaching, 70 clinically-sourced questions across 8 specialties. Built by nurses, for nurses.',
       url: 'https://www.interviewanswers.ai/nurse',
       type: 'website',
     },
@@ -344,7 +344,7 @@ export default function NursingLandingPage() {
           <div className="grid sm:grid-cols-3 gap-6">
             <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
               <div className="text-2xl sm:text-3xl mb-2 sm:mb-3">🩺</div>
-              <p className="text-gray-900 font-semibold text-lg mb-1">68 Clinically-Sourced Questions</p>
+              <p className="text-gray-900 font-semibold text-lg mb-1">70 Clinically-Sourced Questions</p>
               <p className="text-gray-500 text-sm sm:text-base">Across 8 nursing specialties, grounded in NCSBN, SBAR, and Nursing Process frameworks</p>
             </div>
             <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
