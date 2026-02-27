@@ -269,9 +269,6 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
     };
   }, []);
 
-  // Keep nextQuestionRef in sync (avoids circular useCallback dependency)
-  useEffect(() => { nextQuestionRef.current = nextQuestion; }, [nextQuestion]);
-
   // Auto-scroll to bottom of messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -584,6 +581,10 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
       setShowContinuePrompt(true);
     }
   }, [questionIndex, interviewQuestions, sessionResults, candidateQuestionsPhase, continueCount]);
+
+  // Keep nextQuestionRef in sync (avoids circular useCallback dependency)
+  // MUST be AFTER nextQuestion definition to avoid Temporal Dead Zone error
+  useEffect(() => { nextQuestionRef.current = nextQuestion; }, [nextQuestion]);
 
   // End session early (user clicks "End Session")
   const endSessionEarly = useCallback(() => {
