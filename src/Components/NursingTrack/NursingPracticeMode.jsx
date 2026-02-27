@@ -274,11 +274,20 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
       const cleanContent = stripScoreTag(rawContent);
       const validation = validateNursingResponse(rawContent, 'practice');
 
-      setFeedback({ text: cleanContent, score });
+      // Client-side guardrail: trivial answers (≤3 words) can never score above 2/5
+      // Belt-and-suspenders with PRACTICE_SYSTEM_PROMPT's CRITICAL PRE-CHECK
+      const wordCount = userAnswer.trim().split(/\s+/).filter(Boolean).length;
+      let cappedScore = score;
+      if (wordCount <= 3 && score !== null && score > 2) {
+        console.warn(`[Practice scoring guardrail] Capped score from ${score} to 2 (answer was ${wordCount} words)`);
+        cappedScore = 2;
+      }
+
+      setFeedback({ text: cleanContent, score: cappedScore });
       setValidationFlags(validation);
       setQuestionsAnswered(prev => prev + 1);
-      if (score !== null) {
-        setTotalScore(prev => prev + score);
+      if (cappedScore !== null) {
+        setTotalScore(prev => prev + cappedScore);
         setScoredCount(prev => prev + 1);
       }
 
@@ -289,7 +298,7 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
           currentQuestion.question,
           currentQuestion.category,
           currentQuestion.responseFramework,
-          score,
+          cappedScore,
           userAnswer.trim(),
           cleanContent,
         ));

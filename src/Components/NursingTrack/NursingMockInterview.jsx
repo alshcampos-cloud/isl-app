@@ -451,12 +451,21 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
       const cleanContent = stripScoreTag(rawContent);
       const validation = validateNursingResponse(rawContent, 'mock');
 
+      // Client-side guardrail: trivial answers (≤3 words) can never score above 2/5
+      // Belt-and-suspenders with system prompt's SCORING ANCHORS
+      const answerWordCount = userMessage.trim().split(/\s+/).filter(Boolean).length;
+      let cappedScore = score;
+      if (answerWordCount <= 3 && score !== null && score > 2) {
+        console.warn(`[Mock interview scoring guardrail] Capped score from ${score} to 2 (answer was ${answerWordCount} words)`);
+        cappedScore = 2;
+      }
+
       // Add AI response to chat (with score stripped from display)
       setMessages(prev => [...prev, {
         role: 'assistant',
         content: cleanContent,
         timestamp: new Date(),
-        score, // attached for session results tracking
+        score: cappedScore, // attached for session results tracking
         walledGardenFlag: validation.walledGardenFlag,
       }]);
 
@@ -487,7 +496,7 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
             category: currentQuestion.category,
             userAnswer: userMessage,
             aiFeedback: cleanContent,
-            score, // null = "Unscored" — parsing failure doesn't break flow
+            score: cappedScore, // null = "Unscored" — parsing failure doesn't break flow
           }];
         });
 
@@ -498,7 +507,7 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
             question: currentQuestion.question,
             category: currentQuestion.category,
             responseFramework: currentQuestion.responseFramework,
-            score,
+            score: cappedScore,
             userAnswer: userMessage,
             aiFeedback: cleanContent,
           }));

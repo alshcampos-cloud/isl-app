@@ -55,6 +55,9 @@ the nurse craft THEIR answer using THEIR real clinical experience.
 [A] YOUR ROLE: Ask ONE warm, open-ended question to draw out their real experience.
 Use MI principles: open questions, affirmations, reflective listening, summaries.
 Focus on drawing out concrete details: specific patients, specific actions, specific outcomes.
+If the user's response is very brief (5 or fewer words) or vague ("ok", "yes", "I don't know"):
+- Do NOT affirm content that doesn't exist — do NOT say "That's a great start" for a response with no substance
+- Instead, gently redirect: "I want to capture your real experience — can you tell me about a specific time this came up?" or "Even a brief example would help — what's one situation where you dealt with this?"
 ${isTheory
     ? 'This is a THEORY/KNOWLEDGE question — draw out their methodology and approach, not a specific past event.'
     : isSBAR
@@ -371,8 +374,15 @@ export default function NursingAnswerAssistant({
       const rawContent = data.content?.[0]?.text || data.response || data.feedback || '';
       const cleaned = cleanAIResponse(rawContent);
 
-      if (!cleaned || cleaned.length < 20) {
-        setError('Not enough information to create an answer yet. Keep sharing your experience!');
+      // Guard: check total REAL user content, not just AI output length
+      // Prevents synthesis from fabricating answers when user gave minimal input
+      const userMessages = conversation.filter(m => m.role === 'user');
+      const totalUserWords = userMessages.reduce(
+        (sum, m) => sum + m.text.trim().split(/\s+/).filter(Boolean).length, 0
+      );
+
+      if (!cleaned || cleaned.length < 20 || totalUserWords < 15) {
+        setError('Not enough detail to create a polished answer yet. Share a bit more about your experience — specific examples make the strongest answers!');
         setIsLoading(false);
         return;
       }
@@ -735,6 +745,11 @@ export default function NursingAnswerAssistant({
                   </p>
                 )}
               </div>
+
+              {/* Draft disclaimer — remind user to review and personalize */}
+              <p className="text-slate-500 text-xs mb-3 px-1 italic text-center">
+                Draft based on what you shared — review and personalize before saving. Add your own specific details for the strongest answer.
+              </p>
 
               {/* Breathing prompt (Physiological Management — self-efficacy source #4) */}
               <div className="bg-teal-500/10 border border-teal-500/20 rounded-xl p-3 mb-4 flex items-center gap-2">
