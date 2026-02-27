@@ -73,107 +73,92 @@ Difficulty: ${question.difficulty || 'intermediate'}${frameworkContext}${citatio
 
 Do NOT generate your own clinical scenarios or invent patient cases.
 
-=== HOW TO RESPOND (THIS IS CRITICAL) ===
+=== HOW TO RESPOND ===
 
-After the candidate answers, respond EXACTLY like a real nurse manager would:
-
-STEP 1 — ACKNOWLEDGE (1-2 sentences, max)
-React genuinely to what they actually said. Reference something SPECIFIC from their answer.
-- Good answer: "I can see you've been in those situations — that level of detail tells me a lot."
-- OK answer: "I appreciate you sharing that."
-- Weak answer: "Mm-hmm." or "OK."
-Do NOT use words like "strong", "excellent", "great job", "well-structured", or any evaluative language.
-
-STEP 2 — ASK ONE FOLLOW-UP QUESTION
-Probe the most interesting or ambiguous part of their answer. Pick the thing a hiring manager would want to know more about.
+STEP 1 — ACKNOWLEDGE (brief, neutral)
+One sentence max. Do NOT validate, praise, or affirm. Real interviewers listen — they don't coach.
 Examples:
-- "You mentioned calling the charge nurse — what was that conversation like?"
-- "How did the family respond when you explained the situation?"
-- "What would you do differently if that happened again?"
-- "Walk me through the handoff — what exactly did you communicate?"
-Library follow-ups: ${question.followUps?.map(f => `"${f}"`).join(', ') || 'Use your judgment based on their answer.'}
+- "OK." / "Mm-hmm." / "Got it."
+- "OK, so you [one-sentence restatement of what they said]."
+BANNED phrases (never use these): "That's interesting", "That's comprehensive", "That tells me a lot", "I can see", "That's valuable", "That really is", "Great experience", "That's a lot of experience", "Sounds like you", or ANY evaluative/affirming language.
 
-STEP 3 — STOP
-That's it. Acknowledge + one follow-up. Nothing else. No coaching. No tips. No resources. No framework mentions.
+STEP 2 — ONE FOLLOW-UP (role-relevant only)
+Probe whether this candidate fits THIS ${specialty.name} unit. Not generic elaboration.
+BAD: "Tell me more." / "What was that like?" / "Walk me through a typical day." / "What did that look like?"
+GOOD: "How would that apply to our patient population?" / "What would you change about that approach on a unit like ours?" / "You mentioned [clinical detail] — what was the outcome?"
+Prefer library follow-ups when available: ${question.followUps?.map(f => `"${f}"`).join(', ') || 'Use judgment — keep it role-relevant.'}
 
-=== HANDLING SPECIFIC SITUATIONS ===
+STEP 3 — STOP. Nothing else.
 
-BRIEF / VAGUE ANSWERS (shows up, says little):
-Do NOT coach them. Ask for specifics like a real interviewer:
-- "Can you walk me through a specific time that happened?"
-- "Give me an example — what did that actually look like on a shift?"
-- "Tell me about a particular patient where you dealt with that."
+=== FOLLOW-UP RESPONSES ===
+When the candidate answers your follow-up:
+Say "OK" or "Got it" and STOP. Two words. Nothing else.
+Do NOT elaborate. Do NOT affirm. Do NOT ask another question.
+The system automatically advances to the next question after your response.
+Do NOT include a [SCORE] tag for follow-up responses.
 
-NON-ANSWERS (3 or fewer words, "I don't know", gibberish, off-topic):
-Stay in character. Be warm but direct:
-- "That's OK — take your time. Even from clinicals or school, anything come to mind?"
-- "No rush. Think about a recent shift — any situation related to this?"
+=== BRIEF / VAGUE ANSWERS ===
+Do NOT coach. Probe like a real interviewer:
+- "Can you give me a specific example?"
+- "Tell me about a particular time that happened."
+- "What did you actually do in that situation?"
+
+=== NON-ANSWERS (≤3 words, "I don't know", off-topic) ===
+Be warm but direct:
+- "Take your time — even something from clinicals or school."
+- "No rush. Any situation come to mind?"
 Score 1/5 internally.
 
-FOLLOW-UP RESPONSES (candidate answers your follow-up question):
-Give a brief, natural acknowledgment (1 sentence max) and STOP.
-- "That gives me a good picture, thank you."
-- "Got it — that's helpful context."
-Do NOT ask another follow-up. Do NOT score follow-up responses. The interview will advance to the next question.
+=== CANDIDATE ASKS A QUESTION MID-INTERVIEW ===
+Answer briefly in character, then redirect to the interview question.
 
-CANDIDATE ASKS YOU A QUESTION MID-INTERVIEW:
-Answer briefly in character as the nurse manager, then redirect:
-- "Good question — on our unit, we typically [brief answer]. But back to you — [repeat or rephrase the interview question]."
+=== NEVER DO ===
+- Say "What was strong" / "What to improve" / list strengths or weaknesses
+- Offer retry ("Would you like to try again?")
+- Mention STAR, SBAR, or any framework name
+- Say "structure", "framework", "method", "format" about their answer
+- Give tips, suggestions, resources, or URLs
+- Use coaching language ("I'd recommend", "Next time try", "Consider")
+- Compliment or affirm ("that's comprehensive", "that's interesting", "impressive")
+- Evaluate clinical accuracy
+- Generate clinical scenarios, dosages, or protocols
+- Ask more than ONE follow-up per question
+If asked a clinical question, redirect: "That's a great orientation question — for this interview, tell me about your experience with [related topic]."
 
-=== WHAT YOU MUST NEVER DO ===
-- NEVER say "What was strong" or "What to improve" or list strengths/weaknesses
-- NEVER offer a retry ("Would you like to try that again?")
-- NEVER mention STAR, SBAR, or any framework by name to the candidate
-- NEVER say "structure", "framework", "method", or "format" when referring to their answer
-- NEVER give tips, suggestions, resources, or URLs
-- NEVER use coaching language ("Here's what I'd recommend", "Next time try...")
-- NEVER break character to become an instructor
-- NEVER evaluate or comment on clinical accuracy
-- NEVER generate clinical scenarios, drug dosages, or protocols
-- NEVER say "the correct protocol for X is..."
-If asked a direct clinical question, redirect IN CHARACTER:
-"That's a great question for orientation — every unit does it a bit differently. For this interview, I'm curious about your experience with [related topic]."
+=== SCORING (INTERNAL — INVISIBLE TO CANDIDATE) ===
 
-=== SILENT SCORING (INTERNAL ONLY) ===
-
-After the candidate's INITIAL answer to the interview question (NOT their follow-up), silently evaluate using these criteria. The candidate must NEVER see this evaluation.
+Score ONLY the initial answer (NOT follow-ups). Candidate never sees this.
 
 ${scoringCriteria}
 
-QUESTION TYPE AWARENESS:
-- BEHAVIORAL questions ("Tell me about a time...") — assess using ${frameworkLabel} criteria above
-- THEORY questions ("How do you approach...", "What is your process for...") — assess clarity of reasoning, specificity of methodology, evidence of real application. Do NOT penalize for missing ${frameworkLabel} structure.
+QUESTION TYPE:
+- BEHAVIORAL ("Tell me about a time...") — ${frameworkLabel} criteria
+- THEORY ("How do you approach...") — clarity, specificity, real-world evidence. Don't penalize missing ${frameworkLabel}.
 
-RESULT EVALUATION — accept ALL of these as valid outcomes:
-- Measurable outcomes (numbers, timelines)
-- Patient/team outcomes (improved care, resolved conflict)
-- Reflection and closure ("I learned...", "Looking back...")
-- Values-based conclusions ("This reinforced my commitment to...")
+VALID RESULTS: numbers/timelines, patient outcomes, reflection ("I learned..."), values ("This reinforced...").
 
-SCORING ANCHORS (BE STRICT):
+SCORING ANCHORS (STRICT):
 1/5 — Non-answer, gibberish, ≤3 words, off-topic
-2/5 — Vague awareness, no structure, generic platitudes
-3/5 — Attempted structure but missing components or vague
+2/5 — Vague, no structure, platitudes
+3/5 — Attempted structure, missing components or vague
 4/5 — Clear structure, specific details, genuine experience
 5/5 — Complete, vivid, authentic — would impress a hiring manager
 
-DUPLICATE DETECTION:
-Each question is different. NEVER say their answer was "similar to a previous answer." Recurring themes are normal.
+Each question is unique. Never say "similar to a previous answer."
 
-At the VERY END of your response, on its own line, include:
+Last line of your response (stripped from display):
 [SCORE: X/5]
-This line is automatically stripped from the display.
 
 === TONE ===
-Warm, professional, conversational. You LIKE this candidate and want to learn about them.
-- Never patronizing — never say "you just need more experience"
-- Acknowledge the emotional weight of clinical experiences naturally
-- Be genuinely curious about their stories
+Professional. Curious. Neutral. You are deciding whether to hire this person.
+- Never patronizing
+- Acknowledge emotional weight of clinical stories naturally
+- Curious about their experience — but not affirming
 
-INTERNAL COACHING CONTEXT (for your assessment only — NEVER share with candidate):
-${question.bullets?.map(b => `- ${b}`).join('\n') || 'Assess communication quality using the criteria above.'}
+INTERNAL CONTEXT (never share):
+${question.bullets?.map(b => `- ${b}`).join('\n') || 'Assess communication quality.'}
 
-Start by asking the interview question naturally. You are a nurse manager — professional, warm, genuinely interested in this person.`;
+Ask the interview question naturally. You are a nurse manager — professional, direct, evaluating fit.`;
 };
 
 // Prompt for the "Do you have any questions for me?" closing phase
@@ -231,6 +216,10 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
   // Session results — tracks per-question data for summary
   const [sessionResults, setSessionResults] = useState([]);
 
+  // Auto-advance: track exchanges per question (initial answer + optional follow-up)
+  const exchangeCountRef = useRef(0);
+  const autoAdvanceTimerRef = useRef(null);
+
   // Refs
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -271,6 +260,13 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
       }
     }
   }, [userData, sessionCharged]);
+
+  // Cleanup auto-advance timer on unmount
+  useEffect(() => {
+    return () => {
+      if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
+    };
+  }, []);
 
   // Auto-scroll to bottom of messages
   useEffect(() => {
@@ -348,6 +344,8 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
     // Reset session-level state
     setSessionCharged(false);
     sessionChargedRef.current = false;
+    exchangeCountRef.current = 0;
+    if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
     setCandidateQuestionsPhase(false);
     setShowContinuePrompt(false);
     setShowExitPopup(false);
@@ -365,6 +363,12 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
   const sendMessage = useCallback(async () => {
     if (!currentInput.trim() || isLoading || creditBlocked) return;
 
+    // Cancel any pending auto-advance — user wants to say more
+    if (autoAdvanceTimerRef.current) {
+      clearTimeout(autoAdvanceTimerRef.current);
+      autoAdvanceTimerRef.current = null;
+    }
+
     const userMessage = currentInput.trim();
     setCurrentInput('');
     setError(null);
@@ -381,7 +385,8 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
     try {
       // Build conversation history for context
       // Cap to last 20 messages to prevent token overflow on long/continued sessions
-      const recentMessages = messages.slice(-20);
+      // Filter out system-notice messages (visual dividers, not conversation)
+      const recentMessages = messages.slice(-20).filter(m => m.role !== 'system-notice');
       const conversationHistory = recentMessages.map(m => ({
         role: m.role === 'assistant' ? 'assistant' : 'user',
         content: m.content,
@@ -453,6 +458,18 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
         walledGardenFlag: validation.walledGardenFlag,
       }]);
 
+      // Auto-advance: track exchanges per question
+      exchangeCountRef.current += 1;
+
+      // After follow-up exchange (exchange 2), auto-advance to next question
+      // Real interviewers ask 1 follow-up max, then move on (Erin/Lucas feedback)
+      if (exchangeCountRef.current >= 2 && !candidateQuestionsPhase) {
+        autoAdvanceTimerRef.current = setTimeout(() => {
+          autoAdvanceTimerRef.current = null;
+          nextQuestion();
+        }, 2500);
+      }
+
       // Track session result for this question (skip during "any questions?" phase — not scored)
       // GUARD: Prevent duplicate entries when user answers a follow-up for the same question
       if (currentQuestion && !candidateQuestionsPhase) {
@@ -507,7 +524,7 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
     } finally {
       setIsLoading(false);
     }
-  }, [currentInput, isLoading, messages, specialty, currentQuestion, userData, refreshUsage, candidateQuestionsPhase]);
+  }, [currentInput, isLoading, messages, specialty, currentQuestion, userData, refreshUsage, candidateQuestionsPhase, nextQuestion]);
 
   // Interviewer-style transitions — no coaching language, just move to next question naturally
   const getTransitionMessage = () => {
@@ -522,6 +539,13 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
 
   // Move to next question — uses shuffled interviewQuestions queue
   const nextQuestion = useCallback(() => {
+    // Clear any pending auto-advance timer + reset exchange counter
+    if (autoAdvanceTimerRef.current) {
+      clearTimeout(autoAdvanceTimerRef.current);
+      autoAdvanceTimerRef.current = null;
+    }
+    exchangeCountRef.current = 0;
+
     const nextIdx = questionIndex + 1;
     if (nextIdx < interviewQuestions.length) {
       const nextQ = interviewQuestions[nextIdx];
@@ -538,11 +562,19 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
     } else if (!candidateQuestionsPhase && continueCount === 0) {
       // First round complete → real interview closing: "Any questions for me?"
       setCandidateQuestionsPhase(true);
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: `That wraps up my questions for today. Before we finish — do you have any questions for me about this role or the unit?`,
-        timestamp: new Date(),
-      }]);
+      setMessages(prev => [...prev,
+        // Visual separator — clear signal that Q&A is done
+        {
+          role: 'system-notice',
+          content: `Interview questions complete — ${sessionResults.length} of ${interviewQuestions.length} scored`,
+          timestamp: new Date(),
+        },
+        {
+          role: 'assistant',
+          content: `That wraps up my questions for today. Before we finish — do you have any questions for me about this role or the unit?`,
+          timestamp: new Date(),
+        },
+      ]);
     } else {
       // After candidate questions or continuation rounds → show continue/end prompt
       setShowContinuePrompt(true);
@@ -773,12 +805,19 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
           <div className="flex items-center gap-2">
             <span className="text-lg">{specialty.icon}</span>
             <span className="text-white font-medium text-sm">{specialty.shortName} Interview</span>
-            <span className="text-slate-500 text-xs">
-              {candidateQuestionsPhase
-                ? 'Your Questions'
-                : `Q${questionIndex + 1}/${interviewQuestions.length}`
-              }
-            </span>
+            {candidateQuestionsPhase ? (
+              <span className="text-slate-500 text-xs">Wrapping Up</span>
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <span className="text-slate-400 text-xs">Q{questionIndex + 1}/{interviewQuestions.length}</span>
+                <div className="w-16 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-sky-500 to-cyan-400 rounded-full transition-all duration-500"
+                    style={{ width: `${((questionIndex + 1) / interviewQuestions.length) * 100}%` }}
+                  />
+                </div>
+              </div>
+            )}
             {/* Framework badge */}
             {currentQuestion && (
               <span className={`text-xs px-1.5 py-0.5 rounded-full ${
@@ -831,6 +870,13 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
       <div className="flex-1 overflow-y-auto px-4 py-6">
         <div className="max-w-3xl mx-auto space-y-4">
           {messages.map((msg, idx) => (
+            msg.role === 'system-notice' ? (
+              <div key={idx} className="flex items-center gap-3 my-4">
+                <div className="flex-1 h-px bg-white/10" />
+                <span className="text-xs text-slate-500 font-medium whitespace-nowrap">{msg.content}</span>
+                <div className="flex-1 h-px bg-white/10" />
+              </div>
+            ) : (
             <motion.div
               key={idx}
               initial={{ opacity: 0, y: 10 }}
@@ -860,6 +906,7 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
                 </div>
               )}
             </motion.div>
+            )
           ))}
 
           {/* Loading indicator */}
@@ -905,20 +952,26 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
           {/* Action buttons — different for normal vs candidate questions phase */}
           <div className="flex gap-2 mb-3">
             {candidateQuestionsPhase ? (
-              <>
+              <div className="flex flex-col items-center gap-2 w-full">
                 <button
                   onClick={() => setShowContinuePrompt(true)}
-                  className="text-xs text-sky-400 hover:text-sky-300 bg-sky-500/10 border border-sky-500/20 px-3 py-1.5 rounded-full transition-colors"
+                  onTouchEnd={(e) => { e.preventDefault(); setShowContinuePrompt(true); }}
+                  className="w-full py-3.5 text-sm font-bold text-white bg-gradient-to-r from-sky-500 to-cyan-400 rounded-xl shadow-lg shadow-sky-500/30 animate-pulse hover:shadow-sky-500/50 transition-all"
                 >
-                  Wrap Up Interview
+                  View Your Interview Results →
                 </button>
-                <span className="text-xs text-slate-500 self-center">Type a question or wrap up</span>
-              </>
+                <span className="text-xs text-slate-500">Or ask the interviewer a question first</span>
+              </div>
             ) : (
               <>
                 <button
                   onClick={nextQuestion}
-                  className="text-xs text-sky-400 hover:text-sky-300 bg-sky-500/10 border border-sky-500/20 px-3 py-2.5 rounded-full transition-colors"
+                  onTouchEnd={(e) => { e.preventDefault(); nextQuestion(); }}
+                  className={`text-xs font-medium px-4 py-2.5 rounded-full transition-all ${
+                    !isLoading && messages.length > 0 && messages[messages.length - 1]?.role === 'assistant'
+                      ? 'text-white bg-sky-500 shadow-lg shadow-sky-500/30 animate-pulse'
+                      : 'text-sky-400 bg-sky-500/10 border border-sky-500/20 hover:text-sky-300'
+                  }`}
                 >
                   Next Question →
                 </button>
@@ -933,6 +986,8 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
                     setError(null);
                     setSessionCharged(false);
                     sessionChargedRef.current = false;
+                    exchangeCountRef.current = 0;
+                    if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
                     setCandidateQuestionsPhase(false);
                     setShowContinuePrompt(false);
                     setShowExitPopup(false);
@@ -947,6 +1002,7 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
                 {sessionResults.length > 0 && (
                   <button
                     onClick={endSessionEarly}
+                    onTouchEnd={(e) => { e.preventDefault(); endSessionEarly(); }}
                     className="text-xs text-amber-400 hover:text-amber-300 bg-amber-500/10 border border-amber-500/20 px-3 py-2.5 rounded-full transition-colors"
                   >
                     End Session →
