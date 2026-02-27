@@ -256,8 +256,9 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
   // Get questions for this specialty (Supabase → fallback to static)
   const { questions, loading: questionsLoading } = useNursingQuestions(specialty.id);
 
-  // Credit check on mount
+  // Credit check on mount — skip recheck once session is paid for (prevents mid-session block)
   useEffect(() => {
+    if (sessionCharged) return;
     if (userData && !userData.loading && userData.usage) {
       const check = canUseFeature(
         // Nursing track uses separate credit pool
@@ -269,7 +270,7 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
         setCreditBlocked(true);
       }
     }
-  }, [userData]);
+  }, [userData, sessionCharged]);
 
   // Auto-scroll to bottom of messages
   useEffect(() => {
