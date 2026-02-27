@@ -219,6 +219,7 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
   // Auto-advance: track exchanges per question (initial answer + optional follow-up)
   const exchangeCountRef = useRef(0);
   const autoAdvanceTimerRef = useRef(null);
+  const nextQuestionRef = useRef(null); // stable ref for auto-advance timer (avoids circular dep)
 
   // Refs
   const messagesEndRef = useRef(null);
@@ -267,6 +268,9 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
       if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
     };
   }, []);
+
+  // Keep nextQuestionRef in sync (avoids circular useCallback dependency)
+  useEffect(() => { nextQuestionRef.current = nextQuestion; }, [nextQuestion]);
 
   // Auto-scroll to bottom of messages
   useEffect(() => {
@@ -466,7 +470,7 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
       if (exchangeCountRef.current >= 2 && !candidateQuestionsPhase) {
         autoAdvanceTimerRef.current = setTimeout(() => {
           autoAdvanceTimerRef.current = null;
-          nextQuestion();
+          nextQuestionRef.current?.();
         }, 2500);
       }
 
@@ -524,7 +528,7 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
     } finally {
       setIsLoading(false);
     }
-  }, [currentInput, isLoading, messages, specialty, currentQuestion, userData, refreshUsage, candidateQuestionsPhase, nextQuestion]);
+  }, [currentInput, isLoading, messages, specialty, currentQuestion, userData, refreshUsage, candidateQuestionsPhase]);
 
   // Interviewer-style transitions — no coaching language, just move to next question naturally
   const getTransitionMessage = () => {
