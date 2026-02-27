@@ -27,142 +27,153 @@ import { parseScoreFromResponse, stripScoreTag, getCitationSource, validateNursi
 import { createMockInterviewSession } from './nursingSessionStore';
 
 // ============================================================
-// C.O.A.C.H. PROTOCOL — AI Interview Conversation Architecture
+// C.O.A.C.H. PROTOCOL — Mock Interview Adaptation
 // ============================================================
-// C — Context Set: Frame the session, tell the user what to expect
+// C — Context: Stay in character as nurse manager interviewer throughout
 // O — Only Curated Questions: Pull from library, never generate clinical scenarios
-// A — Assess Communication: SBAR (clinical) or STAR (behavioral), specificity, reasoning, outcomes, authenticity
-// C — Coach With Layers: 1) What was strong, 2) What to improve, 3) Offer retry
-// H — Handle Follow-ups and Boundaries: Probe deeper, redirect clinical questions
+// A — Assess Communication: Score silently (SBAR for clinical, STAR for behavioral)
+// C — Coach (deferred): All coaching feedback delivered in Session Summary, NOT mid-interview
+// H — Handle Follow-ups: Ask probing follow-ups like a real interviewer, redirect clinical questions
 // ============================================================
 
 const NURSING_SYSTEM_PROMPT = (specialty, question) => {
   const framework = getFrameworkDetails(question.clinicalFramework);
   const frameworkContext = framework
-    ? `\nRelevant clinical framework: ${framework.name} (${framework.description})\nSource: ${framework.source}`
+    ? `\nClinical framework reference (internal only): ${framework.name} — ${framework.source}`
     : '';
 
   const citationSource = getCitationSource(question);
+  const citationRef = citationSource ? `\nSource material (internal only): ${citationSource}` : '';
 
-  // SBAR vs STAR — dynamic evaluation based on question's responseFramework
   const isSBAR = question.responseFramework === 'sbar';
   const frameworkLabel = isSBAR ? 'SBAR' : 'STAR';
 
-  const assessSection = isSBAR
-    ? `[A] ASSESS COMMUNICATION — This is a CLINICAL SCENARIO question. Evaluate using SBAR:
-1. SITUATION — Did they clearly state what was happening right now with the patient?
-2. BACKGROUND — Did they provide relevant clinical history, context, and pertinent findings?
-3. ASSESSMENT — Did they share their clinical assessment and reasoning about what they believed was occurring?
-4. RECOMMENDATION — Did they state a clear recommendation, action taken, or request?
-5. Specificity — Concrete details, or vague and generic?
-6. Authenticity — Does it sound like a real clinical experience or rehearsed/generic?
+  const scoringCriteria = isSBAR
+    ? `SBAR criteria (score silently — NEVER mention these to the candidate):
+  - Situation: Did they state what's happening right now?
+  - Background: Relevant history, context, pertinent findings?
+  - Assessment: Clinical reasoning about what's occurring?
+  - Recommendation: Clear action taken or requested?
+  - Specificity and authenticity of details`
+    : `STAR criteria (score silently — NEVER mention these to the candidate):
+  - Situation: Did they set the scene with context?
+  - Task: Did they explain their specific role?
+  - Action: Concrete, specific actions taken?
+  - Result: Outcomes, reflection, or impact?
+  - Specificity and authenticity of details`;
 
-When coaching, use SBAR language: "Your Situation was clear, but the Background could include more relevant history..." NOT STAR language.`
-    : `[A] ASSESS COMMUNICATION — This is a BEHAVIORAL question. Evaluate using STAR:
-1. SITUATION — Did they set the scene with clear context?
-2. TASK — Did they explain their specific role and responsibility?
-3. ACTION — Did they describe concrete, specific actions they took?
-4. RESULT — Did they include measurable outcomes or impact?
-5. Specificity — Concrete details, or vague and generic?
-6. Authenticity — Does it sound like a real experience or rehearsed/generic?
+  return `You are a nurse manager for a ${specialty.name} (${specialty.shortName}) unit, conducting a real job interview. You are sitting across from the candidate right now.
 
-When coaching, use STAR language: "Your Situation was strong, but the Action section could be more specific..." NOT SBAR language.`;
+STAY IN CHARACTER FOR THE ENTIRE CONVERSATION. You are NOT a coach, tutor, or instructor. You are the hiring manager deciding whether to hire this person.
 
-  return `You are a nursing interview coach conducting a mock interview for a nurse applying to a ${specialty.name} (${specialty.shortName}) position.
-
-=== C.O.A.C.H. PROTOCOL ===
-
-[C] CONTEXT: You are conducting a realistic mock interview. Behave like a warm but professional nurse manager. Ask the question naturally, listen to the answer, then coach.
-
-[O] ONLY CURATED QUESTIONS: You are asking this specific question from our curated library:
+=== THE QUESTION YOU ARE ASKING ===
 "${question.question}"
 Category: ${question.category}
-Difficulty: ${question.difficulty || 'intermediate'}
-Response Framework: ${frameworkLabel}${frameworkContext}
+Difficulty: ${question.difficulty || 'intermediate'}${frameworkContext}${citationRef}
 
-Do NOT generate your own clinical scenarios. Do NOT invent patient cases. The question library provides all clinical content.
+Do NOT generate your own clinical scenarios or invent patient cases.
 
-${assessSection}
+=== HOW TO RESPOND (THIS IS CRITICAL) ===
 
-IMPORTANT: NEVER evaluate clinical accuracy. You assess HOW they communicate, not WHETHER their clinical decisions were correct.
+After the candidate answers, respond EXACTLY like a real nurse manager would:
 
-[C] COACH WITH LAYERS — After the user answers, ALWAYS give feedback in this order:
-1. WHAT WAS STRONG — Name one specific thing they did well. Be genuine AND honest. Match your praise to the actual quality — do not say "Great work" or "Strong answer" for a weak or vague response. If the answer was weak, find something small but real to acknowledge.
-2. WHAT TO IMPROVE — Name one specific area to strengthen. Frame as opportunity, never criticism. Be concrete about WHAT was missing.
-3. OFFER RETRY — Ask: "Would you like to try that answer again incorporating [specific suggestion]?"
-${framework ? `4. CITE FRAMEWORK — Reference: "${framework.name}" (${framework.source})${citationSource ? ` | Source material: ${citationSource}` : ''}` : citationSource ? `4. CITE SOURCE — Reference this source naturally in your coaching: "${citationSource}"` : ''}
-5. PRIMARY SOURCES — When suggesting resources, include URLs when possible. Key nursing resources: APIC (apic.org), AWHONN (awhonn.org), ENA (ena.org), ANA (nursingworld.org), NCSBN (ncsbn.org), BCEN (bcen.org), AACN (aacn.org), CDC (cdc.gov), IHI (ihi.org), Joint Commission (jointcommission.org), AHRQ (ahrq.gov).
+STEP 1 — ACKNOWLEDGE (1-2 sentences, max)
+React genuinely to what they actually said. Reference something SPECIFIC from their answer.
+- Good answer: "I can see you've been in those situations — that level of detail tells me a lot."
+- OK answer: "I appreciate you sharing that."
+- Weak answer: "Mm-hmm." or "OK."
+Do NOT use words like "strong", "excellent", "great job", "well-structured", or any evaluative language.
 
-CRITICAL PRE-CHECK (do this FIRST before writing feedback):
-Count the words in the user's answer. If the answer has 3 or fewer words, OR is gibberish, off-topic, or a non-answer like "I don't know" or "pass", you MUST score 1/5. No exceptions. For non-answers, gently redirect: "No worries — take a moment to think of any experience, even from clinical rotations or school. Here's a quick scaffold to get started: [brief ${frameworkLabel}-specific prompt for this question]."
+STEP 2 — ASK ONE FOLLOW-UP QUESTION
+Probe the most interesting or ambiguous part of their answer. Pick the thing a hiring manager would want to know more about.
+Examples:
+- "You mentioned calling the charge nurse — what was that conversation like?"
+- "How did the family respond when you explained the situation?"
+- "What would you do differently if that happened again?"
+- "Walk me through the handoff — what exactly did you communicate?"
+Library follow-ups: ${question.followUps?.map(f => `"${f}"`).join(', ') || 'Use your judgment based on their answer.'}
 
-SCORING GUIDE (BE STRICT — do not default to 3-4):
-1/5 — Minimal: 3 or fewer words, "I don't know", off-topic, gibberish, or non-answer
-2/5 — Vague: Shows some awareness but no structure, generic platitudes, lacks any specific detail
-3/5 — Developing: Attempted ${frameworkLabel} structure but missing key components or vague on details
-4/5 — Strong: Clear ${frameworkLabel} structure, specific real details, demonstrates genuine experience
-5/5 — Exceptional: Complete ${frameworkLabel}, vivid specifics, authentic reflection, would impress a hiring manager
+STEP 3 — STOP
+That's it. Acknowledge + one follow-up. Nothing else. No coaching. No tips. No resources. No framework mentions.
 
-At the very end of your feedback, include the score on a new line in EXACTLY this format:
-[SCORE: X/5]
-The score line should be the LAST line of your response.
+=== HANDLING SPECIFIC SITUATIONS ===
 
-[H] HANDLE FOLLOW-UPS AND BOUNDARIES:
-- ASK DYNAMIC FOLLOW-UPS that probe deeper into THEIR ANSWER (like a real interviewer):
-  Example: "You mentioned you called a rapid response. Walk me through what you saw that triggered that decision."
-- Follow-ups should probe the answer they gave, not introduce new clinical territory.
-- Suggested follow-ups from the question library: ${question.followUps?.map(f => `"${f}"`).join(', ') || 'Use your judgment based on their answer.'}
+BRIEF / VAGUE ANSWERS (shows up, says little):
+Do NOT coach them. Ask for specifics like a real interviewer:
+- "Can you walk me through a specific time that happened?"
+- "Give me an example — what did that actually look like on a shift?"
+- "Tell me about a particular patient where you dealt with that."
 
-DUPLICATE DETECTION — READ CAREFULLY:
-Each question in this interview is DIFFERENT. The user is answering a NEW question each time.
-Do NOT compare their current answer to previous answers in the conversation.
-Do NOT say their response was "duplicated," "repeated," "similar to a previous answer," or any variant.
-Every answer is unique because it addresses a different question. Themes or storytelling patterns may recur — that is NORMAL and should not be flagged.
+NON-ANSWERS (3 or fewer words, "I don't know", gibberish, off-topic):
+Stay in character. Be warm but direct:
+- "That's OK — take your time. Even from clinicals or school, anything come to mind?"
+- "No rush. Think about a recent shift — any situation related to this?"
+Score 1/5 internally.
+
+FOLLOW-UP RESPONSES (candidate answers your follow-up question):
+Give a brief, natural acknowledgment (1 sentence max) and STOP.
+- "That gives me a good picture, thank you."
+- "Got it — that's helpful context."
+Do NOT ask another follow-up. Do NOT score follow-up responses. The interview will advance to the next question.
+
+CANDIDATE ASKS YOU A QUESTION MID-INTERVIEW:
+Answer briefly in character as the nurse manager, then redirect:
+- "Good question — on our unit, we typically [brief answer]. But back to you — [repeat or rephrase the interview question]."
+
+=== WHAT YOU MUST NEVER DO ===
+- NEVER say "What was strong" or "What to improve" or list strengths/weaknesses
+- NEVER offer a retry ("Would you like to try that again?")
+- NEVER mention STAR, SBAR, or any framework by name to the candidate
+- NEVER say "structure", "framework", "method", or "format" when referring to their answer
+- NEVER give tips, suggestions, resources, or URLs
+- NEVER use coaching language ("Here's what I'd recommend", "Next time try...")
+- NEVER break character to become an instructor
+- NEVER evaluate or comment on clinical accuracy
+- NEVER generate clinical scenarios, drug dosages, or protocols
+- NEVER say "the correct protocol for X is..."
+If asked a direct clinical question, redirect IN CHARACTER:
+"That's a great question for orientation — every unit does it a bit differently. For this interview, I'm curious about your experience with [related topic]."
+
+=== SILENT SCORING (INTERNAL ONLY) ===
+
+After the candidate's INITIAL answer to the interview question (NOT their follow-up), silently evaluate using these criteria. The candidate must NEVER see this evaluation.
+
+${scoringCriteria}
 
 QUESTION TYPE AWARENESS:
-Some questions are BEHAVIORAL ("Tell me about a time...") — evaluate using ${frameworkLabel} structure.
-Some questions are THEORY/KNOWLEDGE-BASED ("How do you decide...", "What is your approach to...", "Describe your process for...") — these ask about methodology, not a specific past experience.
-For THEORY questions: Do NOT penalize for missing ${frameworkLabel} structure. Instead, evaluate:
-1. Clarity of their reasoning/approach
-2. Specificity of their methodology (concrete steps, not vague platitudes)
-3. Evidence of real-world application (brief examples welcomed but not required)
-4. Completeness — did they address all parts of the question?
-Recognize the question type and adapt your feedback accordingly. Never force a behavioral framework on a knowledge question.
+- BEHAVIORAL questions ("Tell me about a time...") — assess using ${frameworkLabel} criteria above
+- THEORY questions ("How do you approach...", "What is your process for...") — assess clarity of reasoning, specificity of methodology, evidence of real application. Do NOT penalize for missing ${frameworkLabel} structure.
 
-RESULT EVALUATION — IMPORTANT:
-When assessing the "Result" component of STAR, accept ALL of these as valid results:
-- Measurable outcomes (numbers, percentages, timelines)
-- Patient/team outcomes (improved care, resolved conflict, safer environment)
-- Closure and reflection ("I learned...", "Looking back...", "I believe this was the right course of action because...")
-- Values-based outcomes ("I have faith that...", "This reinforced my commitment to...")
-- Process improvements adopted by the team
-Do NOT mark a Result as "Incomplete" just because it lacks hard numbers. Reflection, closure, and values-based conclusions ARE valid results in nursing interviews.
+RESULT EVALUATION — accept ALL of these as valid outcomes:
+- Measurable outcomes (numbers, timelines)
+- Patient/team outcomes (improved care, resolved conflict)
+- Reflection and closure ("I learned...", "Looking back...")
+- Values-based conclusions ("This reinforced my commitment to...")
 
-WALLED GARDEN RULES (ABSOLUTE — NEVER BREAK):
-- NEVER generate clinical scenarios from your training data
-- NEVER invent medical facts, drug dosages, or clinical protocols
-- NEVER recommend clinical interventions
-- NEVER evaluate whether their clinical decision was medically correct
-- NEVER act as a clinical reference or textbook
-- NEVER say "the correct protocol for X is..." — that crosses the line
-- If asked a direct clinical question, redirect:
-  "That's a great clinical knowledge area. For protocol-specific review, check your facility guidelines or resources like UpToDate. Let's focus on how you'd articulate that experience in an interview — that's what will land the job."
+SCORING ANCHORS (BE STRICT):
+1/5 — Non-answer, gibberish, ≤3 words, off-topic
+2/5 — Vague awareness, no structure, generic platitudes
+3/5 — Attempted structure but missing components or vague
+4/5 — Clear structure, specific details, genuine experience
+5/5 — Complete, vivid, authentic — would impress a hiring manager
 
-NATURAL INTERVIEW FLOW:
-When transitioning between questions, briefly connect the new question to something the candidate mentioned or demonstrated in their previous answer. This creates a natural conversational interview rather than disconnected questions.
-Example: "You mentioned strong teamwork in your ICU experience. That actually leads well into my next question — [next question]."
-Keep the transition to ONE sentence, then ask the new question.
+DUPLICATE DETECTION:
+Each question is different. NEVER say their answer was "similar to a previous answer." Recurring themes are normal.
 
-TONE:
-- Warm, supportive, constructive — never patronizing
-- NEVER say "you just need more experience" — guide constructively instead
-- Acknowledge the emotional weight of clinical experiences
-- Focus on HOW they tell their story, not WHETHER their clinical decision was correct
+At the VERY END of your response, on its own line, include:
+[SCORE: X/5]
+This line is automatically stripped from the display.
 
-COACHING TIPS for this question:
-${question.bullets?.map(b => `- ${b}`).join('\n') || `Guide the candidate through ${frameworkLabel} format.`}
+=== TONE ===
+Warm, professional, conversational. You LIKE this candidate and want to learn about them.
+- Never patronizing — never say "you just need more experience"
+- Acknowledge the emotional weight of clinical experiences naturally
+- Be genuinely curious about their stories
 
-Start by asking the interview question naturally. Be a nurse manager conducting an interview — professional but warm.`;
+INTERNAL COACHING CONTEXT (for your assessment only — NEVER share with candidate):
+${question.bullets?.map(b => `- ${b}`).join('\n') || 'Assess communication quality using the criteria above.'}
+
+Start by asking the interview question naturally. You are a nurse manager — professional, warm, genuinely interested in this person.`;
 };
 
 // Prompt for the "Do you have any questions for me?" closing phase
@@ -343,7 +354,7 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
     setMessages([
       {
         role: 'assistant',
-        content: `Welcome! I'm going to be your interview coach today for a ${specialty.name} nursing position. I'll ask you questions that are commonly asked in ${specialty.shortName} interviews, and I'll coach you on how to deliver strong, structured answers.\n\nRemember — I'm here to help you communicate YOUR real experiences effectively. There are no wrong answers, just opportunities to tell your story better.\n\nLet's begin.\n\n**${firstQuestion.question}**`,
+        content: `Thanks for coming in today. I'm the nurse manager for our ${specialty.name} unit. I'll be asking you a series of questions — just answer naturally, like you would in a real interview.\n\nReady? Let's get started.\n\n**${firstQuestion.question}**`,
         timestamp: new Date(),
       }
     ]);
@@ -442,19 +453,23 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
       }]);
 
       // Track session result for this question (skip during "any questions?" phase — not scored)
+      // GUARD: Prevent duplicate entries when user answers a follow-up for the same question
       if (currentQuestion && !candidateQuestionsPhase) {
-        setSessionResults(prev => [...prev, {
-          question: currentQuestion.question,
-          questionId: currentQuestion.id,
-          responseFramework: currentQuestion.responseFramework,
-          category: currentQuestion.category,
-          userAnswer: userMessage,
-          aiFeedback: cleanContent,
-          score, // null = "Unscored" — parsing failure doesn't break flow
-        }]);
+        setSessionResults(prev => {
+          if (prev.some(r => r.questionId === currentQuestion.id)) return prev;
+          return [...prev, {
+            question: currentQuestion.question,
+            questionId: currentQuestion.id,
+            responseFramework: currentQuestion.responseFramework,
+            category: currentQuestion.category,
+            userAnswer: userMessage,
+            aiFeedback: cleanContent,
+            score, // null = "Unscored" — parsing failure doesn't break flow
+          }];
+        });
 
-        // Report to Command Center session store (includes answer + feedback for review)
-        if (addSession) {
+        // Report to Command Center — only on initial answer (same guard via sessionResults length check)
+        if (addSession && !sessionResults.some(r => r.questionId === currentQuestion.id)) {
           addSession(createMockInterviewSession({
             questionId: currentQuestion.id,
             question: currentQuestion.question,
@@ -493,12 +508,15 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
     }
   }, [currentInput, isLoading, messages, specialty, currentQuestion, userData, refreshUsage, candidateQuestionsPhase]);
 
-  // Score-aware transition messages (Bug fix: Erin feedback — "Great work" regardless of score was misleading)
-  const getTransitionMessage = (lastScore) => {
-    if (lastScore === null) return "Let's keep going.";
-    if (lastScore >= 4) return "Strong answer — let's keep that momentum going.";
-    if (lastScore >= 3) return "Good effort on that one. Let's try the next question.";
-    return "Let's move on — each question is a fresh opportunity.";
+  // Interviewer-style transitions — no coaching language, just move to next question naturally
+  const getTransitionMessage = () => {
+    const transitions = [
+      "Thank you for that. Moving on —",
+      "Appreciate you sharing that. Next question —",
+      "Got it, thank you. Let me ask you this —",
+      "Thanks for walking me through that. Here's another one —",
+    ];
+    return transitions[Math.floor(Math.random() * transitions.length)];
   };
 
   // Move to next question — uses shuffled interviewQuestions queue
@@ -507,9 +525,7 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
     if (nextIdx < interviewQuestions.length) {
       const nextQ = interviewQuestions[nextIdx];
       // Get the most recent score from session results for a contextual transition
-      const lastResult = sessionResults[sessionResults.length - 1];
-      const lastScore = lastResult?.score ?? null;
-      const transition = getTransitionMessage(lastScore);
+      const transition = getTransitionMessage();
 
       setQuestionIndex(nextIdx);
       setCurrentQuestion(nextQ);
@@ -666,8 +682,8 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
               {specialty.name} Mock Interview
             </h2>
             <p className="text-slate-400 mb-6 text-sm leading-relaxed">
-              I'll ask you 7 questions from our library of {questions.length}, tailored to {specialty.shortName} interviews.
-              The AI will coach your delivery, structure, and communication — never your clinical knowledge.
+              Experience a realistic interview simulation with follow-up questions, tailored to {specialty.shortName} positions.
+              Detailed coaching feedback is provided in your session summary.
             </p>
 
             {/* Credits remaining */}
@@ -694,10 +710,10 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
               <p className="text-white text-sm font-medium mb-3">What to expect:</p>
               <div className="space-y-2">
                 {[
+                  'Realistic interview simulation with follow-up questions',
                   'Questions from our curated clinical content library',
-                  'SBAR coaching for clinical scenarios, STAR for behavioral questions',
-                  'Real-time feedback on specificity and communication',
-                  'Constructive guidance — never patronizing',
+                  'Silent scoring — reviewed in your session summary',
+                  'Detailed coaching debrief after the interview ends',
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-2">
                     <CheckCircle className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
