@@ -108,6 +108,7 @@ function getSBARTier(scores) {
 // Note: score tags are already stripped by stripSBARScoreTags before this runs,
 // so we use the next "- X:" marker or double-newline as section boundaries.
 function parseSBARFeedbackSections(text) {
+  if (!text) return { sections: {}, overallTip: '', hasSections: false, rawText: '' };
   const sections = {};
   let overallTip = '';
 

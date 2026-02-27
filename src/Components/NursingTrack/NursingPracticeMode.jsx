@@ -838,12 +838,14 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
                     <div className="flex gap-3">
                       <button
                         onClick={() => { setUserAnswer(''); setFeedback(null); setValidationFlags(null); setSavedAsBest(false); setExpandedSections({}); }}
+                        onTouchEnd={(e) => { e.preventDefault(); setUserAnswer(''); setFeedback(null); setValidationFlags(null); setSavedAsBest(false); setExpandedSections({}); }}
                         className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-sm hover:bg-white/20 transition-all"
                       >
                         <RotateCcw className="w-4 h-4" /> Try Again
                       </button>
                       <button
                         onClick={nextQuestion}
+                        onTouchEnd={(e) => { e.preventDefault(); nextQuestion(); }}
                         className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-sky-600 to-cyan-500 text-white font-semibold text-sm shadow-lg shadow-sky-500/30 hover:-translate-y-0.5 transition-all"
                       >
                         Next Question <ChevronRight className="w-4 h-4" />
