@@ -39,10 +39,27 @@ export default function NursingSessionSummary({ specialty, sessionResults, onRet
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) throw new Error('Not authenticated');
 
-        // Build a concise summary of Q&A pairs for the AI
-        const qaList = sessionResults.map((r, i) => (
-          `Q${i + 1} [${r.responseFramework?.toUpperCase() || 'STAR'}, ${r.category}]: "${r.question}"\nScore: ${r.score !== null ? `${r.score}/5` : 'Unscored'}`
-        )).join('\n\n');
+        // Pre-check: if session is too trivial, show static message (don't waste an API call)
+        const avgScore = sessionResults.reduce((sum, r) => sum + (r.score || 0), 0) / sessionResults.length;
+        const substantiveAnswers = sessionResults.filter(r => r.score && r.score >= 2).length;
+
+        if (substantiveAnswers === 0 || avgScore <= 1.5) {
+          setDebrief(
+            `**Not enough content for a detailed debrief.**\n\n` +
+            `You answered ${sessionResults.length} question(s), but the responses were too brief to evaluate meaningfully.\n\n` +
+            `To get the most from your mock interview, try answering each question with a specific experience — aim for 3-4 sentences describing what happened, what you did, and the outcome.`
+          );
+          setDebriefLoading(false);
+          return;
+        }
+
+        // Build a concise summary of Q&A pairs for the AI (include user answers so AI doesn't hallucinate)
+        const qaList = sessionResults.map((r, i) => {
+          const answer = r.userAnswer?.trim() || '(no answer)';
+          // Truncate very long answers to keep prompt size reasonable
+          const truncated = answer.length > 300 ? answer.slice(0, 300) + '...' : answer;
+          return `Q${i + 1} [${r.responseFramework?.toUpperCase() || 'STAR'}, ${r.category}]: "${r.question}"\nCandidate's answer: "${truncated}"\nScore: ${r.score !== null ? `${r.score}/5` : 'Unscored'}`;
+        }).join('\n\n');
 
         const debriefPrompt = `You are reviewing a completed nursing mock interview for a ${specialty.name} position. The candidate answered ${sessionResults.length} questions. Here are the results:
 
@@ -57,7 +74,10 @@ Provide a SHORT (150-200 words max) holistic interview debrief with these sectio
 RULES:
 - DO NOT evaluate clinical accuracy. Only assess communication quality.
 - Be specific and constructive, never patronizing.
-- Reference actual question categories or frameworks they practiced.
+- Reference actual content from the candidate's answers — NEVER invent details they didn't say.
+- If a question scored 1/5 (trivial/non-answer), acknowledge it honestly. Do NOT fabricate strengths for unanswered questions.
+- Only identify "Communication Strengths" from answers where the candidate actually provided substantive content.
+- If most answers were too brief, be direct: the candidate needs to practice giving fuller responses.
 - Keep it SHORT. This is a summary, not a full coaching session.`;
 
         const response = await fetchWithRetry(

@@ -82,11 +82,12 @@ Examples:
 - "OK, so you [one-sentence restatement of what they said]."
 BANNED phrases (never use these): "That's interesting", "That's comprehensive", "That tells me a lot", "I can see", "That's valuable", "That really is", "Great experience", "That's a lot of experience", "Sounds like you", or ANY evaluative/affirming language.
 
-STEP 2 — ONE FOLLOW-UP (role-relevant only)
-Probe whether this candidate fits THIS ${specialty.name} unit. Not generic elaboration.
-BAD: "Tell me more." / "What was that like?" / "Walk me through a typical day." / "What did that look like?"
-GOOD: "How would that apply to our patient population?" / "What would you change about that approach on a unit like ours?" / "You mentioned [clinical detail] — what was the outcome?"
-Prefer library follow-ups when available: ${question.followUps?.map(f => `"${f}"`).join(', ') || 'Use judgment — keep it role-relevant.'}
+STEP 2 — ONE FOLLOW-UP (dig deeper into THEIR answer)
+Your follow-up MUST reference something SPECIFIC the candidate just said. Probe deeper into THEIR experience — do NOT pivot to a different behavioral question.
+BAD: "Tell me more." / "What was that like?" (too generic)
+BAD: "Have you ever disagreed with a provider?" / "Tell me about a time you..." (that's a NEW question, not a follow-up)
+GOOD: "You mentioned [specific detail from their answer] — what was the outcome?" / "How did [person they mentioned] respond?" / "What would you do differently now?"
+Prefer library follow-ups when available: ${question.followUps?.map(f => `"${f}"`).join(', ') || 'Reference something specific from their answer.'}
 
 STEP 3 — STOP. Nothing else.
 
@@ -462,9 +463,12 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
       // Auto-advance: track exchanges per question
       exchangeCountRef.current += 1;
 
-      // After follow-up exchange (exchange 2), auto-advance to next question
-      // Real interviewers ask 1 follow-up max, then move on (Erin/Lucas feedback)
-      if (exchangeCountRef.current >= 2 && !candidateQuestionsPhase) {
+      // Only auto-advance if: (a) enough exchanges, (b) AI didn't just ask a question
+      // If AI asked a follow-up (contains "?"), wait for user to answer it first
+      // Hard cap at 4 exchanges to prevent infinite loops regardless
+      const aiAskedQuestion = cleanContent.includes('?');
+      if ((exchangeCountRef.current >= 2 && !candidateQuestionsPhase && !aiAskedQuestion) ||
+          (exchangeCountRef.current >= 4 && !candidateQuestionsPhase)) {
         autoAdvanceTimerRef.current = setTimeout(() => {
           autoAdvanceTimerRef.current = null;
           nextQuestionRef.current?.();
