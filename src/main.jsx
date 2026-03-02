@@ -17,19 +17,10 @@ if (isNativeApp()) {
     initializeNativePlatform()
   })
 
-  // Initialize native In-App Purchases (Apple IAP)
-  // Wait for deviceready to ensure Cordova plugins are loaded
-  document.addEventListener('deviceready', () => {
-    import('./utils/nativePurchases').then(({ initializePurchases }) => {
-      initializePurchases()
-    })
-  }, false)
-  // Fallback: also try after a delay in case deviceready doesn't fire in Capacitor
-  setTimeout(() => {
-    import('./utils/nativePurchases').then(({ initializePurchases }) => {
-      initializePurchases()
-    })
-  }, 3000)
+  // IAP DISABLED — Using external Stripe checkout per May 2025 court ruling
+  // (Epic v. Apple: developers can use external payment links, no Apple commission)
+  // Users subscribe at InterviewAnswers.ai/pricing via Stripe, then log into the app.
+  // See: nativePurchases.js (preserved for reference but not initialized)
 
   // Refresh app state when returning from background
   import('@capacitor/core').then(({ App }) => {

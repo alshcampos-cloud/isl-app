@@ -105,8 +105,7 @@ const UltimateCompetitiveDashboard = ({ user, supabase, userTier, onUpgrade }) =
       if (userData?.interview_date) {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        const interviewDate = new Date(userData.interview_date);
-        interviewDate.setHours(0, 0, 0, 0);
+        const interviewDate = new Date(userData.interview_date + 'T00:00:00'); // local time, not UTC
         const diffTime = interviewDate.getTime() - today.getTime();
         daysUntil = Math.round(diffTime / (1000 * 60 * 60 * 24));
       }

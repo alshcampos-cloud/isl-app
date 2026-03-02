@@ -128,8 +128,10 @@ export default function FirstTimeConsent({ user, onAccepted, onAlreadyAccepted }
               <ul className="space-y-2">
                 <li>• We collect your email to create your account</li>
                 <li>• Microphone access is used for interview practice</li>
+                <li>• <strong>AI Coaching:</strong> Your practice responses are analyzed by Anthropic's Claude AI to provide personalized feedback. No personal identifiers (email, password) are shared with Anthropic.</li>
+                <li>• Audio is processed on your device — only text transcripts are sent to the AI</li>
                 <li>• Your data is stored securely and encrypted</li>
-                <li>• You can delete your data anytime</li>
+                <li>• You can delete your data anytime from Settings</li>
                 <li>• We never sell your information</li>
               </ul>
             </div>
@@ -137,7 +139,7 @@ export default function FirstTimeConsent({ user, onAccepted, onAlreadyAccepted }
 
           {activeTab === 'privacy' && (
             <div className="space-y-4">
-              <p className="text-xs text-gray-500">Last updated: January 12, 2026</p>
+              <p className="text-xs text-gray-500">Last updated: February 28, 2026</p>
               <p>InterviewAnswers.ai is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and protect your personal information.</p>
 
               <h4 className="font-semibold text-gray-900">Information We Collect</h4>
@@ -166,10 +168,14 @@ export default function FirstTimeConsent({ user, onAccepted, onAlreadyAccepted }
               <h4 className="font-semibold text-gray-900">Third-Party Services</h4>
               <ul className="list-disc pl-5 space-y-1">
                 <li><strong>Supabase:</strong> Database and authentication services</li>
-                <li><strong>OpenAI:</strong> AI-powered feedback generation</li>
-                <li><strong>Web Speech API:</strong> Browser-based speech recognition</li>
+                <li><strong>Anthropic (Claude API):</strong> AI-powered coaching and feedback generation</li>
+                <li><strong>Web Speech API:</strong> Browser-based speech recognition (device-only)</li>
+                <li><strong>Stripe:</strong> Payment processing</li>
               </ul>
               <p>We do not sell, rent, or share your personal information with third parties for their marketing purposes.</p>
+
+              <h4 className="font-semibold text-gray-900">AI Data Processing — Anthropic (Claude)</h4>
+              <p>Your interview practice responses and coaching conversations are sent to <strong>Anthropic's Claude API</strong> to generate personalized AI feedback. We do not send your email, password, or personal identifiers to Anthropic. Audio is processed on your device — only text transcripts are sent to Anthropic. For details, see <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Anthropic's Privacy Policy</a>.</p>
 
               <h4 className="font-semibold text-gray-900">Microphone Access and Recording</h4>
               <p>InterviewAnswers.ai requests microphone access to record your practice interview responses. You have complete control over when recording occurs. Audio is used solely to generate transcriptions and provide feedback.</p>
@@ -253,7 +259,7 @@ export default function FirstTimeConsent({ user, onAccepted, onAlreadyAccepted }
         </div>
 
         <p className="text-xs text-gray-500 text-center mt-4">
-          By clicking "Accept & Continue" you agree to our Terms and Privacy Policy
+          By clicking "Accept & Continue" you agree to our Terms and Privacy Policy, including the use of Anthropic's Claude AI to analyze your practice responses
         </p>
       </div>
     </div>

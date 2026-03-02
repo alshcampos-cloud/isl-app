@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom';
 import { Brain, ArrowRight, Target, Sparkles, ChevronDown, BookOpen, CheckCircle } from 'lucide-react';
 import { useState } from 'react';
 import useDocumentHead from '../../hooks/useDocumentHead';
+import { showNursingFeatures } from '../../utils/appTarget';
 
 const questionCategories = [
   {
@@ -330,7 +331,7 @@ export default function BehavioralInterviewQuestionsPage() {
             </Link>
             <div className="flex flex-wrap items-center justify-center gap-6 text-sm">
               <Link to="/star-method-guide" className="hover:text-white transition-colors">STAR Method Guide</Link>
-              <Link to="/nurse" className="hover:text-white transition-colors">Nursing Interviews</Link>
+              {showNursingFeatures() && <Link to="/nurse" className="hover:text-white transition-colors">Nursing Interviews</Link>}
               <Link to="/terms" className="hover:text-white transition-colors">Terms</Link>
               <Link to="/privacy" className="hover:text-white transition-colors">Privacy</Link>
             </div>

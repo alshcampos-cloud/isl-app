@@ -1,4 +1,4 @@
-# Session State — Last Updated: February 26, 2026
+# Session State — Last Updated: March 1, 2026 (evening session)
 
 ---
 
@@ -16,6 +16,8 @@
 ### Also available (read as needed):
 - `docs/PRODUCT_ARCHITECTURE.md` — App structure
 - `docs/REPO_MAP.md` — File locations
+- `docs/IOS_DEPLOYMENT_GUIDE.md` — **NEW (Feb 28)** — Complete iOS build/submit guide for both apps
+- `docs/APP_STORE_METADATA.md` — **NEW (Feb 28)** — App Store descriptions, keywords, review notes for both apps
 - `docs/HANDOFF_PROMPT.md` — Detailed handoff from Feb 18 session (commit details, file lists, architecture reference)
 - `docs/SESSION_HANDOFF_GUIDE.md` — How session handoffs work
 - `docs/PHASE2_AUDIT_REPORT.md` — Full production audit and scoring
@@ -38,72 +40,157 @@ If you need to change shared utilities, global config, routing architecture, app
 
 ---
 
-## CURRENT PRIORITIES (as of Feb 23, 2026)
+## CURRENT PRIORITIES (as of March 1, 2026)
 
-### 1. ACTIVE — Google Search Console "Page with redirect" Indexing Issue
-**Status:** Google validated fix attempt and FAILED — some pages still affected.
-**Error:** "Page with redirect" — Google is finding URLs that redirect and refusing to index them.
-**Likely causes:**
-- `interviewanswers.ai` → `www.interviewanswers.ai` redirects (Vercel config)
-- Possibly the new `/auth/confirm` route we just added
-- Need to check which specific URLs are flagged in Search Console
-**Action:** Open Search Console, identify affected URLs, fix redirect chain issues.
+### 1. ACTIVE — iOS App Store Resubmission (General App — InterviewAnswers)
+
+**Status:** Code complete. Screenshots ready. Logo being redesigned. Need to rebuild iOS binary, upload screenshots, and resubmit.
+**Apple rejection (Feb 15):** Guidelines 5.1.1(i) and 5.1.2(i) — privacy says "OpenAI" but app uses Anthropic.
+**All code fixes VERIFIED DONE (re-confirmed Mar 1):**
+- [x] Privacy/consent text: OpenAI → Anthropic everywhere (PrivacyPage, FirstTimeConsent, ConsentDialog, App.jsx settings view, TermsPage)
+- [x] PrivacyInfo.xcprivacy manifest created (4 data types: user content, audio, email, performance)
+- [x] Info.plist mic descriptions updated
+- [x] IAP removed (cordova-plugin-purchase uninstalled)
+- [x] Payment routing → always Stripe (external checkout per Epic v. Apple May 2025)
+- [x] Nursing features gated out (VITE_APP_TARGET=general)
+- [x] Landing page skipped for native (→ /app → login)
+- [x] Teal rebrand in Capacitor config
+- [x] Build compiles cleanly
+- [x] App Store screenshots captured (5 screenshots, 1320x2868, in ~/Desktop/AppStoreAssets/General/Screenshots/)
+- [x] Screen recordings saved (3 recordings in ~/Desktop/AppStoreAssets/General/Video/ — not submitting video yet)
+
+**DECISION: iPhone only (no iPad) for initial submission.**
+**DECISION: No App Preview video — screenshots only. Video can be added later.**
+**DECISION: Resubmit through EXISTING rejected submission (not new submission).**
+
+**Remaining steps:**
+- [ ] Replace app icon with new logo (Lucas designing in separate chat)
+- [ ] Replace splash screen
+- [ ] Rebuild iOS binary (./scripts/build-ios.sh general)
+- [ ] Upload 5 screenshots to App Store Connect (iPhone 6.9" — 1320x2868)
+- [ ] Update App Privacy declarations in App Store Connect
+- [ ] Reply to Apple review thread confirming privacy fixes
+- [ ] Archive in Xcode and resubmit
+
+**App Store Connect details:**
+- App ID: 6758879187
+- Submission with "Unresolved Issues": b9b333d9-6379-4683-a579-c210cbe525e9
+- Current version: 1.0 (5)
+- Rejection reason: 5.1.1(i) + 5.1.2(i) — Data Collection + Data Use
+- Apple reviewed on: iPad Air 11-inch (M3) — going iPhone-only avoids this
+
+**Screenshots ready at ~/Desktop/AppStoreAssets/General/Screenshots/:**
+1. 01_HomeScreen.png — Home screen with stats and practice modes (clean 9:41 status bar)
+2. 02_LivePrompter.png — Live Interview Prompter (active session, dark theme)
+3. 03_PracticeMode.png — Practice question (pre-answer state)
+4. 04_PracticeWithAnswer.png — Typed answer with Get Feedback button
+5. 05_InterviewReadinessScore.png — IRS score breakdown (62/100)
+
+**Descript AI Assets (polished screenshots — NOT downloaded yet, ran out of credits):**
+6 polished screenshots in Descript project "App Preview Video - 1320x2868" → AI Assets folder:
+- Master Interview Questions.png
+- Instant Feedback Answers.png
+- Interview Prompter App.png
+- AI Interview Practice.png
+- Interview Readiness Tracker.png
+- Answer with Voice or Text.png
+(These can be downloaded later when credits are available — downloading doesn't use credits but the download feature wasn't working through browser automation)
+
+#### Track B: Nursing App (NurseInterviewPro) — NEW SUBMISSION
+**Status:** Code complete. Needs bundle ID registration, icon, App Store Connect setup.
+**All code done:**
+- [x] Route gating (VITE_APP_TARGET=nursing hides general, shows nursing)
+- [x] Separate Capacitor config (capacitor.config.nursing.json)
+- [x] "Back to App" hidden (no general app in nursing build)
+- [x] "Account Settings" link hidden
+- [x] Build compiles cleanly
+
+**Lucas must do manually:**
+- [ ] Register bundle ID: ai.nurseinterviewpro.app (developer.apple.com)
+- [ ] Create new app in App Store Connect
+- [ ] Design nursing-specific icon and splash
+- [ ] Take nursing screenshots from simulator
+- [ ] Fill in App Store metadata (see docs/APP_STORE_METADATA.md)
+- [ ] Archive and submit
+
+**Build commands:**
+```bash
+./scripts/build-ios.sh general    # General iOS app
+./scripts/build-ios.sh nursing    # Nursing iOS app
+./scripts/build-ios.sh web        # Web version (all features)
+```
 
 ### 2. ACTIVE — Google Ads Campaign Running
 **Status:** Campaign re-enabled Feb 22, $10/day budget, live.
-**Stats (as of Feb 22):** 170 impressions, $31.60 spent, 0 conversions, $2.43 avg CPC.
-**Conversion tracking:** Correctly wired — trackSignUp() fires after successful supabase.auth.signUp(). Has never fired because no one has completed signup yet.
-**Fixes deployed before re-enabling:**
-- Email deliverability fixed (AuthConfirm.jsx + Supabase template change)
-- Manually confirmed stuck user (that1girldora@gmail.com)
-- Onboarding funnel audit completed (CTA visibility issue identified but not yet fixed)
+**Conversion tracking:** Correctly wired. No conversions yet.
 
-### 3. ACTIVE — Organic Social Media Video Content
+### 3. ACTIVE — Google Search Console "Page with redirect" Indexing Issue
+**Status:** Google validated fix attempt and FAILED — some pages still affected.
+
+### 4. ACTIVE — Organic Social Media Video Content
 **Plan:** App demo videos with AI voiceover, posted to TikTok + Instagram Reels + Facebook Reels + YouTube Shorts.
-**First video:** "Practice Mode → AI Feedback" targeting new grad nurses.
-**Production stack:** CapCut (free, editing + captions) + ElevenLabs (free tier, natural AI voiceover) + iPhone screen recording.
-**Script written:** 30-45 second hook-based video with shot list.
-**Status:** Need to record screen recordings of app, then edit in CapCut.
-
-### 4. ACTIVE — University Outreach Emails
-**USF:** Joint email from Erin Spink + Lucas Campos sent to Stacey Kohut (sekohut1@usfca.edu), Director of Undergraduate Student Services, School of Nursing. **No response yet (12 hours in).**
-**Hopkins:** Target identified — Laura Arthur, Director of Career Lab (nursing-specific career services for 1,100+ students). Find email via LinkedIn or try larthur@jhu.edu. CC Jennifer Dotzenrod (jdotzen1@jhu.edu), Associate Dean for Enrollment Management & Student Services.
-**USC:** Lucas solo email to career center (not yet sent).
-**Positioning:** B2C resource recommendation to students, NOT B2B sales to schools. Aligned with Erin's constraints.
 
 ---
 
-## RECENTLY COMPLETED (Feb 22-23, 2026)
+## RECENTLY COMPLETED (Feb 28, 2026 — Evening Session)
 
-### Email Deliverability Fix — DEPLOYED ✅
-**Problem:** Confirmation emails from support@interviewanswers.ai contained links to tzrlpwtkrtvjpdhcaayu.supabase.co — domain mismatch triggered Gmail spam filters.
-**Fix:**
-1. Created `src/Components/AuthConfirm.jsx` (NEW FILE) — handles `/auth/confirm?token_hash=xxx&type=signup` via `supabase.auth.verifyOtp()`
-2. Added 2 lines to `src/App.jsx`:
-   - Lazy import: `const AuthConfirm = lazy(() => import('./Components/AuthConfirm'));`
-   - Route: `<Route path="/auth/confirm" element={<AuthConfirm />} />`
-3. Updated Supabase email template: Changed from `{{ .ConfirmationURL }}` to `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup`
-4. Built and deployed to Vercel production
-5. Tested: `/auth/confirm?token_hash=test&type=signup` correctly shows error for invalid token
+### Additional Fixes Found During Simulator Testing ✅
+- **SpecialtySelection.jsx:** Track switcher gated with showGeneralFeatures() (was showing dead "General" link)
+- **SpecialtySelection.jsx:** Sign-out redirect fixed (/ → /login to avoid loop in nursing build)
+- **NursingDashboard.jsx:** Track switcher gated — shows "🩺 NurseInterviewPro" label instead of General/Nursing toggle
+- **NursingDashboard.jsx:** Added Privacy Policy + Terms of Service links to account dropdown menu
+- **NursingDashboard.jsx:** Sign-out redirect fixed (/ → /login)
+- **Auth.jsx:** Terms/Privacy links changed from external https://interviewanswers.ai/... to relative /terms and /privacy (stays in-app on iOS)
+- **TermsPage.jsx:** Complete rewrite — now mentions Anthropic, recording consent, liability cap, arbitration, CCPA (18 sections, matches App.jsx version)
+- **PrivacyPage.jsx:** Updated to match App.jsx version — added Microphone Access, Recording Consent, CCPA, Data Retention sections
+- **PrivacyPage.jsx + TermsPage.jsx:** "Back to Home" links replaced with navigate(-1) (browser back) to avoid / redirect loop
+- **capacitor.config.nursing.json:** hostname changed from nurseinterviewpro.ai → interviewanswers.ai (don't own that domain yet)
 
-### User Recovery — that1girldora@gmail.com ✅
-- Manually confirmed via SQL: `UPDATE auth.users SET email_confirmed_at = now() WHERE email = 'that1girldora@gmail.com'`
-- Verified: email_confirmed_at = 2026-02-22 21:07:03.321885+00
+### Decisions Made This Session
+- App name confirmed: **NurseInterviewPro** (not taken on App Store)
+- Domain: Using interviewanswers.ai for now (not buying nurseinterviewpro.ai yet)
+- Distribution: **TestFlight** for both apps simultaneously before App Store submission
+- Bundle ID stays: ai.nurseinterviewpro.app
 
-### Google Ads Re-enabled ✅
-- Campaign #1 unpaused, $10/day, live as of Feb 22
+### Apple Rejection Fixes — CODE COMPLETE ✅
+- Replaced ALL "OpenAI" with "Anthropic (Claude API)" in:
+  - PrivacyPage.jsx (full rewrite of Third-Party Services + new Section 5)
+  - FirstTimeConsent.jsx (summary tab, privacy tab, consent footer)
+  - ConsentDialog.jsx (description, info box — native-aware variant)
+  - App.jsx settings view (Third-Party Services + new AI Data Processing subsection)
+- Created PrivacyInfo.xcprivacy (NSPrivacyTracking: false, 4 data types declared)
+- Updated Info.plist mic/speech descriptions to mention Anthropic + on-device processing
 
-### Onboarding Funnel Audit — COMPLETED (not yet fixed) ✅
-**Finding:** 50% dropout between feedback_received and IRS screen.
-**Root cause:** "See your Interview Readiness Score" button only appears AFTER feedback loads (3-5 second API wait + 0.4s animation), no auto-scroll, button may be off-screen on mobile.
-**Fix needed:** Sticky CTA button, auto-scroll to button after feedback, pulse animation. Files: `OnboardingPractice.jsx` line 175 (conditional render), line 211 (button).
-**Status:** Identified but NOT implemented yet.
+### IAP → External Stripe Payment — DONE ✅
+- Uninstalled cordova-plugin-purchase (npm + native iOS cleanup)
+- Removed IAP initialization from main.jsx
+- Changed getPaymentProvider() to always return 'stripe'
+- Updated PricingPage to always use StripeCheckout
+- Removed InAppPurchase from config.xml
+- Legal basis: May 2025 Epic v. Apple court ruling (zero Apple commission)
 
-### Pricing Correction ✅
-**IMPORTANT:** There is NO "$29.99 Pro tier" anymore. Correct pricing:
-- **Nursing 30-Day Pass:** $19.99
-- **General 30-Day Pass:** $14.99
-- Pass-based credit system, not monthly subscription
+### Two-App Architecture — DONE ✅
+- Created src/utils/appTarget.js (VITE_APP_TARGET env var, build-time gating)
+- Gated nursing features in general build:
+  - App.jsx: Routes, track switcher, ArchetypeCTA, lazy imports
+  - LandingNavbar.jsx: Desktop + mobile nursing links
+  - STARMethodGuidePage.jsx: Footer nursing link
+  - BehavioralInterviewQuestionsPage.jsx: Footer nursing link
+- Gated general features in nursing build:
+  - App.jsx: "/" → /nursing, "/app" → /nursing
+  - NursingTrackApp.jsx: "Back to App" button → null
+  - NursingDashboard.jsx: "Account Settings" link → hidden
+- Created capacitor.config.nursing.json (ai.nurseinterviewpro.app)
+- Created scripts/build-ios.sh (build any target with one command)
+- All 3 builds verified: general, nursing, web ✅
+
+### Hallucination Hardening (Final 3 Gaps) — DONE ✅
+- NursingAICoach: Persistent clinical question escalation
+- NursingMockInterview: Trivial input handling for closing phase
+- NursingOfferCoach: Trivial input handling + full audit confirmed
+
+### Teal Rebrand in iOS — DONE ✅
+- capacitor.config.json: All background colors #1e1b4b → #0f766e
 
 ---
 
@@ -111,22 +198,24 @@ If you need to change shared utilities, global config, routing architecture, app
 
 ```
 Branch: feature/nursing-track
-Last commit: 0a973df (pushed to origin Feb 22, 58 commits ahead of main)
-Main branch HEAD: 6a28236 (fix: prevent inflated scores for trivial onboarding answers)
-origin/main: IN SYNC with local main
-
-Production deployed from: feature/nursing-track via `npx vercel --prod` (redeployed Feb 22 with all env vars + AuthConfirm fix)
+Last known good commit: 0a973df (pushed to origin Feb 22)
+UNCOMMITTED CHANGES: ~20 files modified (iOS prep, privacy fixes, route gating)
+Main branch HEAD: 6a28236
+Production deployed from: feature/nursing-track (Feb 22 deploy — does NOT include today's changes)
 ```
+
+**⚠️ IMPORTANT: Today's changes are LOCAL ONLY. Nothing deployed. Nothing pushed.**
 
 ---
 
 ## WHAT'S LIVE ON PRODUCTION (www.interviewanswers.ai)
 
-**IMPORTANT:** Production is currently deployed from `feature/nursing-track` via `npx vercel --prod`, NOT from main branch auto-deploy.
+**IMPORTANT:** Production is currently deployed from `feature/nursing-track` via `npx vercel --prod` (Feb 22 deploy). Today's iOS/privacy changes are NOT on production.
 
 ### Vercel
 - Production URL: www.interviewanswers.ai
 - Last deploy: Feb 22 — includes AuthConfirm.jsx, email deliverability fix, all prior nursing track work
+- **Does NOT include:** Today's privacy text updates, route gating, IAP removal (those are local only)
 
 ### Supabase Edge Functions (all deployed):
 - `ai-feedback` (v29) — nursing-coach mode, server-side credit validation, server-side onboarding prompts, pass-based pricing
@@ -135,10 +224,6 @@ Production deployed from: feature/nursing-track via `npx vercel --prod` (redeplo
 - `generate-question` (v14) — question generation from job descriptions
 - `create-portal-session` (v9) — Stripe customer portal
 - `check-usage` (v4) — usage tracking
-
-### Supabase Email Template:
-- **CHANGED Feb 22:** Confirmation email now uses `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup` instead of `{{ .ConfirmationURL }}`
-- This routes confirmation through our domain (interviewanswers.ai) instead of supabase.co
 
 ---
 
@@ -183,6 +268,10 @@ Production deployed from: feature/nursing-track via `npx vercel --prod` (redeplo
 ### Mock Interview AI Session Debrief (Feb 26) ✅
 ### AI Coach Unlimited for Pass Holders (Feb 26) ✅
 ### Nursing Tutorial 7-Step Rewrite (Feb 26) ✅
+### iOS Two-App Architecture (Feb 28) ✅
+### Apple Rejection Privacy Fixes (Feb 28) ✅
+### IAP → External Stripe Payment (Feb 28) ✅
+### Hallucination Hardening Final Gaps (Feb 28) ✅
 
 ---
 
@@ -190,16 +279,16 @@ Production deployed from: feature/nursing-track via `npx vercel --prod` (redeplo
 
 | Route | Component | Purpose |
 |-------|-----------|---------|
-| `/` | LandingPage | General landing + marketing |
-| `/nurse` | NursingLandingPage | Nursing marketing page |
+| `/` | LandingPage | General landing + marketing (web) / redirects to /app or /nursing (iOS) |
+| `/nurse` | NursingLandingPage | Nursing marketing page (web) / redirects to /nursing (nursing iOS) |
 | `/onboarding` | ArchetypeOnboarding | Value-first onboarding (5-6 screens) |
 | `/onboarding?from=nursing` | ArchetypeOnboarding | Nursing-specific onboarding flow |
 | `/login` | AuthPage | Login |
 | `/login?from=nursing` | AuthPage | Login with nursing redirect |
 | `/signup` | AuthPage | Signup |
-| `/auth/confirm` | AuthConfirm | **NEW (Feb 22)** Email confirmation token verification |
-| `/app` | App.jsx (monolith) | General track dashboard |
-| `/nursing` | NursingTrackApp | Nursing track (protected) |
+| `/auth/confirm` | AuthConfirm | Email confirmation token verification |
+| `/app` | App.jsx (monolith) | General track dashboard (web+general iOS) / redirects to /nursing (nursing iOS) |
+| `/nursing` | NursingTrackApp | Nursing track (web+nursing iOS) / redirects to /app (general iOS) |
 | `/behavioral-interview-questions` | SEO page | |
 | `/nursing-interview-questions` | SEO page | |
 | `/star-method-guide` | SEO page | |
@@ -227,31 +316,45 @@ Production deployed from: feature/nursing-track via `npx vercel --prod` (redeplo
 | Confidence Builder | 0 (Pass only) | Unlimited | Per-session |
 | Flashcards | Unlimited | Unlimited | Free (no credits) |
 
-**Mock Interview credit details (updated Feb 26):**
-- 1 credit charged on FIRST answer (not on session open)
-- Exit without answering = 0 credits charged (free users see reassuring popup)
-- "Continue with More Questions" after initial 7 = costs 1 additional credit for free tier
-- Session debrief on summary screen does NOT cost a credit (part of session they already paid for)
-
 ---
 
-## UNDEPLOYED CHANGES (as of Feb 26)
+## NEW FILES CREATED (Feb 28)
 
-**These changes are built and build-verified on `feature/nursing-track` but NOT yet deployed:**
+| File | Purpose |
+|------|---------|
+| `src/utils/appTarget.js` | Build-time feature gating (VITE_APP_TARGET) |
+| `capacitor.config.nursing.json` | Capacitor config for NurseInterviewPro app |
+| `scripts/build-ios.sh` | One-command build script for any target |
+| `ios/App/App/PrivacyInfo.xcprivacy` | Apple privacy manifest |
+| `docs/APP_STORE_METADATA.md` | App Store descriptions for both apps |
+| `docs/IOS_DEPLOYMENT_GUIDE.md` | Complete iOS build/submit guide |
 
-| File | Change | Sessions Ago |
-|------|--------|-------------|
-| `NursingMockInterview.jsx` | Phase-based questions, per-session credits, candidate Qs, continue, exit popup | Feb 26 |
-| `NursingSessionSummary.jsx` | AI session debrief | Feb 26 |
-| `creditSystem.js` | nursing_mock: 1→2, nursing_coach: 999999 | Feb 26 |
-| `NursingTutorial.jsx` | 7-step rewrite | Feb 25 |
-| `NursingAICoach.jsx` | Credit bug fix (was blocking coach) | Feb 25 |
-| `NursingTrackApp.jsx` | Removed first_name/last_name + added triggerStreakRefresh to OfferCoach | Feb 25-26 |
-| `NursingResources.jsx` | Scroll-to-top fix | Feb 25 |
-| `NursingDashboard.jsx` | Reordered sections | Feb 25 |
-| `ai-feedback/index.ts` | Removed 20-session AI Coach cap | Feb 25 |
+## FILES MODIFIED (Feb 28) — Summary
 
-**To deploy:** `supabase functions deploy ai-feedback` THEN `npm run build && npx vercel --prod`
+| File | Change |
+|------|--------|
+| `src/App.jsx` | +import appTarget, route gating, track switcher conditional, privacy text OpenAI→Anthropic |
+| `src/Components/ConsentDialog.jsx` | Native-aware consent text, Anthropic disclosure |
+| `src/Components/FirstTimeConsent.jsx` | OpenAI→Anthropic, AI coaching disclosure |
+| `src/Components/Landing/PrivacyPage.jsx` | Full Anthropic section, OpenAI removed |
+| `src/Components/Landing/LandingNavbar.jsx` | Nursing links gated by showNursingFeatures() |
+| `src/Components/Landing/STARMethodGuidePage.jsx` | Footer nursing link gated |
+| `src/Components/Landing/BehavioralInterviewQuestionsPage.jsx` | Footer nursing link gated |
+| `src/Components/NursingTrack/NursingTrackApp.jsx` | handleBackToApp conditional, appTarget import |
+| `src/Components/NursingTrack/NursingDashboard.jsx` | Account Settings gated, track switcher gated, Privacy/Terms links added, sign-out → /login |
+| `src/Components/NursingTrack/SpecialtySelection.jsx` | Track switcher gated, sign-out → /login |
+| `src/Components/Landing/TermsPage.jsx` | Complete rewrite (18 sections, Anthropic, navigate(-1) back) |
+| `src/Auth.jsx` | Terms/Privacy links: external URLs → relative /terms and /privacy |
+| `src/Components/NursingTrack/NursingAICoach.jsx` | Persistent clinical redirect prompt |
+| `src/Components/NursingTrack/NursingMockInterview.jsx` | Trivial input handling prompt |
+| `src/Components/NursingTrack/NursingOfferCoach.jsx` | Trivial input handling prompt |
+| `src/Components/PricingPage.jsx` | Removed NativeCheckout, Stripe-only |
+| `src/main.jsx` | Removed IAP initialization |
+| `src/utils/platform.js` | getPaymentProvider() always returns 'stripe' |
+| `capacitor.config.json` | Teal colors (#0f766e) |
+| `ios/App/App/Info.plist` | Mic descriptions mention Anthropic |
+| `ios/App/App/config.xml` | Removed InAppPurchase feature |
+| `package.json` | Removed cordova-plugin-purchase |
 
 ---
 
@@ -269,6 +372,7 @@ Production deployed from: feature/nursing-track via `npx vercel --prod` (redeplo
 - Speech recognition lifecycle (months of iOS Safari fixes)
 - Anonymous auth flow in onboarding
 - Onboarding scoring (belt-and-suspenders client + server-side)
+- Route gating logic (appTarget.js — just built Feb 28, verified across 3 build targets)
 
 ---
 
@@ -284,52 +388,28 @@ Production deployed from: feature/nursing-track via `npx vercel --prod` (redeplo
 - **Budget:** $10/day
 - **Status (Feb 23):** LIVE. Campaign re-enabled Feb 22 after funnel fixes deployed.
 
-## UNIVERSITY OUTREACH
-
-| School | Contact | Email | Status |
-|--------|---------|-------|--------|
-| USF | Stacey Kohut (Dir. Undergrad Student Services, Nursing) | sekohut1@usfca.edu | Sent, no response (12 hrs) |
-| Hopkins | Laura Arthur (Dir. Career Lab, Nursing) | LinkedIn / larthur@jhu.edu (try) | Email drafted, not sent yet |
-| Hopkins CC | Jennifer Dotzenrod (Assoc Dean, Enrollment & Student Services) | jdotzen1@jhu.edu | CC on Laura's email |
-| USC | Career Center (Lucas solo) | Not yet identified | Not sent |
-
 ---
 
-## WHAT'S NEXT (Priority Order)
+## WHAT'S NEXT (Priority Order) — TOMORROW
 
-1. **Fix Google Search Console redirect issue** — Investigate which URLs are flagged, fix redirect chains
-2. **Send Hopkins email** — Laura Arthur via LinkedIn or email
-3. **Record app screen recordings** for video content (iPhone)
-4. **Create first TikTok/Reels video** — Practice Mode → AI Feedback, targeting new grads
-5. **Fix onboarding CTA visibility** — Auto-scroll, sticky button, pulse animation
-6. **Merge feature/nursing-track → main** — 58 files different, origin now in sync
-7. **Mobile responsiveness audit** — Zero real device testing done
-8. **Check Apple** — User mentioned "we haven't checked Apple in quite some time"
+1. **Register bundle ID** `ai.nurseinterviewpro.app` at developer.apple.com
+2. **Create NurseInterviewPro app** in App Store Connect
+3. **Archive BOTH apps** in Xcode (general + nursing builds)
+4. **Upload BOTH to TestFlight** for testing before submission
+5. **Replace app icons + splash screens** (manual — Lucas, need 1024x1024 PNG per app)
+6. **Test on real device via TestFlight** — sign out, Terms/Privacy, practice modes, payments
+7. **Submit both apps to App Store** after TestFlight testing passes
+8. **Deploy today's privacy fixes to web** — `npm run build && npx vercel --prod` (web still says OpenAI in settings view)
+9. **Fix Google Search Console redirect issue**
+10. **Merge feature/nursing-track → main**
 
 ## KEY DECISIONS MADE
 - Pricing is PASS-BASED, not subscription. Nursing $19.99, General $14.99. No Pro tier.
-- University outreach positioned as B2C resource recommendation, NOT B2B sales
-- Organic social media (TikTok/Reels/Shorts) before paid TikTok ads ($50/day minimum too expensive)
-- Video production: CapCut (free editing) + ElevenLabs (free AI voiceover) + iPhone screen recording
-- Email deliverability fixed via PKCE token_hash flow through own domain (not supabase.co redirects)
-- Erin's correct credentials: Erin Spink, MPH, BSN, RN, CIC
-- Lucas's credentials: Lucas Campos, MSEM, BAP
-- Lucas works in Patient Experience at Stanford Health Care
-- Erin works in Infection Prevention at Stanford Health Care
-
-## CONTENT SOURCES (for nursing track)
-The nursing track was built using published competency standards:
-- **Licensing:** NCSBN Clinical Judgment Measurement Model, NCLEX-RN Test Plan, Nurse Licensure Compact
-- **Certification bodies:** BCEN (CEN), AACN (CCRN), AORN/CCI (CNOR), NCC (RNC-OB), PNCB (CPN), ANCC (PMH-BC, MEDSURG-BC), MSNCB (CMSRN)
-- **Professional associations:** ANA, ENA, AWHONN, APNA, AMSN, SPN, NATHO, AORN
-- **Regulatory:** Joint Commission (NPSG), AHRQ (TeamSTEPPS), CDC, CMS (SEP-1), IHI (SBAR), APIC
-- **Clinical frameworks:** SBAR, NCSBN CJM, Nursing Process (ADPIE), Maslow's, ABC, NICHD 3-Tier, CUS
-- All 68 questions reviewed and approved by Erin (2/12/26): 64 approved, 3 rewritten, 0 rejected
-
-## TEST ACCOUNT
-- Email: alshcampos@gmail.com
-- Password: must be entered by the user (security boundary)
-- Beta tester account — unlimited access
+- Two-app architecture: Same codebase → VITE_APP_TARGET env var → separate builds
+- External Stripe checkout for iOS (no Apple IAP, no 30% commission)
+- Legal basis: Epic v. Apple May 2025 court ruling
+- Nursing app = separate App Store listing (NurseInterviewPro, ai.nurseinterviewpro.app)
+- General app = existing listing (InterviewAnswers, ai.interviewanswers.app)
 
 ---
 

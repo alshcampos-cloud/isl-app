@@ -34,6 +34,7 @@ import MilestoneToast from './Components/Streaks/MilestoneToast';
 import IRSDisplay from './Components/IRS/IRSDisplay';
 import { updateStreakAfterSession } from './utils/streakSupabase';
 import { trackPurchase } from './utils/googleAdsTracking';
+import { showNursingFeatures, showGeneralFeatures, isTargetedBuild, getAppTarget } from './utils/appTarget';
 
 // CSS string is OK at top-level
 const styles = `
@@ -4028,7 +4029,8 @@ const startPracticeMode = async () => {
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-slate-800 mb-1 sm:mb-2 tracking-tight">InterviewAnswers.ai</h1>
             <p className="text-base sm:text-lg md:text-xl text-slate-500 font-medium">Master Your Interview Answers with AI</p>
 
-            {/* Track Switcher — toggle between General and Nursing */}
+            {/* Track Switcher — toggle between General and Nursing (hidden in general-only builds) */}
+            {showNursingFeatures() && (
             <div className="flex items-center justify-center gap-1 mt-3 bg-slate-100 rounded-full p-1 max-w-xs mx-auto border border-slate-200">
               <span className="flex-1 text-center px-4 py-2 rounded-full text-sm font-semibold bg-white text-teal-700 shadow-sm">
                 General
@@ -4037,6 +4039,7 @@ const startPracticeMode = async () => {
                 🩺 Nursing
               </a>
             </div>
+            )}
           </div>
 
           {/* IRS Hero Card — Phase 3 Unit 2 */}
@@ -4109,8 +4112,7 @@ const startPracticeMode = async () => {
                       ? (() => {
                           const today = new Date();
                           today.setHours(0, 0, 0, 0);
-                          const interview = new Date(interviewDate);
-                          interview.setHours(0, 0, 0, 0);
+                          const interview = new Date(interviewDate + 'T00:00:00'); // local time, not UTC
                           const diffTime = interview.getTime() - today.getTime();
                           const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
                           return Math.max(0, diffDays);
@@ -4162,7 +4164,7 @@ const startPracticeMode = async () => {
           <ArchetypeCTA onAction={(action, archetype) => {
             if (action === 'practice') startPracticeMode();
             else if (action === 'assessment') setCurrentView('command-center');
-            else if (action === 'tracks') window.location.href = '/nursing';
+            else if (action === 'tracks' && showNursingFeatures()) window.location.href = '/nursing';
           }} />
 
           {/* Practice Modes - Enhanced with Psychology */}
@@ -4676,9 +4678,9 @@ const startPracticeMode = async () => {
             </div>
           </div>
           
-          <div className="max-w-4xl mx-auto mb-8">
+          <div className="max-w-4xl mx-auto mb-8 min-h-[55vh] flex items-center justify-center">
             {/* CLOUD AVATAR CONTAINER */}
-            <div ref={aiQuestionRef} className="relative bg-gradient-to-br from-teal-800/50 to-slate-800/50 backdrop-blur-lg rounded-3xl p-12 shadow-2xl">
+            <div ref={aiQuestionRef} className="relative bg-gradient-to-br from-teal-800/50 to-slate-800/50 backdrop-blur-lg rounded-3xl p-12 shadow-2xl w-full">
               {/* Animated Cloud Avatar */}
               <div className="flex justify-center mb-8">
                 <div className="relative">
@@ -6474,8 +6476,7 @@ const startPracticeMode = async () => {
                 <h3 className="text-lg sm:text-xl lg:text-2xl font-bold mb-3 sm:mb-4">🗓️ {interviewDate ? `${(() => {
                   const today = new Date();
                   today.setHours(0, 0, 0, 0);
-                  const interview = new Date(interviewDate);
-                  interview.setHours(0, 0, 0, 0);
+                  const interview = new Date(interviewDate + 'T00:00:00'); // local time, not UTC
                   const diffTime = interview.getTime() - today.getTime();
                   const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
                   return Math.max(0, diffDays + 1); // +1 so interview day = 1, not 0
@@ -6496,7 +6497,7 @@ const startPracticeMode = async () => {
                   {interviewDate && (
                     <div className="text-center bg-white/20 backdrop-blur rounded-xl p-3 sm:p-4 lg:p-5 min-w-[120px] sm:min-w-[140px]">
                       <div className="text-3xl sm:text-4xl lg:text-5xl font-black mb-0.5 sm:mb-1">
-                        {Math.max(0, Math.ceil((new Date(interviewDate).setHours(0,0,0,0) - new Date().setHours(0,0,0,0)) / (1000 * 60 * 60 * 24)) + 1)}
+                        {Math.max(0, Math.round((new Date(interviewDate + 'T00:00:00').getTime() - new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()).getTime()) / (1000 * 60 * 60 * 24)) + 1)}
                       </div>
                       <div className="text-xs sm:text-sm text-white/90 font-bold">days left!</div>
                       <div className="text-[10px] sm:text-xs text-white/75 mt-0.5 sm:mt-1">⭐ You've got this!</div>
@@ -7760,9 +7761,18 @@ const startPracticeMode = async () => {
             <p className="mb-4 text-gray-700">We use the following third-party services:</p>
             <ul className="list-disc pl-6 mb-6 space-y-2 text-gray-700">
               <li><strong>Supabase:</strong> Database and authentication services</li>
-              <li><strong>OpenAI:</strong> AI-powered feedback generation</li>
-              <li><strong>Web Speech API:</strong> Browser-based speech recognition (no data sent to external servers)</li>
+              <li><strong>Anthropic (Claude API):</strong> AI-powered interview coaching and feedback generation</li>
+              <li><strong>Stripe:</strong> Payment processing for subscriptions</li>
+              <li><strong>Web Speech API:</strong> On-device speech recognition (no audio sent to external servers)</li>
             </ul>
+
+            <h3 className="text-xl font-semibold mt-6 mb-3">AI Data Processing — Anthropic (Claude)</h3>
+            <p className="mb-4 text-gray-700">
+              Your practice responses (text only) are sent to Anthropic's Claude AI to generate personalized coaching feedback.
+              No personal identifiers (email, password, payment info) are included in AI requests. Audio is transcribed on your
+              device — only the text transcript is sent for analysis. You can review Anthropic's privacy practices at{' '}
+              <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener noreferrer" className="text-teal-600 underline">anthropic.com/privacy</a>.
+            </p>
             <p className="mb-6 text-gray-700">
               We do not sell, rent, or share your personal information with third parties for their marketing purposes.
             </p>
@@ -8162,12 +8172,12 @@ import AuthPage from './Components/AuthPage';
 const LandingPage = lazy(() => import('./Components/Landing/LandingPage'));
 const TermsPage = lazy(() => import('./Components/Landing/TermsPage'));
 const PrivacyPage = lazy(() => import('./Components/Landing/PrivacyPage'));
-const NursingTrackApp = lazy(() => import('./Components/NursingTrack/NursingTrackApp'));
-const NursingLandingPage = lazy(() => import('./Components/NursingTrack/NursingLandingPage'));
+const NursingTrackApp = showNursingFeatures() ? lazy(() => import('./Components/NursingTrack/NursingTrackApp')) : () => null;
+const NursingLandingPage = showNursingFeatures() ? lazy(() => import('./Components/NursingTrack/NursingLandingPage')) : () => null;
 const ArchetypeOnboarding = lazy(() => import('./Components/Onboarding/ArchetypeOnboarding'));
 const STARMethodGuidePage = lazy(() => import('./Components/Landing/STARMethodGuidePage'));
 const BehavioralInterviewQuestionsPage = lazy(() => import('./Components/Landing/BehavioralInterviewQuestionsPage'));
-const NursingInterviewQuestionsPage = lazy(() => import('./Components/Landing/NursingInterviewQuestionsPage'));
+const NursingInterviewQuestionsPage = showNursingFeatures() ? lazy(() => import('./Components/Landing/NursingInterviewQuestionsPage')) : () => null;
 const AuthConfirm = lazy(() => import('./Components/AuthConfirm'));
 
 const LoadingFallback = () => (
@@ -8183,18 +8193,43 @@ function App() {
   return (
     <Suspense fallback={<LoadingFallback />}>
       <Routes>
-        <Route path="/" element={<LandingPage />} />
+        {/* Root route: web → landing page, general iOS → /app, nursing iOS → /nursing */}
+        <Route path="/" element={
+          getAppTarget() === 'nursing' ? <Navigate to="/nursing" replace /> :
+          isTargetedBuild() ? <Navigate to="/app" replace /> :
+          <LandingPage />
+        } />
         <Route path="/login" element={<AuthPage mode="login" />} />
         <Route path="/signup" element={<AuthPage mode="signup" />} />
         <Route path="/auth/confirm" element={<AuthConfirm />} />
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
-        <Route path="/app" element={<ProtectedRoute><ISL /></ProtectedRoute>} />
-        <Route path="/nursing" element={<ProtectedRoute><NursingTrackApp /></ProtectedRoute>} />
-        <Route path="/nurse" element={<NursingLandingPage />} />
+
+        {/* General app: available in 'all' and 'general' builds */}
+        {showGeneralFeatures() ? (
+          <Route path="/app" element={<ProtectedRoute><ISL /></ProtectedRoute>} />
+        ) : (
+          <Route path="/app" element={<Navigate to="/nursing" replace />} />
+        )}
+
+        {/* Nursing app: available in 'all' and 'nursing' builds */}
+        {showNursingFeatures() ? (
+          <>
+            <Route path="/nursing" element={<ProtectedRoute><NursingTrackApp /></ProtectedRoute>} />
+            <Route path="/nurse" element={getAppTarget() === 'nursing' ? <Navigate to="/nursing" replace /> : <NursingLandingPage />} />
+            <Route path="/nursing-interview-questions" element={<NursingInterviewQuestionsPage />} />
+          </>
+        ) : (
+          <>
+            <Route path="/nursing" element={<Navigate to="/app" replace />} />
+            <Route path="/nurse" element={<Navigate to="/" replace />} />
+            <Route path="/nursing-interview-questions" element={<Navigate to="/" replace />} />
+          </>
+        )}
+
+        {/* SEO content pages: available in all builds */}
         <Route path="/star-method-guide" element={<STARMethodGuidePage />} />
         <Route path="/behavioral-interview-questions" element={<BehavioralInterviewQuestionsPage />} />
-        <Route path="/nursing-interview-questions" element={<NursingInterviewQuestionsPage />} />
         <Route path="/onboarding" element={<ArchetypeOnboarding />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

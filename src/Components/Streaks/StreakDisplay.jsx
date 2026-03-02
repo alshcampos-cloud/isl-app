@@ -9,7 +9,7 @@ import { Flame, Snowflake, Trophy, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { fetchStreak, activateFreeze } from '../../utils/streakSupabase';
-import { checkFreeze } from '../../utils/streakCalculator';
+import { checkFreeze, getLocalDateString } from '../../utils/streakCalculator';
 
 const MILESTONES_CONFIG = [
   { days: 3, label: '3 days', icon: '🌱' },
@@ -46,12 +46,32 @@ export default function StreakDisplay({ refreshTrigger, variant = 'dark' }) {
   // Don't render anything if we have no data
   if (!streak) return null;
 
-  const currentStreak = streak.current_streak || 0;
+  // Recalculate streak on display — the DB stores the last known value,
+  // but if the user missed days since then, the displayed streak should be 0.
+  // The DB only updates on session completion, so we need this client-side check.
+  let currentStreak = streak.current_streak || 0;
   const longestStreak = streak.longest_streak || 0;
   const freezeInfo = checkFreeze(
     streak.freezes_used_this_week || 0,
     streak.freeze_week_start
   );
+
+  if (currentStreak > 0 && streak.last_practice_date) {
+    const today = getLocalDateString();
+    const lastDate = streak.last_practice_date; // already YYYY-MM-DD
+    const a = new Date(lastDate + 'T00:00:00');
+    const b = new Date(today + 'T00:00:00');
+    const daysSince = Math.round((b - a) / (1000 * 60 * 60 * 24));
+    // If more than 1 day gap and no freeze available, streak is broken
+    if (daysSince > 1) {
+      // Check if a freeze could cover exactly 1 missed day (gap of 2)
+      if (daysSince === 2 && freezeInfo.canFreeze) {
+        // Freeze covers 1 missed day — streak survives but don't increment
+      } else {
+        currentStreak = 0; // streak is broken, show 0
+      }
+    }
+  }
 
   // Flame color: teal at 0-6, orange at 7+
   const isHotStreak = currentStreak >= 7;

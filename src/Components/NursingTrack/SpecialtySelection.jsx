@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { ArrowRight, ArrowLeft, Stethoscope, CheckCircle, LogOut } from 'lucide-react';
 import { NURSING_SPECIALTIES } from './nursingQuestions';
 import { supabase } from '../../lib/supabase';
+import { showGeneralFeatures } from '../../utils/appTarget';
 
 export default function SpecialtySelection({ onSelectSpecialty, onBack }) {
   const [selected, setSelected] = useState(null);
@@ -23,7 +24,8 @@ export default function SpecialtySelection({ onSelectSpecialty, onBack }) {
       {/* Header */}
       <div className="bg-slate-900/80 backdrop-blur-lg border-b border-white/10 sticky top-0 z-30">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-          {/* Track Switcher — mirrors the toggle on the main app home screen */}
+          {/* Track Switcher — shown only when general app is available */}
+          {showGeneralFeatures() ? (
           <div className="flex items-center gap-1 bg-white/10 rounded-full p-0.5 border border-white/20">
             <a href="/app" className="px-3 py-1.5 rounded-full text-xs font-semibold text-white/70 hover:text-white hover:bg-white/10 transition-all no-underline">
               General
@@ -32,13 +34,20 @@ export default function SpecialtySelection({ onSelectSpecialty, onBack }) {
               🩺 Nursing
             </span>
           </div>
+          ) : (
+          <div className="flex items-center gap-1">
+            <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-white/10 text-white border border-white/20">
+              🩺 NurseInterviewPro
+            </span>
+          </div>
+          )}
           <div className="flex items-center gap-2">
             <Stethoscope className="w-4 h-4 text-sky-400" />
             <span className="text-white font-medium text-sm">Nursing Interview Track</span>
           </div>
           <button
-            onClick={async () => { await supabase.auth.signOut(); window.location.href = '/'; }}
-            onTouchEnd={async (e) => { e.preventDefault(); await supabase.auth.signOut(); window.location.href = '/'; }}
+            onClick={async () => { await supabase.auth.signOut(); window.location.href = '/login'; }}
+            onTouchEnd={async (e) => { e.preventDefault(); await supabase.auth.signOut(); window.location.href = '/login'; }}
             className="flex items-center gap-1 text-slate-400 hover:text-red-400 text-xs transition-colors"
             title="Sign out"
           >

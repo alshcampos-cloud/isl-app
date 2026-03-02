@@ -40,19 +40,15 @@ export function isWeb() {
 }
 
 /**
- * Get the payment method that should be used on the current platform
- * - Web → Stripe (existing flow)
- * - iOS → Apple In-App Purchase (required by App Store rules)
- * - Android → Google Play Billing (required by Play Store rules)
+ * Get the payment method that should be used on the current platform.
+ *
+ * As of May 2025 (Epic v. Apple ruling), developers can use external payment
+ * links in U.S. iOS apps with zero Apple commission. We route ALL platforms
+ * to Stripe via the website for a consistent, lower-cost payment flow.
+ *
+ * Native app users who need to subscribe are directed to the website checkout.
  */
 export function getPaymentProvider() {
-  const platform = getPlatform();
-  switch (platform) {
-    case 'ios':
-      return 'apple';
-    case 'android':
-      return 'google';
-    default:
-      return 'stripe';
-  }
+  // All platforms use Stripe via external web checkout
+  return 'stripe';
 }

@@ -10,6 +10,7 @@ import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { isBetaUser, getUsageStats, resolveEffectiveTier, hasActiveNursingPass } from '../../utils/creditSystem';
+import { showGeneralFeatures } from '../../utils/appTarget';
 import FirstTimeConsent from '../FirstTimeConsent';
 import NursingTutorial from './NursingTutorial';
 import { fetchSessionHistory, insertPracticeSession } from './nursingSupabase';
@@ -332,10 +333,10 @@ export default function NursingTrackApp() {
     setTargetQuestionId(null);
   }, []);
 
-  const handleBackToApp = useCallback(() => {
-    // Navigate back to the main InterviewAnswers.AI app
+  // Only provide "Back to App" when general features exist (not in nursing-only builds)
+  const handleBackToApp = showGeneralFeatures() ? (() => {
     navigate('/app');
-  }, [navigate]);
+  }) : null;
 
   // ============================================================
   // PRO GATE — blocks free users from premium modes

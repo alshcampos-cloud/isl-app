@@ -22,7 +22,6 @@
     "@capacitor/status-bar": "^8.0.0",
     "@stripe/stripe-js": "^8.7.0",
     "@supabase/supabase-js": "^2.89.0",
-    "cordova-plugin-purchase": "^13.13.0",
     "framer-motion": "^12.23.26",
     "lucide-react": "^0.263.1",
     "react": "^18.2.0",

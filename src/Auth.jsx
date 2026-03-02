@@ -235,18 +235,14 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
                 <span className="text-sm text-gray-600">
                   I agree to the{' '}
                   <a
-                    href="https://interviewanswers.ai/terms"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href="/terms"
                     className="text-teal-600 hover:text-teal-700 underline"
                   >
                     Terms of Service
                   </a>{' '}
                   and{' '}
                   <a
-                    href="https://interviewanswers.ai/privacy"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href="/privacy"
                     className="text-teal-600 hover:text-teal-700 underline"
                   >
                     Privacy Policy

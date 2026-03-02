@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom';
 import { Brain, ArrowRight, CheckCircle, Target, Sparkles, BookOpen, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 import useDocumentHead from '../../hooks/useDocumentHead';
+import { showNursingFeatures } from '../../utils/appTarget';
 
 function AccordionItem({ title, children, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -332,7 +333,7 @@ export default function STARMethodGuidePage() {
               <span className="font-bold text-white">InterviewAnswers.ai</span>
             </Link>
             <div className="flex flex-wrap items-center justify-center gap-6 text-sm">
-              <Link to="/nurse" className="hover:text-white transition-colors">Nursing Interviews</Link>
+              {showNursingFeatures() && <Link to="/nurse" className="hover:text-white transition-colors">Nursing Interviews</Link>}
               <Link to="/behavioral-interview-questions" className="hover:text-white transition-colors">Behavioral Questions</Link>
               <Link to="/terms" className="hover:text-white transition-colors">Terms</Link>
               <Link to="/privacy" className="hover:text-white transition-colors">Privacy</Link>

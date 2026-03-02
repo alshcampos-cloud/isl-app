@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Brain, ArrowLeft } from 'lucide-react';
 import useDocumentHead from '../../hooks/useDocumentHead';
 
@@ -10,97 +10,155 @@ export default function PrivacyPage() {
     robots: 'noindex, follow',
   });
 
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
+          <button onClick={() => navigate(-1)} className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-600 to-emerald-600 flex items-center justify-center">
               <Brain className="w-5 h-5 text-white" />
             </div>
             <span className="font-bold text-gray-900">InterviewAnswers.ai</span>
-          </Link>
-          <Link to="/" className="flex items-center gap-1 text-sm text-teal-600 hover:text-teal-700 font-medium">
+          </button>
+          <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm text-teal-600 hover:text-teal-700 font-medium">
             <ArrowLeft className="w-4 h-4" />
-            Back to Home
-          </Link>
+            Back
+          </button>
         </div>
       </nav>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Privacy Policy</h1>
         <div className="space-y-6 text-gray-600 leading-relaxed">
-          <p><strong>Effective Date:</strong> January 1, 2025</p>
+          <p><strong>Last updated:</strong> February 28, 2026</p>
+
+          <p>
+            InterviewAnswers.ai is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and protect your personal information.
+          </p>
 
           <h2 className="text-xl font-bold text-gray-900 mt-8">1. Information We Collect</h2>
-          <p>When you use InterviewAnswers.ai, we collect:</p>
+          <p>We collect the following information:</p>
           <ul className="list-disc pl-6 space-y-2">
-            <li><strong>Account information:</strong> Email address, full name, and password (securely hashed)</li>
-            <li><strong>Practice data:</strong> Your interview questions, answers, practice session recordings (text only), and performance scores</li>
-            <li><strong>Usage data:</strong> Feature usage, session frequency, and interaction patterns to improve the Service</li>
-            <li><strong>Payment information:</strong> Processed securely by Stripe. We do not store credit card numbers.</li>
+            <li>Email address for account creation and authentication</li>
+            <li>Audio recordings of your practice interview responses</li>
+            <li>Text transcriptions generated from your audio responses</li>
+            <li>Practice session history, scores, and progress metrics</li>
+            <li>Question banks and custom questions you create</li>
+            <li>Usage data and analytics to improve our services</li>
           </ul>
 
           <h2 className="text-xl font-bold text-gray-900 mt-8">2. How We Use Your Information</h2>
-          <p>We use your information to:</p>
           <ul className="list-disc pl-6 space-y-2">
-            <li>Provide and improve the interview preparation Service</li>
-            <li>Generate AI-powered feedback on your practice sessions</li>
-            <li>Track your progress and provide analytics</li>
-            <li>Process subscription payments</li>
-            <li>Send essential account communications (password resets, billing notices)</li>
+            <li>Authenticate your account and enable access across devices</li>
+            <li>Generate AI-powered feedback on your interview responses</li>
+            <li>Track your progress and improvement over time</li>
+            <li>Improve our AI models and service features</li>
+            <li>Send service-related communications and product updates</li>
+            <li>Provide customer support when requested</li>
           </ul>
 
-          <h2 className="text-xl font-bold text-gray-900 mt-8">3. Data Security</h2>
-          <p>We take the security of your data seriously:</p>
-          <ul className="list-disc pl-6 space-y-2">
-            <li>All data is encrypted using <strong>AES-256 encryption</strong></li>
-            <li>Authentication is handled by <strong>Supabase</strong> with industry-standard security practices</li>
-            <li>All connections use HTTPS/TLS encryption</li>
-            <li>Payment processing is handled by <strong>Stripe</strong>, a PCI-DSS Level 1 certified payment processor</li>
-          </ul>
+          <h2 className="text-xl font-bold text-gray-900 mt-8">3. Data Storage and Security</h2>
+          <p>
+            We use Supabase as our database provider to store your account information and practice data.
+            Audio recordings are stored locally on your device. All data transmitted between your device
+            and our servers is encrypted using industry-standard HTTPS/TLS protocols. Data at rest is
+            encrypted using AES-256 encryption.
+          </p>
 
           <h2 className="text-xl font-bold text-gray-900 mt-8">4. Third-Party Services</h2>
-          <p>We use the following third-party services to provide and improve our Service:</p>
+          <p>We use the following third-party services:</p>
           <ul className="list-disc pl-6 space-y-2">
-            <li><strong>Supabase:</strong> Authentication, database, and serverless functions</li>
-            <li><strong>OpenAI:</strong> AI-powered interview feedback and answer generation</li>
-            <li><strong>Stripe:</strong> Payment processing for Pro subscriptions</li>
-            <li><strong>Web Speech API:</strong> Browser-based speech recognition for practice sessions</li>
-            <li><strong>Vercel:</strong> Application hosting and deployment</li>
+            <li><strong>Supabase:</strong> Database and authentication services</li>
+            <li><strong>Anthropic (Claude API):</strong> AI-powered interview coaching and feedback generation</li>
+            <li><strong>Stripe:</strong> Payment processing for subscriptions</li>
+            <li><strong>Web Speech API:</strong> On-device speech recognition (no audio sent to external servers)</li>
           </ul>
-          <p>Each of these services has their own privacy policies governing how they handle data.</p>
 
-          <h2 className="text-xl font-bold text-gray-900 mt-8">5. Data Sharing</h2>
-          <p>We do <strong>not</strong> sell, trade, or rent your personal information to third parties. We only share data with the third-party services listed above as necessary to provide the Service.</p>
+          <h2 className="text-xl font-bold text-gray-900 mt-8">5. AI Data Processing — Anthropic (Claude)</h2>
+          <p>
+            Your practice responses (text only) are sent to <strong>Anthropic's Claude AI</strong> to generate personalized coaching feedback.
+            No personal identifiers (email, password, payment info) are included in AI requests. Audio is transcribed on your
+            device — only the text transcript is sent for analysis. You can review Anthropic's privacy practices at{' '}
+            <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener noreferrer" className="text-teal-600 hover:text-teal-700 underline">anthropic.com/privacy</a>.
+          </p>
+          <p>
+            We do not sell, rent, or share your personal information with third parties for their marketing purposes.
+          </p>
 
-          <h2 className="text-xl font-bold text-gray-900 mt-8">6. Speech Recognition</h2>
-          <p>When you use speech recognition features, your audio is processed by your browser's Web Speech API. Audio data is processed locally or by your browser's speech service (e.g., Google for Chrome). We do not store audio recordings. Only the transcribed text is saved to your account.</p>
+          <h2 className="text-xl font-bold text-gray-900 mt-8">6. Microphone Access and Recording</h2>
+          <p>
+            InterviewAnswers.ai requests microphone access to record your practice interview responses. You have complete
+            control over when recording occurs. Audio is used solely to generate transcriptions and provide
+            feedback. We do not monitor, listen to, or store your recordings on external servers without
+            your explicit consent.
+          </p>
 
-          <h2 className="text-xl font-bold text-gray-900 mt-8">7. Live Prompter</h2>
-          <p>The Live Prompter feature processes audio locally in your browser to detect interview questions. No audio is transmitted to our servers. Only question-matching is performed locally to display your prepared bullet points.</p>
+          <h3 className="text-lg font-semibold text-gray-900 mt-6">Recording Consent and Legal Compliance</h3>
+          <p>
+            <strong>Important:</strong> If you use InterviewAnswers.ai's Live Prompter feature during actual interviews with other people,
+            you are solely responsible for obtaining consent from all parties being recorded and complying with
+            applicable recording laws. Many jurisdictions require all-party consent before recording conversations.
+          </p>
+          <p>
+            States requiring all-party consent include: California, Connecticut, Florida, Illinois, Maryland,
+            Massachusetts, Michigan, Montana, Nevada, New Hampshire, Pennsylvania, and Washington. This list
+            is not exhaustive. You should consult local laws and obtain appropriate consent before recording
+            any conversation.
+          </p>
 
-          <h2 className="text-xl font-bold text-gray-900 mt-8">8. Data Retention</h2>
-          <p>Your practice data and account information are retained as long as your account is active. If you delete your account, we will remove your personal data within 30 days. Some anonymized usage data may be retained for analytics purposes.</p>
-
-          <h2 className="text-xl font-bold text-gray-900 mt-8">9. Your Rights</h2>
-          <p>You have the right to:</p>
+          <h2 className="text-xl font-bold text-gray-900 mt-8">7. Your Rights and Data Control</h2>
+          <p>You have the following rights regarding your data:</p>
           <ul className="list-disc pl-6 space-y-2">
-            <li>Access your personal data</li>
-            <li>Request correction of inaccurate data</li>
-            <li>Request deletion of your account and data</li>
-            <li>Export your practice data</li>
-            <li>Opt out of non-essential communications</li>
+            <li><strong>Access:</strong> You can view all your data within the app</li>
+            <li><strong>Deletion:</strong> You can delete all your data at any time from Settings</li>
+            <li><strong>Export:</strong> You can request a copy of your data by contacting us</li>
+            <li><strong>Correction:</strong> You can update or correct your information within the app</li>
+            <li><strong>Opt-out:</strong> You can opt-out of non-essential communications</li>
           </ul>
+
+          <h2 className="text-xl font-bold text-gray-900 mt-8">8. California Privacy Rights (CCPA)</h2>
+          <p>
+            If you are a California resident, you have additional rights under the California Consumer Privacy Act:
+          </p>
+          <ul className="list-disc pl-6 space-y-2">
+            <li>Right to know what personal information we collect and how we use it</li>
+            <li>Right to delete your personal information</li>
+            <li>Right to opt-out of the sale of personal information (we do not sell your data)</li>
+            <li>Right to non-discrimination for exercising your privacy rights</li>
+          </ul>
+          <p>
+            To exercise these rights, use the Delete Data function in Settings or contact us at support@interviewanswers.ai.
+          </p>
+
+          <h2 className="text-xl font-bold text-gray-900 mt-8">9. Data Retention</h2>
+          <p>
+            We retain your personal information for as long as your account is active or as needed to provide
+            services. You may delete your account and all associated data at any time from the Settings page.
+            After deletion, your data will be permanently removed from our systems within 30 days, except where
+            we are required to retain it for legal compliance.
+          </p>
 
           <h2 className="text-xl font-bold text-gray-900 mt-8">10. Children's Privacy</h2>
-          <p>The Service is not intended for children under 13. We do not knowingly collect information from children under 13. If we become aware of such collection, we will delete the information promptly.</p>
+          <p>
+            InterviewAnswers.ai is not intended for children under the age of 13. We do not knowingly collect personal
+            information from children under 13. If you believe we have collected information from a child
+            under 13, please contact us immediately and we will delete such information.
+          </p>
 
           <h2 className="text-xl font-bold text-gray-900 mt-8">11. Changes to This Policy</h2>
-          <p>We may update this Privacy Policy from time to time. We will notify you of significant changes via email. Continued use of the Service constitutes acceptance of the updated policy.</p>
+          <p>
+            We may update this Privacy Policy from time to time. We will notify you of any material changes
+            by posting the new Privacy Policy on this page and updating the "Last updated" date. Your continued
+            use of InterviewAnswers.ai after such changes constitutes acceptance of the updated policy.
+          </p>
 
-          <h2 className="text-xl font-bold text-gray-900 mt-8">12. Contact</h2>
-          <p>For privacy-related questions or requests, contact us at <a href="mailto:support@interviewanswers.ai" className="text-teal-600 hover:text-teal-700">support@interviewanswers.ai</a>.</p>
+          <h2 className="text-xl font-bold text-gray-900 mt-8">12. Contact Us</h2>
+          <p>
+            If you have questions about this Privacy Policy or wish to exercise your privacy rights, please contact us
+            at <a href="mailto:support@interviewanswers.ai" className="text-teal-600 hover:text-teal-700">support@interviewanswers.ai</a>.
+          </p>
         </div>
       </div>
     </div>

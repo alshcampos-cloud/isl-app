@@ -8,10 +8,11 @@ import {
   ArrowLeft, Bot, Target, BookOpen, Award,
   ChevronRight, Stethoscope, MessageSquare, Clock,
   BarChart3, Star, Sparkles, Layers, Shield, DollarSign,
-  LogOut, Settings, ChevronDown, User
+  LogOut, Settings, ChevronDown, User, FileText, Lock
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { CLINICAL_FRAMEWORKS } from './nursingQuestions';
+import { showGeneralFeatures } from '../../utils/appTarget';
 import useNursingQuestions from './useNursingQuestions';
 import NursingLoadingSkeleton from './NursingLoadingSkeleton';
 import NursingIRSDisplay from './NursingIRSDisplay';
@@ -69,18 +70,38 @@ function AccountMenu({ userData }) {
             <p className="text-slate-500 text-[10px] mt-0.5">{tierLabel} Plan</p>
           </div>
 
-          {/* Settings — goes to general app settings */}
+          {/* Account Settings — goes to general app settings (only in builds that include general) */}
+          {showGeneralFeatures() && (
           <a
             href="/app?view=settings"
             className="flex items-center gap-2 px-3 py-2 text-slate-300 hover:text-white hover:bg-white/10 text-xs transition-colors no-underline"
           >
             <Settings className="w-3.5 h-3.5" /> Account Settings
           </a>
+          )}
 
-          {/* Sign out */}
+          {/* Privacy Policy */}
+          <a
+            href="/privacy"
+            className="flex items-center gap-2 px-3 py-2 text-slate-300 hover:text-white hover:bg-white/10 text-xs transition-colors no-underline"
+          >
+            <Lock className="w-3.5 h-3.5" /> Privacy Policy
+          </a>
+
+          {/* Terms of Service */}
+          <a
+            href="/terms"
+            className="flex items-center gap-2 px-3 py-2 text-slate-300 hover:text-white hover:bg-white/10 text-xs transition-colors no-underline"
+          >
+            <FileText className="w-3.5 h-3.5" /> Terms of Service
+          </a>
+
+          <div className="border-t border-white/10 my-1" />
+
+          {/* Sign out — use /login to avoid redirect loop in nursing-only builds */}
           <button
-            onClick={async () => { await supabase.auth.signOut(); window.location.href = '/'; }}
-            onTouchEnd={async (e) => { e.preventDefault(); await supabase.auth.signOut(); window.location.href = '/'; }}
+            onClick={async () => { await supabase.auth.signOut(); window.location.href = '/login'; }}
+            onTouchEnd={async (e) => { e.preventDefault(); await supabase.auth.signOut(); window.location.href = '/login'; }}
             className="flex items-center gap-2 w-full px-3 py-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 text-xs transition-colors"
           >
             <LogOut className="w-3.5 h-3.5" /> Sign Out
@@ -188,7 +209,8 @@ export default function NursingDashboard({ specialty, onStartMode, onChangeSpeci
       {/* Top Nav */}
       <div className="bg-slate-900/80 backdrop-blur-lg border-b border-white/10 sticky top-0 z-30">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-          {/* Track Switcher — mirrors the toggle on the main app home screen */}
+          {/* Track Switcher — shown only when general app is available */}
+          {showGeneralFeatures() ? (
           <div className="flex items-center gap-1 bg-white/10 rounded-full p-0.5 border border-white/20">
             <a href="/app" className="px-3 py-1.5 rounded-full text-xs font-semibold text-white/70 hover:text-white hover:bg-white/10 transition-all no-underline">
               General
@@ -197,6 +219,13 @@ export default function NursingDashboard({ specialty, onStartMode, onChangeSpeci
               🩺 Nursing
             </span>
           </div>
+          ) : (
+          <div className="flex items-center gap-1">
+            <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-white/10 text-white border border-white/20">
+              🩺 NurseInterviewPro
+            </span>
+          </div>
+          )}
 
           {/* Current specialty indicator */}
           <div className="flex items-center gap-2">

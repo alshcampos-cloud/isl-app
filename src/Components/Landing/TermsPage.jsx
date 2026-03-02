@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Brain, ArrowLeft } from 'lucide-react';
 import useDocumentHead from '../../hooks/useDocumentHead';
 
@@ -10,67 +10,200 @@ export default function TermsPage() {
     robots: 'noindex, follow',
   });
 
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
+          <button onClick={() => navigate(-1)} className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-600 to-emerald-600 flex items-center justify-center">
               <Brain className="w-5 h-5 text-white" />
             </div>
             <span className="font-bold text-gray-900">InterviewAnswers.ai</span>
-          </Link>
-          <Link to="/" className="flex items-center gap-1 text-sm text-teal-600 hover:text-teal-700 font-medium">
+          </button>
+          <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm text-teal-600 hover:text-teal-700 font-medium">
             <ArrowLeft className="w-4 h-4" />
-            Back to Home
-          </Link>
+            Back
+          </button>
         </div>
       </nav>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Terms of Service</h1>
         <div className="space-y-6 text-gray-600 leading-relaxed">
-          <p><strong>Effective Date:</strong> January 1, 2025</p>
+          <p><strong>Last updated:</strong> February 28, 2026</p>
 
           <h2 className="text-xl font-bold text-gray-900 mt-8">1. Acceptance of Terms</h2>
-          <p>By accessing or using InterviewAnswers.ai ("we", "our", or "the Service"), you agree to be bound by these Terms of Service. If you do not agree, please do not use the Service.</p>
+          <p>
+            By accessing or using InterviewAnswers.ai, you agree to be bound by these Terms of Service
+            and all applicable laws and regulations. If you do not agree with these terms, you may not use InterviewAnswers.ai.
+          </p>
 
           <h2 className="text-xl font-bold text-gray-900 mt-8">2. Description of Service</h2>
-          <p>InterviewAnswers.ai provides AI-powered interview preparation tools including practice sessions, answer building, question generation, and live interview prompting. The Service is intended for educational and personal development purposes only.</p>
+          <p>
+            InterviewAnswers.ai provides AI-powered interview preparation tools including practice sessions,
+            mock interviews, answer building, question generation, live interview prompting, and nursing-specific
+            interview coaching. The Service uses <strong>Anthropic's Claude AI</strong> to generate personalized
+            feedback and coaching. The Service is intended for educational and personal development purposes only.
+          </p>
 
-          <h2 className="text-xl font-bold text-gray-900 mt-8">3. User Accounts</h2>
-          <p>You must be at least 13 years old to create an account. You are responsible for maintaining the confidentiality of your account credentials. You agree to provide accurate information when creating your account.</p>
+          <h2 className="text-xl font-bold text-gray-900 mt-8">3. License to Use</h2>
+          <p>
+            We grant you a limited, non-exclusive, non-transferable, revocable license to access and use InterviewAnswers.ai
+            for personal interview practice and preparation. You may not use InterviewAnswers.ai for any commercial purpose
+            without our prior written consent.
+          </p>
 
-          <h2 className="text-xl font-bold text-gray-900 mt-8">4. Acceptable Use</h2>
-          <p>You agree not to:</p>
+          <h2 className="text-xl font-bold text-gray-900 mt-8">4. User Accounts</h2>
+          <p>
+            You must be at least 13 years old to create an account. You are responsible for maintaining the
+            confidentiality of your account credentials. You agree to provide accurate information when creating your account.
+          </p>
+
+          <h2 className="text-xl font-bold text-gray-900 mt-8">5. AI-Generated Content</h2>
+          <p>
+            InterviewAnswers.ai uses <strong>Anthropic's Claude AI</strong> to generate interview feedback, coaching,
+            and suggestions. You acknowledge and agree that:
+          </p>
           <ul className="list-disc pl-6 space-y-2">
-            <li>Use the Service for any illegal or unauthorized purpose</li>
-            <li>Attempt to gain unauthorized access to the Service or its systems</li>
-            <li>Share your account credentials with others</li>
-            <li>Use the Service in a way that could harm other users</li>
-            <li>Violate any applicable laws or regulations</li>
+            <li>AI-generated feedback may contain errors, inaccuracies, or biases</li>
+            <li>Feedback is provided for educational and practice purposes only</li>
+            <li>AI feedback does not constitute professional career counseling or advice</li>
+            <li>You should exercise your own judgment and seek professional guidance for important career decisions</li>
+            <li>We make no guarantees regarding interview success, job offers, or career outcomes</li>
+            <li>For nursing interview features, AI provides <strong>communication coaching only</strong> — it does not provide clinical advice, medical recommendations, or replace clinical education</li>
           </ul>
 
-          <h2 className="text-xl font-bold text-gray-900 mt-8">5. Subscription and Payments</h2>
-          <p>InterviewAnswers.ai offers both free and paid subscription tiers. Paid subscriptions are billed monthly through Stripe. You may cancel your subscription at any time. Cancellation takes effect at the end of the current billing period. No refunds are provided for partial billing periods.</p>
+          <h2 className="text-xl font-bold text-gray-900 mt-8">6. Recording Consent and Legal Compliance</h2>
+          <p><strong>User Responsibility for Recording Consent:</strong></p>
+          <p>
+            If you use InterviewAnswers.ai's Live Prompter feature or any recording functionality during actual interviews
+            or conversations with other people, you are solely responsible for:
+          </p>
+          <ul className="list-disc pl-6 space-y-2">
+            <li>Obtaining explicit consent from all parties before recording</li>
+            <li>Complying with all applicable federal, state, and local recording laws</li>
+            <li>Informing all parties that you are using assistance technology</li>
+            <li>Verifying that such use is permitted by the organization conducting the interview</li>
+          </ul>
+          <p>
+            Many jurisdictions require all-party consent before recording conversations. States with all-party
+            consent laws include California, Connecticut, Florida, Illinois, Maryland, Massachusetts, Michigan,
+            Montana, Nevada, New Hampshire, Pennsylvania, and Washington. This list is not exhaustive. Recording
+            without proper consent may result in criminal penalties, civil liability, and disqualification from
+            employment consideration. You agree to indemnify and hold InterviewAnswers.ai harmless from any claims arising from
+            your failure to obtain proper recording consent.
+          </p>
 
-          <h2 className="text-xl font-bold text-gray-900 mt-8">6. Live Prompter Disclaimer</h2>
-          <p>The Live Prompter feature is designed to assist during interviews. Some employers may have policies regarding the use of notes or assistance during interviews. It is your responsibility to understand and comply with any such policies. InterviewAnswers.ai is not responsible for any consequences resulting from the use of the Live Prompter feature.</p>
+          <h2 className="text-xl font-bold text-gray-900 mt-8">7. Subscription and Payments</h2>
+          <p>
+            InterviewAnswers.ai offers both free and paid subscription tiers. Paid subscriptions are billed through Stripe.
+            You may cancel your subscription at any time. Cancellation takes effect at the end of the current billing period.
+            No refunds are provided for partial billing periods.
+          </p>
 
-          <h2 className="text-xl font-bold text-gray-900 mt-8">7. AI-Generated Content</h2>
-          <p>The AI feedback, suggestions, and generated content provided by the Service are for educational purposes only and should not be considered professional career advice. AI-generated content may not always be accurate or appropriate for your specific situation.</p>
+          <h2 className="text-xl font-bold text-gray-900 mt-8">8. Acceptable Use Policy</h2>
+          <p>You agree not to:</p>
+          <ul className="list-disc pl-6 space-y-2">
+            <li>Record conversations without obtaining legally required consent from all parties</li>
+            <li>Use InterviewAnswers.ai for any unlawful purpose or in violation of any applicable laws</li>
+            <li>Upload, transmit, or share illegal, harmful, threatening, or offensive content</li>
+            <li>Attempt to gain unauthorized access to InterviewAnswers.ai's systems or other users' accounts</li>
+            <li>Reverse engineer, decompile, or disassemble any part of InterviewAnswers.ai</li>
+            <li>Use automated systems to access or interact with InterviewAnswers.ai without authorization</li>
+            <li>Interfere with or disrupt the operation of InterviewAnswers.ai or its servers</li>
+            <li>Impersonate any person or entity or misrepresent your affiliation</li>
+          </ul>
 
-          <h2 className="text-xl font-bold text-gray-900 mt-8">8. Intellectual Property</h2>
-          <p>The Service, including its design, features, and content, is owned by InterviewAnswers.ai. Your interview answers and personal content remain your own property. By using the Service, you grant us a limited license to process your content for the purpose of providing the Service.</p>
+          <h2 className="text-xl font-bold text-gray-900 mt-8">9. Intellectual Property</h2>
+          <p>
+            The Service, including its design, features, and content, is owned by InterviewAnswers.ai. Your interview
+            answers and personal content remain your own property. By using the Service, you grant us a limited license
+            to process your content for the purpose of providing the Service.
+          </p>
 
-          <h2 className="text-xl font-bold text-gray-900 mt-8">9. Limitation of Liability</h2>
-          <p>The Service is provided "as is" without warranties of any kind. We are not liable for any indirect, incidental, or consequential damages arising from your use of the Service, including but not limited to job interview outcomes.</p>
+          <h2 className="text-xl font-bold text-gray-900 mt-8">10. Limitation of Liability</h2>
+          <p><strong>Maximum Liability Cap:</strong></p>
+          <p>
+            To the maximum extent permitted by law, InterviewAnswers.ai's total liability for all claims related to the service
+            shall not exceed the lesser of (a) the amount you paid to InterviewAnswers.ai in the twelve months preceding the
+            claim, or (b) one hundred dollars ($100 USD).
+          </p>
+          <p><strong>Exclusion of Damages:</strong></p>
+          <p>
+            InterviewAnswers.ai shall not be liable for any indirect, incidental, special, consequential, or punitive damages,
+            including but not limited to loss of profits, data, business opportunities, or goodwill, whether based
+            on contract, tort, negligence, strict liability, or otherwise, arising from your use of InterviewAnswers.ai, reliance
+            on AI-generated feedback, or violation of recording consent laws, even if InterviewAnswers.ai has been advised of the
+            possibility of such damages.
+          </p>
 
-          <h2 className="text-xl font-bold text-gray-900 mt-8">10. Changes to Terms</h2>
-          <p>We may update these Terms from time to time. Continued use of the Service after changes constitutes acceptance of the new Terms. We will notify users of significant changes via email.</p>
+          <h2 className="text-xl font-bold text-gray-900 mt-8">11. Disclaimer of Warranties</h2>
+          <p>
+            INTERVIEWANSWERS.AI IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+            INCLUDING BUT NOT LIMITED TO IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE,
+            OR NON-INFRINGEMENT. We do not warrant that InterviewAnswers.ai will be uninterrupted, secure, or error-free, that
+            defects will be corrected, or that AI-generated feedback will be accurate, complete, or reliable.
+          </p>
 
-          <h2 className="text-xl font-bold text-gray-900 mt-8">11. Contact</h2>
+          <h2 className="text-xl font-bold text-gray-900 mt-8">12. Indemnification</h2>
+          <p>
+            You agree to indemnify, defend, and hold harmless InterviewAnswers.ai and its officers, directors, employees, and
+            agents from and against any claims, liabilities, damages, losses, costs, or expenses (including
+            reasonable attorneys' fees) arising from or related to: (a) your use of InterviewAnswers.ai; (b) your violation
+            of these Terms; (c) your violation of any recording laws or failure to obtain proper consent;
+            (d) your reliance on AI-generated feedback; or (e) your violation of any third-party rights.
+          </p>
+
+          <h2 className="text-xl font-bold text-gray-900 mt-8">13. Account Termination</h2>
+          <p>
+            We reserve the right to suspend or terminate your access to InterviewAnswers.ai at any time, with or without notice,
+            for any reason, including but not limited to violation of these Terms, fraudulent conduct, or
+            misuse of the service. You may terminate your account at any time by deleting your account
+            through the Settings page. Upon termination, your right to use InterviewAnswers.ai will immediately cease.
+          </p>
+
+          <h2 className="text-xl font-bold text-gray-900 mt-8">14. Dispute Resolution and Arbitration</h2>
+          <p>
+            Any dispute, claim, or controversy arising out of or relating to these Terms or your use of InterviewAnswers.ai
+            shall be resolved through binding arbitration administered by the American Arbitration Association
+            under its Commercial Arbitration Rules. The arbitration shall take place in San Francisco, California,
+            or another mutually agreed location.
+          </p>
+          <p>
+            <strong>You waive your right to a jury trial and your right to participate in class action lawsuits or
+            class-wide arbitrations.</strong>
+          </p>
+
+          <h2 className="text-xl font-bold text-gray-900 mt-8">15. Governing Law</h2>
+          <p>
+            These Terms shall be governed by and construed in accordance with the laws of the State of California,
+            without regard to its conflict of law provisions.
+          </p>
+
+          <h2 className="text-xl font-bold text-gray-900 mt-8">16. Severability</h2>
+          <p>
+            If any provision of these Terms is found to be unenforceable or invalid, that provision shall be
+            limited or eliminated to the minimum extent necessary, and the remaining provisions shall remain
+            in full force and effect.
+          </p>
+
+          <h2 className="text-xl font-bold text-gray-900 mt-8">17. Changes to Terms</h2>
+          <p>
+            We reserve the right to modify these Terms at any time. We will notify you of material changes
+            by posting the updated Terms on this page and updating the "Last updated" date. Your continued
+            use of InterviewAnswers.ai after such changes constitutes your acceptance of the modified Terms.
+          </p>
+
+          <h2 className="text-xl font-bold text-gray-900 mt-8">18. Contact</h2>
           <p>For questions about these Terms, contact us at <a href="mailto:support@interviewanswers.ai" className="text-teal-600 hover:text-teal-700">support@interviewanswers.ai</a>.</p>
+
+          <hr className="my-8 border-gray-300" />
+          <p className="text-sm text-gray-500 italic">
+            By using InterviewAnswers.ai, you acknowledge that you have read, understood, and agree to be bound by these
+            Terms of Service. These Terms constitute a legal agreement between you and InterviewAnswers.ai.
+          </p>
         </div>
       </div>
     </div>
