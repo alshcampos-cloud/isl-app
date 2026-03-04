@@ -1,7 +1,10 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { supabase } from './lib/supabase'
 import { Mail, Lock, User, AlertCircle, CheckCircle } from 'lucide-react'
 import { trackSignUp } from './utils/googleAdsTracking'
+import GoogleSignInButton from './Components/GoogleSignInButton'
+import { startGoogleOAuth } from './utils/googleOAuth'
+import { isNativeApp } from './utils/platform'
 
 function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing = false }) {
   const [loading, setLoading] = useState(false)
@@ -15,6 +18,23 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
 
   const [showPasswordReset, setShowPasswordReset] = useState(false)
   const [agreedToTerms, setAgreedToTerms] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
+
+  const handleGoogleSignIn = useCallback(async () => {
+    setGoogleLoading(true)
+    setError(null)
+
+    const { error: oauthError } = await startGoogleOAuth({
+      fromNursing,
+    })
+
+    if (oauthError) {
+      setError(oauthError)
+      setGoogleLoading(false)
+    }
+    // If no error, browser is redirecting to Google — don't reset loading
+  }, [fromNursing])
+
   const handleAuth = async (e) => {
     e.preventDefault()
     setLoading(true)
@@ -103,7 +123,7 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
           </h1>
           <p className="text-gray-600">
             {isSignUp
-              ? (fromNursing ? 'Sign up for NurseInterviewPro' : 'Sign up for InterviewAnswers.ai')
+              ? (fromNursing ? 'Sign up for NurseAnswerPro' : 'Sign up for InterviewAnswers.ai')
               : 'Log in to continue'}
           </p>
         </div>
@@ -120,6 +140,26 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
             <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
             <p className="text-red-800 text-sm">{error}</p>
           </div>
+        )}
+
+        {/* Google Sign-In — web only, not in native Capacitor app */}
+        {!isNativeApp() && (
+          <>
+            <div className="mb-6">
+              <GoogleSignInButton
+                onClick={handleGoogleSignIn}
+                loading={googleLoading}
+                label={isSignUp ? 'Sign up with Google' : 'Sign in with Google'}
+              />
+            </div>
+
+            {/* Divider */}
+            <div className="flex items-center gap-3 mb-6">
+              <div className="flex-1 h-px bg-gray-200" />
+              <span className="text-xs text-gray-400 font-medium">or</span>
+              <div className="flex-1 h-px bg-gray-200" />
+            </div>
+          </>
         )}
 
         <form onSubmit={handleAuth} className="space-y-4">

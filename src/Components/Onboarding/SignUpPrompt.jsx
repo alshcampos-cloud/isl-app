@@ -3,6 +3,9 @@ import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { trackOnboardingEvent } from '../../utils/onboardingTracker'
 import { trackSignUp } from '../../utils/googleAdsTracking'
+import GoogleSignInButton from '../GoogleSignInButton'
+import { startGoogleOAuth } from '../../utils/googleOAuth'
+import { isNativeApp } from '../../utils/platform'
 
 /**
  * SignUpPrompt — Screen 6: Create Account to Save Progress
@@ -31,6 +34,25 @@ export default function SignUpPrompt({ archetype, archetypeConfig, practiceScore
   const [showPassword, setShowPassword] = useState(false)
   const [signUpSuccess, setSignUpSuccess] = useState(false)
   const hasTrackedFormStart = useRef(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
+  const [googleError, setGoogleError] = useState(null)
+
+  const handleGoogleSignIn = useCallback(async () => {
+    setGoogleLoading(true)
+    setGoogleError(null)
+    trackOnboardingEvent(6, 'google_signin_clicked')
+
+    const { error } = await startGoogleOAuth({
+      fromNursing,
+      archetype,
+    })
+
+    if (error) {
+      setGoogleError(error)
+      setGoogleLoading(false)
+    }
+    // If no error, browser is redirecting to Google — don't reset loading
+  }, [fromNursing, archetype])
 
   const handleSignUp = useCallback(async (e) => {
     e.preventDefault()
@@ -197,6 +219,36 @@ export default function SignUpPrompt({ archetype, archetypeConfig, practiceScore
           </li>
         </ul>
       </div>
+
+      {/* Google Sign-In — web only, not in native Capacitor app */}
+      {!isNativeApp() && (
+        <>
+          <GoogleSignInButton
+            onClick={handleGoogleSignIn}
+            loading={googleLoading}
+            label="Continue with Google"
+          />
+
+          {googleError && (
+            <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2 text-center">
+              {googleError}
+            </p>
+          )}
+
+          <p className="text-center text-xs text-slate-400 -mb-2">
+            By continuing, you agree to our{' '}
+            <Link to="/terms" className="underline hover:text-slate-500">Terms</Link> and{' '}
+            <Link to="/privacy" className="underline hover:text-slate-500">Privacy Policy</Link>.
+          </p>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3 my-2">
+            <div className="flex-1 h-px bg-slate-200" />
+            <span className="text-xs text-slate-400 font-medium">or sign up with email</span>
+            <div className="flex-1 h-px bg-slate-200" />
+          </div>
+        </>
+      )}
 
       {/* Sign up form */}
       <form onSubmit={handleSignUp} className="space-y-4">

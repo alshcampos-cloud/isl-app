@@ -155,7 +155,7 @@ export default function NursingInterviewQuestionsPage() {
   const totalQuestions = nursingCategories.reduce((sum, c) => sum + c.questions.length, 0);
 
   useDocumentHead({
-    title: `${totalQuestions} Nursing Interview Questions by Category (2026) | NurseInterviewPro`,
+    title: `${totalQuestions} Nursing Interview Questions by Category (2026) | NurseAnswerPro`,
     description: `${totalQuestions} nursing interview questions for RNs, new grads, and specialty nurses. Covers patient care, SBAR communication, teamwork, ethics, and more. Practice with AI coaching.`,
     keywords: 'nursing interview questions, nurse interview questions and answers, nursing behavioral interview questions, new grad nurse interview questions, SBAR interview, nursing interview tips, RN interview questions, ICU nurse interview, ED nurse interview, nursing interview preparation 2026, clinical interview questions nursing',
     canonical: 'https://www.interviewanswers.ai/nursing-interview-questions',
@@ -184,10 +184,10 @@ export default function NursingInterviewQuestionsPage() {
           </Link>
           <div className="flex items-center gap-3">
             <Link to="/nurse" className="text-sky-600 hover:text-sky-700 text-sm font-medium hidden sm:block">
-              <span className="flex items-center gap-1"><Stethoscope className="w-3.5 h-3.5" /> NurseInterviewPro</span>
+              <span className="flex items-center gap-1"><Stethoscope className="w-3.5 h-3.5" /> NurseAnswerPro</span>
             </Link>
             <Link
-              to="/onboarding"
+              to="/onboarding?from=nursing"
               className="bg-gradient-to-r from-sky-500 to-blue-500 text-white text-sm font-bold px-4 py-2 rounded-lg hover:from-sky-600 hover:to-blue-600 transition-all"
             >
               Practice Free
@@ -305,7 +305,7 @@ export default function NursingInterviewQuestionsPage() {
         <section className="bg-gradient-to-r from-sky-600 to-blue-600 rounded-2xl p-8 sm:p-12 text-center text-white">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Stethoscope className="w-7 h-7" />
-            <span className="text-sky-200 font-medium">NurseInterviewPro.ai</span>
+            <span className="text-sky-200 font-medium">NurseAnswerPro</span>
           </div>
           <h2 className="text-3xl font-bold mb-4">Practice Nursing Interview Questions with AI</h2>
           <p className="text-sky-100 text-lg mb-8 max-w-2xl mx-auto">
@@ -315,7 +315,7 @@ export default function NursingInterviewQuestionsPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              to="/onboarding"
+              to="/onboarding?from=nursing"
               className="bg-white text-sky-700 font-bold px-8 py-4 rounded-xl hover:bg-sky-50 transition-colors text-lg inline-flex items-center justify-center gap-2"
             >
               Start Practicing Free <ArrowRight className="w-5 h-5" />
@@ -324,7 +324,7 @@ export default function NursingInterviewQuestionsPage() {
               to="/nurse"
               className="border-2 border-white/30 text-white font-bold px-8 py-4 rounded-xl hover:bg-white/10 transition-colors text-lg inline-flex items-center justify-center gap-2"
             >
-              Learn More About NurseInterviewPro
+              Learn More About NurseAnswerPro
             </Link>
           </div>
           <p className="text-sky-200 text-sm mt-4">No credit card required. Free tier includes mock interview sessions.</p>
@@ -344,7 +344,7 @@ export default function NursingInterviewQuestionsPage() {
             <div className="flex flex-wrap items-center justify-center gap-6 text-sm">
               <Link to="/star-method-guide" className="hover:text-white transition-colors">STAR Method Guide</Link>
               <Link to="/behavioral-interview-questions" className="hover:text-white transition-colors">Behavioral Questions</Link>
-              <Link to="/nurse" className="hover:text-white transition-colors">NurseInterviewPro</Link>
+              <Link to="/nurse" className="hover:text-white transition-colors">NurseAnswerPro</Link>
               <Link to="/terms" className="hover:text-white transition-colors">Terms</Link>
               <Link to="/privacy" className="hover:text-white transition-colors">Privacy</Link>
             </div>
