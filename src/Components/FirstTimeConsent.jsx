@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { getAppTarget } from '../utils/appTarget';
 
 export default function FirstTimeConsent({ user, onAccepted, onAlreadyAccepted }) {
   const [showModal, setShowModal] = useState(false);
@@ -138,13 +139,15 @@ export default function FirstTimeConsent({ user, onAccepted, onAlreadyAccepted }
                 </ul>
               </div>
 
-              {/* MEDICAL DISCLAIMER — Apple Guideline 1.4.1 */}
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
-                <h4 className="font-semibold text-amber-900 text-xs mb-1">⚕️ Not a Clinical Tool</h4>
-                <p className="text-amber-800 text-xs">
-                  This app coaches interview communication skills only. It does not provide medical advice, clinical guidance, or replace clinical education, NCLEX preparation, or continuing education requirements. All clinical content is reviewed by licensed healthcare professionals and grounded in published nursing frameworks.
-                </p>
-              </div>
+              {/* MEDICAL DISCLAIMER — Apple Guideline 1.4.1 (nursing app only) */}
+              {getAppTarget() === 'nursing' && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
+                  <h4 className="font-semibold text-amber-900 text-xs mb-1">⚕️ Not a Clinical Tool</h4>
+                  <p className="text-amber-800 text-xs">
+                    This app coaches interview communication skills only. It does not provide medical advice, clinical guidance, or replace clinical education, NCLEX preparation, or continuing education requirements. All clinical content is reviewed by licensed healthcare professionals and grounded in published nursing frameworks.
+                  </p>
+                </div>
+              )}
 
               <h3 className="font-semibold text-gray-900 mb-2">Quick Summary:</h3>
               <ul className="space-y-2">
