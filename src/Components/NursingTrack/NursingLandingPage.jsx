@@ -1,6 +1,6 @@
-// NursingTrack — NurseInterviewPro.ai Landing Page
+// NursingTrack — NurseAnswerPro Landing Page
 // Marketing landing page that funnels into the nursing track within InterviewAnswers.AI
-// In production, NurseInterviewPro.ai domain points to this route
+// Landing page lives at interviewanswers.ai/nurse
 //
 // ⚠️ D.R.A.F.T. Protocol: This is a NEW file. No existing code modified.
 
@@ -16,18 +16,18 @@ import { trackPricingView } from '../../utils/googleAdsTracking';
 export default function NursingLandingPage() {
   // SEO: Dynamic meta tags for the nursing interview landing page
   useDocumentHead({
-    title: 'NurseInterviewPro - AI Nursing Interview Practice | SBAR & STAR Coaching',
+    title: 'NurseAnswerPro - AI Nursing Interview Practice | SBAR & STAR Coaching',
     description: 'Practice nursing interview questions with AI coaching. SBAR communication drills, STAR method feedback, and specialty-specific questions for ED, ICU, OR, L&D, Pediatrics, and more. Built by nurses, for nurses.',
     keywords: 'nursing interview questions, nurse interview practice, nursing job interview, SBAR interview, STAR method nursing, nursing interview tips, RN interview questions, nursing interview preparation, clinical interview questions, healthcare interview practice, ICU interview, ED interview, nurse interview coach, nursing behavioral interview, travel nurse interview',
     canonical: 'https://www.interviewanswers.ai/nurse',
     og: {
-      title: 'NurseInterviewPro - AI Nursing Interview Practice & SBAR Coaching',
+      title: 'NurseAnswerPro - AI Nursing Interview Practice & SBAR Coaching',
       description: 'Practice nursing interviews with AI. SBAR drills, STAR coaching, 70 clinically-sourced questions across 8 specialties. Built by nurses, for nurses.',
       url: 'https://www.interviewanswers.ai/nurse',
       type: 'website',
     },
     twitter: {
-      title: 'NurseInterviewPro - AI Nursing Interview Practice',
+      title: 'NurseAnswerPro - AI Nursing Interview Practice',
       description: 'Practice nursing interviews with AI. SBAR drills, STAR coaching, specialty-specific questions. Built by nurses, for nurses.',
     },
   });
@@ -42,8 +42,7 @@ export default function NursingLandingPage() {
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <Stethoscope className="w-6 h-6 text-sky-700" />
-              <span className="font-bold text-lg text-gray-900">NurseInterviewPro</span>
-              <span className="text-xs text-sky-600 font-medium">.ai</span>
+              <span className="font-bold text-lg text-gray-900">NurseAnswerPro</span>
             </div>
             <Link to="/" className="text-[10px] text-gray-400 hover:text-indigo-500 ml-8 -mt-0.5 transition-colors">by InterviewAnswers.AI</Link>
           </div>
@@ -429,7 +428,7 @@ export default function NursingLandingPage() {
             {[
               {
                 q: 'Is this a replacement for NCLEX prep?',
-                a: 'No. NurseInterviewPro focuses exclusively on interview communication skills — how you tell your clinical stories, not clinical knowledge itself. For NCLEX prep, please use dedicated review courses.',
+                a: 'No. NurseAnswerPro focuses exclusively on interview communication skills — how you tell your clinical stories, not clinical knowledge itself. For NCLEX prep, please use dedicated review courses.',
               },
               {
                 q: 'Who writes the interview questions?',
@@ -445,7 +444,7 @@ export default function NursingLandingPage() {
               },
               {
                 q: 'Can I practice on my phone?',
-                a: 'Yes. NurseInterviewPro is fully responsive and works on any device with a web browser — phone, tablet, or desktop. Practice between shifts, on the bus, or wherever you have a few minutes.',
+                a: 'Yes. NurseAnswerPro is fully responsive and works on any device with a web browser — phone, tablet, or desktop. Practice between shifts, on the bus, or wherever you have a few minutes.',
               },
               {
                 q: 'How is this different from practicing with a friend?',
@@ -547,7 +546,7 @@ export default function NursingLandingPage() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <Stethoscope className="w-5 h-5 text-sky-400" />
-              <span className="text-white font-medium">NurseInterviewPro.ai</span>
+              <span className="text-white font-medium">NurseAnswerPro</span>
             </div>
             <p className="text-sm">
               A product of <Link to="/" className="text-white hover:text-indigo-300 transition-colors">InterviewAnswers.AI</Link>

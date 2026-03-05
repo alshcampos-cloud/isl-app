@@ -4,7 +4,7 @@
 #
 # Usage:
 #   ./scripts/build-ios.sh general    — Build general InterviewAnswers app
-#   ./scripts/build-ios.sh nursing    — Build NurseInterviewPro app
+#   ./scripts/build-ios.sh nursing    — Build NurseAnswerPro app
 #   ./scripts/build-ios.sh web        — Build web version (all features)
 #
 # Each target uses a different VITE_APP_TARGET and Capacitor config.
@@ -41,7 +41,7 @@ case $TARGET in
     ;;
 
   nursing)
-    echo "📦 Building NURSING iOS app (NurseInterviewPro)"
+    echo "📦 Building NURSING iOS app (NurseAnswerPro)"
     echo "   Bundle ID: ai.nurseinterviewpro.app"
     echo "   Features: Nursing track only (no general)"
     echo ""

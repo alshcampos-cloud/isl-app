@@ -26,6 +26,8 @@ import NursingResources from './NursingResources';
 import NursingConfidenceBuilder from './NursingConfidenceBuilder';
 import NursingOfferCoach from './NursingOfferCoach';
 import NursingPricing from './NursingPricing';
+import { isIOS, isNativeApp } from '../../utils/platform';
+import { Browser } from '@capacitor/browser';
 
 // Internal view states for the nursing track
 const VIEWS = {
@@ -347,6 +349,9 @@ export default function NursingTrackApp() {
   // State for showing the in-app pricing modal
   const [showPricing, setShowPricing] = useState(false);
 
+  // Detect if running inside iOS native app
+  const isIOSNative = isIOS() && isNativeApp();
+
   const ProGateScreen = ({ modeName, modeIcon, onBack }) => (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-sky-950 to-slate-900 flex items-center justify-center p-4">
       <div className="max-w-md w-full text-center">
@@ -357,12 +362,24 @@ export default function NursingTrackApp() {
           <p className="text-slate-500 text-xs mb-6">
             Get unlimited access to {modeName}, plus all other nursing interview tools.
           </p>
-          <button
-            onClick={() => setShowPricing(true)}
-            className="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-500 text-white font-medium px-6 py-3 rounded-xl transition-colors text-sm mb-4"
-          >
-            Get Nursing Pass — $19.99
-          </button>
+          {isIOSNative ? (
+            <button
+              onClick={async () => {
+                try { await Browser.open({ url: 'https://www.interviewanswers.ai/nursing' }); }
+                catch { setShowPricing(true); }
+              }}
+              className="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-500 text-white font-medium px-6 py-3 rounded-xl transition-colors text-sm mb-4"
+            >
+              Purchase on Website — $19.99
+            </button>
+          ) : (
+            <button
+              onClick={() => setShowPricing(true)}
+              className="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-500 text-white font-medium px-6 py-3 rounded-xl transition-colors text-sm mb-4"
+            >
+              Get Nursing Pass — $19.99
+            </button>
+          )}
           <div>
             <button
               onClick={onBack}
@@ -522,6 +539,23 @@ export default function NursingTrackApp() {
         );
     }
   };
+
+  // ── Loading screen while user data initializes ───────────
+  // FIX: Guideline 2.1(a) — App must not appear unresponsive after login.
+  // Without this, renderView() fires with null userData on iPad (slower networks),
+  // causing blank/broken screen that looks "unresponsive" to Apple reviewers.
+  if (userData.loading) {
+    return (
+      <div className="nursing-track">
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-sky-950 to-slate-900 flex items-center justify-center p-4">
+          <div className="text-center">
+            <div className="w-12 h-12 border-4 border-sky-200 border-t-sky-500 rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-slate-300 text-lg">Loading your dashboard...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // ── Payment verification loading screen ───────────────────
   if (verifyingPurchase) {

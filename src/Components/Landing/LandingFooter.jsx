@@ -26,7 +26,7 @@ export default function LandingFooter() {
               Nursing Questions
             </Link>
             <Link to="/nurse" className="hover:text-white transition-colors">
-              🩺 NurseInterviewPro
+              🩺 NurseAnswerPro
             </Link>
             <a href="mailto:support@interviewanswers.ai" className="hover:text-white transition-colors">
               Contact

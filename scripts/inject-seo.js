@@ -24,7 +24,7 @@ const DIST = join(__dirname, '..', 'dist');
 // Route-specific SEO data
 const ROUTES = {
   '/nurse': {
-    title: 'NurseInterviewPro - AI Nursing Interview Practice | SBAR & STAR Coaching',
+    title: 'NurseAnswerPro - AI Nursing Interview Practice | SBAR & STAR Coaching',
     description: 'Practice nursing interview questions with AI coaching. SBAR communication drills, STAR method feedback, and specialty-specific questions for ED, ICU, OR, L&D, Pediatrics, and more. Built by nurses, for nurses.',
     canonical: 'https://www.interviewanswers.ai/nurse',
     keywords: 'nursing interview questions, nurse interview practice, nursing job interview, SBAR interview, STAR method nursing, RN interview questions, nursing interview preparation',
@@ -42,7 +42,7 @@ const ROUTES = {
     keywords: 'behavioral interview questions, common behavioral interview questions, STAR method questions, leadership interview questions, teamwork interview questions',
   },
   '/nursing-interview-questions': {
-    title: '35 Nursing Interview Questions by Category (2026) | NurseInterviewPro',
+    title: '35 Nursing Interview Questions by Category (2026) | NurseAnswerPro',
     description: '35 nursing interview questions for RNs, new grads, and specialty nurses. Covers patient care, SBAR communication, teamwork, ethics, and more. Practice with AI coaching.',
     canonical: 'https://www.interviewanswers.ai/nursing-interview-questions',
     keywords: 'nursing interview questions, nurse interview questions and answers, new grad nurse interview questions, SBAR interview, RN interview questions',
@@ -75,7 +75,7 @@ const ROUTES = {
     robots: 'noindex, follow',
   },
   '/nursing': {
-    title: 'Nursing Interview Dashboard | NurseInterviewPro by InterviewAnswers.ai',
+    title: 'Nursing Interview Dashboard | NurseAnswerPro by InterviewAnswers.ai',
     description: 'Access your nursing interview practice dashboard. Track progress across 8 specialties with AI-powered mock interviews.',
     canonical: 'https://www.interviewanswers.ai/nursing',
     keywords: 'nursing interview dashboard, nursing interview practice',

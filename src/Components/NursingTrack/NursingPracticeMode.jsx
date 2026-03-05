@@ -465,12 +465,21 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
                   {currentQuestion.question}
                 </h2>
 
-                {/* Framework citation */}
-                {currentQuestion.clinicalFramework && (
-                  <p className="text-slate-500 text-xs mt-3 italic">
-                    Framework: {getFrameworkDetails(currentQuestion.clinicalFramework)?.name}
-                  </p>
-                )}
+                {/* Framework citation — Apple Guideline 1.4.1: citations must be easy to find */}
+                {currentQuestion.clinicalFramework && (() => {
+                  const fw = getFrameworkDetails(currentQuestion.clinicalFramework);
+                  if (!fw) return null;
+                  return (
+                    <p className="text-slate-500 text-xs mt-3 italic">
+                      Framework: {fw.url ? (
+                        <a href={fw.url} target="_blank" rel="noopener noreferrer" className="underline text-sky-400 hover:text-sky-300">
+                          {fw.name}
+                        </a>
+                      ) : fw.name}
+                      {fw.source && <span className="text-slate-600"> — {fw.source}</span>}
+                    </p>
+                  );
+                })()}
               </motion.div>
 
               {/* Answer Input or Feedback */}

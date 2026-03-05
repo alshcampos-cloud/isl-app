@@ -124,11 +124,33 @@ export default function FirstTimeConsent({ user, onAccepted, onAlreadyAccepted }
         <div className="bg-gray-50 rounded-lg p-4 mb-6 max-h-64 overflow-y-auto text-sm text-gray-700">
           {activeTab === 'summary' && (
             <div>
+              {/* PROMINENT AI DATA DISCLOSURE — Apple Guideline 5.1.1(i) & 5.1.2(i) */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                <h4 className="font-semibold text-blue-900 text-sm mb-1">🤖 Third-Party AI Data Disclosure</h4>
+                <p className="text-blue-800 text-xs mb-1">
+                  Your practice responses are sent to <strong>Anthropic's Claude AI</strong> (a third-party service) to generate personalized coaching feedback.
+                </p>
+                <ul className="text-blue-700 text-xs space-y-0.5 ml-2">
+                  <li>• Audio is transcribed on your device — only text is sent to Anthropic</li>
+                  <li>• No personal identifiers (email, name, password) are shared</li>
+                  <li>• Anthropic does not use your data to train AI models</li>
+                  <li>• See <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener noreferrer" className="underline text-blue-600">Anthropic's Privacy Policy</a> for details</li>
+                </ul>
+              </div>
+
+              {/* MEDICAL DISCLAIMER — Apple Guideline 1.4.1 */}
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
+                <h4 className="font-semibold text-amber-900 text-xs mb-1">⚕️ Not a Clinical Tool</h4>
+                <p className="text-amber-800 text-xs">
+                  This app coaches interview communication skills only. It does not provide medical advice, clinical guidance, or replace clinical education, NCLEX preparation, or continuing education requirements. All clinical content is reviewed by licensed healthcare professionals and grounded in published nursing frameworks.
+                </p>
+              </div>
+
               <h3 className="font-semibold text-gray-900 mb-2">Quick Summary:</h3>
               <ul className="space-y-2">
                 <li>• We collect your email to create your account</li>
                 <li>• Microphone access is used for interview practice</li>
-                <li>• <strong>AI Coaching:</strong> Your practice responses are analyzed by Anthropic's Claude AI to provide personalized feedback. No personal identifiers (email, password) are shared with Anthropic.</li>
+                <li>• <strong>AI Coaching:</strong> Your practice responses are analyzed by Anthropic's Claude AI to provide personalized feedback</li>
                 <li>• Audio is processed on your device — only text transcripts are sent to the AI</li>
                 <li>• Your data is stored securely and encrypted</li>
                 <li>• You can delete your data anytime from Settings</li>

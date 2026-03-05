@@ -5,14 +5,36 @@
 // ⚠️ D.R.A.F.T. Protocol: NEW file. No existing code modified.
 
 import { useState } from 'react';
-import { X, Shield, Zap, Clock, Star, CheckCircle, Loader2 } from 'lucide-react';
+import { X, Shield, Zap, Clock, Star, CheckCircle, Loader2, ExternalLink } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { isIOS, isNativeApp } from '../../utils/platform';
+import { Browser } from '@capacitor/browser';
 
 export default function NursingPricing({ userData, onClose }) {
   const [isLoading, setIsLoading] = useState(null); // 'nursing_30day' | 'annual_all_access' | null
   const [error, setError] = useState(null);
 
+  // Detect if running inside iOS native app
+  const isIOSNative = isIOS() && isNativeApp();
+
+  // iOS native: open the website in Safari for purchases
+  // (Epic v. Apple ruling allows external purchase links in US iOS apps)
+  const handleIOSPurchase = async () => {
+    try {
+      await Browser.open({ url: 'https://www.interviewanswers.ai/nursing' });
+    } catch {
+      // Fallback: tell user to visit website
+      setError('Please visit interviewanswers.ai/nursing in Safari to purchase.');
+    }
+  };
+
   const handleCheckout = async (passType) => {
+    // On iOS native, redirect to website in Safari instead of in-app Stripe
+    if (isIOSNative) {
+      handleIOSPurchase();
+      return;
+    }
+
     if (!userData?.user?.id) {
       setError('You must be logged in to purchase.');
       return;

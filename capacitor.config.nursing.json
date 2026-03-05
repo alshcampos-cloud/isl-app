@@ -1,6 +1,6 @@
 {
   "appId": "ai.nurseinterviewpro.app",
-  "appName": "NurseInterviewPro",
+  "appName": "NurseAnswerPro",
   "webDir": "dist",
   "server": {
     "hostname": "interviewanswers.ai",

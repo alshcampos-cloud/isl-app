@@ -5,12 +5,17 @@
 // Integration: Replaces old PricingPage.jsx in App.jsx showPricingPage modal
 
 import { useState } from 'react';
-import { X, Shield, Zap, Clock, Star, CheckCircle, Loader2, Crown, Sparkles } from 'lucide-react';
+import { X, Shield, Zap, Clock, Star, CheckCircle, Loader2, Crown, Sparkles, ExternalLink } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { isIOS, isNativeApp } from '../utils/platform';
+import { Browser } from '@capacitor/browser';
 
 export default function GeneralPricing({ userData, onClose }) {
   const [isLoading, setIsLoading] = useState(null); // 'general_30day' | 'annual_all_access' | null
   const [error, setError] = useState(null);
+
+  // Detect if running inside iOS native app
+  const isIOSNative = isIOS() && isNativeApp();
 
   // Normalize userData — App.jsx passes { user, tier } structure
   const user = userData?.user || userData;
@@ -18,7 +23,22 @@ export default function GeneralPricing({ userData, onClose }) {
   const userEmail = user?.email;
   const tier = userData?.tier || 'free';
 
+  // iOS native: open the website in Safari for purchases
+  const handleIOSPurchase = async () => {
+    try {
+      await Browser.open({ url: 'https://www.interviewanswers.ai/app' });
+    } catch {
+      setError('Please visit interviewanswers.ai in Safari to purchase.');
+    }
+  };
+
   const handleCheckout = async (passType) => {
+    // On iOS native, redirect to website in Safari instead of in-app Stripe
+    if (isIOSNative) {
+      handleIOSPurchase();
+      return;
+    }
+
     if (!userId) {
       setError('You must be logged in to purchase.');
       return;

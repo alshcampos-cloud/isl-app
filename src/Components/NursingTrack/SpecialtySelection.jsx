@@ -37,7 +37,7 @@ export default function SpecialtySelection({ onSelectSpecialty, onBack }) {
           ) : (
           <div className="flex items-center gap-1">
             <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-white/10 text-white border border-white/20">
-              🩺 NurseInterviewPro
+              🩺 NurseAnswerPro
             </span>
           </div>
           )}
