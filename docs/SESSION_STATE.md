@@ -1,4 +1,4 @@
-# Session State — Last Updated: March 1, 2026 (evening session)
+# Session State — Last Updated: March 5, 2026 (early morning session)
 
 ---
 
@@ -40,99 +40,97 @@ If you need to change shared utilities, global config, routing architecture, app
 
 ---
 
-## CURRENT PRIORITIES (as of March 1, 2026)
+## CURRENT PRIORITIES (as of March 5, 2026)
 
-### 1. ACTIVE — iOS App Store Resubmission (General App — InterviewAnswers)
+### 1. COMPLETED — NurseAnswerPro (iOS) Apple Rejection Response ✅
+
+**Status:** All 4 rejection issues addressed. Code deployed to production. Reply sent to Apple via Resolution Center. Awaiting re-review.
+
+**Apple rejection (March 5, 2026 at 1:37 AM):** NurseAnswerPro iOS v1.0 rejected on 4 guidelines:
+- Guideline 2.1(a) — App unresponsive after login on iPad Air 11-inch (M3)
+- Guideline 1.4.1 — Medical citations missing for health-related content
+- Guideline 2.1(b) — IAP products not submitted (app uses external Stripe)
+- Guidelines 5.1.1(i) & 5.1.2(i) — AI data sharing disclosure with third-party (Anthropic)
+
+**All fixes deployed and reply sent (March 5, 2026 at 3:36 AM):**
+- [x] Loading spinner added to NursingTrackApp.jsx (prevents blank screen while userData loads)
+- [x] Medical disclaimer "Not a Clinical Tool" added to FirstTimeConsent.jsx consent flow
+- [x] "Clinical Frameworks Referenced" section added to NursingResources.jsx (5 frameworks with clickable source links)
+- [x] Framework citations in NursingPracticeMode.jsx now tappable links to original sources
+- [x] Non-affiliation disclaimer for NCSBN, ANA, IHI, AHA added
+- [x] Prominent "Third-Party AI Data Disclosure" callout added to consent flow (names Anthropic's Claude AI)
+- [x] IAP addressed via reply citing Guidelines 3.1.1(a) and 3.1.3 (external Stripe permitted on US storefront)
+- [x] Test account (appreviewer@interviewanswers.ai) accepted_terms reset to FALSE so Apple sees consent flow
+- [x] Code committed, pushed, deployed to Vercel production
+- [x] Reply sent via App Store Connect Resolution Center
+
+**App Store Connect details (NurseAnswerPro):**
+- App ID: 6759942609
+- Submission ID: 99378311-86b1-4ee0-8d34-f6bf712edbac
+- Review date: March 05, 2026
+- Review Device: iPad Air 11-inch (M3)
+- Test account: appreviewer@interviewanswers.ai / AppleTester1!
+- Test account user_id: 97ee699f-77da-48aa-9604-f7eabc9415b2
+
+### 2. PENDING — General App (InterviewAnswers) iOS Resubmission
 
 **Status:** Code complete. Screenshots ready. Logo being redesigned. Need to rebuild iOS binary, upload screenshots, and resubmit.
 **Apple rejection (Feb 15):** Guidelines 5.1.1(i) and 5.1.2(i) — privacy says "OpenAI" but app uses Anthropic.
-**All code fixes VERIFIED DONE (re-confirmed Mar 1):**
-- [x] Privacy/consent text: OpenAI → Anthropic everywhere (PrivacyPage, FirstTimeConsent, ConsentDialog, App.jsx settings view, TermsPage)
-- [x] PrivacyInfo.xcprivacy manifest created (4 data types: user content, audio, email, performance)
-- [x] Info.plist mic descriptions updated
-- [x] IAP removed (cordova-plugin-purchase uninstalled)
-- [x] Payment routing → always Stripe (external checkout per Epic v. Apple May 2025)
-- [x] Nursing features gated out (VITE_APP_TARGET=general)
-- [x] Landing page skipped for native (→ /app → login)
-- [x] Teal rebrand in Capacitor config
-- [x] Build compiles cleanly
-- [x] App Store screenshots captured (5 screenshots, 1320x2868, in ~/Desktop/AppStoreAssets/General/Screenshots/)
-- [x] Screen recordings saved (3 recordings in ~/Desktop/AppStoreAssets/General/Video/ — not submitting video yet)
-
-**DECISION: iPhone only (no iPad) for initial submission.**
-**DECISION: No App Preview video — screenshots only. Video can be added later.**
-**DECISION: Resubmit through EXISTING rejected submission (not new submission).**
+**All code fixes VERIFIED DONE.**
 
 **Remaining steps:**
-- [ ] Replace app icon with new logo (Lucas designing in separate chat)
+- [ ] Replace app icon with new logo
 - [ ] Replace splash screen
 - [ ] Rebuild iOS binary (./scripts/build-ios.sh general)
-- [ ] Upload 5 screenshots to App Store Connect (iPhone 6.9" — 1320x2868)
-- [ ] Update App Privacy declarations in App Store Connect
-- [ ] Reply to Apple review thread confirming privacy fixes
+- [ ] Upload screenshots to App Store Connect
+- [ ] Update App Privacy declarations
+- [ ] Reply to Apple review thread
 - [ ] Archive in Xcode and resubmit
 
-**App Store Connect details:**
+**App Store Connect details (InterviewAnswers):**
 - App ID: 6758879187
 - Submission with "Unresolved Issues": b9b333d9-6379-4683-a579-c210cbe525e9
-- Current version: 1.0 (5)
-- Rejection reason: 5.1.1(i) + 5.1.2(i) — Data Collection + Data Use
-- Apple reviewed on: iPad Air 11-inch (M3) — going iPhone-only avoids this
 
-**Screenshots ready at ~/Desktop/AppStoreAssets/General/Screenshots/:**
-1. 01_HomeScreen.png — Home screen with stats and practice modes (clean 9:41 status bar)
-2. 02_LivePrompter.png — Live Interview Prompter (active session, dark theme)
-3. 03_PracticeMode.png — Practice question (pre-answer state)
-4. 04_PracticeWithAnswer.png — Typed answer with Get Feedback button
-5. 05_InterviewReadinessScore.png — IRS score breakdown (62/100)
-
-**Descript AI Assets (polished screenshots — NOT downloaded yet, ran out of credits):**
-6 polished screenshots in Descript project "App Preview Video - 1320x2868" → AI Assets folder:
-- Master Interview Questions.png
-- Instant Feedback Answers.png
-- Interview Prompter App.png
-- AI Interview Practice.png
-- Interview Readiness Tracker.png
-- Answer with Voice or Text.png
-(These can be downloaded later when credits are available — downloading doesn't use credits but the download feature wasn't working through browser automation)
-
-#### Track B: Nursing App (NurseInterviewPro) — NEW SUBMISSION
-**Status:** Code complete. Needs bundle ID registration, icon, App Store Connect setup.
-**All code done:**
-- [x] Route gating (VITE_APP_TARGET=nursing hides general, shows nursing)
-- [x] Separate Capacitor config (capacitor.config.nursing.json)
-- [x] "Back to App" hidden (no general app in nursing build)
-- [x] "Account Settings" link hidden
-- [x] Build compiles cleanly
-
-**Lucas must do manually:**
-- [ ] Register bundle ID: ai.nurseinterviewpro.app (developer.apple.com)
-- [ ] Create new app in App Store Connect
-- [ ] Design nursing-specific icon and splash
-- [ ] Take nursing screenshots from simulator
-- [ ] Fill in App Store metadata (see docs/APP_STORE_METADATA.md)
-- [ ] Archive and submit
-
-**Build commands:**
-```bash
-./scripts/build-ios.sh general    # General iOS app
-./scripts/build-ios.sh nursing    # Nursing iOS app
-./scripts/build-ios.sh web        # Web version (all features)
-```
-
-### 2. ACTIVE — Google Ads Campaign Running
+### 3. ACTIVE — Google Ads Campaign Running
 **Status:** Campaign re-enabled Feb 22, $10/day budget, live.
-**Conversion tracking:** Correctly wired. No conversions yet.
 
-### 3. ACTIVE — Google Search Console "Page with redirect" Indexing Issue
+### 4. ACTIVE — Google OAuth Sign-In (planned, not yet implemented)
+**Status:** Plan approved. Addresses 89% onboarding bounce. Google Cloud Console + Supabase setup needed before code.
+
+### 5. ACTIVE — Google Search Console "Page with redirect" Indexing Issue
 **Status:** Google validated fix attempt and FAILED — some pages still affected.
-
-### 4. ACTIVE — Organic Social Media Video Content
-**Plan:** App demo videos with AI voiceover, posted to TikTok + Instagram Reels + Facebook Reels + YouTube Shorts.
 
 ---
 
-## RECENTLY COMPLETED (Feb 28, 2026 — Evening Session)
+## RECENTLY COMPLETED (March 5, 2026 — Early Morning Session)
+
+### Apple App Store Rejection Response — NurseAnswerPro ✅
+**Commit:** c92d341 — fix: Apple App Store rejection — add loading screen, medical disclaimers, AI disclosure, citations
+
+Files modified (4 key files, 15 total):
+1. **NursingTrackApp.jsx** — Added loading screen when `userData.loading === true` (+46 lines)
+2. **FirstTimeConsent.jsx** — Added AI data disclosure + medical disclaimer to consent flow (+24 lines)
+3. **NursingPracticeMode.jsx** — Made framework citations tappable links with source URLs (+21 lines)
+4. **NursingResources.jsx** — Added "Clinical Frameworks Referenced" section + non-affiliation disclaimer (+45 lines)
+
+Infrastructure changes:
+- Supabase: Reset appreviewer accepted_terms to FALSE (so Apple sees consent flow)
+- Vercel: Deployed to production (commit c92d341)
+- App Store Connect: Reply sent via Resolution Center addressing all 4 guidelines
+
+### Google OAuth Plan Created ✅
+- Plan file at .claude/plans/velvety-dazzling-kite.md
+- Addresses 89% onboarding bounce at sign-up screen
+- Requires manual Google Cloud Console + Supabase dashboard setup before code
+
+### Favicon Rebrand ✅
+- Updated favicon from blue ISL to teal IA
+- Google OAuth button component created (GoogleSignInButton.jsx)
+- Native app guard added to ProtectedRoute.jsx
+
+---
+
+## PREVIOUSLY COMPLETED (Feb 28, 2026 — Evening Session)
 
 ### Additional Fixes Found During Simulator Testing ✅
 - **SpecialtySelection.jsx:** Track switcher gated with showGeneralFeatures() (was showing dead "General" link)
@@ -198,24 +196,22 @@ If you need to change shared utilities, global config, routing architecture, app
 
 ```
 Branch: feature/nursing-track
-Last known good commit: 0a973df (pushed to origin Feb 22)
-UNCOMMITTED CHANGES: ~20 files modified (iOS prep, privacy fixes, route gating)
+Last commit: c92d341 — fix: Apple App Store rejection (pushed to origin Mar 5)
 Main branch HEAD: 6a28236
-Production deployed from: feature/nursing-track (Feb 22 deploy — does NOT include today's changes)
+Production deployed from: feature/nursing-track commit c92d341 (Mar 5 deploy via npx vercel --prod)
+Working tree: Clean (no uncommitted changes)
 ```
-
-**⚠️ IMPORTANT: Today's changes are LOCAL ONLY. Nothing deployed. Nothing pushed.**
 
 ---
 
 ## WHAT'S LIVE ON PRODUCTION (www.interviewanswers.ai)
 
-**IMPORTANT:** Production is currently deployed from `feature/nursing-track` via `npx vercel --prod` (Feb 22 deploy). Today's iOS/privacy changes are NOT on production.
+**Production deployed from:** `feature/nursing-track` commit c92d341 via `npx vercel --prod` (March 5, 2026)
 
 ### Vercel
 - Production URL: www.interviewanswers.ai
-- Last deploy: Feb 22 — includes AuthConfirm.jsx, email deliverability fix, all prior nursing track work
-- **Does NOT include:** Today's privacy text updates, route gating, IAP removal (those are local only)
+- Last deploy: March 5, 2026 — includes Apple rejection fixes (loading screen, medical disclaimers, AI disclosure, citations)
+- Google OAuth, favicon rebrand, native app guard also included
 
 ### Supabase Edge Functions (all deployed):
 - `ai-feedback` (v29) — nursing-coach mode, server-side credit validation, server-side onboarding prompts, pass-based pricing
@@ -272,6 +268,8 @@ Production deployed from: feature/nursing-track (Feb 22 deploy — does NOT incl
 ### Apple Rejection Privacy Fixes (Feb 28) ✅
 ### IAP → External Stripe Payment (Feb 28) ✅
 ### Hallucination Hardening Final Gaps (Feb 28) ✅
+### Google OAuth Button + Favicon Rebrand + Native App Guard (Mar 3) ✅
+### NurseAnswerPro Apple Rejection Fixes (Mar 5) ✅
 
 ---
 
@@ -390,18 +388,15 @@ Production deployed from: feature/nursing-track (Feb 22 deploy — does NOT incl
 
 ---
 
-## WHAT'S NEXT (Priority Order) — TOMORROW
+## WHAT'S NEXT (Priority Order)
 
-1. **Register bundle ID** `ai.nurseinterviewpro.app` at developer.apple.com
-2. **Create NurseInterviewPro app** in App Store Connect
-3. **Archive BOTH apps** in Xcode (general + nursing builds)
-4. **Upload BOTH to TestFlight** for testing before submission
-5. **Replace app icons + splash screens** (manual — Lucas, need 1024x1024 PNG per app)
-6. **Test on real device via TestFlight** — sign out, Terms/Privacy, practice modes, payments
-7. **Submit both apps to App Store** after TestFlight testing passes
-8. **Deploy today's privacy fixes to web** — `npm run build && npx vercel --prod` (web still says OpenAI in settings view)
-9. **Fix Google Search Console redirect issue**
-10. **Merge feature/nursing-track → main**
+1. **Wait for Apple re-review** of NurseAnswerPro (reply sent, code deployed, test account reset)
+2. **Implement Google OAuth** — Plan approved, need Google Cloud Console + Supabase setup first
+3. **General app (InterviewAnswers) iOS resubmission** — icon, screenshots, reply to Apple
+4. **Fix Google Search Console redirect issue**
+5. **Merge feature/nursing-track → main** (60+ commits ahead)
+6. **Email deliverability** — SPF/DKIM/DMARC for confirmation emails
+7. **Mobile responsiveness audit** — no real device testing done
 
 ## KEY DECISIONS MADE
 - Pricing is PASS-BASED, not subscription. Nursing $19.99, General $14.99. No Pro tier.
