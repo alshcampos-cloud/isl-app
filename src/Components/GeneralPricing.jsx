@@ -142,20 +142,23 @@ export default function GeneralPricing({ userData, onClose }) {
   const isAnnual = tier === 'annual';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-slate-900 border border-white/10 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xl">
+      <div className="relative bg-slate-900 border border-white/10 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl shadow-black/40">
+        {/* Close button — floating pill */}
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 z-10 flex items-center justify-center w-8 h-8 rounded-full bg-white/10 backdrop-blur-md text-slate-400 hover:text-white hover:bg-white/20 transition-all"
+        >
+          <X className="w-4 h-4" />
+        </button>
+
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-white/10">
-          <div>
+        <div className="p-5 pb-4 border-b border-white/10">
+          <div className="flex items-center gap-2 mb-1">
+            <Sparkles className="w-5 h-5 text-teal-400" />
             <h2 className="text-white font-bold text-lg">Interview Prep Pro</h2>
-            <p className="text-slate-400 text-xs mt-0.5">Unlimited AI-powered interview practice</p>
           </div>
-          <button
-            onClick={onClose}
-            className="text-slate-500 hover:text-white transition-colors p-1"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <p className="text-slate-400 text-xs">Unlimited AI-powered interview practice</p>
         </div>
 
         {/* Pricing cards */}
@@ -175,12 +178,16 @@ export default function GeneralPricing({ userData, onClose }) {
                 <p className="text-slate-400 text-xs mt-1">Full access for 30 days — no subscription, no commitment</p>
               </div>
               <div className="text-right">
-                <p className="text-white font-bold text-2xl">$14<span className="text-base">.99</span></p>
+                <p className="text-white font-bold">
+                  <span className="text-lg align-top">$</span>
+                  <span className="text-4xl font-extrabold bg-gradient-to-r from-indigo-300 to-indigo-500 bg-clip-text text-transparent">14</span>
+                  <span className="text-lg text-slate-300">.99</span>
+                </p>
                 <p className="text-slate-500 text-[10px]">one-time</p>
               </div>
             </div>
 
-            <ul className="space-y-1.5 mb-4">
+            <ul className="space-y-2 mb-4 pl-1">
               {[
                 'Unlimited AI mock interviews',
                 'Unlimited practice sessions',
@@ -190,8 +197,10 @@ export default function GeneralPricing({ userData, onClose }) {
                 'Full question bank access',
                 'Session history & analytics',
               ].map((item) => (
-                <li key={item} className="flex items-center gap-2 text-slate-300 text-xs">
-                  <CheckCircle className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
+                <li key={item} className="flex items-center gap-2.5 text-slate-300 text-xs">
+                  <span className="flex items-center justify-center w-4 h-4 rounded-full bg-teal-500/20 flex-shrink-0">
+                    <CheckCircle className="w-3 h-3 text-teal-400" />
+                  </span>
                   {item}
                 </li>
               ))}
@@ -201,7 +210,7 @@ export default function GeneralPricing({ userData, onClose }) {
               <button
                 onClick={() => handleCheckout('general_30day')}
                 disabled={!!isLoading}
-                className="w-full py-2.5 rounded-xl text-sm font-medium transition-all bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-600/30"
+                className="w-full py-3 rounded-xl text-sm font-medium transition-all active:scale-[0.98] bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-600/30"
               >
                 {isLoading === 'general_30day' ? (
                   <span className="flex items-center justify-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Processing...</span>
@@ -213,10 +222,10 @@ export default function GeneralPricing({ userData, onClose }) {
               <button
                 onClick={() => handleCheckout('general_30day')}
                 disabled={!!isLoading || isAnnual}
-                className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                className={`w-full py-3 rounded-xl text-sm font-semibold transition-all active:scale-[0.98] ${
                   isAnnual
                     ? 'bg-white/5 text-slate-500 cursor-not-allowed'
-                    : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20'
+                    : 'bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white shadow-lg shadow-teal-600/25'
                 }`}
               >
                 {isLoading === 'general_30day' ? (
@@ -231,22 +240,22 @@ export default function GeneralPricing({ userData, onClose }) {
           </div>
 
           {/* Annual All-Access */}
-          <div className={`border rounded-xl p-5 relative overflow-hidden transition-all ${
+          <div className={`border rounded-xl p-5 relative overflow-hidden transition-all ring-2 ${
             isAnnual
-              ? 'border-amber-500/40 bg-amber-500/5'
-              : 'border-amber-500/20 hover:border-amber-500/40 bg-gradient-to-br from-amber-500/[0.03] to-orange-500/[0.03]'
+              ? 'border-amber-500/40 bg-amber-500/5 ring-amber-500/30'
+              : 'border-teal-500/30 ring-teal-500/40 bg-gradient-to-br from-teal-500/[0.04] to-emerald-500/[0.04]'
           }`}>
             {/* Best value badge */}
             {!isAnnual && (
-              <div className="absolute top-0 right-0 bg-amber-500 text-black text-[10px] font-bold px-3 py-1 rounded-bl-lg">
-                BEST VALUE
+              <div className="absolute top-0 right-0 bg-gradient-to-r from-teal-500 to-emerald-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg tracking-wide shadow-lg">
+                MOST POPULAR
               </div>
             )}
 
             <div className="flex items-start justify-between mb-3">
               <div>
                 <div className="flex items-center gap-2">
-                  <Star className="w-4 h-4 text-amber-400" />
+                  <Crown className="w-4 h-4 text-teal-400" />
                   <h3 className="text-white font-semibold">Annual All-Access</h3>
                 </div>
                 <p className="text-slate-400 text-xs mt-1">
@@ -256,12 +265,16 @@ export default function GeneralPricing({ userData, onClose }) {
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-white font-bold text-2xl">$149<span className="text-base">.99</span></p>
+                <p className="text-white font-bold">
+                  <span className="text-lg align-top">$</span>
+                  <span className="text-4xl font-extrabold bg-gradient-to-r from-teal-300 to-emerald-400 bg-clip-text text-transparent">149</span>
+                  <span className="text-lg text-slate-300">.99</span>
+                </p>
                 <p className="text-slate-500 text-[10px]">/year (~$12.50/mo)</p>
               </div>
             </div>
 
-            <ul className="space-y-1.5 mb-4">
+            <ul className="space-y-2 mb-4 pl-1">
               {[
                 'Everything in General Pass',
                 ...(showNursingFeatures() ? ['Full Nursing Interview Track'] : []),
@@ -269,8 +282,10 @@ export default function GeneralPricing({ userData, onClose }) {
                 'Year-round access',
                 'Priority support',
               ].map((item) => (
-                <li key={item} className="flex items-center gap-2 text-slate-300 text-xs">
-                  <CheckCircle className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+                <li key={item} className="flex items-center gap-2.5 text-slate-300 text-xs">
+                  <span className="flex items-center justify-center w-4 h-4 rounded-full bg-teal-500/20 flex-shrink-0">
+                    <CheckCircle className="w-3 h-3 text-teal-400" />
+                  </span>
                   {item}
                 </li>
               ))}
@@ -279,10 +294,10 @@ export default function GeneralPricing({ userData, onClose }) {
             <button
               onClick={() => handleCheckout('annual_all_access')}
               disabled={!!isLoading || isAnnual}
-              className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all ${
+              className={`w-full py-3 rounded-xl text-sm font-semibold transition-all active:scale-[0.98] ${
                 isAnnual
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-amber-500 to-orange-500 text-black shadow-lg shadow-amber-500/20 hover:-translate-y-0.5'
+                  ? 'bg-teal-500/20 text-teal-300 border border-teal-500/30 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white shadow-lg shadow-teal-600/25 hover:-translate-y-0.5'
               }`}
             >
               {isLoading === 'annual_all_access' ? (
@@ -309,13 +324,17 @@ export default function GeneralPricing({ userData, onClose }) {
           )}
 
           {/* Trust signals */}
-          <div className="flex items-center justify-center gap-4 pt-2 pb-1">
-            <div className="flex items-center gap-1 text-slate-500 text-[10px]">
-              <Shield className="w-3 h-3" />
+          <div className="flex items-center justify-center gap-6 pt-3 pb-1">
+            <div className="flex items-center gap-2 text-slate-400 text-[11px]">
+              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-white/5">
+                <Shield className="w-3 h-3" />
+              </span>
               Secure checkout
             </div>
-            <div className="flex items-center gap-1 text-slate-500 text-[10px]">
-              <Zap className="w-3 h-3" />
+            <div className="flex items-center gap-2 text-slate-400 text-[11px]">
+              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-white/5">
+                <Zap className="w-3 h-3" />
+              </span>
               Instant access
             </div>
           </div>

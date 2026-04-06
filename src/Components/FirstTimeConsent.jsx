@@ -92,9 +92,16 @@ export default function FirstTimeConsent({ user, onAccepted, onAlreadyAccepted }
   if (isChecking || !showModal) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm overflow-y-auto p-4">
-      <div 
-        className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-8 my-auto"
+    <>
+    <style>{`
+      @keyframes modalIn {
+        from { opacity: 0; transform: scale(0.95) translateY(10px); }
+        to { opacity: 1; transform: scale(1) translateY(0); }
+      }
+    `}</style>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xl overflow-y-auto p-4">
+      <div
+        className="bg-white rounded-3xl shadow-2xl max-w-md w-full mx-4 p-8 my-auto animate-[modalIn_0.3s_ease-out]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="text-center mb-6">
@@ -102,52 +109,53 @@ export default function FirstTimeConsent({ user, onAccepted, onAlreadyAccepted }
           <p className="text-gray-600">Before we begin, please review our policies</p>
         </div>
 
-        <div className="flex border-b border-gray-200 mb-4">
+        <div className="flex gap-2 mb-4 bg-slate-100 rounded-full p-1">
           <button
             onClick={() => setActiveTab('summary')}
-            className={`flex-1 py-2 text-sm font-medium border-b-2 transition ${activeTab === 'summary' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+            className={`flex-1 py-2 text-sm font-medium rounded-full transition-all ${activeTab === 'summary' ? 'bg-teal-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
           >
             Summary
           </button>
           <button
             onClick={() => setActiveTab('privacy')}
-            className={`flex-1 py-2 text-sm font-medium border-b-2 transition ${activeTab === 'privacy' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+            className={`flex-1 py-2 text-sm font-medium rounded-full transition-all ${activeTab === 'privacy' ? 'bg-teal-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
           >
-            Privacy Policy
+            Privacy
           </button>
           <button
             onClick={() => setActiveTab('terms')}
-            className={`flex-1 py-2 text-sm font-medium border-b-2 transition ${activeTab === 'terms' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+            className={`flex-1 py-2 text-sm font-medium rounded-full transition-all ${activeTab === 'terms' ? 'bg-teal-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
           >
-            Terms of Service
+            Terms
           </button>
         </div>
 
-        <div className="bg-gray-50 rounded-lg p-4 mb-6 max-h-64 overflow-y-auto text-sm text-gray-700">
+        <div className="relative mb-6">
+        <div className="bg-gray-50 rounded-xl p-4 max-h-64 overflow-y-auto text-sm text-gray-700" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 4%, black 92%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 4%, black 92%, transparent 100%)' }}>
           {activeTab === 'summary' && (
             <div>
               {/* PROMINENT AI DATA DISCLOSURE — Apple Guideline 5.1.1(i) & 5.1.2(i) */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
-                <h4 className="font-semibold text-blue-900 text-sm mb-1">🤖 Third-Party AI Data Disclosure</h4>
-                <p className="text-blue-800 text-xs mb-1">
+              <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 mb-3" style={{ borderLeft: '4px solid', borderImage: 'linear-gradient(to bottom, #60a5fa, #2dd4bf) 1' }}>
+                <h4 className="font-semibold text-slate-900 text-sm mb-1">Third-Party AI Data Disclosure</h4>
+                <p className="text-slate-700 text-xs mb-1">
                   Your practice responses are sent to <strong>Anthropic's Claude AI</strong> (a third-party service) to generate personalized coaching feedback.
                 </p>
-                <ul className="text-blue-700 text-xs space-y-0.5 ml-2">
+                <ul className="text-slate-600 text-xs space-y-0.5 ml-2">
                   <li>• Audio is transcribed on your device — only text is sent to Anthropic</li>
                   <li>• No personal identifiers (email, name, password) are shared</li>
                   <li>• Anthropic does not use your data to train AI models</li>
-                  <li>• See <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener noreferrer" className="underline text-blue-600">Anthropic's Privacy Policy</a> for details</li>
+                  <li>• See <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener noreferrer" className="underline text-teal-600">Anthropic's Privacy Policy</a> for details</li>
                 </ul>
               </div>
 
-              <label className="flex items-start gap-3 mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200 cursor-pointer">
+              <label className="flex items-start gap-3 mt-3 p-3 bg-teal-50 rounded-xl border border-teal-200 cursor-pointer transition hover:border-teal-300">
                 <input
                   type="checkbox"
                   checked={aiConsentChecked}
                   onChange={(e) => setAiConsentChecked(e.target.checked)}
-                  className="mt-1 w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                  className="mt-0.5 w-5 h-5 rounded focus:ring-teal-500 accent-teal-600"
                 />
-                <span className="text-sm text-slate-700">
+                <span className="text-sm text-slate-700 leading-relaxed">
                   I understand and consent to my practice responses being sent to Anthropic's Claude AI service for coaching feedback. No audio, email, or payment data is shared.
                 </span>
               </label>
@@ -280,18 +288,19 @@ export default function FirstTimeConsent({ user, onAccepted, onAlreadyAccepted }
             </div>
           )}
         </div>
+        </div>
 
         <div className="flex gap-3">
           <button
             onClick={handleReject}
-            className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition"
+            className="flex-1 px-4 py-3 border-2 border-gray-200 text-gray-600 rounded-xl font-medium hover:bg-gray-50 transition-all active:scale-[0.98]"
           >
             Decline
           </button>
           <button
             onClick={handleAccept}
             disabled={!aiConsentChecked}
-            className={`flex-1 px-4 py-3 rounded-lg font-medium transition shadow-lg ${aiConsentChecked ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
+            className={`flex-1 px-4 py-3 rounded-xl font-medium transition-all ${aiConsentChecked ? 'bg-gradient-to-r from-teal-600 to-emerald-600 text-white shadow-lg shadow-teal-600/25 hover:shadow-xl hover:shadow-teal-600/30 active:scale-[0.98]' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
           >
             Accept & Continue
           </button>
@@ -302,5 +311,6 @@ export default function FirstTimeConsent({ user, onAccepted, onAlreadyAccepted }
         </p>
       </div>
     </div>
+    </>
   );
 }

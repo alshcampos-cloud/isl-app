@@ -1,8 +1,170 @@
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Custom scrollbar */
+/* ============================================================
+   UI Polish — Premium Design Layer
+   Adapted from Baby Decoder's design system for InterviewAnswers.ai
+   All additive. Does NOT modify existing classes.
+   Uses teal/emerald brand colors (NOT Baby Decoder's sage/coral).
+   ============================================================ */
+
+@layer base {
+  /* Serif headings — the single biggest premium differentiator */
+  h1, h2, h3, h4 {
+    font-family: 'Source Serif 4 Variable', 'Source Serif 4', Georgia, Cambria, serif;
+  }
+
+  /* Antialiased text rendering */
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Prevent iOS auto-zoom on ALL inputs (not just Capacitor) */
+  @media (max-width: 768px) {
+    input, select, textarea {
+      font-size: 16px !important;
+    }
+  }
+
+  /* Tabular numbers for stats/scores — prevents layout shift */
+  .stat-number {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer components {
+  /* --- CARDS --- */
+  .polish-card {
+    @apply bg-white rounded-2xl p-5 border border-warm-200/60
+           shadow-[0_2px_12px_-4px_rgba(0,0,0,0.05)]
+           transition-all duration-200;
+  }
+  .polish-card-hover {
+    @apply polish-card hover:shadow-md hover:-translate-y-0.5;
+  }
+  .polish-card-interactive {
+    @apply polish-card cursor-pointer
+           hover:shadow-md hover:border-warm-300/80 active:scale-[0.98];
+  }
+
+  /* --- BUTTONS --- */
+  /* Primary CTA — teal with color-tinted shadow */
+  .polish-btn-primary {
+    @apply font-semibold px-6 py-3 rounded-2xl
+           transition-all duration-200 active:scale-[0.97]
+           shadow-md;
+    /* Color-tinted shadow for teal buttons */
+    --tw-shadow-color: rgba(13, 148, 136, 0.15);
+  }
+  /* Secondary button */
+  .polish-btn-secondary {
+    @apply bg-white text-warm-700 font-semibold px-6 py-3 rounded-2xl
+           border border-warm-200 transition-all duration-200 active:scale-[0.97]
+           hover:bg-warm-50;
+  }
+  /* Ghost button */
+  .polish-btn-ghost {
+    @apply text-warm-600 font-medium px-4 py-2 rounded-xl
+           transition-all duration-200 hover:bg-warm-100 active:scale-[0.97];
+  }
+
+  /* --- INPUTS --- */
+  .polish-input {
+    @apply w-full px-4 py-3 rounded-xl border border-warm-200 bg-white
+           text-warm-800 placeholder-warm-400
+           focus:outline-none focus:ring-2 focus:ring-teal-300/50 focus:border-teal-300
+           transition-all duration-200;
+  }
+
+  /* --- GLASS EFFECTS --- */
+  .polish-glass {
+    @apply bg-white/80 border-warm-200/40;
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+  }
+  .polish-frosted-header {
+    @apply sticky top-0 z-10 border-b bg-white/80 border-warm-200/40;
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+  }
+
+  /* --- SECTION LABELS --- */
+  .polish-section-label {
+    @apply text-xs font-semibold uppercase tracking-wider text-warm-500;
+  }
+
+  /* --- SKELETON LOADING --- */
+  .polish-skeleton {
+    background: linear-gradient(90deg,
+      rgba(0,0,0,0.04) 25%,
+      rgba(0,0,0,0.07) 50%,
+      rgba(0,0,0,0.04) 75%
+    );
+    background-size: 200% 100%;
+    animation: skeletonWave 1.8s ease-in-out infinite;
+    border-radius: 0.75rem;
+  }
+}
+
+/* --- NOISE TEXTURE — Adds subliminal warmth to flat backgrounds --- */
+/* 1.5% opacity = invisible to conscious perception, adds organic feel */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0.015;
+  pointer-events: none;
+  z-index: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+}
+
+/* Ensure all app content renders above the noise texture */
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+/* Warm page background instead of pure white */
+body {
+  background-color: #fafaf8;
+}
+
+/* Universal tap feedback on buttons — pure CSS, zero risk */
+button, [role="button"] {
+  transition: transform 0.15s ease;
+}
+button:active, [role="button"]:active {
+  transform: scale(0.97);
+}
+
+/* Shimmer animation for CTA buttons */
+@keyframes shimmerSlide {
+  0% { left: -100%; }
+  100% { left: 200%; }
+}
+.polish-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.polish-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  animation: shimmerSlide 3s ease-in-out infinite;
+}
+
+/* Custom scrollbar — warm version */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -122,4 +284,214 @@ html.capacitor select {
   html.capacitor body {
     font-size: 18px;
   }
+}
+
+/* ============================================================
+   Phase 2: Targeted Polish — Warm Overrides
+   These override specific Tailwind patterns to warm up the
+   existing UI without modifying App.jsx. Higher-specificity
+   compound selectors beat single-class Tailwind utilities.
+   ============================================================ */
+
+/* --- Page backgrounds: warm up all gray-50 backgrounds --- */
+/* Command Center, settings, and other views use bg-gray-50 */
+.min-h-screen.bg-gray-50 {
+  background-color: #fafaf8;
+}
+
+/* Home view: warm up the slate/gray/sky gradient */
+.min-h-screen.bg-gradient-to-br.from-slate-50 {
+  background: linear-gradient(to bottom right, #fafaf8, #f5f5f0, #f0f4f8);
+}
+
+/* --- Stat cards: warmer borders + softer premium shadows --- */
+.container .bg-white.rounded-xl.border-slate-200,
+.container .bg-white.rounded-2xl.border-slate-200 {
+  border-color: rgba(232, 232, 224, 0.6);
+  box-shadow: 0 2px 12px -4px rgba(0,0,0,0.05);
+}
+
+/* --- Profile dropdown: premium shadow upgrade --- */
+.absolute.top-full .rounded-xl.shadow-2xl {
+  box-shadow:
+    0 20px 60px -12px rgba(0,0,0,0.15),
+    0 0 0 1px rgba(232, 232, 224, 0.4);
+  border: 1px solid rgba(232, 232, 224, 0.5);
+}
+
+/* --- Command Center: frosted sticky tab bar --- */
+.sticky.top-0.border-b.shadow-sm.z-40 {
+  background: rgba(250, 250, 248, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom-color: rgba(232, 232, 224, 0.6);
+}
+
+/* Command Center tab pills: rounded-xl for premium feel */
+.sticky.top-0.z-40 button.rounded-lg {
+  border-radius: 0.75rem;
+}
+
+/* --- Command Center header: warm frosted glass --- */
+.bg-white.shadow-sm.border-b.border-slate-100 {
+  background: rgba(250, 250, 248, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom-color: rgba(232, 232, 224, 0.4);
+}
+
+/* --- Feedback sections: warmer card backgrounds --- */
+.feedback-section .bg-gray-50 {
+  background-color: #fafaf8;
+}
+
+/* Feedback card containers: subtle warm border */
+.max-w-3xl .bg-white.rounded-2xl.shadow-2xl {
+  box-shadow:
+    0 16px 48px -8px rgba(0,0,0,0.08),
+    0 0 0 1px rgba(232, 232, 224, 0.3);
+}
+
+/* --- Practice history items: warm bg --- */
+.border-l-4.bg-gray-50 {
+  background-color: #fafaf8;
+}
+
+/* --- Most practiced items: warm bg --- */
+.flex.items-center.gap-4 > .bg-gray-50.rounded-lg {
+  background-color: #fafaf8;
+}
+
+/* --- White content cards in Command Center: warm treatment --- */
+.bg-white.rounded-xl.shadow-md.border-slate-100,
+.bg-white.rounded-xl.shadow-md.border.border-slate-100,
+.bg-white.rounded-2xl.shadow-md.border.border-slate-100 {
+  border-color: rgba(232, 232, 224, 0.5);
+  box-shadow: 0 4px 16px -4px rgba(0,0,0,0.06);
+}
+
+/* --- Input focus rings: teal-tinted for brand consistency --- */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
+
+/* Standard inputs: warmer borders + rounder corners */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+textarea,
+select {
+  border-radius: 0.75rem;
+}
+
+/* --- Empty states: warmer text --- */
+.text-center .text-gray-600 {
+  color: #5c5c54;
+}
+.text-center .text-gray-500 {
+  color: #787870;
+}
+
+/* --- Welcome tip card: warmer treatment --- */
+.bg-gradient-to-r.from-teal-50.to-emerald-50 {
+  border-color: rgba(13, 148, 136, 0.2);
+}
+
+/* --- Practice mode card CTA buttons: color-tinted shadows --- */
+.bg-gradient-to-r.from-teal-500.to-emerald-500 {
+  box-shadow: 0 4px 12px -2px rgba(13, 148, 136, 0.25);
+}
+.bg-gradient-to-r.from-purple-500.to-indigo-500 {
+  box-shadow: 0 4px 12px -2px rgba(139, 92, 246, 0.25);
+}
+.bg-gradient-to-r.from-blue-500.to-cyan-500 {
+  box-shadow: 0 4px 12px -2px rgba(59, 130, 246, 0.25);
+}
+.bg-gradient-to-r.from-orange-500.to-amber-500 {
+  box-shadow: 0 4px 12px -2px rgba(249, 115, 22, 0.25);
+}
+
+/* --- Command Center banner: enhanced glow --- */
+.bg-gradient-to-r.from-teal-600.to-emerald-600.rounded-xl,
+.bg-gradient-to-r.from-teal-600.to-emerald-600.rounded-2xl {
+  box-shadow: 0 8px 24px -4px rgba(13, 148, 136, 0.3);
+}
+
+/* --- Smooth page transitions --- */
+.container {
+  animation: pageEnter 0.3s ease-out;
+}
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Score animation in feedback: glow effect --- */
+.bg-gradient-to-r.from-teal-600.to-sky-600.rounded-xl {
+  box-shadow: 0 8px 32px -4px rgba(13, 148, 136, 0.3);
+}
+
+/* ============================================================
+   Premium Polish — Additional Enhancements
+   Added 2026-04-05. All additive — no existing styles modified.
+   ============================================================ */
+
+/* Premium typography — optimizeLegibility for sharper text */
+body {
+  text-rendering: optimizeLegibility;
+}
+
+/* Smooth view transitions — apply .view-enter to route containers */
+.view-enter {
+  animation: viewFadeIn 0.2s ease-out;
+}
+@keyframes viewFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Premium focus states — teal ring for keyboard navigation */
+button:focus-visible, a:focus-visible, input:focus-visible {
+  outline: 2px solid #14b8a6;
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* Interactive card feel — reusable utility class */
+.interactive-card {
+  transition: all 0.2s ease;
+}
+.interactive-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.1);
+}
+.interactive-card:active {
+  transform: scale(0.99);
+}
+
+/* iOS safe area helpers for notch/home indicator */
+.safe-top { padding-top: env(safe-area-inset-top); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+
+/* Premium modal backdrop with frosted glass */
+.modal-backdrop {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.4);
+}
+
+/* Loading skeleton — lighter alternative to polish-skeleton */
+.skeleton {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+@keyframes skeleton-loading {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }

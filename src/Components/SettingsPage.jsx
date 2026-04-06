@@ -19,6 +19,16 @@ const TIER_LABELS = {
   annual: 'Annual All-Access',
 };
 
+// Tier badge styles
+const TIER_BADGE_STYLES = {
+  free: 'bg-slate-100 text-slate-600',
+  beta: 'bg-purple-50 text-purple-700',
+  pro: 'bg-teal-50 text-teal-700',
+  nursing_pass: 'bg-teal-50 text-teal-700',
+  general_pass: 'bg-indigo-50 text-indigo-700',
+  annual: 'bg-amber-50 text-amber-700',
+};
+
 export default function SettingsPage({ user, userData, supabase: supabaseProp, onBack, onNavigate }) {
   // Delete account state
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -43,6 +53,8 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
   const tier = userData?.tier || 'free';
   const tierLabel = TIER_LABELS[tier] || tier;
   const email = user?.email || userData?.user?.email || 'Unknown';
+  const userInitial = (email && email !== 'Unknown') ? email[0].toUpperCase() : '?';
+  const tierBadgeStyle = TIER_BADGE_STYLES[tier] || TIER_BADGE_STYLES.free;
 
   // ── Handlers ──────────────────────────────────────────────────────
 
@@ -149,6 +161,22 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
     }
   };
 
+  // ── Icon color map per section ────────────────────────────────────
+
+  const iconStyles = {
+    User:       { bg: 'bg-teal-50',   text: 'text-teal-600' },
+    CreditCard: { bg: 'bg-teal-50',   text: 'text-teal-600' },
+    RefreshCw:  { bg: 'bg-teal-50',   text: 'text-teal-600' },
+    Shield:     { bg: 'bg-indigo-50',  text: 'text-indigo-600' },
+    FileText:   { bg: 'bg-indigo-50',  text: 'text-indigo-600' },
+    Scale:      { bg: 'bg-indigo-50',  text: 'text-indigo-600' },
+    Mail:       { bg: 'bg-sky-50',     text: 'text-sky-600' },
+    Star:       { bg: 'bg-amber-50',   text: 'text-amber-600' },
+    Info:       { bg: 'bg-slate-100',  text: 'text-slate-500' },
+  };
+
+  const getIconStyle = (iconName) => iconStyles[iconName] || { bg: 'bg-slate-100', text: 'text-slate-500' };
+
   // ── Sections Definition ───────────────────────────────────────────
 
   const sections = [
@@ -157,19 +185,23 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
       items: [
         {
           icon: User,
+          iconName: 'User',
           label: 'Profile',
           subtitle: email,
           action: null,
         },
         {
           icon: CreditCard,
+          iconName: 'CreditCard',
           label: 'Subscription',
           subtitle: tierLabel,
           action: () => onNavigate('pricing'),
           actionLabel: 'Manage',
+          tierBadge: true,
         },
         ...(isNativeApp() ? [{
           icon: RefreshCw,
+          iconName: 'RefreshCw',
           label: 'Restore Purchases',
           subtitle: restoreMessage || 'Restore previous App Store purchases',
           action: handleRestorePurchases,
@@ -182,6 +214,7 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
       items: [
         {
           icon: Shield,
+          iconName: 'Shield',
           label: 'AI Data Sharing',
           subtitle: 'Your responses are processed by Anthropic\'s Claude AI',
           action: () => window.open('https://www.anthropic.com/privacy', '_blank'),
@@ -189,12 +222,14 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
         },
         {
           icon: FileText,
+          iconName: 'FileText',
           label: 'Privacy Policy',
           subtitle: 'How we handle your data',
           action: () => onNavigate('privacy'),
         },
         {
           icon: Scale,
+          iconName: 'Scale',
           label: 'Terms of Service',
           subtitle: 'Usage terms and conditions',
           action: () => onNavigate('terms'),
@@ -206,42 +241,44 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
       items: [
         {
           icon: Mail,
+          iconName: 'Mail',
           label: 'Contact Support',
           subtitle: 'support@interviewanswers.ai',
           action: () => { window.location.href = 'mailto:support@interviewanswers.ai'; },
         },
         {
           icon: Star,
+          iconName: 'Star',
           label: 'Rate the App',
           subtitle: 'Help us improve with your feedback',
           action: () => window.open('https://apps.apple.com/app/interviewanswers-ai/id0000000000', '_blank'),
         },
       ],
     },
-    {
-      title: 'About',
-      items: [
-        {
-          icon: Info,
-          label: 'InterviewAnswers.AI',
-          subtitle: 'Version 1.0.0',
-          action: null,
-          footer: 'Made by Koda Labs LLC',
-        },
-      ],
-    },
   ];
+
+  // ── Section Header Component ──────────────────────────────────────
+
+  const SectionHeader = ({ title }) => (
+    <div className="flex items-center gap-2.5 mb-3 px-1">
+      <div className="w-1 h-4 rounded-full bg-teal-500" />
+      <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+        {title}
+      </h2>
+    </div>
+  );
 
   // ── Render ────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-24">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100/80 pb-24">
       {/* Header */}
       <div className="sticky top-0 z-10 backdrop-blur-xl bg-white/80 border-b border-slate-200/60 px-4 py-3">
         <div className="flex items-center gap-3">
           <button
             onClick={onBack}
-            className="p-2 -ml-2 rounded-2xl hover:bg-slate-100 transition-colors"
+            onTouchEnd={onBack}
+            className="p-2 -ml-2 rounded-2xl hover:bg-slate-100 active:scale-[0.96] transition-all duration-200"
           >
             <ChevronLeft className="w-5 h-5 text-slate-600" />
           </button>
@@ -249,50 +286,71 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
         </div>
       </div>
 
-      <div className="px-4 py-6 space-y-6">
+      <div className="px-4 py-6 space-y-5">
+        {/* Profile Avatar Card */}
+        <div className="rounded-2xl border border-slate-200/60 bg-gradient-to-br from-white to-slate-50/80 p-5 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.08)]">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-teal-200/50">
+              <span className="text-xl font-bold text-white leading-none">{userInitial}</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-base font-semibold text-slate-900 truncate">{email}</p>
+              <div className="flex items-center gap-2 mt-1">
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${tierBadgeStyle}`}>
+                  {tierLabel}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Sections */}
         {sections.map((section) => (
           <div key={section.title}>
-            <h2 className="text-xs font-semibold uppercase tracking-wider mb-2 px-1 text-slate-500">
-              {section.title}
-            </h2>
-            <div className="rounded-2xl border border-slate-200/60 bg-white overflow-hidden divide-y divide-slate-100 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.05)]">
+            <SectionHeader title={section.title} />
+            <div className="rounded-2xl border border-slate-200/60 bg-gradient-to-br from-white to-slate-50/30 overflow-hidden divide-y divide-slate-100/80 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.08)]">
               {section.items.map((item) => {
                 const Icon = item.icon;
+                const style = getIconStyle(item.iconName);
                 return (
                   <button
                     key={item.label}
                     onClick={item.action}
+                    onTouchEnd={item.action ? (e) => { e.preventDefault(); item.action(); } : undefined}
                     disabled={!item.action || item.loading}
-                    className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors ${
-                      item.action ? 'hover:bg-slate-50 active:bg-slate-100' : ''
+                    className={`w-full flex items-center gap-3.5 px-4 min-h-[52px] py-3.5 text-left transition-all duration-200 ${
+                      item.action
+                        ? 'hover:bg-slate-50/80 active:bg-slate-100 active:scale-[0.98]'
+                        : ''
                     }`}
                   >
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-slate-100">
+                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 ${style.bg} transition-all duration-200`}>
                       {item.loading ? (
-                        <Loader2 className="w-[18px] h-[18px] text-slate-500 animate-spin" />
+                        <Loader2 className={`w-[18px] h-[18px] ${style.text} animate-spin`} />
                       ) : (
-                        <Icon className="w-[18px] h-[18px] text-slate-600" />
+                        <Icon className={`w-[18px] h-[18px] ${style.text}`} />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-medium text-slate-800">{item.label}</p>
                         {item.badge && (
-                          <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-emerald-100 text-emerald-700 rounded-md">
+                          <span className="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-emerald-50 text-emerald-700 rounded-full">
                             {item.badge}
+                          </span>
+                        )}
+                        {item.tierBadge && (
+                          <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full ${tierBadgeStyle}`}>
+                            {tierLabel}
                           </span>
                         )}
                       </div>
                       {item.subtitle && (
-                        <p className="text-xs text-slate-500 truncate">{item.subtitle}</p>
-                      )}
-                      {item.footer && (
-                        <p className="text-[10px] text-slate-400 mt-0.5">{item.footer}</p>
+                        <p className="text-xs text-slate-500 truncate mt-0.5">{item.subtitle}</p>
                       )}
                     </div>
                     {item.action && !item.loading && (
-                      <ChevronRight className="w-4 h-4 flex-shrink-0 text-slate-400" />
+                      <ChevronRight className="w-4 h-4 flex-shrink-0 text-slate-300 transition-transform duration-200 group-hover:translate-x-0.5" />
                     )}
                   </button>
                 );
@@ -303,49 +361,48 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
 
         {/* Data Management Section */}
         <div>
-          <h2 className="text-xs font-semibold uppercase tracking-wider mb-2 px-1 text-slate-500">
-            Data Management
-          </h2>
-          <div className="rounded-2xl border border-slate-200/60 bg-white overflow-hidden divide-y divide-slate-100 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.05)]">
+          <SectionHeader title="Data Management" />
+          <div className="rounded-2xl border border-slate-200/60 bg-gradient-to-br from-white to-slate-50/30 overflow-hidden shadow-[0_2px_12px_-4px_rgba(0,0,0,0.08)]">
             {/* Reset Progress */}
             <button
               onClick={() => setShowResetConfirm(true)}
-              className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-slate-50 active:bg-slate-100 transition-colors"
+              onTouchEnd={(e) => { e.preventDefault(); setShowResetConfirm(true); }}
+              className="w-full flex items-center gap-3.5 px-4 min-h-[52px] py-3.5 text-left hover:bg-slate-50/80 active:bg-slate-100 active:scale-[0.98] transition-all duration-200"
             >
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-amber-50">
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 bg-amber-50 transition-all duration-200">
                 <RotateCcw className="w-[18px] h-[18px] text-amber-600" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-slate-800">Reset Progress</p>
-                <p className="text-xs text-slate-500">Reset scores and streaks. Questions and answers are kept.</p>
+                <p className="text-xs text-slate-500 mt-0.5">Reset scores and streaks. Questions and answers are kept.</p>
               </div>
-              <ChevronRight className="w-4 h-4 flex-shrink-0 text-slate-400" />
+              <ChevronRight className="w-4 h-4 flex-shrink-0 text-slate-300" />
             </button>
           </div>
         </div>
 
         {/* Reset Confirmation */}
         {showResetConfirm && (
-          <div className="rounded-2xl border border-amber-200/60 bg-amber-50/60 p-5">
+          <div className="rounded-2xl border border-amber-200/60 bg-gradient-to-br from-amber-50/80 to-amber-50/40 p-5 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.06)] transition-all duration-300">
             <div className="flex flex-col items-center text-center">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center mb-3 bg-amber-100">
+              <div className="w-14 h-14 rounded-full flex items-center justify-center mb-3 bg-amber-100 shadow-sm">
                 <RotateCcw className="w-6 h-6 text-amber-600" />
               </div>
               <h3 className="text-base font-semibold text-slate-900 mb-2">Reset All Progress?</h3>
-              <p className="text-xs text-slate-600 mb-4">
+              <p className="text-xs text-slate-600 mb-5 leading-relaxed">
                 This will reset your practice scores, session history, and streaks. Your saved questions and answers will not be affected.
               </p>
               <div className="flex gap-3 w-full">
                 <button
                   onClick={() => setShowResetConfirm(false)}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
+                  className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 active:scale-[0.98] transition-all duration-200"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleResetProgress}
                   disabled={resetLoading}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-amber-500 text-white hover:bg-amber-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-amber-500 text-white hover:bg-amber-600 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm shadow-amber-200/50"
                 >
                   {resetLoading ? (
                     <>
@@ -361,32 +418,25 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
 
         {/* Reset Success Toast */}
         {resetDone && (
-          <div className="rounded-2xl border border-emerald-200/60 bg-emerald-50 p-4 flex items-center gap-3">
-            <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+          <div className="rounded-2xl border border-emerald-200/60 bg-gradient-to-r from-emerald-50 to-emerald-50/60 p-4 flex items-center gap-3 shadow-sm transition-all duration-300">
+            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+              <CheckCircle className="w-4 h-4 text-emerald-600" />
+            </div>
             <p className="text-sm text-emerald-700 font-medium">Progress has been reset.</p>
           </div>
         )}
 
-        {/* Sign Out */}
-        <button
-          onClick={handleSignOut}
-          disabled={loggingOut}
-          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl border border-red-200/60 bg-white text-red-600 font-medium hover:bg-red-50 active:bg-red-100 transition-colors shadow-[0_2px_8px_-3px_rgba(0,0,0,0.04)]"
-        >
-          <LogOut className="w-4 h-4" />
-          {loggingOut ? 'Signing out...' : 'Sign Out'}
-        </button>
-
-        {/* Delete Account — Danger Zone */}
-        <div className="pt-4">
-          <div className="rounded-2xl border border-red-200/50 bg-red-50/60 overflow-hidden p-4">
-            <div className="flex items-start gap-3">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-red-100">
-                <Trash2 className="w-[18px] h-[18px] text-red-500" />
+        {/* Danger Zone — Delete Account */}
+        <div>
+          <SectionHeader title="Danger Zone" />
+          <div className="rounded-2xl border border-red-200/60 bg-gradient-to-br from-red-50/50 to-red-50/20 overflow-hidden p-4 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.06)]">
+            <div className="flex items-start gap-3.5">
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 bg-red-100/80">
+                <AlertTriangle className="w-[18px] h-[18px] text-red-500" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-red-700">Delete My Account</p>
-                <p className="text-xs mt-0.5 text-red-600/70">
+                <p className="text-xs mt-1 text-red-600/70 leading-relaxed">
                   Permanently delete all your data including practice sessions, saved answers, AI history, and your account. This cannot be undone.
                 </p>
                 <button
@@ -396,7 +446,14 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
                     setDeleteLoading(false);
                     setShowDeleteConfirm(true);
                   }}
-                  className="mt-3 px-4 py-2 rounded-xl text-xs font-medium bg-red-100 text-red-700 hover:bg-red-200 active:bg-red-200 transition-colors"
+                  onTouchEnd={(e) => {
+                    e.preventDefault();
+                    setDeleteInput('');
+                    setDeleteError(null);
+                    setDeleteLoading(false);
+                    setShowDeleteConfirm(true);
+                  }}
+                  className="mt-3 px-4 py-2 rounded-xl text-xs font-medium bg-red-100 text-red-700 hover:bg-red-200 active:bg-red-200 active:scale-[0.98] transition-all duration-200 min-h-[40px]"
                 >
                   Delete My Account...
                 </button>
@@ -407,26 +464,26 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
 
         {/* Delete Account Confirmation */}
         {showDeleteConfirm && (
-          <div className="rounded-2xl border border-red-200/60 bg-red-50/80 p-5">
+          <div className="rounded-2xl border border-red-200/60 bg-gradient-to-br from-red-50/80 to-red-50/40 p-5 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.06)] transition-all duration-300">
             <div className="flex flex-col items-center text-center">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center mb-3 bg-red-100">
+              <div className="w-14 h-14 rounded-full flex items-center justify-center mb-3 bg-red-100 shadow-sm">
                 <Trash2 className="w-6 h-6 text-red-500" />
               </div>
               <h3 className="text-base font-semibold text-slate-900 mb-2">Delete Your Account?</h3>
-              <p className="text-xs text-slate-600 mb-3">
+              <p className="text-xs text-slate-600 mb-3 leading-relaxed">
                 This will permanently delete all your data:
               </p>
-              <ul className="text-xs text-left w-full space-y-1 mb-3 text-slate-600">
-                <li className="flex items-center gap-2"><span className="text-red-500">&#8226;</span> Practice sessions and scores</li>
-                <li className="flex items-center gap-2"><span className="text-red-500">&#8226;</span> Saved questions and answers</li>
-                <li className="flex items-center gap-2"><span className="text-red-500">&#8226;</span> AI coaching history</li>
-                <li className="flex items-center gap-2"><span className="text-red-500">&#8226;</span> Streaks and progress data</li>
-                <li className="flex items-center gap-2"><span className="text-red-500">&#8226;</span> Your account and profile</li>
+              <ul className="text-xs text-left w-full space-y-1.5 mb-4 text-slate-600">
+                <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0" /> Practice sessions and scores</li>
+                <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0" /> Saved questions and answers</li>
+                <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0" /> AI coaching history</li>
+                <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0" /> Streaks and progress data</li>
+                <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0" /> Your account and profile</li>
               </ul>
 
-              <div className="flex items-start gap-2 rounded-xl p-2.5 mb-4 w-full bg-slate-100/60">
-                <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-600" />
-                <p className="text-xs text-slate-600">
+              <div className="flex items-start gap-2.5 rounded-xl p-3 mb-4 w-full bg-white/60 border border-slate-200/60">
+                <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-500" />
+                <p className="text-xs text-slate-600 leading-relaxed">
                   Type <span className="font-mono font-bold text-red-600">DELETE</span> to confirm. Active subscriptions must be cancelled separately through Stripe or the App Store.
                 </p>
               </div>
@@ -436,7 +493,7 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
                 value={deleteInput}
                 onChange={(e) => setDeleteInput(e.target.value)}
                 placeholder='Type "DELETE" to confirm'
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-center focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-red-300 placeholder:text-slate-400"
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm text-center focus:outline-none focus:ring-2 focus:ring-red-300/60 focus:border-red-300 placeholder:text-slate-400 transition-all duration-200"
               />
 
               {deleteError && (
@@ -446,14 +503,14 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
               <div className="flex gap-3 w-full mt-4">
                 <button
                   onClick={() => setShowDeleteConfirm(false)}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
+                  className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 active:scale-[0.98] transition-all duration-200"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleDeleteAccount}
                   disabled={deleteInput !== 'DELETE' || deleteLoading}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-red-600 text-white hover:bg-red-700 active:scale-[0.98] transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm shadow-red-200/50"
                 >
                   {deleteLoading ? (
                     <>
@@ -469,14 +526,34 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
 
         {/* Deletion Success */}
         {deleteDone && (
-          <div className="rounded-2xl border border-emerald-200/60 bg-emerald-50 p-4 flex items-center gap-3">
-            <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+          <div className="rounded-2xl border border-emerald-200/60 bg-gradient-to-r from-emerald-50 to-emerald-50/60 p-4 flex items-center gap-3 shadow-sm transition-all duration-300">
+            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+              <CheckCircle className="w-4 h-4 text-emerald-600" />
+            </div>
             <p className="text-sm text-emerald-700 font-medium">Account deleted. Redirecting...</p>
           </div>
         )}
 
-        {/* Bottom Spacer */}
-        <div className="h-8" />
+        {/* Sign Out */}
+        <button
+          onClick={handleSignOut}
+          onTouchEnd={(e) => { e.preventDefault(); handleSignOut(); }}
+          disabled={loggingOut}
+          className="w-full flex items-center justify-center gap-2.5 py-4 min-h-[52px] rounded-2xl border border-red-200/40 bg-gradient-to-br from-white to-red-50/30 text-red-500 font-medium hover:bg-red-50/60 active:bg-red-100/60 active:scale-[0.98] transition-all duration-200 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.06)]"
+        >
+          <LogOut className="w-4.5 h-4.5" />
+          <span className="text-sm">{loggingOut ? 'Signing out...' : 'Sign Out'}</span>
+        </button>
+
+        {/* Version Footer */}
+        <div className="pt-4 pb-2">
+          <p className="text-center text-[11px] text-slate-400 leading-relaxed">
+            InterviewAnswers.ai v1.0.0
+          </p>
+          <p className="text-center text-[11px] text-slate-300 mt-0.5">
+            Made with &#9829; by Koda Labs LLC
+          </p>
+        </div>
       </div>
     </div>
   );
