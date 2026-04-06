@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InterviewAnswers.ai — Admin Dashboard</title>
+  <meta name="robots" content="noindex, nofollow">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #0f172a;
+      --bg-card: #1e293b;
+      --bg-card-hover: #334155;
+      --bg-input: #0f172a;
+      --border: #334155;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent-teal: #2dd4bf;
+      --accent-blue: #3b82f6;
+      --accent-green: #22c55e;
+      --accent-yellow: #eab308;
+      --accent-red: #ef4444;
+      --accent-purple: #a855f7;
+      --accent-orange: #f97316;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    /* ── Login Screen ─────────────────────────────────── */
+    #login-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 1rem;
+    }
+
+    .login-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .login-box h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .login-box p {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .login-box label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 0.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .login-box input {
+      width: 100%;
+      padding: 0.625rem 0.75rem;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 0.875rem;
+      margin-bottom: 1rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .login-box input:focus { border-color: var(--accent-teal); }
+
+    .login-box button {
+      width: 100%;
+      padding: 0.625rem;
+      background: var(--accent-teal);
+      color: var(--bg-primary);
+      border: none;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .login-box button:hover { opacity: 0.9; }
+    .login-box button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .login-error {
+      color: var(--accent-red);
+      font-size: 0.8rem;
+      margin-bottom: 0.75rem;
+      display: none;
+    }
+
+    /* ── Dashboard ─────────────────────────────────────── */
+    #dashboard { display: none; }
+
+    .topbar {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .topbar-left h1 {
+      font-size: 1rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .topbar-left .overall-status {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .topbar-right button {
+      padding: 0.375rem 0.75rem;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .topbar-right button:hover { background: var(--bg-card-hover); }
+
+    .auto-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .auto-toggle input[type="checkbox"] {
+      accent-color: var(--accent-teal);
+    }
+
+    /* ── Health dots ───────────────────────────────────── */
+    .health-bar {
+      display: flex;
+      gap: 1.25rem;
+      padding: 0.75rem 1.5rem;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+
+    .health-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+    }
+
+    .health-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .health-dot.ok { background: var(--accent-green); box-shadow: 0 0 6px rgba(34, 197, 94, 0.5); }
+    .health-dot.error { background: var(--accent-red); box-shadow: 0 0 6px rgba(239, 68, 68, 0.5); }
+    .health-dot.loading { background: var(--text-muted); animation: pulse 1.5s infinite; }
+
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    .health-label { color: var(--text-secondary); font-weight: 500; }
+    .health-detail { color: var(--text-muted); font-size: 0.7rem; }
+
+    /* ── Grid layout ──────────────────────────────────── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 1rem;
+      padding: 1.25rem 1.5rem;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+    }
+
+    .card-badge {
+      font-size: 0.65rem;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      background: rgba(45, 212, 191, 0.1);
+      color: var(--accent-teal);
+      font-weight: 500;
+    }
+
+    /* ── Metric rows ──────────────────────────────────── */
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .metric {
+      background: var(--bg-primary);
+      border-radius: 8px;
+      padding: 0.75rem;
+      text-align: center;
+    }
+
+    .metric-value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .metric-value.teal { color: var(--accent-teal); }
+    .metric-value.blue { color: var(--accent-blue); }
+    .metric-value.green { color: var(--accent-green); }
+    .metric-value.yellow { color: var(--accent-yellow); }
+    .metric-value.red { color: var(--accent-red); }
+    .metric-value.purple { color: var(--accent-purple); }
+    .metric-value.orange { color: var(--accent-orange); }
+
+    .metric-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+
+    /* ── Tier list ────────────────────────────────────── */
+    .tier-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 0.75rem;
+      background: var(--bg-primary);
+      border-radius: 6px;
+      font-size: 0.85rem;
+    }
+
+    .tier-row + .tier-row { margin-top: 0.375rem; }
+
+    .tier-name {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-secondary);
+    }
+
+    .tier-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .tier-count {
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ── Usage bars ────────────────────────────────────── */
+    .usage-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.8rem;
+    }
+
+    .usage-row + .usage-row { margin-top: 0.5rem; }
+
+    .usage-label {
+      width: 140px;
+      flex-shrink: 0;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+    }
+
+    .usage-bar-track {
+      flex: 1;
+      height: 6px;
+      background: var(--bg-primary);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .usage-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.4s ease;
+    }
+
+    .usage-count {
+      width: 50px;
+      text-align: right;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      font-size: 0.8rem;
+    }
+
+    /* ── Error table ──────────────────────────────────── */
+    .error-table {
+      width: 100%;
+      font-size: 0.75rem;
+      border-collapse: collapse;
+    }
+
+    .error-table th {
+      text-align: left;
+      color: var(--text-muted);
+      font-weight: 500;
+      padding: 0.375rem 0.5rem;
+      border-bottom: 1px solid var(--border);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-size: 0.65rem;
+    }
+
+    .error-table td {
+      padding: 0.375rem 0.5rem;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+      color: var(--text-secondary);
+      vertical-align: top;
+    }
+
+    .error-table tr.critical td { color: var(--accent-red); }
+
+    .error-fn { color: var(--accent-orange); font-weight: 500; }
+    .error-msg { max-width: 280px; word-break: break-word; }
+    .error-time { color: var(--text-muted); white-space: nowrap; }
+
+    /* ── Placeholder states ───────────────────────────── */
+    .placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      font-style: italic;
+      text-align: center;
+    }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent-teal);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-right: 0.5rem;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Responsive ───────────────────────────────────── */
+    @media (max-width: 640px) {
+      .grid { grid-template-columns: 1fr; padding: 0.75rem; }
+      .topbar { padding: 0.5rem 0.75rem; }
+      .health-bar { padding: 0.5rem 0.75rem; gap: 0.75rem; }
+      .metric-value { font-size: 1.35rem; }
+    }
+
+    /* ── Full-width card ──────────────────────────────── */
+    .card.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .logout-btn {
+      color: var(--accent-red);
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    .logout-btn:hover { background: rgba(239, 68, 68, 0.1) !important; }
+  </style>
+</head>
+<body>
+
+<!-- ── Login Screen ──────────────────────────────────── -->
+<div id="login-screen">
+  <div class="login-box">
+    <h1>Admin Dashboard</h1>
+    <p>InterviewAnswers.ai &mdash; Authorized Personnel Only</p>
+    <div id="login-error" class="login-error"></div>
+    <label for="email">Email</label>
+    <input type="email" id="email" placeholder="admin@interviewanswers.ai" autocomplete="email">
+    <label for="password">Password</label>
+    <input type="password" id="password" placeholder="Password" autocomplete="current-password">
+    <button id="login-btn" onclick="handleLogin()">Sign In</button>
+  </div>
+</div>
+
+<!-- ── Dashboard ─────────────────────────────────────── -->
+<div id="dashboard">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <h1>InterviewAnswers.ai Admin</h1>
+      <div class="overall-status" id="overall-status">
+        <span class="health-dot loading"></span>
+        <span>Checking...</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <span id="last-refresh">--</span>
+      <label class="auto-toggle">
+        <input type="checkbox" id="auto-refresh-toggle" checked>
+        Auto (60s)
+      </label>
+      <button onclick="refreshAll()">Refresh Now</button>
+      <button class="logout-btn" onclick="handleLogout()">Sign Out</button>
+    </div>
+  </div>
+
+  <!-- Health bar -->
+  <div class="health-bar" id="health-bar">
+    <div class="health-item">
+      <span class="health-dot loading" id="dot-database"></span>
+      <span class="health-label">Database</span>
+      <span class="health-detail" id="detail-database"></span>
+    </div>
+    <div class="health-item">
+      <span class="health-dot loading" id="dot-anthropic"></span>
+      <span class="health-label">Anthropic API</span>
+      <span class="health-detail" id="detail-anthropic"></span>
+    </div>
+    <div class="health-item">
+      <span class="health-dot loading" id="dot-tts"></span>
+      <span class="health-label">TTS (GCP)</span>
+      <span class="health-detail" id="detail-tts"></span>
+    </div>
+    <div class="health-item">
+      <span class="health-dot loading" id="dot-stripe"></span>
+      <span class="health-label">Stripe</span>
+      <span class="health-detail" id="detail-stripe"></span>
+    </div>
+  </div>
+
+  <!-- Dashboard grid -->
+  <div class="grid">
+
+    <!-- User Metrics -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">User Metrics</span>
+        <span class="card-badge">Live</span>
+      </div>
+      <div class="metric-grid" id="user-metrics">
+        <div class="metric"><div class="metric-value teal" id="m-total-users">--</div><div class="metric-label">Total Users</div></div>
+        <div class="metric"><div class="metric-value green" id="m-active-24h">--</div><div class="metric-label">Active 24h</div></div>
+        <div class="metric"><div class="metric-value blue" id="m-active-7d">--</div><div class="metric-label">Active 7d</div></div>
+        <div class="metric"><div class="metric-value purple" id="m-active-30d">--</div><div class="metric-label">Active 30d</div></div>
+        <div class="metric"><div class="metric-value orange" id="m-signups-today">--</div><div class="metric-label">Signups Today</div></div>
+        <div class="metric"><div class="metric-value yellow" id="m-nursing-users">--</div><div class="metric-label">Nursing Users</div></div>
+      </div>
+    </div>
+
+    <!-- Revenue & Subscriptions -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Revenue &amp; Tiers</span>
+        <span class="card-badge">user_profiles</span>
+      </div>
+      <div id="tier-breakdown">
+        <div class="placeholder"><span class="spinner"></span> Loading...</div>
+      </div>
+    </div>
+
+    <!-- API Usage (24h) -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">API Usage (Current Period)</span>
+        <span class="card-badge">usage_tracking</span>
+      </div>
+      <div id="api-usage">
+        <div class="placeholder"><span class="spinner"></span> Loading...</div>
+      </div>
+    </div>
+
+    <!-- Session Activity -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Session Activity</span>
+        <span class="card-badge">Today</span>
+      </div>
+      <div class="metric-grid" id="session-metrics">
+        <div class="metric"><div class="metric-value teal" id="m-sessions-today">--</div><div class="metric-label">Total Sessions</div></div>
+        <div class="metric"><div class="metric-value blue" id="m-nursing-sessions">--</div><div class="metric-label">Nursing Sessions</div></div>
+        <div class="metric"><div class="metric-value green" id="m-mock-interviews">--</div><div class="metric-label">Mock Interviews</div></div>
+        <div class="metric"><div class="metric-value purple" id="m-sbar-drills">--</div><div class="metric-label">SBAR Drills</div></div>
+        <div class="metric"><div class="metric-value orange" id="m-coach-sessions">--</div><div class="metric-label">AI Coach</div></div>
+        <div class="metric"><div class="metric-value yellow" id="m-practice-sessions">--</div><div class="metric-label">Practice</div></div>
+      </div>
+    </div>
+
+    <!-- Recent Errors -->
+    <div class="card full-width">
+      <div class="card-header">
+        <span class="card-title">Recent Errors / Edge Function Failures</span>
+        <span class="card-badge" id="error-count-badge">--</span>
+      </div>
+      <div id="error-log">
+        <div class="placeholder"><span class="spinner"></span> Loading...</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── Config ─────────────────────────────────────────────────
+const SUPABASE_URL = 'https://tzrlpwtkrtvjpdhcaayu.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6cmxwd3RrcnR2anBkaGNhYXl1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYzNjM1OTAsImV4cCI6MjA4MTkzOTU5MH0.wnL18oe18kxmniUz0_nntBgDlcc4UxOBwnOYf3ElElk';
+const ADMIN_WHITELIST = ['alshwenbearcampos@gmail.com'];
+const REFRESH_INTERVAL = 60000;
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let refreshTimer = null;
+
+// ── Auth ───────────────────────────────────────────────────
+async function handleLogin() {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const errEl = document.getElementById('login-error');
+  const btn = document.getElementById('login-btn');
+
+  errEl.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'Signing in...';
+
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+
+    if (!ADMIN_WHITELIST.includes(data.user.email.toLowerCase())) {
+      await sb.auth.signOut();
+      throw new Error('Access denied. This account is not authorized for admin access.');
+    }
+
+    showDashboard();
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Sign In';
+  }
+}
+
+async function handleLogout() {
+  clearInterval(refreshTimer);
+  await sb.auth.signOut();
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+async function checkSession() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session && ADMIN_WHITELIST.includes(session.user.email.toLowerCase())) {
+    showDashboard();
+  }
+}
+
+function showDashboard() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  refreshAll();
+  startAutoRefresh();
+}
+
+// ── Auto-refresh ───────────────────────────────────────────
+function startAutoRefresh() {
+  clearInterval(refreshTimer);
+  if (document.getElementById('auto-refresh-toggle').checked) {
+    refreshTimer = setInterval(refreshAll, REFRESH_INTERVAL);
+  }
+}
+
+document.getElementById('auto-refresh-toggle')?.addEventListener('change', startAutoRefresh);
+
+// Enter key on password field
+document.getElementById('password')?.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') handleLogin();
+});
+
+// ── Refresh All ────────────────────────────────────────────
+async function refreshAll() {
+  document.getElementById('last-refresh').textContent = 'Refreshing...';
+  await Promise.allSettled([
+    fetchHealthCheck(),
+    fetchUserMetrics(),
+    fetchTierBreakdown(),
+    fetchApiUsage(),
+    fetchSessionActivity(),
+    fetchRecentErrors(),
+  ]);
+  const now = new Date();
+  document.getElementById('last-refresh').textContent =
+    `Last: ${now.toLocaleTimeString()}`;
+}
+
+// ── 1. Health Check ────────────────────────────────────────
+async function fetchHealthCheck() {
+  const services = ['database', 'anthropic', 'tts', 'stripe'];
+  services.forEach(s => {
+    document.getElementById(`dot-${s}`).className = 'health-dot loading';
+    document.getElementById(`detail-${s}`).textContent = '';
+  });
+
+  try {
+    // Call the health-check Edge Function
+    // Note: This requires HEALTH_CHECK_KEY to be set. We'll try without auth first,
+    // and if that fails, we fall back to local checks.
+    const { data: { session } } = await sb.auth.getSession();
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/health-check`, {
+      headers: {
+        'Authorization': `Bearer ${session?.access_token || SUPABASE_ANON_KEY}`,
+        'x-health-key': 'admin-dashboard',  // Will fail if key doesn't match, that's fine
+      },
+    });
+
+    if (res.ok) {
+      const health = await res.json();
+      Object.entries(health.checks).forEach(([name, check]) => {
+        const dot = document.getElementById(`dot-${name}`);
+        const detail = document.getElementById(`detail-${name}`);
+        if (!dot) return;
+        dot.className = `health-dot ${check.status}`;
+        if (check.latency_ms) {
+          detail.textContent = `${check.latency_ms}ms`;
+        } else if (check.configured !== undefined) {
+          detail.textContent = check.configured ? 'Configured' : 'Not configured';
+        }
+      });
+
+      // Overall status
+      updateOverallStatus(health.status);
+      return;
+    }
+  } catch (e) {
+    console.warn('Health check Edge Function unavailable, falling back to direct checks:', e.message);
+  }
+
+  // Fallback: just check database connectivity directly
+  try {
+    const start = performance.now();
+    const { count, error } = await sb.from('user_profiles').select('id', { count: 'exact', head: true });
+    const ms = Math.round(performance.now() - start);
+
+    document.getElementById('dot-database').className = `health-dot ${error ? 'error' : 'ok'}`;
+    document.getElementById('detail-database').textContent = error ? error.message : `${ms}ms`;
+
+    // Others unknown in fallback
+    ['anthropic', 'tts', 'stripe'].forEach(s => {
+      document.getElementById(`dot-${s}`).className = 'health-dot loading';
+      document.getElementById(`detail-${s}`).textContent = 'Edge Fn unavailable';
+    });
+
+    updateOverallStatus(error ? 'unhealthy' : 'degraded');
+  } catch (e) {
+    document.getElementById('dot-database').className = 'health-dot error';
+    document.getElementById('detail-database').textContent = 'Connection failed';
+    updateOverallStatus('unhealthy');
+  }
+}
+
+function updateOverallStatus(status) {
+  const el = document.getElementById('overall-status');
+  const colors = {
+    healthy: { bg: 'rgba(34,197,94,0.12)', color: '#22c55e', label: 'All Systems Healthy' },
+    degraded: { bg: 'rgba(234,179,8,0.12)', color: '#eab308', label: 'Degraded' },
+    unhealthy: { bg: 'rgba(239,68,68,0.12)', color: '#ef4444', label: 'Unhealthy' },
+  };
+  const c = colors[status] || colors.degraded;
+  el.style.background = c.bg;
+  el.style.color = c.color;
+  el.innerHTML = `<span class="health-dot ${status === 'healthy' ? 'ok' : status === 'unhealthy' ? 'error' : 'loading'}" style="animation:none"></span><span>${c.label}</span>`;
+}
+
+// ── 2. User Metrics ────────────────────────────────────────
+async function fetchUserMetrics() {
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+  const h24 = new Date(now.getTime() - 24 * 3600000).toISOString();
+  const d7 = new Date(now.getTime() - 7 * 24 * 3600000).toISOString();
+  const d30 = new Date(now.getTime() - 30 * 24 * 3600000).toISOString();
+
+  // Total users
+  try {
+    const { count } = await sb.from('user_profiles').select('id', { count: 'exact', head: true });
+    setText('m-total-users', count ?? 0);
+  } catch { setText('m-total-users', 'ERR'); }
+
+  // Active users: use usage_tracking.last_used
+  try {
+    const { count: a24 } = await sb.from('usage_tracking').select('user_id', { count: 'exact', head: true }).gte('last_used', h24);
+    setText('m-active-24h', a24 ?? 0);
+  } catch { setText('m-active-24h', '--'); }
+
+  try {
+    const { count: a7 } = await sb.from('usage_tracking').select('user_id', { count: 'exact', head: true }).gte('last_used', d7);
+    setText('m-active-7d', a7 ?? 0);
+  } catch { setText('m-active-7d', '--'); }
+
+  try {
+    const { count: a30 } = await sb.from('usage_tracking').select('user_id', { count: 'exact', head: true }).gte('last_used', d30);
+    setText('m-active-30d', a30 ?? 0);
+  } catch { setText('m-active-30d', '--'); }
+
+  // Signups today
+  try {
+    const { count } = await sb.from('user_profiles').select('id', { count: 'exact', head: true }).gte('created_at', todayStart);
+    setText('m-signups-today', count ?? 0);
+  } catch { setText('m-signups-today', '--'); }
+
+  // Nursing users
+  try {
+    const { count } = await sb.from('nursing_user_profiles').select('user_id', { count: 'exact', head: true });
+    setText('m-nursing-users', count ?? 0);
+  } catch { setText('m-nursing-users', '--'); }
+}
+
+// ── 3. Tier Breakdown ──────────────────────────────────────
+async function fetchTierBreakdown() {
+  const container = document.getElementById('tier-breakdown');
+  const now = new Date().toISOString();
+
+  try {
+    // Query all user_profiles to compute tier distribution
+    // We need pass_type, nursing_pass_expires, general_pass_expires, subscription_status, premium_trial_ends
+    const { data, error } = await sb.from('user_profiles')
+      .select('subscription_status, pass_type, nursing_pass_expires, general_pass_expires, premium_trial_ends');
+
+    if (error) throw error;
+
+    const tiers = {
+      free: 0,
+      nursing_pass: 0,
+      general_pass: 0,
+      trial: 0,
+      pro_legacy: 0,
+    };
+
+    (data || []).forEach(u => {
+      const hasNursingPass = u.nursing_pass_expires && u.nursing_pass_expires > now;
+      const hasGeneralPass = u.general_pass_expires && u.general_pass_expires > now;
+      const hasTrial = u.premium_trial_ends && u.premium_trial_ends > now;
+      const isProLegacy = u.subscription_status === 'active';
+
+      if (isProLegacy) tiers.pro_legacy++;
+      else if (hasNursingPass) tiers.nursing_pass++;
+      else if (hasGeneralPass) tiers.general_pass++;
+      else if (hasTrial) tiers.trial++;
+      else tiers.free++;
+    });
+
+    const tierDefs = [
+      { key: 'free', label: 'Free Tier', color: '#64748b' },
+      { key: 'nursing_pass', label: 'Nursing Pass ($19.99)', color: '#2dd4bf' },
+      { key: 'general_pass', label: 'General Pass ($14.99)', color: '#3b82f6' },
+      { key: 'trial', label: '24h Trial', color: '#a855f7' },
+      { key: 'pro_legacy', label: 'Pro Legacy', color: '#f97316' },
+    ];
+
+    const total = Object.values(tiers).reduce((a, b) => a + b, 0) || 1;
+    const estMRR = (tiers.nursing_pass * 19.99) + (tiers.general_pass * 14.99);
+
+    let html = `<div style="display:flex;justify-content:space-between;margin-bottom:0.75rem;padding:0.5rem 0.75rem;background:var(--bg-primary);border-radius:6px;">
+      <span style="color:var(--text-secondary);font-size:0.8rem;">Est. MRR</span>
+      <span style="font-weight:700;color:var(--accent-green);font-size:0.9rem;">$${estMRR.toFixed(2)}</span>
+    </div>`;
+
+    tierDefs.forEach(t => {
+      const pct = ((tiers[t.key] / total) * 100).toFixed(0);
+      html += `<div class="tier-row">
+        <span class="tier-name"><span class="tier-dot" style="background:${t.color}"></span>${t.label}</span>
+        <span class="tier-count" style="color:${t.color}">${tiers[t.key]} <span style="color:var(--text-muted);font-weight:400;font-size:0.7rem">(${pct}%)</span></span>
+      </div>`;
+    });
+
+    container.innerHTML = html;
+  } catch (e) {
+    container.innerHTML = `<div class="placeholder" style="color:var(--accent-red)">Failed to load tier data: ${esc(e.message)}</div>`;
+  }
+}
+
+// ── 4. API Usage ───────────────────────────────────────────
+async function fetchApiUsage() {
+  const container = document.getElementById('api-usage');
+
+  try {
+    // Get current period's usage tracking data — sum across all users
+    const currentPeriod = getCurrentPeriod();
+    const { data, error } = await sb.from('usage_tracking')
+      .select('ai_interviewer, practice_mode, answer_assistant, question_gen, live_prompter_questions, nursing_practice, nursing_mock, nursing_sbar, nursing_coach')
+      .eq('period', currentPeriod);
+
+    if (error) throw error;
+
+    // Aggregate across all users
+    const features = {
+      'AI Interviewer': { key: 'ai_interviewer', color: '#3b82f6', total: 0 },
+      'Practice Mode': { key: 'practice_mode', color: '#22c55e', total: 0 },
+      'Answer Assistant': { key: 'answer_assistant', color: '#a855f7', total: 0 },
+      'Question Gen': { key: 'question_gen', color: '#eab308', total: 0 },
+      'Live Prompter': { key: 'live_prompter_questions', color: '#f97316', total: 0 },
+      'Nursing Practice': { key: 'nursing_practice', color: '#2dd4bf', total: 0 },
+      'Nursing Mock': { key: 'nursing_mock', color: '#06b6d4', total: 0 },
+      'Nursing SBAR': { key: 'nursing_sbar', color: '#ec4899', total: 0 },
+      'Nursing Coach': { key: 'nursing_coach', color: '#f43f5e', total: 0 },
+    };
+
+    (data || []).forEach(row => {
+      Object.values(features).forEach(f => {
+        f.total += (row[f.key] || 0);
+      });
+    });
+
+    const maxVal = Math.max(1, ...Object.values(features).map(f => f.total));
+    const totalCalls = Object.values(features).reduce((a, f) => a + f.total, 0);
+
+    // Cost estimation: ~$0.01 per practice call, ~$0.03 per interview/coach call
+    const costEst = (
+      (features['AI Interviewer'].total * 0.03) +
+      (features['Practice Mode'].total * 0.01) +
+      (features['Answer Assistant'].total * 0.02) +
+      (features['Question Gen'].total * 0.01) +
+      (features['Live Prompter'].total * 0.005) +
+      (features['Nursing Practice'].total * 0.01) +
+      (features['Nursing Mock'].total * 0.03) +
+      (features['Nursing SBAR'].total * 0.015) +
+      (features['Nursing Coach'].total * 0.03)
+    );
+
+    let html = `<div style="display:flex;gap:0.75rem;margin-bottom:0.75rem;">
+      <div class="metric" style="flex:1"><div class="metric-value teal" style="font-size:1.25rem">${totalCalls}</div><div class="metric-label">Total Calls</div></div>
+      <div class="metric" style="flex:1"><div class="metric-value red" style="font-size:1.25rem">$${costEst.toFixed(2)}</div><div class="metric-label">Est. Cost</div></div>
+      <div class="metric" style="flex:1"><div class="metric-value blue" style="font-size:1.25rem">${currentPeriod}</div><div class="metric-label">Period</div></div>
+    </div>`;
+
+    Object.entries(features).forEach(([label, f]) => {
+      const pct = Math.round((f.total / maxVal) * 100);
+      html += `<div class="usage-row">
+        <span class="usage-label">${label}</span>
+        <div class="usage-bar-track"><div class="usage-bar-fill" style="width:${pct}%;background:${f.color}"></div></div>
+        <span class="usage-count" style="color:${f.color}">${f.total}</span>
+      </div>`;
+    });
+
+    container.innerHTML = html;
+  } catch (e) {
+    // Graceful fallback if table doesn't exist
+    container.innerHTML = `<div class="placeholder">Usage tracking data unavailable: ${esc(e.message)}</div>`;
+  }
+}
+
+// ── 5. Recent Errors ───────────────────────────────────────
+async function fetchRecentErrors() {
+  const container = document.getElementById('error-log');
+  const badge = document.getElementById('error-count-badge');
+
+  // Try api_error_log table first, fall back gracefully
+  try {
+    const { data, error } = await sb.from('api_error_log')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    if (error) throw error;
+
+    badge.textContent = `${data.length} recent`;
+
+    if (!data || data.length === 0) {
+      container.innerHTML = '<div class="placeholder">No recent errors recorded.</div>';
+      return;
+    }
+
+    let html = `<div style="overflow-x:auto"><table class="error-table">
+      <thead><tr><th>Function</th><th>Message</th><th>Time</th></tr></thead><tbody>`;
+
+    data.forEach(row => {
+      const isCritical = (row.error_message || '').toLowerCase().includes('critical') ||
+                         (row.status_code && row.status_code >= 500);
+      html += `<tr class="${isCritical ? 'critical' : ''}">
+        <td class="error-fn">${esc(row.function_name || row.edge_function || 'unknown')}</td>
+        <td class="error-msg">${esc((row.error_message || row.message || '').slice(0, 200))}</td>
+        <td class="error-time">${formatTime(row.created_at)}</td>
+      </tr>`;
+    });
+
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+  } catch (e) {
+    // Table likely doesn't exist yet
+    badge.textContent = 'N/A';
+    container.innerHTML = `<div class="placeholder">
+      Error log table not found. Create <code>api_error_log</code> table to enable error tracking.<br>
+      <span style="font-size:0.7rem;margin-top:0.25rem;display:block;color:var(--text-muted)">${esc(e.message)}</span>
+    </div>`;
+  }
+}
+
+// ── 6. Session Activity ────────────────────────────────────
+async function fetchSessionActivity() {
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+
+  // General practice sessions (practice_sessions table)
+  try {
+    const { count } = await sb.from('practice_sessions').select('id', { count: 'exact', head: true }).gte('created_at', todayStart);
+    setText('m-sessions-today', count ?? 0);
+  } catch { setText('m-sessions-today', '--'); }
+
+  // Nursing sessions breakdown
+  try {
+    const { count: total } = await sb.from('nursing_practice_sessions').select('id', { count: 'exact', head: true }).gte('created_at', todayStart);
+    setText('m-nursing-sessions', total ?? 0);
+  } catch { setText('m-nursing-sessions', '--'); }
+
+  try {
+    const { count } = await sb.from('nursing_practice_sessions').select('id', { count: 'exact', head: true })
+      .gte('created_at', todayStart).eq('mode', 'mock-interview');
+    setText('m-mock-interviews', count ?? 0);
+  } catch { setText('m-mock-interviews', '--'); }
+
+  try {
+    const { count } = await sb.from('nursing_practice_sessions').select('id', { count: 'exact', head: true })
+      .gte('created_at', todayStart).eq('mode', 'sbar-drill');
+    setText('m-sbar-drills', count ?? 0);
+  } catch { setText('m-sbar-drills', '--'); }
+
+  try {
+    const { count } = await sb.from('nursing_practice_sessions').select('id', { count: 'exact', head: true })
+      .gte('created_at', todayStart).eq('mode', 'ai-coach');
+    setText('m-coach-sessions', count ?? 0);
+  } catch { setText('m-coach-sessions', '--'); }
+
+  try {
+    const { count } = await sb.from('nursing_practice_sessions').select('id', { count: 'exact', head: true })
+      .gte('created_at', todayStart).eq('mode', 'practice');
+    setText('m-practice-sessions', count ?? 0);
+  } catch { setText('m-practice-sessions', '--'); }
+}
+
+// ── Helpers ────────────────────────────────────────────────
+function setText(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = typeof val === 'number' ? val.toLocaleString() : val;
+}
+
+function esc(str) {
+  const el = document.createElement('span');
+  el.textContent = str || '';
+  return el.innerHTML;
+}
+
+function formatTime(iso) {
+  if (!iso) return '--';
+  const d = new Date(iso);
+  const now = new Date();
+  const diffMs = now - d;
+  if (diffMs < 60000) return 'just now';
+  if (diffMs < 3600000) return `${Math.floor(diffMs / 60000)}m ago`;
+  if (diffMs < 86400000) return `${Math.floor(diffMs / 3600000)}h ago`;
+  return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function getCurrentPeriod() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
+// ── Init ───────────────────────────────────────────────────
+checkSession();
+</script>
+</body>
+</html>
