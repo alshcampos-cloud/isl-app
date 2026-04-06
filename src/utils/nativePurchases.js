@@ -1,234 +1,168 @@
 // Native In-App Purchase handler for iOS and Android
-// This module handles Apple/Google payments when running as a native app.
-// Web payments continue to use the existing StripeCheckout.jsx flow.
-//
-// Uses cordova-plugin-purchase (v13+) for StoreKit 2 support.
+// Uses @capgo/native-purchases for direct StoreKit 2 (no RevenueCat, no third-party cut).
+// Web payments continue to use Stripe via GeneralPricing.jsx.
 
-import { isNativeApp, getPaymentProvider } from './platform';
+import { isNativeApp, isIOS, getPaymentProvider } from './platform';
 
-// Product IDs — must match what's configured in App Store Connect / Google Play Console
+// Product IDs — must match App Store Connect / Google Play Console
 const PRODUCTS = {
-  PRO_MONTHLY: 'ai.interviewanswers.pro.monthly',
+  GENERAL_30DAY: 'ai.interviewanswers.general.30day',
+  NURSING_30DAY: 'ai.interviewanswers.nursing.30day',
+  ANNUAL_ALL_ACCESS: 'ai.interviewanswers.annual.allaccess',
 };
 
-// Reference to the store instance (set during initialization)
-let store = null;
+let NativePurchases = null;
 let storeReady = false;
+let productCache = {};
 let initAttempts = 0;
 const MAX_INIT_ATTEMPTS = 3;
 
 /**
- * Wait for the CdvPurchase plugin to become available.
- * The plugin loads asynchronously via Cordova, so it may not be
- * on window immediately.
- */
-function waitForCdvPurchase(maxWaitMs = 10000) {
-  return new Promise((resolve) => {
-    if (window.CdvPurchase) {
-      resolve(true);
-      return;
-    }
-    const startTime = Date.now();
-    const interval = setInterval(() => {
-      if (window.CdvPurchase) {
-        clearInterval(interval);
-        resolve(true);
-      } else if (Date.now() - startTime > maxWaitMs) {
-        clearInterval(interval);
-        resolve(false);
-      }
-    }, 200);
-  });
-}
-
-/**
  * Initialize the native purchase system.
  * Call once on app startup (only activates on native platforms).
- * Includes retry logic in case the store takes time to connect.
  */
 export async function initializePurchases() {
   if (!isNativeApp()) return;
 
   try {
-    console.log('[Purchases] Waiting for CdvPurchase plugin...');
-    const pluginAvailable = await waitForCdvPurchase();
+    // Dynamic import — only loads on native platforms
+    const mod = await import('@capgo/native-purchases');
+    NativePurchases = mod.NativePurchases;
 
-    if (!pluginAvailable || !window.CdvPurchase) {
-      console.warn('[Purchases] CdvPurchase not available after waiting — plugin may not be installed');
+    // Check if billing is available
+    const { isBillingSupported } = await NativePurchases.isBillingSupported();
+    if (!isBillingSupported) {
+      console.warn('[Purchases] Billing not supported on this device');
       return;
     }
+    console.log('[Purchases] Billing supported');
 
-    console.log('[Purchases] CdvPurchase plugin found, setting up store...');
-    store = window.CdvPurchase.store;
-    const { ProductType, Platform } = window.CdvPurchase;
+    // Prefetch product info
+    const productIds = Object.values(PRODUCTS);
+    try {
+      const { products } = await NativePurchases.getProducts({
+        productIdentifiers: productIds,
+        productType: 'INAPP',
+      });
 
-    // Enable verbose logging in debug/TestFlight builds
-    store.verbosity = window.CdvPurchase.LogLevel.DEBUG;
-
-    // Register the Pro subscription product
-    store.register({
-      id: PRODUCTS.PRO_MONTHLY,
-      type: ProductType.PAID_SUBSCRIPTION,
-      platform: Platform.APPLE_APPSTORE,
-    });
-
-    // Listen for purchase approvals — finish the transaction after server validation
-    store.when().approved(async (transaction) => {
-      console.log('[Purchases] Transaction approved:', transaction.transactionId);
-      // Transaction will be finished after we validate server-side
-      // The NativeCheckout component handles calling validateReceipt
-      transaction.finish();
-    });
-
-    // Listen for errors
-    store.error((err) => {
-      console.error('[Purchases] Store error:', err.code, err.message);
-    });
-
-    // Initialize the store
-    console.log('[Purchases] Calling store.initialize([APPLE_APPSTORE])...');
-    const errors = await store.initialize([Platform.APPLE_APPSTORE]);
-    if (errors.length > 0) {
-      console.error('[Purchases] Init errors:', JSON.stringify(errors));
-      // Retry if under max attempts
-      initAttempts++;
-      if (initAttempts < MAX_INIT_ATTEMPTS) {
-        console.log(`[Purchases] Retrying initialization (attempt ${initAttempts + 1}/${MAX_INIT_ATTEMPTS})...`);
-        setTimeout(() => initializePurchases(), 2000);
-        return;
-      }
-    } else {
-      storeReady = true;
-      const product = store.get(PRODUCTS.PRO_MONTHLY);
-      console.log(`[Purchases] Initialized for ${getPaymentProvider()}`);
-      console.log(`[Purchases] Product found: ${product ? product.title + ' - ' + (product.pricing?.price || 'no price') : 'NOT FOUND'}`);
+      products.forEach(p => {
+        productCache[p.productIdentifier] = p;
+        console.log(`[Purchases] Product: ${p.productIdentifier} — ${p.price}`);
+      });
+    } catch (prodErr) {
+      console.warn('[Purchases] Could not fetch products:', prodErr.message);
     }
+
+    storeReady = true;
+    console.log(`[Purchases] Initialized for ${getPaymentProvider()}, ${Object.keys(productCache).length} products loaded`);
   } catch (err) {
     console.error('[Purchases] Init error:', err);
-    // Retry on exception
     initAttempts++;
     if (initAttempts < MAX_INIT_ATTEMPTS) {
-      console.log(`[Purchases] Retrying after error (attempt ${initAttempts + 1}/${MAX_INIT_ATTEMPTS})...`);
+      console.log(`[Purchases] Retrying (attempt ${initAttempts + 1}/${MAX_INIT_ATTEMPTS})...`);
       setTimeout(() => initializePurchases(), 2000);
     }
   }
 }
 
 /**
- * Check if the store is ready. If not, attempt to initialize.
+ * Check if the store is ready.
  */
 export function isStoreReady() {
   return storeReady;
 }
 
 /**
- * Get the registered Pro product (for displaying price, etc.)
- * @returns {object|null} The product object or null
+ * Get a product's display info (price string, title, etc.)
+ * @param {string} productId — one of PRODUCTS values
+ * @returns {object|null}
  */
-export function getProProduct() {
-  if (!store || !storeReady) return null;
-  return store.get(PRODUCTS.PRO_MONTHLY) || null;
+export function getProduct(productId) {
+  return productCache[productId] || null;
 }
 
 /**
- * Start the native purchase flow for Pro subscription.
- * @param {string} userId - Supabase user ID (for receipt validation)
+ * Start the native purchase flow.
+ * @param {string} productId — product identifier
+ * @param {string} userId — Supabase user ID (for receipt validation)
  * @returns {Promise<{success: boolean, error?: string}>}
  */
-export async function purchaseProNative(userId) {
+export async function purchaseProduct(productId, userId) {
   if (!isNativeApp()) {
     return { success: false, error: 'Not a native platform — use Stripe' };
   }
 
-  if (!store || !storeReady) {
-    // Try to initialize one more time before giving up
+  if (!NativePurchases || !storeReady) {
     console.log('[Purchases] Store not ready, attempting re-initialization...');
     await initializePurchases();
-    if (!store || !storeReady) {
+    if (!NativePurchases || !storeReady) {
       return { success: false, error: 'Store not initialized. Please close and reopen the app, then try again.' };
     }
   }
 
   try {
-    const product = store.get(PRODUCTS.PRO_MONTHLY);
-    if (!product) {
-      return { success: false, error: 'Subscription product not found' };
-    }
+    // Open the native payment sheet
+    const result = await NativePurchases.purchaseProduct({
+      productIdentifier: productId,
+      productType: 'INAPP',
+      quantity: 1,
+    });
 
-    // Get the first available offer
-    const offer = product.getOffer();
-    if (!offer) {
-      return { success: false, error: 'No offer available for this product' };
-    }
+    console.log('[Purchases] Purchase result:', JSON.stringify(result));
 
-    // Start the purchase flow — this opens the native Apple Pay sheet
-    const orderResult = await store.order(offer);
-    if (orderResult) {
-      // orderResult is an error if the purchase failed
-      if (orderResult.code === window.CdvPurchase.ErrorCode.PAYMENT_CANCELLED) {
-        return { success: false, error: 'cancelled' };
-      }
-      return { success: false, error: orderResult.message || 'Purchase failed' };
-    }
-
-    // If order() returns undefined, the purchase was initiated successfully.
-    // The 'approved' handler in initializePurchases will fire.
-    // Now validate the receipt server-side.
-    const latestReceipt = await getLatestReceipt();
-    if (latestReceipt) {
-      const validated = await validateReceipt(userId, latestReceipt, getPaymentProvider());
+    // Validate server-side
+    const transactionId = result.transactionId || result.transaction?.transactionId;
+    if (transactionId) {
+      const validated = await validateTransaction(userId, transactionId, productId);
       return validated;
     }
 
     return { success: true };
   } catch (err) {
-    console.error('[Purchases] Error:', err);
-    return { success: false, error: err.message };
+    console.error('[Purchases] Purchase error:', err);
+    // User cancelled
+    if (err.message?.includes('cancel') || err.code === 'PAYMENT_CANCELLED') {
+      return { success: false, error: 'cancelled' };
+    }
+    return { success: false, error: err.message || 'Purchase failed' };
   }
 }
 
-/**
- * Get the latest Apple receipt from the store.
- * @returns {string|null} Base64-encoded receipt data
- */
-async function getLatestReceipt() {
-  if (!store) return null;
-  try {
-    const { Platform } = window.CdvPurchase;
-    const receipt = store.localReceipts.find(r => r.platform === Platform.APPLE_APPSTORE);
-    return receipt?.nativeData?.appStoreReceipt || null;
-  } catch (err) {
-    console.error('[Purchases] Error getting receipt:', err);
-    return null;
-  }
+// Backwards-compatible wrapper used by NativeCheckout.jsx
+export async function purchaseProNative(userId) {
+  return purchaseProduct(PRODUCTS.GENERAL_30DAY, userId);
 }
 
 /**
- * Restore previous purchases (required by App Store guidelines).
- * Users can tap "Restore Purchases" to recover their subscription
- * on a new device.
- * @param {string} userId - Supabase user ID
+ * Restore previous purchases (required by Apple guidelines).
+ * @param {string} userId — Supabase user ID
  */
 export async function restorePurchases(userId) {
   if (!isNativeApp()) return { restored: false };
 
-  if (!store || !storeReady) {
+  if (!NativePurchases || !storeReady) {
     return { restored: false, error: 'Store not initialized' };
   }
 
   try {
-    await store.restorePurchases();
+    const result = await NativePurchases.restorePurchases();
+    console.log('[Purchases] Restore result:', JSON.stringify(result));
 
-    // After restore, check if we have a valid receipt
-    const latestReceipt = await getLatestReceipt();
-    if (latestReceipt) {
-      const validated = await validateReceipt(userId, latestReceipt, getPaymentProvider());
-      if (validated.success) {
-        return { restored: true };
+    // Check if any transactions were restored
+    const transactions = result.transactions || [];
+    if (transactions.length > 0) {
+      // Validate the most recent transaction
+      const latest = transactions[transactions.length - 1];
+      const transactionId = latest.transactionId || latest.transaction?.transactionId;
+      if (transactionId) {
+        const validated = await validateTransaction(userId, transactionId, latest.productIdentifier || PRODUCTS.GENERAL_30DAY);
+        if (validated.success) {
+          return { restored: true };
+        }
       }
     }
 
-    return { restored: false, error: 'No active subscription found' };
+    return { restored: false, error: 'No active purchases found to restore' };
   } catch (err) {
     console.error('[Purchases] Restore error:', err);
     return { restored: false, error: err.message };
@@ -236,16 +170,20 @@ export async function restorePurchases(userId) {
 }
 
 /**
- * Validate a purchase receipt server-side.
- * Sends the receipt to a Supabase Edge Function that verifies with Apple/Google
- * and updates the user's tier to 'pro' in the database.
+ * Validate a transaction server-side.
+ * Sends transactionId to Edge Function which verifies with Apple's App Store Server API.
  */
-async function validateReceipt(userId, receipt, provider) {
+async function validateTransaction(userId, transactionId, productId) {
   try {
     const { supabase } = await import('../lib/supabase');
 
     const { data, error } = await supabase.functions.invoke('validate-native-receipt', {
-      body: { userId, receipt, provider }
+      body: {
+        userId,
+        transactionId,
+        productId,
+        provider: getPaymentProvider(),
+      }
     });
 
     if (error) {

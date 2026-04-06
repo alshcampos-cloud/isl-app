@@ -5,13 +5,14 @@ import {
   Brain, Database, Play, Plus, Edit2, Trash2, TrendingUp, Download, Upload,
   Mic, MicOff, Volume2, Eye, EyeOff, Settings, Sparkles, ChevronRight, ChevronDown, X,
   Zap, CheckCircle, Target, Bot, BookOpen, SkipForward, Pause, Award, Filter,
-  Crown, Lightbulb, Square, Calendar, AlertCircle, Mail
+  Crown, Lightbulb, Square, Calendar, AlertCircle, Mail, MessageSquare
 } from 'lucide-react';
 
 import SupabaseTest from './SupabaseTest';
 import ProtectedRoute from './ProtectedRoute';
 import { supabase } from './lib/supabase';
 import FirstTimeConsent from "./Components/FirstTimeConsent";
+import SettingsPage from "./Components/SettingsPage";
 import QuestionAssistant from './Components/QuestionAssistant';
 import AnswerAssistant from './Components/AnswerAssistant';
 import TemplateLibrary from './TemplateLibrary';
@@ -35,6 +36,31 @@ import IRSDisplay from './Components/IRS/IRSDisplay';
 import { updateStreakAfterSession } from './utils/streakSupabase';
 import { trackPurchase } from './utils/googleAdsTracking';
 import { showNursingFeatures, showGeneralFeatures, isTargetedBuild, getAppTarget } from './utils/appTarget';
+import { isNativeApp } from './utils/platform';
+import { getPreferredVoice, VOICE_SETTINGS } from './utils/voiceManager';
+import InterviewContextHub from './Components/InterviewContextHub';
+import InterviewCoach from './Components/InterviewCoach';
+import QuickAddQuestion from './Components/QuickAddQuestion';
+import ScoreTrendSparkline from './Components/Intelligence/ScoreTrendSparkline';
+import DeliveryInsights from './Components/Intelligence/DeliveryInsights';
+import { buildDeliveryContext } from './utils/deliveryPromptBuilder';
+import TimerOverlay, { TimerSelector } from './Components/Intelligence/TimerOverlay';
+import JDDecoder from './Components/Intelligence/JDDecoder';
+import QuestionSparkNotes from './Components/Intelligence/QuestionSparkNotes';
+import StoryBank from './Components/Intelligence/StoryBank';
+import CompanyBrief from './Components/Intelligence/CompanyBrief';
+import SessionReport from './Components/Intelligence/SessionReport';
+import InterviewDayMode from './Components/Intelligence/InterviewDayMode';
+import PrepRadio from './Components/Intelligence/PrepRadio';
+import WeakPointDrill from './Components/Intelligence/WeakPointDrill';
+import FollowUpEmail from './Components/Intelligence/FollowUpEmail';
+import StealthPrompter from './Components/Intelligence/StealthPrompter';
+import LearnSection from './Components/Intelligence/LearnSection';
+// TrialBanner removed — 24-hour trial killed, free tier is the new onramp
+import { resetAllProgress } from './utils/resetProgress';
+import JobFocusManager, { isFocusModeOn, setFocusMode, getFilteredQuestions, loadFavorites } from './Components/Intelligence/JobFocusManager';
+import Portfolio from './Components/Intelligence/Portfolio';
+import JourneyProgress from './Components/Intelligence/JourneyProgress';
 
 // CSS string is OK at top-level
 const styles = `
@@ -185,6 +211,20 @@ const ISL = () => {
   const [aiSubtitle, setAiSubtitle] = useState('');
   const [questionHistory, setQuestionHistory] = useState([]);
   const [showResumeToast, setShowResumeToast] = useState(false);
+  // Phase 4J: Time Pressure Practice
+  const [timedMode, setTimedMode] = useState(false);
+  const [timerDuration, setTimerDuration] = useState(180);
+  const [timerActive, setTimerActive] = useState(false);
+  const [recordingElapsed, setRecordingElapsed] = useState(null);
+  // Phase 4M: Confidence Calibration
+  const [confidenceRating, setConfidenceRating] = useState(null);
+  // Phase 4E: Question SparkNotes
+  const [sparkNotesQuestion, setSparkNotesQuestion] = useState(null);
+  // Phase 4G: Session Report
+  const [sessionQuestions, setSessionQuestions] = useState([]);
+  const [showSessionReport, setShowSessionReport] = useState(false);
+  // Phase 4L: Drill target from SessionReport
+  const [drillTargetComponent, setDrillTargetComponent] = useState(null);
   const [resumedQuestion, setResumedQuestion] = useState(null);
   const [flashcardSide, setFlashcardSide] = useState('question');
   const [flashcardIndex, setFlashcardIndex] = useState(0);
@@ -200,7 +240,7 @@ const ISL = () => {
   const [revealStage, setRevealStage] = useState(0);
   const [showAllFeedback, setShowAllFeedback] = useState(false);
   const [commandCenterTab, setCommandCenterTab] = useState('analytics');
-  
+
   // SESSION-BASED MICROPHONE STATES
   const [interviewSessionActive, setInterviewSessionActive] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
@@ -224,7 +264,17 @@ const ISL = () => {
   const [dailyGoal, setDailyGoal] = useState(parseInt(localStorage.getItem('isl_daily_goal') || '3', 10));
   const [selectedSession, setSelectedSession] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const [focusModeActive, setFocusModeActive] = useState(false);
+  const [cachedFavorites, setCachedFavorites] = useState(null);
+  // Sync focus mode + favorites from localStorage when user changes
+  useEffect(() => {
+    if (currentUser) {
+      setFocusModeActive(isFocusModeOn(currentUser.id));
+      setCachedFavorites(loadFavorites(currentUser.id));
+    }
+  }, [currentUser]);
   const [userTier, setUserTier] = useState('free');
+  // trialInfo state removed — trial system killed
   const [showPricingPage, setShowPricingPage] = useState(false);
   const [showSubscriptionManagement, setShowSubscriptionManagement] = useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState('inactive');
@@ -557,14 +607,33 @@ const ISL = () => {
   const getUserContext = () => {
     try {
       const saved = localStorage.getItem('isl_question_context');
+      const interviewDate = localStorage.getItem('isl_interview_date');
+      const base = { targetRole: '', targetCompany: '', background: '', interviewType: '', jobDescription: '', interviewDate: interviewDate || '', portfolioSummary: '' };
       if (saved) {
-        const { role, comp, bg } = JSON.parse(saved);
-        return { targetRole: role || '', targetCompany: comp || '', background: bg || '' };
+        const { role, comp, bg, type, jd } = JSON.parse(saved);
+        base.targetRole = role || '';
+        base.targetCompany = comp || '';
+        base.background = bg || '';
+        base.interviewType = type || '';
+        base.jobDescription = jd || '';
       }
+      // Inject portfolio summary for AI context enrichment
+      const portfolioRaw = localStorage.getItem('isl_portfolio');
+      if (portfolioRaw) {
+        try {
+          const projects = JSON.parse(portfolioRaw).filter(p => p.isAnalyzed);
+          if (projects.length > 0) {
+            base.portfolioSummary = projects.map(p =>
+              `${p.title}: ${p.aiSummary || ''} Skills: ${(p.keySkills || []).join(', ')}`
+            ).join('\n');
+          }
+        } catch {}
+      }
+      return base;
     } catch (err) {
       console.error('Error loading user context:', err);
     }
-    return { targetRole: '', targetCompany: '', background: '' };
+    return { targetRole: '', targetCompany: '', background: '', interviewType: '', jobDescription: '', interviewDate: '', portfolioSummary: '' };
   };
 
   const loadQuestions = async () => {
@@ -967,7 +1036,7 @@ loadPracticeHistory();
       console.log('🔍 Fetching profile for user:', user.id);
       const { data: profile, error: profileError } = await supabase
         .from('user_profiles')
-        .select('tier, subscription_status, stripe_customer_id, nursing_pass_expires, general_pass_expires')
+        .select('tier, subscription_status, stripe_customer_id, nursing_pass_expires, general_pass_expires, premium_trial_ends')
         .eq('user_id', user.id)
         .single();
 
@@ -1000,7 +1069,7 @@ loadPracticeHistory();
           general_pass_expires: profile.general_pass_expires,
         });
       } else {
-        // Create profile if doesn't exist
+        // Create profile if doesn't exist — start on free tier
         console.log('📝 Creating new profile for user:', user.id);
         const { error: insertError } = await supabase
           .from('user_profiles')
@@ -1009,7 +1078,7 @@ loadPracticeHistory();
         if (insertError) {
           console.error('❌ Profile creation error:', insertError.message);
         } else {
-          console.log('✅ Profile created successfully');
+          console.log('✅ Profile created on free tier');
         }
       }
 
@@ -1106,11 +1175,15 @@ loadPracticeHistory();
     const urlParams = new URLSearchParams(window.location.search);
     const isSuccess = urlParams.get('success') === 'true';
     const sessionId = urlParams.get('session_id');
+    // Also detect new pass-based checkout: ?purchase=success&pass=general_30day
+    const isPurchaseSuccess = urlParams.get('purchase') === 'success';
+    const passType = urlParams.get('pass');
 
-    if (!isSuccess || !sessionId || !currentUser) return;
+    if (!(isSuccess && sessionId) && !isPurchaseSuccess) return;
+    if (!currentUser) return;
 
     // FIX: Prevent duplicate popups - check sessionStorage for this specific session
-    const handledKey = `stripe_success_handled_${sessionId}`;
+    const handledKey = `stripe_success_handled_${sessionId || passType || 'unknown'}`;
     if (sessionStorage.getItem(handledKey)) {
       console.log('💳 Checkout success already handled for this session, skipping...');
       window.history.replaceState({}, document.title, window.location.pathname);
@@ -1118,7 +1191,7 @@ loadPracticeHistory();
     }
 
     console.log('💳 Stripe checkout success detected, polling for tier update...');
-    console.log('📋 Session ID:', sessionId, 'User ID:', currentUser.id);
+    console.log('📋 Session ID:', sessionId, 'Pass type:', passType, 'User ID:', currentUser.id);
 
     let pollCount = 0;
     const maxPolls = 30; // Poll for up to 30 seconds (webhook can be slow)
@@ -1133,7 +1206,7 @@ loadPracticeHistory();
         // Force fresh data - bypass any caching
         const { data: profile, error } = await supabase
           .from('user_profiles')
-          .select('tier, subscription_status, stripe_customer_id, nursing_pass_expires, general_pass_expires')
+          .select('tier, subscription_status, stripe_customer_id, nursing_pass_expires, general_pass_expires, premium_trial_ends')
           .eq('user_id', currentUser.id)
           .single();
 
@@ -1156,11 +1229,12 @@ loadPracticeHistory();
           // Clean up URL parameters
           window.history.replaceState({}, document.title, window.location.pathname);
 
-          // Google Ads purchase conversion tracking
-          trackPurchase(14.99, sessionId);
+          // Google Ads purchase conversion tracking (dynamic by pass type)
+          const passAmounts = { general_30day: 14.99, nursing_30day: 19.99, annual_all_access: 149.99 };
+          trackPurchase(passAmounts[passType] || 14.99, sessionId || 'pass_purchase');
 
           // Show success message
-          alert('🎉 Welcome to Pro! Your subscription is now active.');
+          alert(isPurchaseSuccess ? '🎉 Your pass is now active! Enjoy your new features.' : '🎉 Welcome to Pro! Your subscription is now active.');
           return true;
         }
 
@@ -2519,47 +2593,27 @@ useEffect(() => {
     
     if (currentMode) { window.addEventListener('keydown', handleKeyDown); window.addEventListener('keyup', handleKeyUp); return () => { window.removeEventListener('keydown', handleKeyDown); window.removeEventListener('keyup', handleKeyUp); }; }
   }, [currentMode, spacebarHeld, isListening, interviewSessionActive, isCapturing]);
-  // TTS with improved voice selection
+  // TTS with smart voice selection via voiceManager
   const speakText = (text) => {
     if (!synthRef.current) { console.warn('TTS not available'); return; }
     synthRef.current.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     const voices = synthRef.current.getVoices();
-    
-    // Priority order for best voices (more natural sounding)
-    const voicePriority = [
-      'Samantha',           // macOS - very natural
-      'Google US English',  // Google voices are good
-      'Google UK English Female',
-      'Microsoft Zira',     // Windows - decent
-      'Microsoft David',
-      'Alex',              // macOS male
-      'Karen',             // macOS female
-      'Fiona'              // macOS Scottish
-    ];
-    
-    // Find the best available voice
-    let selectedVoice = null;
-    for (const voiceName of voicePriority) {
-      selectedVoice = voices.find(v => v.name.includes(voiceName));
-      if (selectedVoice) break;
+
+    // Smart voice selection — scores all voices by quality indicators
+    // (Premium, Neural, Enhanced, Natural) + known good voices (Samantha, etc.)
+    const selectedVoice = getPreferredVoice(voices);
+
+    if (selectedVoice) {
+      utterance.voice = selectedVoice;
+      console.log('🎙️ Voice:', selectedVoice.name);
     }
-    
-    // Fallback to any English voice if no priority match
-    if (!selectedVoice) {
-      selectedVoice = voices.find(v => v.lang.startsWith('en-')) || voices[0];
-    }
-    
-    if (selectedVoice) { 
-      utterance.voice = selectedVoice; 
-      console.log('🎙️ Voice:', selectedVoice.name); 
-    }
-    
-    // Optimized settings for more natural speech
-    utterance.rate = 0.92;   // Slightly slower for clarity
-    utterance.pitch = 1.05;  // Slightly higher pitch sounds more natural
-    utterance.volume = 1.0;
-    
+
+    // Optimized settings for interview coaching
+    utterance.rate = VOICE_SETTINGS.rate;
+    utterance.pitch = VOICE_SETTINGS.pitch;
+    utterance.volume = VOICE_SETTINGS.volume;
+
     utterance.onstart = () => { setAiSpeaking(true); setAiSubtitle(text); };
     utterance.onend = () => { setAiSpeaking(false); setAiSubtitle(''); };
     synthRef.current.speak(utterance);
@@ -2802,46 +2856,110 @@ Respond in this exact JSON format:
   };
 
   const exportQuestions = () => { const dataStr = JSON.stringify(questions, null, 2); const blob = new Blob([dataStr], { type: 'application/json' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = `isl-questions-${Date.now()}.json`; link.click(); };
-  const importQuestions = async (jsonData) => { 
-    try { 
-      const imported = JSON.parse(jsonData); 
-      if (!Array.isArray(imported)) {
-        alert('Invalid format: Expected an array of questions');
+  // Smart multi-format question parser — accepts JSON, plain text, numbered lists, CSV
+  const parseQuestionsFromText = (rawText) => {
+    const text = rawText.trim();
+    if (!text) return [];
+
+    // Try JSON first (backward compatible)
+    try {
+      const parsed = JSON.parse(text);
+      if (Array.isArray(parsed)) {
+        return parsed.filter(q => q.question).map(q => ({
+          question: q.question,
+          category: q.category || 'Imported',
+          priority: q.priority || 'Standard',
+          bullets: q.bullets || [],
+          narrative: q.narrative || '',
+          keywords: q.keywords || [],
+        }));
+      }
+    } catch (e) {
+      // Not JSON — try other formats
+    }
+
+    // Split by newlines and parse each line
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    const questions = [];
+
+    for (const line of lines) {
+      // Skip CSV headers
+      if (/^question\s*[,\t]/i.test(line)) continue;
+
+      // Try CSV: "question","category" or question,category
+      const csvMatch = line.match(/^"?([^"]+)"?\s*[,\t]\s*"?([^"]*)"?$/);
+      if (csvMatch && csvMatch[1].length > 10) {
+        questions.push({
+          question: csvMatch[1].trim(),
+          category: csvMatch[2]?.trim() || 'Imported',
+          priority: 'Standard',
+          bullets: [],
+          narrative: '',
+          keywords: [],
+        });
+        continue;
+      }
+
+      // Strip numbered list prefixes: "1.", "1)", "- ", "• ", etc.
+      let cleaned = line.replace(/^\d+[.)]\s*/, '').replace(/^[-•*]\s*/, '').trim();
+
+      // Skip very short lines (likely not questions)
+      if (cleaned.length < 10) continue;
+
+      questions.push({
+        question: cleaned,
+        category: 'Imported',
+        priority: 'Standard',
+        bullets: [],
+        narrative: '',
+        keywords: [],
+      });
+    }
+
+    return questions;
+  };
+
+  const importQuestions = async (rawData) => {
+    try {
+      const parsed = parseQuestionsFromText(rawData);
+
+      if (!parsed || parsed.length === 0) {
+        alert('No questions found. Try pasting one question per line, a numbered list, or a JSON array.');
         return;
       }
-      
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         alert('Please sign in to import questions');
         return;
       }
-      
+
       // Import to Supabase
-      const questionsToImport = imported.map(q => ({
+      const questionsToImport = parsed.map(q => ({
         user_id: user.id,
         question: q.question,
-        category: q.category || 'Imported',
-        priority: q.priority || 'Standard',
-        bullets: q.bullets || [],
-        narrative: q.narrative || '',
-        keywords: q.keywords || []
+        category: q.category,
+        priority: q.priority,
+        bullets: q.bullets,
+        narrative: q.narrative,
+        keywords: q.keywords,
       }));
-      
+
       const { data, error } = await supabase
         .from('questions')
         .insert(questionsToImport)
         .select();
-      
+
       if (error) throw error;
-      
+
       // Reload questions to get the imported ones with IDs
       await loadQuestions();
-      
-      alert(`✅ Imported ${data.length} questions!`); 
-    } catch (error) { 
+
+      alert(`Imported ${data.length} question${data.length !== 1 ? 's' : ''}!`);
+    } catch (error) {
       console.error('Import error:', error);
-      alert('Failed to import: ' + error.message); 
-    } 
+      alert('Failed to import: ' + error.message);
+    }
   };
 
   // MODE STARTERS
@@ -2908,11 +3026,13 @@ Respond in this exact JSON format:
     if (!canUse) return;
     
     // Set UI state IMMEDIATELY (no await blocking)
-    accumulatedTranscript.current = ''; 
-    const randomQ = questions[Math.floor(Math.random() * questions.length)]; 
-    setCurrentQuestion(randomQ); 
-    setCurrentMode('ai-interviewer'); 
-    setCurrentView('ai-interviewer'); 
+    accumulatedTranscript.current = '';
+    const pool = getFilteredQuestions(questions, currentUser?.id);
+    if (!pool || pool.length === 0) { console.error('No questions available'); return; }
+    const randomQ = pool[Math.floor(Math.random() * pool.length)];
+    setCurrentQuestion(randomQ);
+    setCurrentMode('ai-interviewer');
+    setCurrentView('ai-interviewer');
     window.scrollTo({ top: 0, behavior: 'smooth' });
     setUserAnswer(''); 
     setSpokenAnswer(''); 
@@ -2958,14 +3078,19 @@ const startPracticeMode = async () => {
     if (!canUse) return;
     
     // Set UI state IMMEDIATELY (no await blocking)
-    accumulatedTranscript.current = ''; 
-    const randomQ = questions[Math.floor(Math.random() * questions.length)]; 
-    setCurrentQuestion(randomQ); 
-    setCurrentMode('practice'); 
-    setCurrentView('practice'); 
+    accumulatedTranscript.current = '';
+    const pool = getFilteredQuestions(questions, currentUser?.id);
+    if (!pool || pool.length === 0) { console.error('No questions available'); return; }
+    const randomQ = pool[Math.floor(Math.random() * pool.length)];
+    setCurrentQuestion(randomQ);
+    setCurrentMode('practice');
+    setCurrentView('practice');
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    setUserAnswer(''); 
-    setSpokenAnswer(''); 
+    setUserAnswer('');
+    setSpokenAnswer('');
+    setSessionQuestions([]);
+    setConfidenceRating(null);
+    setTranscript('');
     flushSync(() => {
       setFeedback(null);
     });
@@ -3070,7 +3195,9 @@ const startPracticeMode = async () => {
           body: JSON.stringify({
             questionText: currentQuestion.question,
             userAnswer: answer,
+            deliveryContext: buildDeliveryContext(answer),
             expectedBullets: currentQuestion.bullets || [],
+            userContext: getUserContext(),
             mode: 'practice',
             selfEfficacyData: {
               previousScores: practiceHistory.slice(-10).map(h => h.feedback?.overall).filter(Boolean),
@@ -3138,6 +3265,14 @@ const startPracticeMode = async () => {
               date: new Date().toISOString(),
             },
           ]);
+
+          // Phase 4G: Track this question in current session for SessionReport
+          setSessionQuestions(prev => [...prev, {
+            question: currentQuestion.question,
+            answer,
+            feedback: feedbackJson,
+            date: new Date().toISOString(),
+          }]);
         });
 
         console.log('🎯 FLUSHSYNC FIX: Feedback committed to DOM, now saving to database in parallel');
@@ -3234,6 +3369,7 @@ const startPracticeMode = async () => {
             body: JSON.stringify({
               questionText: followUpQuestion || currentQuestion.question,
               userAnswer: answer,
+              deliveryContext: buildDeliveryContext(answer),
               expectedBullets: currentQuestion.bullets || [],
               userContext: getUserContext(),
               mode: 'ai-interviewer',
@@ -3358,8 +3494,16 @@ const startPracticeMode = async () => {
                 date: new Date().toISOString(),
               },
             ]);
+
+            // Phase 4G: Track this question in current session for SessionReport
+            setSessionQuestions(prev => [...prev, {
+              question: currentQuestion.question,
+              answer,
+              feedback: feedbackJson,
+              date: new Date().toISOString(),
+            }]);
           });
-          
+
           console.log('🎯 FLUSHSYNC FIX: Feedback committed to DOM, now saving AI interview to database in parallel');
 
           // BUG 7 FIX: Track usage AFTER successful feedback (not at session start)
@@ -3795,6 +3939,26 @@ const startPracticeMode = async () => {
         }}
       />
 
+      {/* Phase 4E: Question SparkNotes modal */}
+      <QuestionSparkNotes
+        question={sparkNotesQuestion}
+        isOpen={!!sparkNotesQuestion}
+        onClose={() => setSparkNotesQuestion(null)}
+        getUserContext={getUserContext}
+      />
+
+      {/* Phase 4G: Session Report */}
+      {showSessionReport && (
+        <SessionReport
+          sessions={sessionQuestions}
+          allHistory={practiceHistory}
+          questions={questions}
+          onClose={() => { setShowSessionReport(false); setSessionQuestions([]); }}
+          onDrill={(component) => { setShowSessionReport(false); setDrillTargetComponent(component); setCurrentView('weak-drill'); }}
+          onNavigate={(view) => { setShowSessionReport(false); setSessionQuestions([]); view === 'practice' ? startPracticeMode() : setCurrentView(view); }}
+        />
+      )}
+
       {/* FIRST-TIME CONSENT - Terms & Privacy acceptance for new users */}
       {/* onAccepted sets hasAcceptedFirstTimeTerms so Tutorial waits until consent is done */}
       {currentUser && <FirstTimeConsent user={currentUser} onAccepted={() => { console.log('✅ User accepted Terms & Privacy'); setHasAcceptedFirstTimeTerms(true); }} onAlreadyAccepted={() => setHasAcceptedFirstTimeTerms(true)} />}
@@ -3916,6 +4080,7 @@ const startPracticeMode = async () => {
     
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-sky-50">
+        {/* Trial banner removed — free tier is the new onramp */}
         <div className="container mx-auto px-4 pt-6 pb-8">
 
           {/* Profile Menu - Top Right Corner */}
@@ -4029,8 +4194,8 @@ const startPracticeMode = async () => {
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-slate-800 mb-1 sm:mb-2 tracking-tight">InterviewAnswers.ai</h1>
             <p className="text-base sm:text-lg md:text-xl text-slate-500 font-medium">Master Your Interview Answers with AI</p>
 
-            {/* Track Switcher — toggle between General and Nursing (hidden in general-only builds) */}
-            {showNursingFeatures() && (
+            {/* Track Switcher — only shown in targeted native builds, hidden on web */}
+            {showNursingFeatures() && isTargetedBuild() && (
             <div className="flex items-center justify-center gap-1 mt-3 bg-slate-100 rounded-full p-1 max-w-xs mx-auto border border-slate-200">
               <span className="flex-1 text-center px-4 py-2 rounded-full text-sm font-semibold bg-white text-teal-700 shadow-sm">
                 General
@@ -4044,6 +4209,19 @@ const startPracticeMode = async () => {
 
           {/* IRS Hero Card — Phase 3 Unit 2 */}
           <IRSDisplay refreshTrigger={streakRefreshTrigger} />
+
+          {/* Score Trend Sparkline — Phase 4A */}
+          {practiceHistory.length >= 2 && (
+            <div className="mb-4 sm:mb-6">
+              <ScoreTrendSparkline
+                practiceHistory={practiceHistory}
+                onClick={() => {
+                  setCurrentView('command-center');
+                  setCommandCenterTab('progress');
+                }}
+              />
+            </div>
+          )}
 
           {/* Compact Stats Row */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-2 sm:gap-3 mb-4 sm:mb-6">
@@ -4167,10 +4345,65 @@ const startPracticeMode = async () => {
             else if (action === 'tracks' && showNursingFeatures()) window.location.href = '/nursing';
           }} />
 
-          {/* Practice Modes - Enhanced with Psychology */}
-          <div className="mb-8">
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-800 mb-2">🎯 Practice Modes</h2>
-            <p className="text-slate-500 text-sm sm:text-base mb-5 font-medium">Choose your training method and level up your skills</p>
+          {/* Journey Progress — 5-step prep milestone tracker */}
+          <JourneyProgress
+            practiceHistory={practiceHistory}
+            questions={questions}
+            getUserContext={getUserContext}
+            onNavigate={(view) => view === 'practice' ? startPracticeMode() : setCurrentView(view)}
+          />
+
+          {/* Phase 4: Smart Next Step Recommendation */}
+          {(() => {
+            const ctx = getUserContext();
+            const practicedTexts = new Set(practiceHistory.map(s => s.question));
+            const coverage = questions.length > 0 ? Math.round((practicedTexts.size / questions.length) * 100) : 0;
+            const hasStories = (() => { try { return JSON.parse(localStorage.getItem('isl_stories') || '[]').length > 0; } catch { return false; } })();
+            const hasJD = !!(ctx.jobDescription && ctx.jobDescription.length > 20);
+            const hasCompany = !!(ctx.targetCompany && ctx.targetCompany.length > 1);
+            const daysUntil = (() => {
+              if (!ctx.interviewDate) return null;
+              const today = new Date(); today.setHours(0,0,0,0);
+              const interview = new Date(ctx.interviewDate + 'T00:00:00');
+              return Math.max(0, Math.round((interview - today) / 86400000));
+            })();
+
+            let rec = null;
+            if (daysUntil === 0) {
+              rec = { icon: '⭐', text: "It's interview day! Review your prep and breathe.", action: 'interview-day', btn: 'Enter Day Mode', color: 'from-rose-500 to-pink-500', bg: 'from-rose-50 to-pink-50', border: 'border-rose-200' };
+            } else if (questions.length === 0) {
+              rec = null; // Welcome banner handles this
+            } else if (!hasJD && questions.length > 0) {
+              rec = { icon: '📋', text: 'Decode your job description to unlock tailored questions and strategy.', action: 'jd-decoder', btn: 'Decode JD', color: 'from-sky-500 to-blue-500', bg: 'from-sky-50 to-blue-50', border: 'border-sky-200' };
+            } else if (practiceHistory.length === 0) {
+              rec = { icon: '🎯', text: 'Start your first practice session to build momentum.', action: 'practice', btn: 'Start Practicing', color: 'from-teal-500 to-emerald-500', bg: 'from-teal-50 to-emerald-50', border: 'border-teal-200' };
+            } else if (!hasStories && practiceHistory.length >= 5) {
+              rec = { icon: '📖', text: 'You\'ve practiced enough to build your Story Bank — 7 stories cover 50 questions.', action: 'story-bank', btn: 'Build Stories', color: 'from-emerald-500 to-teal-500', bg: 'from-emerald-50 to-teal-50', border: 'border-emerald-200' };
+            } else if (coverage < 50 && practiceHistory.length >= 3) {
+              rec = { icon: '📊', text: `You've covered ${coverage}% of your questions. Keep going to build full coverage.`, action: 'practice', btn: 'Practice More', color: 'from-amber-500 to-orange-500', bg: 'from-amber-50 to-orange-50', border: 'border-amber-200' };
+            } else if (daysUntil !== null && daysUntil <= 3 && daysUntil > 0) {
+              rec = { icon: '🔥', text: `${daysUntil} day${daysUntil !== 1 ? 's' : ''} until your interview! Focus on your weakest areas.`, action: 'weak-drill', btn: 'STAR Drill', color: 'from-orange-500 to-red-500', bg: 'from-orange-50 to-red-50', border: 'border-orange-200' };
+            }
+
+            if (!rec) return null;
+            return (
+              <div className={`mb-4 sm:mb-6 bg-gradient-to-r ${rec.bg} rounded-xl p-3.5 sm:p-4 border ${rec.border} cursor-pointer hover:shadow-md transition-all`}
+                onClick={() => rec.action === 'practice' ? startPracticeMode() : setCurrentView(rec.action)}>
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl flex-shrink-0">{rec.icon}</span>
+                  <p className="text-xs sm:text-sm text-slate-700 font-medium flex-1">{rec.text}</p>
+                  <span className={`px-3 py-1.5 bg-gradient-to-r ${rec.color} text-white text-xs font-bold rounded-lg shadow-sm flex-shrink-0 whitespace-nowrap`}>
+                    {rec.btn}
+                  </span>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Practice Modes — PRIMARY ACTIONS (above everything else) */}
+          <div className="mb-6">
+            <h2 className="text-lg sm:text-xl font-black text-slate-800 mb-1">Practice</h2>
+            <p className="text-slate-500 text-xs sm:text-sm mb-3 font-medium">Build your skills with hands-on training</p>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
               {/* Live Prompter - Enhanced */}
               <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:shadow-xl hover:shadow-teal-500/30 hover:-translate-y-1 cursor-pointer group relative overflow-hidden border border-slate-100">
@@ -4234,6 +4467,81 @@ const startPracticeMode = async () => {
             </div>
           </div>
 
+          {/* Learn & Listen — Featured Section */}
+          <div className="mb-6">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-800 mb-1">Learn & Listen</h2>
+            <p className="text-xs text-slate-400 mb-3">Master interview skills at your own pace</p>
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+              <button
+                onClick={() => setCurrentView('learn')}
+                className="bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl p-4 sm:p-5 text-left text-white hover:shadow-lg hover:shadow-violet-500/30 hover:scale-[1.02] transition-all relative overflow-hidden group"
+              >
+                <span className="absolute top-2 right-2 px-1.5 py-0.5 bg-white/20 text-white rounded-full text-[9px] font-bold">NEW</span>
+                <div className="text-2xl sm:text-3xl mb-2">🎓</div>
+                <p className="text-sm sm:text-base font-bold">Learn</p>
+                <p className="text-[10px] sm:text-xs text-white/70 mt-0.5">20 lessons • Quizzes • Daily goals</p>
+              </button>
+              <button
+                onClick={() => setCurrentView('prep-radio')}
+                className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl p-4 sm:p-5 text-left text-white hover:shadow-lg hover:shadow-purple-500/30 hover:scale-[1.02] transition-all relative overflow-hidden group"
+              >
+                <div className="text-2xl sm:text-3xl mb-2">🎧</div>
+                <p className="text-sm sm:text-base font-bold">Prep Radio</p>
+                <p className="text-[10px] sm:text-xs text-white/70 mt-0.5">8 playlists • Hands-free audio prep</p>
+              </button>
+            </div>
+          </div>
+
+          {/* Intelligence Tools — Compact Grid */}
+          <div className="mb-6">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-800 mb-1">Tools</h2>
+            <p className="text-xs text-slate-400 mb-3">Research, strategize, and prepare</p>
+            <div className="grid grid-cols-4 gap-2 sm:gap-3 mb-2 sm:mb-3">
+              {[
+                { view: 'jd-decoder', icon: '📋', label: 'JD Decoder', desc: 'Analyze job descriptions', color: 'from-sky-400 to-blue-500', badge: 'AI' },
+                { view: 'story-bank', icon: '📖', label: 'Story Bank', desc: 'Build STAR stories', color: 'from-emerald-400 to-teal-500', badge: null },
+                { view: 'interview-coach', icon: '💬', label: 'AI Coach', desc: 'Guided strategy', color: 'from-amber-400 to-orange-500', badge: null },
+                { view: 'weak-drill', icon: '🎯', label: 'STAR Drill', desc: 'Target your weak areas', color: 'from-orange-400 to-red-500', badge: null },
+              ].map(tool => (
+                <button
+                  key={tool.view}
+                  onClick={() => setCurrentView(tool.view)}
+                  className="bg-white rounded-xl p-2.5 sm:p-3 border border-slate-200 shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all text-center group"
+                >
+                  {tool.badge && (
+                    <span className="absolute top-1.5 right-1.5 px-1 py-0.5 bg-teal-100 text-teal-700 rounded-full text-[8px] font-bold">{tool.badge}</span>
+                  )}
+                  <div className={`w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br ${tool.color} rounded-lg flex items-center justify-center mx-auto mb-1 sm:mb-1.5 shadow-sm group-hover:scale-110 transition-transform`}>
+                    <span className="text-sm sm:text-base">{tool.icon}</span>
+                  </div>
+                  <p className="text-[10px] sm:text-xs font-bold text-slate-800 leading-tight">{tool.label}</p>
+                  <p className="text-[8px] sm:text-[9px] text-slate-400 leading-tight mt-0.5 hidden sm:block">{tool.desc}</p>
+                </button>
+              ))}
+            </div>
+            <div className="grid grid-cols-5 gap-2 sm:gap-3">
+              {[
+                { view: 'portfolio', icon: '💼', label: 'Portfolio', desc: 'Your past work', color: 'from-indigo-400 to-purple-500' },
+                { view: 'interview-day', icon: '⭐', label: 'Day Mode', desc: 'Interview day prep', color: 'from-pink-400 to-rose-500' },
+                { view: 'follow-up-email', icon: '✉️', label: 'Follow-Up', desc: 'Thank-you email', color: 'from-amber-400 to-orange-500' },
+                { view: 'stealth-prompter', icon: '📝', label: 'Notes', desc: 'Stealth interview notes', color: 'from-gray-400 to-slate-500' },
+                { view: 'flashcard', icon: '🃏', label: 'Flashcards', desc: 'Quick review', color: 'from-orange-400 to-amber-500' },
+              ].map(tool => (
+                <button
+                  key={tool.view}
+                  onClick={() => tool.view === 'flashcard' ? startFlashcardMode() : setCurrentView(tool.view)}
+                  className="bg-white rounded-xl p-2.5 sm:p-3 border border-slate-200 shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all text-center group"
+                >
+                  <div className={`w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br ${tool.color} rounded-lg flex items-center justify-center mx-auto mb-1 sm:mb-1.5 shadow-sm group-hover:scale-110 transition-transform`}>
+                    <span className="text-sm sm:text-base">{tool.icon}</span>
+                  </div>
+                  <p className="text-[10px] sm:text-xs font-bold text-slate-800 leading-tight">{tool.label}</p>
+                  <p className="text-[8px] sm:text-[9px] text-slate-400 leading-tight mt-0.5 hidden sm:block">{tool.desc}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Command Center - Enhanced */}
           <div data-tutorial="command-center" className="bg-gradient-to-r from-teal-600 to-emerald-600 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-xl hover:shadow-teal-500/30 p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:-translate-y-0.5 cursor-pointer border border-teal-500/20 relative overflow-hidden group" onClick={() => setCurrentView('command-center')}>
             <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 transform translate-x-full group-hover:translate-x-[-100%] transition-transform duration-1000"></div>
@@ -4251,6 +4559,15 @@ const startPracticeMode = async () => {
               </div>
             </div>
           </div>
+
+          {/* Quick Add Question FAB — floating action button */}
+          <QuickAddQuestion
+            onQuestionsAdded={loadQuestions}
+            onOpenGenerator={() => {
+              setCurrentView('command-center');
+              setCommandCenterTab('bank');
+            }}
+          />
 
         </div>
       </div>
@@ -4287,7 +4604,7 @@ const startPracticeMode = async () => {
             
             <button
               onClick={() => {
-                setCurrentView('commandCenter');
+                setCurrentView('command-center');
                 setCommandCenterTab('bank');
               }}
               className="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 px-8 py-4 rounded-xl font-bold text-lg transition-all shadow-lg"
@@ -4448,6 +4765,14 @@ const startPracticeMode = async () => {
                         <p className="text-sm text-gray-300">Click "Tab Audio" before starting to capture audio from the browser tab where your Teams/Zoom call is running.</p>
                       </div>
                     )}
+                    <div className="mt-4 pt-4 border-t border-teal-500/30">
+                      <button
+                        onClick={() => setCurrentView('stealth-prompter')}
+                        className="text-sm text-gray-500 hover:text-gray-300 transition-colors"
+                      >
+                        📝 Prefer a quieter view? Try Notes Mode
+                      </button>
+                    </div>
                   </div>
                 </>
               ) : (
@@ -4666,7 +4991,10 @@ const startPracticeMode = async () => {
       <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-between mb-6 text-white">
-            <button onClick={() => { stopSpeaking(); setCurrentView('home'); }} className="text-gray-300 hover:text-white">← Exit</button>
+            <button onClick={() => { stopSpeaking(); setCurrentView('home');
+                setSpokenAnswer(''); setUserAnswer(''); setTranscript(''); setFeedback(null);
+                accumulatedTranscript.current = '';
+              }} className="text-gray-300 hover:text-white">← Exit</button>
             <h1 className="text-2xl font-bold">AI Mock Interview</h1>
             <div className="flex items-center gap-2">
               <button onClick={goToPreviousQuestion} className="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg font-semibold flex items-center gap-1">
@@ -4904,11 +5232,21 @@ const startPracticeMode = async () => {
       </p>
       <p className="text-xl opacity-90">out of 10</p>
       <div className="mt-4 w-full bg-white/20 rounded-full h-3">
-        <div 
+        <div
           className="bg-white h-3 rounded-full transition-all duration-1000 ease-out"
           style={{ width: `${(animatedScore / 10) * 100}%` }}
         ></div>
       </div>
+      {/* Phase 4M: Confidence Calibration gap */}
+      {confidenceRating > 0 && feedback?.overall && (() => {
+        const actual = feedback.overall;
+        const predicted = confidenceRating * 2;
+        const gap = Math.abs(actual - predicted);
+        const msg = gap <= 1 ? '🎯 Great self-awareness! Your confidence matched your score.'
+          : actual > predicted ? '💪 You scored higher than expected! Trust yourself more.'
+          : `📚 You rated ${confidenceRating}/5 but scored ${actual.toFixed(1)}/10. More practice needed here.`;
+        return <p className="mt-3 text-sm opacity-90">{msg}</p>;
+      })()}
     </div>
 
     {/* ==================== IDEAL ANSWER - Stage 1 ==================== */}
@@ -4955,6 +5293,9 @@ const startPracticeMode = async () => {
         )}
       </div>
     )}
+
+    {/* ==================== DELIVERY INSIGHTS - Phase 4B ==================== */}
+    <DeliveryInsights answer={spokenAnswer || userAnswer} />
 
     {/* ==================== STRENGTHS - Stage 2 ==================== */}
     {feedback.strengths && feedback.strengths.length > 0 && isSectionVisible(2) && (
@@ -5307,22 +5648,85 @@ const startPracticeMode = async () => {
       <div className="min-h-screen bg-gray-50">
         <div className="bg-white shadow-sm border-b">
           <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <button onClick={() => setCurrentView('home')} className="text-gray-600 hover:text-gray-900">← Exit</button>
+            <button onClick={() => {
+                if (sessionQuestions.length >= 2) { setShowSessionReport(true); }
+                setCurrentView('home'); setTimerActive(false); setConfidenceRating(null);
+                setSpokenAnswer(''); setUserAnswer(''); setTranscript(''); setFeedback(null);
+                accumulatedTranscript.current = '';
+              }} className="text-gray-600 hover:text-gray-900">← Exit</button>
             <h1 className="text-2xl font-bold">Practice Mode</h1>
             <div className="flex items-center gap-2">
+              {/* Phase 4J: Timed toggle */}
+              <button
+                onClick={() => { setTimedMode(!timedMode); setTimerActive(false); }}
+                className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all ${timedMode ? 'bg-teal-100 text-teal-700 border border-teal-300' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+              >
+                ⏱ {timedMode ? 'Timed' : 'Timer'}
+              </button>
               <button onClick={goToPreviousQuestion} className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg font-semibold flex items-center gap-1">
                 ← Prev
               </button>
-              <button onClick={goToNextQuestion} className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-semibold flex items-center gap-1">
+              <button onClick={() => { goToNextQuestion(); setTimerActive(false); setConfidenceRating(null); }} className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-semibold flex items-center gap-1">
                 Next →
               </button>
             </div>
           </div>
         </div>
         <div className="container mx-auto px-4 py-8 max-w-4xl">
+          {/* Phase 4J: Timer controls & overlay */}
+          {timedMode && (
+            <div className="mb-4 flex items-center justify-between bg-white rounded-xl shadow-sm p-3 border border-slate-200">
+              <TimerSelector selectedDuration={timerDuration} onSelect={setTimerDuration} />
+              <TimerOverlay
+                isActive={timerActive}
+                durationSeconds={timerDuration}
+                onTimeUp={() => setTimerActive(false)}
+                onElapsed={(elapsed) => setRecordingElapsed(elapsed)}
+              />
+            </div>
+          )}
+
           <div className="bg-white rounded-2xl shadow-lg p-8 mb-6">
-            <h2 className="text-4xl font-bold mb-8">{currentQuestion.question}</h2>
-            
+            <h2 className="text-4xl font-bold mb-4">{currentQuestion.question}</h2>
+            {/* Phase 4E: Teach Me button */}
+            <button
+              onClick={() => setSparkNotesQuestion(currentQuestion)}
+              className="mb-6 px-4 py-1.5 bg-purple-50 text-purple-600 rounded-full text-sm font-medium hover:bg-purple-100 transition-colors border border-purple-200"
+            >
+              📚 Teach Me This Question
+            </button>
+
+            {/* Phase 4M: Confidence Calibration - pre-answer rating */}
+            {!feedback && confidenceRating === null && (
+              <div className="mb-6 p-4 bg-gradient-to-r from-slate-50 to-teal-50 rounded-xl border border-slate-200">
+                <p className="text-sm font-semibold text-slate-700 mb-2">How confident are you on this question?</p>
+                <div className="flex items-center gap-2">
+                  {[
+                    { val: 1, emoji: '😰', label: 'Not at all' },
+                    { val: 2, emoji: '😟', label: 'Shaky' },
+                    { val: 3, emoji: '😐', label: 'Okay' },
+                    { val: 4, emoji: '🙂', label: 'Good' },
+                    { val: 5, emoji: '😎', label: 'Nailed it' },
+                  ].map(opt => (
+                    <button
+                      key={opt.val}
+                      onClick={() => { setConfidenceRating(opt.val); if (timedMode) setTimerActive(true); }}
+                      className="flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg hover:bg-white hover:shadow-md transition-all border border-transparent hover:border-slate-200"
+                    >
+                      <span className="text-2xl">{opt.emoji}</span>
+                      <span className="text-[10px] text-slate-500">{opt.label}</span>
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => { setConfidenceRating(0); if (timedMode) setTimerActive(true); }}
+                    className="ml-2 text-xs text-slate-400 hover:text-slate-600 underline"
+                  >
+                    Skip
+                  </button>
+                </div>
+              </div>
+            )}
+
             {!feedback && (
               <>
                 {/* Speech Input */}
@@ -5457,11 +5861,21 @@ const startPracticeMode = async () => {
       </p>
       <p className="text-xl opacity-90">out of 10</p>
       <div className="mt-4 w-full bg-white/20 rounded-full h-3">
-        <div 
+        <div
           className="bg-white h-3 rounded-full transition-all duration-1000 ease-out"
           style={{ width: `${(animatedScore / 10) * 100}%` }}
         ></div>
       </div>
+      {/* Phase 4M: Confidence Calibration gap */}
+      {confidenceRating > 0 && feedback?.overall && (() => {
+        const actual = feedback.overall;
+        const predicted = confidenceRating * 2;
+        const gap = Math.abs(actual - predicted);
+        const msg = gap <= 1 ? '🎯 Great self-awareness! Your confidence matched your score.'
+          : actual > predicted ? '💪 You scored higher than expected! Trust yourself more.'
+          : `📚 You rated ${confidenceRating}/5 but scored ${actual.toFixed(1)}/10. More practice needed here.`;
+        return <p className="mt-3 text-sm opacity-90">{msg}</p>;
+      })()}
     </div>
 
     {/* ==================== IDEAL ANSWER - Stage 1 ==================== */}
@@ -5508,6 +5922,9 @@ const startPracticeMode = async () => {
         )}
       </div>
     )}
+
+    {/* ==================== DELIVERY INSIGHTS - Phase 4B ==================== */}
+    <DeliveryInsights answer={spokenAnswer || userAnswer} />
 
     {/* ==================== STRENGTHS - Stage 2 ==================== */}
     {feedback.strengths && feedback.strengths.length > 0 && isSectionVisible(2) && (
@@ -6155,6 +6572,102 @@ const startPracticeMode = async () => {
     );
   }
 
+// INTERVIEW COACH
+  // Phase 4D: JD Decoder
+  if (currentView === 'jd-decoder') {
+    return <JDDecoder
+      onBack={() => setCurrentView('home')}
+      jobDescription={getUserContext().jobDescription || ''}
+      getUserContext={getUserContext}
+      onSaveQuestions={async (newQs) => {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) { alert('Please sign in to save questions'); return; }
+          const rows = newQs.map(q => ({
+            user_id: user.id,
+            question: q.question,
+            category: q.category || 'Behavioral',
+            priority: q.priority || 'Standard',
+            keywords: q.keywords || [],
+            bullets: q.bullets || [],
+            narrative: '',
+          }));
+          const { error } = await supabase.from('questions').insert(rows);
+          if (error) throw error;
+          await loadQuestions();
+          console.log(`✅ ${rows.length} JD Decoder questions saved to Supabase`);
+        } catch (err) {
+          console.error('❌ JD Decoder save error:', err);
+          alert('Failed to save questions: ' + err.message);
+        }
+      }}
+      onNavigate={(view) => view === 'practice' ? startPracticeMode() : setCurrentView(view)}
+    />;
+  }
+
+  // Phase 4F: Story Bank
+  if (currentView === 'story-bank') {
+    return <StoryBank onBack={() => setCurrentView('home')} questions={questions} getUserContext={getUserContext} onNavigate={(view) => view === 'practice' ? startPracticeMode() : setCurrentView(view)} />;
+  }
+
+  // Portfolio: Work History & Confidence Builder
+  if (currentView === 'portfolio') {
+    return <Portfolio onBack={() => setCurrentView('home')} getUserContext={getUserContext} questions={questions} onNavigate={(view) => view === 'practice' ? startPracticeMode() : setCurrentView(view)} />;
+  }
+
+  // Phase 4K: Prep Radio
+  if (currentView === 'prep-radio') {
+    return <PrepRadio onBack={() => setCurrentView('home')} questions={questions} practiceHistory={practiceHistory} getUserContext={getUserContext} userTier={userTier} onUpgrade={() => setShowPricingPage(true)} />;
+  }
+
+  // Phase 5: Learn Section
+  if (currentView === 'learn') {
+    return <LearnSection onBack={() => setCurrentView('home')} userTier={userTier} onUpgrade={() => setShowPricingPage(true)} supabase={supabase} userId={currentUser?.id} />;
+  }
+
+  // Phase 4L: Weak STAR Drill
+  if (currentView === 'weak-drill') {
+    return <WeakPointDrill onBack={() => { setDrillTargetComponent(null); setCurrentView('home'); }} practiceHistory={practiceHistory} questions={questions} getUserContext={getUserContext} targetComponent={drillTargetComponent} />;
+  }
+
+  // Phase 4I: Interview Day Mode
+  if (currentView === 'interview-day') {
+    return <InterviewDayMode onBack={() => setCurrentView('home')} practiceHistory={practiceHistory} questions={questions} getUserContext={getUserContext} />;
+  }
+
+  // Phase 4N: Follow-Up Email
+  if (currentView === 'follow-up-email') {
+    return <FollowUpEmail onBack={() => setCurrentView('home')} getUserContext={getUserContext} />;
+  }
+
+  // Phase 4 Special: Stealth Prompter
+  if (currentView === 'stealth-prompter') {
+    return (
+      <StealthPrompter
+        questions={questions}
+        matchQuestion={matchQuestion}
+        onExit={() => setCurrentView('home')}
+        getUserContext={getUserContext}
+      />
+    );
+  }
+
+  if (currentView === 'interview-coach') {
+    return (
+      <div className="min-h-screen" style={{ background: 'linear-gradient(to bottom right, #fafaf8, #f5f5f0, #f0f4f8)' }}>
+        <InterviewCoach
+          onBack={() => setCurrentView('home')}
+          getUserContext={getUserContext}
+          questions={questions}
+          practiceHistory={practiceHistory}
+          speakText={speakText}
+          stopSpeaking={() => synthRef.current?.cancel()}
+          aiSpeaking={aiSpeaking}
+        />
+      </div>
+    );
+  }
+
 // COMMAND CENTER
   if (currentView === 'command-center') {
     return (
@@ -6470,149 +6983,16 @@ const startPracticeMode = async () => {
 
           {/* ==================== INTERVIEW PREP TAB ==================== */}
           {commandCenterTab === 'prep' && (
-            <div>
-              {/* Interview Countdown */}
-              <div className="bg-gradient-to-br from-teal-600 to-sky-600 rounded-xl sm:rounded-2xl p-4 sm:p-5 lg:p-6 text-white mb-5 sm:mb-6">
-                <h3 className="text-lg sm:text-xl lg:text-2xl font-bold mb-3 sm:mb-4">🗓️ {interviewDate ? `${(() => {
-                  const today = new Date();
-                  today.setHours(0, 0, 0, 0);
-                  const interview = new Date(interviewDate + 'T00:00:00'); // local time, not UTC
-                  const diffTime = interview.getTime() - today.getTime();
-                  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-                  return Math.max(0, diffDays + 1); // +1 so interview day = 1, not 0
-                })()} Days to Shine!` : 'Set Your Interview Date'}</h3>
-                <div className="flex flex-col md:flex-row items-start md:items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
-                  <div className="flex-1 w-full">
-                    <label className="block text-xs sm:text-sm text-white/90 font-medium mb-1.5 sm:mb-2">Interview Date:</label>
-                    <input
-                      type="date"
-                      value={interviewDate}
-                      onChange={(e) => {
-                        setInterviewDate(e.target.value);
-                        localStorage.setItem('isl_interview_date', e.target.value);
-                      }}
-                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg text-slate-900 font-semibold text-sm sm:text-base"
-                    />
-                  </div>
-                  {interviewDate && (
-                    <div className="text-center bg-white/20 backdrop-blur rounded-xl p-3 sm:p-4 lg:p-5 min-w-[120px] sm:min-w-[140px]">
-                      <div className="text-3xl sm:text-4xl lg:text-5xl font-black mb-0.5 sm:mb-1">
-                        {Math.max(0, Math.round((new Date(interviewDate + 'T00:00:00').getTime() - new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()).getTime()) / (1000 * 60 * 60 * 24)) + 1)}
-                      </div>
-                      <div className="text-xs sm:text-sm text-white/90 font-bold">days left!</div>
-                      <div className="text-[10px] sm:text-xs text-white/75 mt-0.5 sm:mt-1">⭐ You've got this!</div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Daily Goal */}
-              <div className="bg-white rounded-xl sm:rounded-2xl shadow-md border border-slate-100 p-4 sm:p-5 mb-5 sm:mb-6">
-                <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-slate-800">🎯 Daily Practice Goal</h3>
-                <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
-                  <label className="text-slate-700 font-semibold text-sm sm:text-base">Sessions per day:</label>
-                  {document.documentElement.classList.contains('capacitor') ? (
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => {
-                          const newVal = Math.max(1, dailyGoal - 1);
-                          setDailyGoal(newVal);
-                          localStorage.setItem('isl_daily_goal', String(newVal));
-                        }}
-                        className="w-10 h-10 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xl flex items-center justify-center transition-colors"
-                      >−</button>
-                      <span className="w-12 text-center font-bold text-lg text-slate-800">{dailyGoal}</span>
-                      <button
-                        onClick={() => {
-                          const newVal = Math.min(20, dailyGoal + 1);
-                          setDailyGoal(newVal);
-                          localStorage.setItem('isl_daily_goal', String(newVal));
-                        }}
-                        className="w-10 h-10 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xl flex items-center justify-center transition-colors"
-                      >+</button>
-                    </div>
-                  ) : (
-                    <input
-                      type="number"
-                      min="1"
-                      max="20"
-                      value={dailyGoal}
-                      onChange={(e) => {
-                        const value = parseInt(e.target.value);
-                        if (!isNaN(value) && value > 0) {
-                          setDailyGoal(value);
-                          localStorage.setItem('isl_daily_goal', e.target.value);
-                        }
-                      }}
-                      className="w-16 sm:w-20 px-3 sm:px-4 py-2 border-2 border-slate-200 rounded-lg text-center font-bold text-sm sm:text-base focus:border-teal-500 focus:outline-none transition-colors"
-                    />
-                  )}
-                </div>
-                <div className="bg-slate-50 rounded-lg sm:rounded-xl p-3 sm:p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs sm:text-sm font-semibold text-slate-700">Today's Progress:</span>
-                    <span className="text-lg sm:text-xl font-black text-teal-600">
-                      {practiceHistory.filter(s => new Date(s.date).toDateString() === new Date().toDateString()).length} / {dailyGoal}
-                    </span>
-                  </div>
-                  <div className="w-full bg-slate-200 rounded-full h-3 sm:h-4">
-                    <div
-                      className="bg-gradient-to-r from-teal-500 to-sky-500 h-3 sm:h-4 rounded-full transition-all flex items-center justify-end pr-2"
-                      style={{
-                        width: `${Math.min(100, (practiceHistory.filter(s => new Date(s.date).toDateString() === new Date().toDateString()).length / dailyGoal) * 100)}%`
-                      }}
-                    >
-                      {practiceHistory.filter(s => new Date(s.date).toDateString() === new Date().toDateString()).length >= dailyGoal && (
-                        <span className="text-white text-[10px] sm:text-xs font-bold">🎉 Goal reached!</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Category Coverage */}
-              <div className="bg-white rounded-xl shadow-md p-5">
-                <h3 className="text-xl font-bold mb-4 text-gray-900">📚 Category Mastery</h3>
-                <div className="space-y-4">
-                  {['Core Narrative', 'System-Level', 'Behavioral', 'Technical'].map(category => {
-                    const categoryQuestions = questions.filter(q => q.category === category);
-                    const total = categoryQuestions.length;
-                    
-                    // Calculate how many questions in this category have been practiced
-                    const practicedQuestionTexts = new Set(
-                      practiceHistory.map(s => s.question)
-                    );
-                    const practiced = categoryQuestions.filter(q => 
-                      practicedQuestionTexts.has(q.question)
-                    ).length;
-                    
-                    const percentage = total > 0 ? (practiced / total) * 100 : 0;
-                    
-                    return (
-                      <div key={category} className="p-4 bg-gray-50 rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="font-bold text-gray-900 text-base">{category}</span>
-                          <span className="text-sm text-gray-700 font-bold">{practiced} / {total} practiced</span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-3">
-                          <div 
-                            className={`h-3 rounded-full transition-all ${
-                              percentage === 100 ? 'bg-gradient-to-r from-green-500 to-emerald-500' :
-                              percentage >= 50 ? 'bg-gradient-to-r from-teal-500 to-sky-500' :
-                              'bg-gradient-to-r from-yellow-500 to-orange-500'
-                            }`}
-                            style={{ width: `${percentage}%` }}
-                          ></div>
-                        </div>
-                        {percentage === 100 && (
-                          <p className="text-xs text-green-600 font-bold mt-1">✓ Mastered!</p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
+            <InterviewContextHub
+              questions={questions}
+              practiceHistory={practiceHistory}
+              dailyGoal={dailyGoal}
+              setDailyGoal={setDailyGoal}
+              interviewDate={interviewDate}
+              setInterviewDate={setInterviewDate}
+              setCurrentView={setCurrentView}
+              onGenerateQuestions={() => setCommandCenterTab('bank')}
+            />
           )}
           
          {/* ==================== PROGRESS TAB ==================== */}
@@ -7245,6 +7625,50 @@ const startPracticeMode = async () => {
                   </div>
                 )}
               </div>
+
+              {/* Job Focus Manager — AI-curated favorites for target role */}
+              <JobFocusManager
+                questions={questions}
+                getUserContext={getUserContext}
+                userId={currentUser?.id}
+                onFavoritesUpdated={(data) => {
+                  setCachedFavorites(data);
+                  if (data) {
+                    setFocusModeActive(true);
+                    setFocusMode(currentUser?.id, true);
+                  } else {
+                    setFocusModeActive(false);
+                    setFocusMode(currentUser?.id, false);
+                  }
+                }}
+              />
+
+              {/* Focus Mode Toggle — only shown when favorites exist */}
+              {currentUser && cachedFavorites && (
+                <div className="mb-4 flex items-center justify-between bg-indigo-50 rounded-lg px-4 py-3 border border-indigo-200">
+                  <div>
+                    <span className="text-sm font-semibold text-indigo-800">🎯 Focus Mode</span>
+                    <p className="text-xs text-indigo-600">
+                      {focusModeActive ? 'Practicing only job-relevant questions' : 'Practicing all questions'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const newState = !focusModeActive;
+                      setFocusModeActive(newState);
+                      setFocusMode(currentUser?.id, newState);
+                    }}
+                    className={`relative w-12 h-7 rounded-full transition-colors ${
+                      focusModeActive ? 'bg-indigo-600' : 'bg-gray-300'
+                    }`}
+                  >
+                    <div className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform ${
+                      focusModeActive ? 'translate-x-5' : 'translate-x-0.5'
+                    }`} />
+                  </button>
+                </div>
+              )}
+
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 mb-5 sm:mb-6">
                 <button onClick={() => setEditingQuestion({ question: '', keywords: [], category: 'Core Narrative', priority: 'Must-Know', bullets: [''], narrative: '', followups: [] })} className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all active:scale-[0.98] text-sm sm:text-base">
                   <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -7263,7 +7687,7 @@ const startPracticeMode = async () => {
               </div>
 
               <div className="flex flex-wrap gap-2 mb-5 sm:mb-6">
-                <button onClick={() => { const input = document.createElement('input'); input.type = 'file'; input.accept = '.json'; input.onchange = (e) => { const file = e.target.files[0]; const reader = new FileReader(); reader.onload = (event) => importQuestions(event.target.result); reader.readAsText(file); }; input.click(); }} className="px-3 sm:px-4 py-2 sm:py-2.5 bg-slate-100 hover:bg-slate-200 rounded-lg font-medium flex items-center gap-1.5 sm:gap-2 text-slate-700 transition-all active:scale-[0.98] text-sm">
+                <button onClick={() => { const input = document.createElement('input'); input.type = 'file'; input.accept = '.json,.txt,.csv'; input.onchange = (e) => { const file = e.target.files[0]; const reader = new FileReader(); reader.onload = (event) => importQuestions(event.target.result); reader.readAsText(file); }; input.click(); }} className="px-3 sm:px-4 py-2 sm:py-2.5 bg-slate-100 hover:bg-slate-200 rounded-lg font-medium flex items-center gap-1.5 sm:gap-2 text-slate-700 transition-all active:scale-[0.98] text-sm">
                   <Upload className="w-4 h-4" />
                   Import
                 </button>
@@ -7416,6 +7840,9 @@ const startPracticeMode = async () => {
                         <div className="flex gap-2 mb-2">
                           <span className={`px-2 py-1 rounded text-xs font-semibold ${q.priority === 'Must-Know' ? 'bg-red-100 text-red-800' : q.priority === 'Technical' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'}`}>{q.priority}</span>
                           <span className="px-2 py-1 bg-gray-100 rounded text-xs">{q.category}</span>
+                          {focusModeActive && cachedFavorites?.questionIds?.includes(q.id) && (
+                            <span className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs font-semibold">🎯 Focus</span>
+                          )}
                         </div>
                         <h3 className="text-xl font-bold mb-2">{q.question}</h3>
                         {q.bullets.length > 0 && (
@@ -7515,6 +7942,19 @@ const startPracticeMode = async () => {
   // SETTINGS
   if (currentView === 'settings') {
     return (
+      <SettingsPage
+        user={currentUser}
+        userData={{ user: currentUser, tier: userTier }}
+        supabase={supabase}
+        onBack={() => setCurrentView('home')}
+        onNavigate={(view) => setCurrentView(view)}
+      />
+    );
+  }
+
+  // LEGACY SETTINGS (replaced by SettingsPage component above)
+  if (false) {
+    return (
       <div className="min-h-screen bg-gray-50">
         <div className="bg-white shadow-sm border-b">
           <div className="container mx-auto px-4 py-4">
@@ -7525,6 +7965,12 @@ const startPracticeMode = async () => {
         </div>
         <div className="max-w-2xl mx-auto px-4 py-8">
           <h1 className="text-2xl font-bold mb-6">Settings</h1>
+
+          {/* Account */}
+          <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 mb-4">
+            <h3 className="text-sm font-semibold text-slate-800 mb-2">Account</h3>
+            <p className="text-xs text-slate-500">{user?.email || 'Not signed in'}</p>
+          </div>
 
           <div className="bg-white rounded-xl shadow-sm p-5 mb-4">
             <h2 className="text-lg font-semibold mb-3 text-gray-800">App Information</h2>
@@ -7556,6 +8002,61 @@ const startPracticeMode = async () => {
               </span>
               <ChevronRight className="w-4 h-4 text-gray-400" />
             </button>
+            {isNativeApp() && (
+              <div className="mt-2">
+                <button
+                  onClick={async () => {
+                    if (!user?.id) return;
+                    // Show restoring state inline
+                    const btn = document.getElementById('restore-purchases-btn');
+                    const msg = document.getElementById('restore-purchases-msg');
+                    if (btn) btn.textContent = 'Restoring...';
+                    if (btn) btn.disabled = true;
+                    if (msg) msg.textContent = '';
+                    try {
+                      const { restorePurchases } = await import('./utils/nativePurchases');
+                      const result = await restorePurchases(user.id);
+                      if (result.restored) {
+                        if (msg) msg.textContent = 'Purchases restored successfully!';
+                        if (msg) msg.className = 'text-center text-xs text-green-600 mt-1';
+                        setTimeout(() => window.location.reload(), 1500);
+                      } else {
+                        if (msg) msg.textContent = result.error || 'No active purchases found.';
+                        if (msg) msg.className = 'text-center text-xs text-slate-500 mt-1';
+                      }
+                    } catch (err) {
+                      if (msg) msg.textContent = 'Unable to restore. Please contact support@interviewanswers.ai';
+                      if (msg) msg.className = 'text-center text-xs text-red-500 mt-1';
+                    }
+                    if (btn) btn.textContent = 'Restore Purchases';
+                    if (btn) btn.disabled = false;
+                  }}
+                  id="restore-purchases-btn"
+                  className="w-full text-center text-sm text-blue-600 hover:text-blue-800 py-2"
+                >
+                  Restore Purchases
+                </button>
+                <p id="restore-purchases-msg" className="text-center text-xs text-slate-500 mt-1"></p>
+              </div>
+            )}
+          </div>
+
+          {/* AI Data Sharing */}
+          <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 mb-4">
+            <h3 className="text-sm font-semibold text-slate-800 mb-2">AI Data Sharing</h3>
+            <p className="text-xs text-slate-500 mb-3">
+              Your interview practice responses are sent to Anthropic's Claude AI service for personalized coaching feedback. Audio is transcribed on your device — only text is sent.
+            </p>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-slate-700">AI-powered coaching enabled</span>
+              <div className="text-xs text-emerald-600 font-medium bg-emerald-50 px-2 py-1 rounded-full">Active</div>
+            </div>
+            <p className="text-xs text-slate-400 mt-2">
+              To revoke consent, contact support@interviewanswers.ai. AI features require this data sharing to function.
+            </p>
+            <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline mt-1 block">
+              Anthropic Privacy Policy →
+            </a>
           </div>
 
           <div className="bg-white rounded-xl shadow-sm p-5 mb-4">
@@ -7588,6 +8089,55 @@ const startPracticeMode = async () => {
               <span className="font-medium text-gray-700">Need help? Contact us</span>
               <Mail className="w-4 h-4 text-gray-400" />
             </a>
+          </div>
+
+          {/* Reset Progress — for new job prep */}
+          <div className="bg-white rounded-xl shadow-sm p-5 mb-4">
+            <h2 className="text-lg font-semibold mb-3 text-gray-800">Progress Reset</h2>
+            <p className="text-sm text-gray-600 mb-3">
+              Preparing for a new job? Reset your scores, streaks, and session history
+              while keeping your question bank and saved answers.
+            </p>
+            <button
+              onClick={async () => {
+                if (window.confirm(
+                  '🔄 Reset Practice Progress?\n\n' +
+                  'This will reset:\n' +
+                  '• All practice scores and session history\n' +
+                  '• Streaks and learning progress\n' +
+                  '• Coach chat history\n\n' +
+                  'This will KEEP:\n' +
+                  '• Your question bank\n' +
+                  '• Your saved answers\n' +
+                  '• Your subscription\n\n' +
+                  'This cannot be undone.'
+                )) {
+                  try {
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (!user) { alert('Please sign in first.'); return; }
+                    const result = await resetAllProgress(user.id);
+                    if (result.success) {
+                      setPracticeHistory([]);
+                      setSessionCount(0);
+                      await loadQuestions(); // Refresh stats (practiceCount/averageScore reset)
+                      alert('✅ Progress reset! Your questions and answers are still here. Fresh start!');
+                    } else {
+                      alert('⚠️ Progress partially reset. Some operations may have failed.\n\n' + (result.errors || []).join('\n'));
+                    }
+                  } catch (error) {
+                    console.error('Reset error:', error);
+                    alert('❌ Reset failed: ' + error.message);
+                  }
+                }
+              }}
+              className="w-full flex justify-between items-center py-3 px-3 bg-amber-50 hover:bg-amber-100 border-2 border-amber-300 rounded-lg text-sm transition-all"
+            >
+              <span className="font-medium text-amber-800">🔄 Reset Progress for New Job</span>
+              <ChevronRight className="w-4 h-4 text-amber-500" />
+            </button>
+            <p className="text-xs text-gray-500 mt-2">
+              Keeps your question bank and saved answers intact.
+            </p>
           </div>
 
           <div className="bg-white rounded-xl shadow-sm p-5 mb-4">
@@ -7643,8 +8193,15 @@ const startPracticeMode = async () => {
                         } catch (err) {
                           console.warn('⚠️ user_profiles reset failed/timeout:', err.message);
                         }
+
+                        // Attempt to delete the Supabase auth account
+                        try {
+                          await supabase.rpc('delete_user');
+                        } catch (e) {
+                          console.log('Account deletion via RPC not available, signing out instead');
+                        }
                       }
-                      
+
                       // Clear ALL localStorage (including consent so user starts fresh)
                       localStorage.clear();
                       
@@ -7679,6 +8236,19 @@ const startPracticeMode = async () => {
             <p className="text-xs text-gray-500 mt-2">
               Permanently deletes everything. <strong>Cannot be undone.</strong>
             </p>
+          </div>
+
+          {/* Sign Out */}
+          <div className="mb-4">
+            <button
+              onClick={async () => {
+                await supabase.auth.signOut();
+                window.location.href = '/login';
+              }}
+              className="w-full py-3 rounded-xl text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 transition-all"
+            >
+              Sign Out
+            </button>
           </div>
 
           <div className="bg-white rounded-xl shadow-sm p-5">
@@ -7722,8 +8292,8 @@ const startPracticeMode = async () => {
         <div className="max-w-3xl mx-auto px-4 py-12">
           <h1 className="text-3xl font-bold mb-8">Privacy Policy</h1>
           <div className="prose prose-gray max-w-none">
-            <p className="text-sm text-gray-600 mb-6">Last updated: January 12, 2026</p>
-            
+            <p className="text-sm text-gray-600 mb-6">Last updated: April 5, 2026</p>
+
             <p className="mb-6 text-gray-700 leading-relaxed">
               InterviewAnswers.ai is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and protect your personal information.
             </p>
@@ -7744,7 +8314,7 @@ const startPracticeMode = async () => {
               <li>Authenticate your account and enable access across devices</li>
               <li>Generate AI-powered feedback on your interview responses</li>
               <li>Track your progress and improvement over time</li>
-              <li>Improve our AI models and service features</li>
+              <li>Improve our service features and user experience</li>
               <li>Send service-related communications and product updates</li>
               <li>Provide customer support when requested</li>
             </ul>
@@ -7770,8 +8340,9 @@ const startPracticeMode = async () => {
             <p className="mb-4 text-gray-700">
               Your practice responses (text only) are sent to Anthropic's Claude AI to generate personalized coaching feedback.
               No personal identifiers (email, password, payment info) are included in AI requests. Audio is transcribed on your
-              device — only the text transcript is sent for analysis. You can review Anthropic's privacy practices at{' '}
-              <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener noreferrer" className="text-teal-600 underline">anthropic.com/privacy</a>.
+              device — only the text transcript is sent for analysis. Anthropic processes your data in accordance with their Privacy Policy ({' '}
+              <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener noreferrer" className="text-teal-600 underline">anthropic.com/privacy</a>
+              ) and provides protection of user data consistent with the standards described in this Privacy Policy. Anthropic does not use data submitted via its API to train or improve its AI models.
             </p>
             <p className="mb-6 text-gray-700">
               We do not sell, rent, or share your personal information with third parties for their marketing purposes.
@@ -7819,7 +8390,7 @@ const startPracticeMode = async () => {
               <li>Right to non-discrimination for exercising your privacy rights</li>
             </ul>
             <p className="mb-6 text-gray-700">
-              To exercise these rights, use the Delete Data function in Settings or contact us at YOUR_EMAIL@example.com
+              To exercise these rights, use the Delete Data function in Settings or contact us at support@interviewanswers.ai
             </p>
             
             <h2 className="text-2xl font-semibold mt-8 mb-4">Data Retention</h2>
@@ -7848,8 +8419,7 @@ const startPracticeMode = async () => {
             <p className="mb-4 text-gray-700">
               If you have questions about this Privacy Policy or wish to exercise your privacy rights, please contact us:
             </p>
-            <p className="mb-2 text-gray-700">Email: YOUR_EMAIL@example.com</p>
-            <p className="text-sm text-gray-500 italic">Please replace with your actual email address</p>
+            <p className="mb-2 text-gray-700">Email: support@interviewanswers.ai</p>
           </div>
         </div>
       </div>
@@ -7870,7 +8440,7 @@ const startPracticeMode = async () => {
         <div className="max-w-3xl mx-auto px-4 py-12">
           <h1 className="text-3xl font-bold mb-8">Terms of Service</h1>
           <div className="prose prose-gray max-w-none">
-            <p className="text-sm text-gray-600 mb-6">Last updated: January 12, 2026</p>
+            <p className="text-sm text-gray-600 mb-6">Last updated: April 5, 2026</p>
             
             <h2 className="text-2xl font-semibold mt-8 mb-4">1. Acceptance of Terms</h2>
             <p className="mb-6 text-gray-700">

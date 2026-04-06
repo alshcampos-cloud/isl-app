@@ -54,7 +54,7 @@ export default function PrivacyPage() {
             <li>Authenticate your account and enable access across devices</li>
             <li>Generate AI-powered feedback on your interview responses</li>
             <li>Track your progress and improvement over time</li>
-            <li>Improve our AI models and service features</li>
+            <li>Improve our service features and user experience</li>
             <li>Send service-related communications and product updates</li>
             <li>Provide customer support when requested</li>
           </ul>
@@ -80,8 +80,9 @@ export default function PrivacyPage() {
           <p>
             Your practice responses (text only) are sent to <strong>Anthropic's Claude AI</strong> to generate personalized coaching feedback.
             No personal identifiers (email, password, payment info) are included in AI requests. Audio is transcribed on your
-            device — only the text transcript is sent for analysis. You can review Anthropic's privacy practices at{' '}
-            <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener noreferrer" className="text-teal-600 hover:text-teal-700 underline">anthropic.com/privacy</a>.
+            device — only the text transcript is sent for analysis. Anthropic processes your data in accordance with their Privacy Policy ({' '}
+            <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener noreferrer" className="text-teal-600 hover:text-teal-700 underline">anthropic.com/privacy</a>
+            ) and provides protection of user data consistent with the standards described in this Privacy Policy. Anthropic does not use data submitted via its API to train or improve its AI models.
           </p>
           <p>
             We do not sell, rent, or share your personal information with third parties for their marketing purposes.

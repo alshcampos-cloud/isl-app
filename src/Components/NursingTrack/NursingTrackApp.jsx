@@ -28,6 +28,7 @@ import NursingOfferCoach from './NursingOfferCoach';
 import NursingPricing from './NursingPricing';
 import { isIOS, isNativeApp } from '../../utils/platform';
 import { Browser } from '@capacitor/browser';
+import { trackPurchase } from '../../utils/googleAdsTracking';
 
 // Internal view states for the nursing track
 const VIEWS = {
@@ -116,7 +117,7 @@ export default function NursingTrackApp() {
 
         // Fetch profile (name, tier, pass expiry) and beta status in parallel
         const [profileResult, betaResult] = await Promise.all([
-          supabase.from('user_profiles').select('tier, subscription_status, nursing_pass_expires, general_pass_expires, accepted_terms').eq('user_id', userId).maybeSingle(),
+          supabase.from('user_profiles').select('tier, subscription_status, nursing_pass_expires, general_pass_expires, premium_trial_ends, accepted_terms').eq('user_id', userId).maybeSingle(),
           isBetaUser(supabase, userId),
         ]);
 
@@ -130,7 +131,7 @@ export default function NursingTrackApp() {
           const { data: newProfile, error: insertErr } = await supabase
             .from('user_profiles')
             .insert({ user_id: userId, tier: 'free', onboarding_field: 'nursing' })
-            .select('tier, subscription_status, nursing_pass_expires, general_pass_expires, accepted_terms')
+            .select('tier, subscription_status, nursing_pass_expires, general_pass_expires, premium_trial_ends, accepted_terms')
             .single();
           if (!insertErr && newProfile) {
             profile = newProfile;
@@ -140,7 +141,7 @@ export default function NursingTrackApp() {
             // Re-fetch it
             const { data: refetch } = await supabase
               .from('user_profiles')
-              .select('tier, subscription_status, nursing_pass_expires, general_pass_expires, accepted_terms')
+              .select('tier, subscription_status, nursing_pass_expires, general_pass_expires, premium_trial_ends, accepted_terms')
               .eq('user_id', userId)
               .maybeSingle();
             profile = refetch;
@@ -186,9 +187,15 @@ export default function NursingTrackApp() {
   useEffect(() => {
     if (!verifyingPurchase || !userData.user || userData.loading) return;
 
+    // Pass type → price mapping for Google Ads conversion tracking
+    const passAmounts = { nursing_30day: 19.99, annual_all_access: 149.99 };
+    const purchasedPass = searchParams.get('pass');
+
     // If tier is already set (webhook was fast), just clear the flag
     if (userData.tier === 'nursing_pass' || userData.tier === 'annual' || userData.tier === 'beta' || userData.tier === 'pro') {
       console.log('NursingTrackApp: Payment already verified, tier =', userData.tier);
+      // Google Ads purchase conversion
+      trackPurchase(passAmounts[purchasedPass] || 19.99, 'nursing_pass_purchase');
       setVerifyingPurchase(false);
       // Clean up URL params
       searchParams.delete('purchase');
@@ -214,6 +221,8 @@ export default function NursingTrackApp() {
 
         if (freshTier !== 'free') {
           console.log('NursingTrackApp: Payment verified! Tier =', freshTier);
+          // Google Ads purchase conversion
+          trackPurchase(passAmounts[purchasedPass] || 19.99, 'nursing_pass_purchase');
           clearInterval(pollInterval);
           setVerifyingPurchase(false);
           // Clean up URL params
@@ -335,10 +344,8 @@ export default function NursingTrackApp() {
     setTargetQuestionId(null);
   }, []);
 
-  // Only provide "Back to App" when general features exist (not in nursing-only builds)
-  const handleBackToApp = showGeneralFeatures() ? (() => {
-    navigate('/app');
-  }) : null;
+  // "Back to App" hidden on web — each track is standalone
+  const handleBackToApp = null;
 
   // ============================================================
   // PRO GATE — blocks free users from premium modes

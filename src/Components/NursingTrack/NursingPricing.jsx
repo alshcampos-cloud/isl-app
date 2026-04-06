@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { X, Shield, Zap, Clock, Star, CheckCircle, Loader2, ExternalLink } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { isIOS, isNativeApp } from '../../utils/platform';
+import { restorePurchases } from '../../utils/nativePurchases';
 import { Browser } from '@capacitor/browser';
 
 export default function NursingPricing({ userData, onClose }) {
@@ -284,6 +285,37 @@ export default function NursingPricing({ userData, onClose }) {
               Instant access
             </div>
           </div>
+
+          {/* Restore Purchases — native apps only (Apple requirement) */}
+          {isNativeApp() && (
+            <p className="text-center text-xs text-slate-400 mt-4">
+              Already purchased?{' '}
+              <button
+                id="nursing-restore-btn"
+                onClick={async () => {
+                  const btn = document.getElementById('nursing-restore-btn');
+                  const msg = document.getElementById('nursing-restore-msg');
+                  if (btn) btn.textContent = 'Restoring...';
+                  try {
+                    const result = await restorePurchases(userData?.user?.id);
+                    if (result.restored) {
+                      if (msg) { msg.textContent = 'Purchases restored!'; msg.style.color = '#22c55e'; }
+                      setTimeout(() => { onClose?.(); window.location.reload(); }, 1500);
+                    } else {
+                      if (msg) { msg.textContent = result.error || 'No active purchases found.'; msg.style.color = '#ef4444'; }
+                    }
+                  } catch {
+                    if (msg) { msg.textContent = 'Unable to restore. Contact support@interviewanswers.ai'; msg.style.color = '#ef4444'; }
+                  }
+                  if (btn) btn.textContent = 'Restore Purchases';
+                }}
+                className="text-sky-400 hover:underline"
+              >
+                Restore Purchases
+              </button>
+              <span id="nursing-restore-msg" className="block mt-1 text-xs"></span>
+            </p>
+          )}
         </div>
       </div>
     </div>

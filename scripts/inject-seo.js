@@ -20,6 +20,8 @@ import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DIST = join(__dirname, '..', 'dist');
+const APP_TARGET = process.env.VITE_APP_TARGET || 'all';
+const NURSING_ROUTES = ['/nurse', '/nursing-interview-questions', '/nursing'];
 
 // Route-specific SEO data
 const ROUTES = {
@@ -163,10 +165,33 @@ if (!existsSync(templatePath)) {
   process.exit(1);
 }
 
-const template = readFileSync(templatePath, 'utf-8');
+let template = readFileSync(templatePath, 'utf-8');
+
+// For general builds, strip nursing references from JSON-LD structured data
+if (APP_TARGET === 'general') {
+  // Remove nursing offer from Product JSON-LD
+  template = template.replace(/,\s*\{\s*"@type":\s*"Offer",\s*"price":\s*"19\.99"[^}]*"30-Day Nursing Pass"[^}]*\}/s, '');
+  // Remove nursing feature from featureList
+  template = template.replace(/,\s*"Nursing interview specialty track with SBAR coaching"/, '');
+  // Remove nursing FAQ entry
+  template = template.replace(/,\s*\{\s*"@type":\s*"Question",\s*"name":\s*"Can I use InterviewAnswers\.ai for nursing interviews\?"[^}]*\{[^}]*\}[^}]*\}/s, '');
+  // Clean "general and nursing" from Annual description
+  template = template.replace(/general and nursing interview tracks/g, 'all interview features');
+  // Clean nursing reference from interview types FAQ
+  template = template.replace(/There is also a dedicated nursing interview track with SBAR communication drills and specialty-specific questions for ED, ICU, OR, L&D, Pediatrics, and more\./, '');
+  // Clean org description if it mentions nursing
+  template = template.replace(/nursing interview specialty track/g, 'comprehensive interview preparation');
+  console.log('  🧹 Stripped nursing references from JSON-LD (general build)');
+}
+
 let created = 0;
 
 for (const [route, seo] of Object.entries(ROUTES)) {
+  // Skip nursing routes in general-only builds
+  if (APP_TARGET === 'general' && NURSING_ROUTES.includes(route)) {
+    console.log(`  ⏭️  ${route} → skipped (general build)`);
+    continue;
+  }
   const routeDir = join(DIST, route.slice(1)); // Remove leading /
   const routeHtml = join(routeDir, 'index.html');
 

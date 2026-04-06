@@ -24,23 +24,12 @@ export default function SpecialtySelection({ onSelectSpecialty, onBack }) {
       {/* Header */}
       <div className="bg-slate-900/80 backdrop-blur-lg border-b border-white/10 sticky top-0 z-30">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-          {/* Track Switcher — shown only when general app is available */}
-          {showGeneralFeatures() ? (
-          <div className="flex items-center gap-1 bg-white/10 rounded-full p-0.5 border border-white/20">
-            <a href="/app" className="px-3 py-1.5 rounded-full text-xs font-semibold text-white/70 hover:text-white hover:bg-white/10 transition-all no-underline">
-              General
-            </a>
-            <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-white text-slate-900 shadow-md">
-              🩺 Nursing
-            </span>
-          </div>
-          ) : (
+          {/* Track label — toggle hidden on web */}
           <div className="flex items-center gap-1">
             <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-white/10 text-white border border-white/20">
               🩺 NurseAnswerPro
             </span>
           </div>
-          )}
           <div className="flex items-center gap-2">
             <Stethoscope className="w-4 h-4 text-sky-400" />
             <span className="text-white font-medium text-sm">Nursing Interview Track</span>

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Brain, Lock } from 'lucide-react';
+import { showNursingFeatures } from '../../utils/appTarget';
 
 export default function LandingFooter() {
   return (
@@ -22,12 +23,16 @@ export default function LandingFooter() {
             <Link to="/behavioral-interview-questions" className="hover:text-white transition-colors">
               Behavioral Questions
             </Link>
+            {showNursingFeatures() && (
+            <>
             <Link to="/nursing-interview-questions" className="hover:text-white transition-colors">
               Nursing Questions
             </Link>
             <Link to="/nurse" className="hover:text-white transition-colors">
               🩺 NurseAnswerPro
             </Link>
+            </>
+            )}
             <a href="mailto:support@interviewanswers.ai" className="hover:text-white transition-colors">
               Contact
             </a>

@@ -6,6 +6,7 @@ export default function FirstTimeConsent({ user, onAccepted, onAlreadyAccepted }
   const [showModal, setShowModal] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
   const [activeTab, setActiveTab] = useState('summary');
+  const [aiConsentChecked, setAiConsentChecked] = useState(false);
 
   useEffect(() => {
     checkTermsAcceptance();
@@ -139,6 +140,18 @@ export default function FirstTimeConsent({ user, onAccepted, onAlreadyAccepted }
                 </ul>
               </div>
 
+              <label className="flex items-start gap-3 mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={aiConsentChecked}
+                  onChange={(e) => setAiConsentChecked(e.target.checked)}
+                  className="mt-1 w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                />
+                <span className="text-sm text-slate-700">
+                  I understand and consent to my practice responses being sent to Anthropic's Claude AI service for coaching feedback. No audio, email, or payment data is shared.
+                </span>
+              </label>
+
               {/* MEDICAL DISCLAIMER — Apple Guideline 1.4.1 (nursing app only) */}
               {getAppTarget() === 'nursing' && (
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
@@ -182,7 +195,7 @@ export default function FirstTimeConsent({ user, onAccepted, onAlreadyAccepted }
                 <li>Authenticate your account and enable access across devices</li>
                 <li>Generate AI-powered feedback on your interview responses</li>
                 <li>Track your progress and improvement over time</li>
-                <li>Improve our AI models and service features</li>
+                <li>Improve our service features and user experience</li>
                 <li>Send service-related communications and product updates</li>
                 <li>Provide customer support when requested</li>
               </ul>
@@ -200,7 +213,7 @@ export default function FirstTimeConsent({ user, onAccepted, onAlreadyAccepted }
               <p>We do not sell, rent, or share your personal information with third parties for their marketing purposes.</p>
 
               <h4 className="font-semibold text-gray-900">AI Data Processing — Anthropic (Claude)</h4>
-              <p>Your interview practice responses and coaching conversations are sent to <strong>Anthropic's Claude API</strong> to generate personalized AI feedback. We do not send your email, password, or personal identifiers to Anthropic. Audio is processed on your device — only text transcripts are sent to Anthropic. For details, see <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Anthropic's Privacy Policy</a>.</p>
+              <p>Your interview practice responses and coaching conversations are sent to <strong>Anthropic's Claude API</strong> to generate personalized AI feedback. We do not send your email, password, or personal identifiers to Anthropic. Audio is processed on your device — only text transcripts are sent to Anthropic. Anthropic processes your data in accordance with their Privacy Policy and provides protection of user data consistent with the standards described in this Privacy Policy. Anthropic does not use data submitted via its API to train or improve its AI models. For details, see <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Anthropic's Privacy Policy</a>.</p>
 
               <h4 className="font-semibold text-gray-900">Microphone Access and Recording</h4>
               <p>InterviewAnswers.ai requests microphone access to record your practice interview responses. You have complete control over when recording occurs. Audio is used solely to generate transcriptions and provide feedback.</p>
@@ -277,7 +290,8 @@ export default function FirstTimeConsent({ user, onAccepted, onAlreadyAccepted }
           </button>
           <button
             onClick={handleAccept}
-            className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition shadow-lg"
+            disabled={!aiConsentChecked}
+            className={`flex-1 px-4 py-3 rounded-lg font-medium transition shadow-lg ${aiConsentChecked ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
           >
             Accept & Continue
           </button>

@@ -4,11 +4,13 @@
 //
 // Integration: Replaces old PricingPage.jsx in App.jsx showPricingPage modal
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Shield, Zap, Clock, Star, CheckCircle, Loader2, Crown, Sparkles, ExternalLink } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { isIOS, isNativeApp } from '../utils/platform';
+import { showNursingFeatures } from '../utils/appTarget';
 import { Browser } from '@capacitor/browser';
+import { purchaseProduct, restorePurchases, initializePurchases, PRODUCTS } from '../utils/nativePurchases';
 
 export default function GeneralPricing({ userData, onClose }) {
   const [isLoading, setIsLoading] = useState(null); // 'general_30day' | 'annual_all_access' | null
@@ -17,25 +19,51 @@ export default function GeneralPricing({ userData, onClose }) {
   // Detect if running inside iOS native app
   const isIOSNative = isIOS() && isNativeApp();
 
+  // Initialize native purchase system when component mounts on iOS native
+  useEffect(() => {
+    if (isIOSNative) {
+      initializePurchases();
+    }
+  }, [isIOSNative]);
+
   // Normalize userData — App.jsx passes { user, tier } structure
   const user = userData?.user || userData;
   const userId = user?.id;
   const userEmail = user?.email;
   const tier = userData?.tier || 'free';
 
-  // iOS native: open the website in Safari for purchases
-  const handleIOSPurchase = async () => {
+  // iOS native: use Apple In-App Purchase
+  const handleIOSPurchase = async (passType) => {
+    if (!userId) {
+      setError('You must be logged in to purchase.');
+      return;
+    }
+    setIsLoading(passType);
+    setError(null);
     try {
-      await Browser.open({ url: 'https://www.interviewanswers.ai/app' });
-    } catch {
-      setError('Please visit interviewanswers.ai in Safari to purchase.');
+      const productId = passType === 'annual_all_access' ? PRODUCTS.ANNUAL_ALL_ACCESS : PRODUCTS.GENERAL_30DAY;
+      const result = await purchaseProduct(productId, userId);
+      if (result.error === 'cancelled') {
+        setIsLoading(null);
+        return;
+      }
+      if (!result.success && result.error) {
+        throw new Error(result.error);
+      }
+      // Purchase successful — close modal and refresh user data
+      onClose?.();
+      window.location.reload();
+    } catch (err) {
+      setError(err.message || 'Purchase failed. Please try again.');
+    } finally {
+      setIsLoading(null);
     }
   };
 
   const handleCheckout = async (passType) => {
-    // On iOS native, redirect to website in Safari instead of in-app Stripe
+    // On iOS native, use Apple IAP
     if (isIOSNative) {
-      handleIOSPurchase();
+      handleIOSPurchase(passType);
       return;
     }
 
@@ -221,7 +249,11 @@ export default function GeneralPricing({ userData, onClose }) {
                   <Star className="w-4 h-4 text-amber-400" />
                   <h3 className="text-white font-semibold">Annual All-Access</h3>
                 </div>
-                <p className="text-slate-400 text-xs mt-1">General + Nursing interview prep — save over 50%</p>
+                <p className="text-slate-400 text-xs mt-1">
+                  {showNursingFeatures()
+                    ? 'General + Nursing interview prep — save over 50%'
+                    : 'Complete interview prep — save over 50%'}
+                </p>
               </div>
               <div className="text-right">
                 <p className="text-white font-bold text-2xl">$149<span className="text-base">.99</span></p>
@@ -232,7 +264,7 @@ export default function GeneralPricing({ userData, onClose }) {
             <ul className="space-y-1.5 mb-4">
               {[
                 'Everything in General Pass',
-                'Full Nursing Interview Track',
+                ...(showNursingFeatures() ? ['Full Nursing Interview Track'] : []),
                 'Unlimited AI Coach',
                 'Year-round access',
                 'Priority support',
@@ -287,6 +319,42 @@ export default function GeneralPricing({ userData, onClose }) {
               Instant access
             </div>
           </div>
+
+          {/* Restore Purchases — visible only in native app for App Store compliance */}
+          {isNativeApp() && (
+            <div className="text-center mt-4">
+              <p className="text-xs text-slate-500">
+                Already purchased?{' '}
+                <button
+                  id="gp-restore-btn"
+                  onClick={async () => {
+                    if (!userId) return;
+                    const btn = document.getElementById('gp-restore-btn');
+                    const msg = document.getElementById('gp-restore-msg');
+                    if (btn) btn.textContent = 'Restoring...';
+                    if (btn) btn.disabled = true;
+                    if (msg) msg.textContent = '';
+                    try {
+                      const result = await restorePurchases(userId);
+                      if (result.restored) {
+                        if (msg) { msg.textContent = 'Purchases restored!'; msg.className = 'text-xs text-green-400 mt-1'; }
+                        setTimeout(() => { onClose?.(); window.location.reload(); }, 1500);
+                      } else {
+                        if (msg) { msg.textContent = result.error || 'No active purchases found.'; msg.className = 'text-xs text-slate-500 mt-1'; }
+                      }
+                    } catch (err) {
+                      if (msg) { msg.textContent = 'Unable to restore. Contact support@interviewanswers.ai'; msg.className = 'text-xs text-red-400 mt-1'; }
+                    }
+                    if (btn) { btn.textContent = 'Restore Purchases'; btn.disabled = false; }
+                  }}
+                  className="text-blue-400 hover:underline"
+                >
+                  Restore Purchases
+                </button>
+              </p>
+              <p id="gp-restore-msg" className="text-xs text-slate-500 mt-1"></p>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -41,14 +41,11 @@ export function isWeb() {
 
 /**
  * Get the payment method that should be used on the current platform.
- *
- * As of May 2025 (Epic v. Apple ruling), developers can use external payment
- * links in U.S. iOS apps with zero Apple commission. We route ALL platforms
- * to Stripe via the website for a consistent, lower-cost payment flow.
- *
- * Native app users who need to subscribe are directed to the website checkout.
+ * iOS native uses Apple IAP (StoreKit 2 via @capgo/native-purchases).
+ * Web and Android use Stripe.
  */
 export function getPaymentProvider() {
-  // All platforms use Stripe via external web checkout
+  if (isIOS() && isNativeApp()) return 'apple';
+  if (isAndroid() && isNativeApp()) return 'google';
   return 'stripe';
 }

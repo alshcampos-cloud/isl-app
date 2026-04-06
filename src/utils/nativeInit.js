@@ -5,6 +5,7 @@
 import { SplashScreen } from '@capacitor/splash-screen';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
+import { initializePurchases } from './nativePurchases';
 
 /**
  * Initialize native platform features.
@@ -26,6 +27,38 @@ export async function initializeNativePlatform() {
   } catch (e) {
     console.log('SplashScreen hide skipped:', e.message);
   }
+
+  // Initialize In-App Purchases (StoreKit 2)
+  try {
+    await initializePurchases();
+  } catch (e) {
+    console.log('IAP init skipped:', e.message);
+  }
+
+  // Offline detection for native apps (uses navigator.onLine — no extra dependency)
+  try {
+    if (!navigator.onLine) {
+      showOfflineBanner();
+    }
+    window.addEventListener('offline', () => showOfflineBanner());
+    window.addEventListener('online', () => hideOfflineBanner());
+  } catch (e) {
+    console.log('Offline detection skipped:', e.message);
+  }
+}
+
+function showOfflineBanner() {
+  if (document.getElementById('offline-banner')) return;
+  const banner = document.createElement('div');
+  banner.id = 'offline-banner';
+  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#ef4444;color:white;text-align:center;padding:8px;font-size:14px;font-family:system-ui;';
+  banner.textContent = 'No internet connection. Some features may be unavailable.';
+  document.body.prepend(banner);
+}
+
+function hideOfflineBanner() {
+  const banner = document.getElementById('offline-banner');
+  if (banner) banner.remove();
 }
 
 /**

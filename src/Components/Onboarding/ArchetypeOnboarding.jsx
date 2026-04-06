@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { getArchetype, getArchetypeConfig, getPostOnboardingRoute, TIMELINE_OPTIONS, FIELD_OPTIONS, NURSING_FIRST_QUESTION } from '../../utils/archetypeRouter'
+import { showNursingFeatures } from '../../utils/appTarget'
 import { trackOnboardingEvent, startScreenTimer } from '../../utils/onboardingTracker'
 import useDocumentHead from '../../hooks/useDocumentHead'
 import BreathingExercise from './BreathingExercise'
@@ -339,7 +340,7 @@ function ScreenOne({ timeline, setTimeline, field, setField, onContinue, fromNur
             What field are you in?
           </p>
           <div className="grid grid-cols-2 gap-2">
-            {FIELD_OPTIONS.map((opt) => (
+            {FIELD_OPTIONS.filter(opt => opt.value !== 'nursing' || showNursingFeatures()).map((opt) => (
               <button
                 key={opt.value}
                 onClick={() => { setField(opt.value); trackOnboardingEvent(1, 'field_selected', { field: opt.value }); }}

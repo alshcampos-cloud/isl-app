@@ -199,6 +199,37 @@ export default function TermsPage() {
           <h2 className="text-xl font-bold text-gray-900 mt-8">18. Contact</h2>
           <p>For questions about these Terms, contact us at <a href="mailto:support@interviewanswers.ai" className="text-teal-600 hover:text-teal-700">support@interviewanswers.ai</a>.</p>
 
+          <h2 className="text-xl font-bold text-gray-900 mt-8">19. Apple App Store Terms</h2>
+          <p>
+            If you access the Service through an Apple iOS application, the following additional terms apply:
+          </p>
+          <ol className="list-decimal pl-6 space-y-3">
+            <li>
+              This agreement is between you and Koda Labs LLC, not Apple Inc. Apple has no obligation
+              to provide maintenance or support for the Service.
+            </li>
+            <li>
+              In-app purchases and subscriptions are processed through Apple's App Store. Subscriptions
+              can be managed and canceled through your iOS device Settings &gt; Apple ID &gt; Subscriptions.
+            </li>
+            <li>
+              Apple has no warranty obligation for the Service. Any claims relating to the Service are the
+              responsibility of Koda Labs LLC, not Apple.
+            </li>
+            <li>
+              Apple is not responsible for addressing any claims you may have relating to the Service,
+              including product liability claims, regulatory compliance, or intellectual property infringement.
+            </li>
+            <li>
+              In the event of any failure of the Service to conform to applicable warranties, you may notify
+              Apple for a refund of the purchase price (if applicable). Apple has no other warranty obligation.
+            </li>
+            <li>
+              Apple and its subsidiaries are third-party beneficiaries of this agreement. Upon acceptance of
+              these terms, Apple has the right to enforce them against you as a third-party beneficiary.
+            </li>
+          </ol>
+
           <hr className="my-8 border-gray-300" />
           <p className="text-sm text-gray-500 italic">
             By using InterviewAnswers.ai, you acknowledge that you have read, understood, and agree to be bound by these
