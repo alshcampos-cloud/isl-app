@@ -13,16 +13,20 @@ import { isNativeApp, isIOS, isAndroid, getPaymentProvider } from './platform';
 
 // Product IDs — must match App Store Connect
 const PRODUCTS = {
+  MONTHLY: 'monthly',
+  YEARLY: 'yearly',
+  LIFETIME: 'lifetime',
+  // Legacy IDs (App Store Connect non-consumables)
   GENERAL_30DAY: 'ai.interviewanswers.general.30day',
   NURSING_30DAY: 'ai.interviewanswers.nursing.30day',
   ANNUAL_ALL_ACCESS: 'ai.interviewanswers.annual.allaccess',
 };
 
 // Entitlement ID — must match RevenueCat dashboard
-const ENTITLEMENT_ID = 'pro';
+const ENTITLEMENT_ID = 'Koda Labs Pro';
 
 // RevenueCat API keys
-const RC_APPLE_KEY = import.meta.env.VITE_REVENUECAT_APPLE_KEY || '';
+const RC_APPLE_KEY = import.meta.env.VITE_REVENUECAT_APPLE_KEY || 'test_tWLPHzYPAPDEETSJUWdnhSebTlh';
 const RC_GOOGLE_KEY = import.meta.env.VITE_REVENUECAT_GOOGLE_KEY || '';
 
 let Purchases = null;
