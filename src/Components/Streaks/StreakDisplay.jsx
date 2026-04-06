@@ -96,7 +96,7 @@ export default function StreakDisplay({ refreshTrigger, variant = 'dark' }) {
       <div
         className={`rounded-xl sm:rounded-2xl p-3 sm:p-4 hover:scale-[1.02] transition-all duration-200 cursor-pointer relative ${
           variant === 'light'
-            ? 'bg-white text-slate-800 border border-slate-200 shadow-lg shadow-slate-200/50 hover:shadow-xl'
+            ? 'bg-gradient-to-br from-rose-50 to-pink-50 text-slate-800 border border-rose-100/60 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.06)] hover:shadow-lg active:scale-[0.98]'
             : 'bg-white/10 backdrop-blur-lg text-white border border-white/20 hover:bg-white/15'
         }`}
         onClick={() => setShowPopover(true)}
@@ -116,10 +116,10 @@ export default function StreakDisplay({ refreshTrigger, variant = 'dark' }) {
             <Flame className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
           </div>
           <div className="min-w-0">
-            <p className="text-xl sm:text-2xl font-black leading-tight">
+            <p className="text-2xl font-bold leading-tight">
               {currentStreak}
             </p>
-            <p className={`text-[10px] sm:text-xs leading-tight font-semibold whitespace-nowrap ${variant === 'light' ? 'text-slate-500' : 'text-white/80'}`}>
+            <p className={`text-xs leading-tight font-medium whitespace-nowrap ${variant === 'light' ? 'text-slate-500' : 'text-white/80'}`}>
               {currentStreak === 1 ? 'Day' : 'Day Streak'}
             </p>
           </div>

@@ -4191,8 +4191,8 @@ const startPracticeMode = async () => {
 
           {/* Clean Centered Title */}
           <div className="text-center mb-4 sm:mb-6">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-slate-800 mb-1 sm:mb-2 tracking-tight">InterviewAnswers.ai</h1>
-            <p className="text-base sm:text-lg md:text-xl text-slate-500 font-medium">Master Your Interview Answers with AI</p>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent mb-1 sm:mb-2 tracking-tight">InterviewAnswers.ai</h1>
+            <p className="text-base sm:text-lg md:text-xl text-slate-400 font-medium">Master Your Interview Answers with AI</p>
 
             {/* Track Switcher — only shown in targeted native builds, hidden on web */}
             {showNursingFeatures() && isTargetedBuild() && (
@@ -4225,7 +4225,7 @@ const startPracticeMode = async () => {
 
           {/* Compact Stats Row */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-2 sm:gap-3 mb-4 sm:mb-6">
-            <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 text-slate-800 hover:shadow-lg hover:scale-[1.02] transition-all duration-200 border border-slate-200 shadow-sm cursor-pointer" onClick={() => {
+            <div className="bg-gradient-to-br from-teal-50 to-emerald-50 rounded-xl sm:rounded-2xl p-3 sm:p-4 text-slate-800 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 border border-teal-100/60 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.06)] cursor-pointer" onClick={() => {
               setCurrentView('command-center');
               setCommandCenterTab('bank');
             }}>
@@ -4234,39 +4234,39 @@ const startPracticeMode = async () => {
                   <Database className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xl sm:text-2xl font-black leading-tight">{questions.length}</p>
-                  <p className="text-[10px] sm:text-xs text-slate-500 leading-tight font-semibold">Questions</p>
+                  <p className="text-2xl font-bold leading-tight">{questions.length}</p>
+                  <p className="text-xs text-slate-500 leading-tight font-medium">Questions</p>
                 </div>
               </div>
             </div>
-            <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 text-slate-800 hover:shadow-lg hover:scale-[1.02] transition-all duration-200 border border-slate-200 shadow-sm cursor-pointer" onClick={() => {
+            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl sm:rounded-2xl p-3 sm:p-4 text-slate-800 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 border border-indigo-100/60 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.06)] cursor-pointer" onClick={() => {
               setCurrentView('command-center');
               setCommandCenterTab('progress');
             }}>
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-indigo-400 to-purple-600 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
                   <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xl sm:text-2xl font-black leading-tight">{practiceHistory.length}</p>
-                  <p className="text-[10px] sm:text-xs text-slate-500 leading-tight font-semibold">Sessions</p>
+                  <p className="text-2xl font-bold leading-tight">{practiceHistory.length}</p>
+                  <p className="text-xs text-slate-500 leading-tight font-medium">Sessions</p>
                 </div>
               </div>
             </div>
             {/* Usage Dashboard Link Card */}
             <div
-              className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 text-slate-800 hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer border border-slate-200 shadow-sm"
+              className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl sm:rounded-2xl p-3 sm:p-4 text-slate-800 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 cursor-pointer border border-amber-100/60 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.06)]"
               onClick={() => setShowUsageDashboard(true)}
             >
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-amber-400 to-amber-600 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-amber-400 to-orange-600 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
                   <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-lg sm:text-xl font-black leading-tight">
+                  <p className="text-2xl font-bold leading-tight">
                     {(userTier === 'pro' || userTier === 'general_pass' || userTier === 'annual' || userTier === 'beta') ? '∞' : 'View'}
                   </p>
-                  <p className="text-[10px] sm:text-xs text-slate-500 leading-tight font-semibold whitespace-nowrap">
+                  <p className="text-xs text-slate-500 leading-tight font-medium whitespace-nowrap">
                     {(userTier === 'pro' || userTier === 'general_pass' || userTier === 'annual' || userTier === 'beta') ? 'Unlimited' : 'Usage'}
                   </p>
                 </div>
@@ -4274,18 +4274,18 @@ const startPracticeMode = async () => {
             </div>
             {/* Days Until Interview Card */}
             <div
-              className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 text-slate-800 hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer border border-slate-200 shadow-sm"
+              className="bg-gradient-to-br from-sky-50 to-blue-50 rounded-xl sm:rounded-2xl p-3 sm:p-4 text-slate-800 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 cursor-pointer border border-sky-100/60 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.06)]"
               onClick={() => {
                 setCurrentView('command-center');
                 setCommandCenterTab('prep');
               }}
             >
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-sky-400 to-sky-600 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-sky-400 to-blue-600 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
                   <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xl sm:text-2xl font-black leading-tight">
+                  <p className="text-2xl font-bold leading-tight">
                     {interviewDate
                       ? (() => {
                           const today = new Date();
@@ -4298,7 +4298,7 @@ const startPracticeMode = async () => {
                       : '—'
                     }
                   </p>
-                  <p className="text-[10px] sm:text-xs text-slate-500 leading-tight font-semibold whitespace-nowrap">
+                  <p className="text-xs text-slate-500 leading-tight font-medium whitespace-nowrap">
                     {interviewDate ? 'Days' : 'Set Date'}
                   </p>
                 </div>
@@ -4402,11 +4402,11 @@ const startPracticeMode = async () => {
 
           {/* Practice Modes — PRIMARY ACTIONS (above everything else) */}
           <div className="mb-6">
-            <h2 className="text-lg sm:text-xl font-black text-slate-800 mb-1">Practice</h2>
-            <p className="text-slate-500 text-xs sm:text-sm mb-3 font-medium">Build your skills with hands-on training</p>
+            <h2 className="text-lg sm:text-xl font-bold text-slate-800 mb-1 tracking-tight">Practice</h2>
+            <p className="text-slate-400 text-xs sm:text-sm mb-3 font-medium">Build your skills with hands-on training</p>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
               {/* Live Prompter - Enhanced */}
-              <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:shadow-xl hover:shadow-teal-500/30 hover:-translate-y-1 cursor-pointer group relative overflow-hidden border border-slate-100">
+              <div className="bg-white rounded-2xl shadow-[0_2px_16px_-4px_rgba(0,0,0,0.08)] p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:shadow-xl hover:shadow-teal-500/20 hover:-translate-y-1 active:scale-[0.97] cursor-pointer group relative overflow-hidden border border-slate-100/80">
                 <div className="absolute inset-0 bg-gradient-to-br from-teal-400/0 to-emerald-500/0 group-hover:from-teal-400/10 group-hover:to-emerald-500/10 transition-all duration-300"></div>
                 <div className="text-center flex flex-col h-full relative z-10">
                   <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300 shadow-md">
@@ -4421,7 +4421,7 @@ const startPracticeMode = async () => {
               </div>
 
               {/* AI Interviewer - Enhanced */}
-              <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/30 hover:-translate-y-1 cursor-pointer group relative overflow-hidden border border-slate-100">
+              <div className="bg-white rounded-2xl shadow-[0_2px_16px_-4px_rgba(0,0,0,0.08)] p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/20 hover:-translate-y-1 active:scale-[0.97] cursor-pointer group relative overflow-hidden border border-slate-100/80">
                 <div className="absolute inset-0 bg-gradient-to-br from-purple-400/0 to-indigo-500/0 group-hover:from-purple-400/10 group-hover:to-indigo-500/10 transition-all duration-300"></div>
                 <div className="text-center flex flex-col h-full relative z-10">
                   <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300 shadow-md">
@@ -4436,7 +4436,7 @@ const startPracticeMode = async () => {
               </div>
 
               {/* Practice Mode - Enhanced */}
-              <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/30 hover:-translate-y-1 cursor-pointer group relative overflow-hidden border border-slate-100">
+              <div className="bg-white rounded-2xl shadow-[0_2px_16px_-4px_rgba(0,0,0,0.08)] p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/20 hover:-translate-y-1 active:scale-[0.97] cursor-pointer group relative overflow-hidden border border-slate-100/80">
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-400/0 to-cyan-500/0 group-hover:from-blue-400/10 group-hover:to-cyan-500/10 transition-all duration-300"></div>
                 <div className="text-center flex flex-col h-full relative z-10">
                   <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300 shadow-md">
@@ -4451,7 +4451,7 @@ const startPracticeMode = async () => {
               </div>
 
               {/* Flashcard - Enhanced */}
-              <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:shadow-xl hover:shadow-orange-500/30 hover:-translate-y-1 cursor-pointer group relative overflow-hidden border border-slate-100">
+              <div className="bg-white rounded-2xl shadow-[0_2px_16px_-4px_rgba(0,0,0,0.08)] p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:shadow-xl hover:shadow-orange-500/20 hover:-translate-y-1 active:scale-[0.97] cursor-pointer group relative overflow-hidden border border-slate-100/80">
                 <div className="absolute inset-0 bg-gradient-to-br from-orange-400/0 to-amber-500/0 group-hover:from-orange-400/10 group-hover:to-amber-500/10 transition-all duration-300"></div>
                 <div className="text-center flex flex-col h-full relative z-10">
                   <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300 shadow-md">
@@ -4469,8 +4469,8 @@ const startPracticeMode = async () => {
 
           {/* Learn & Listen — Featured Section */}
           <div className="mb-6">
-            <h2 className="text-lg sm:text-xl font-bold text-slate-800 mb-1">Learn & Listen</h2>
-            <p className="text-xs text-slate-400 mb-3">Master interview skills at your own pace</p>
+            <h2 className="text-lg sm:text-xl font-bold text-slate-800 mb-1 tracking-tight">Learn & Listen</h2>
+            <p className="text-xs text-slate-400 mb-3 font-medium">Master interview skills at your own pace</p>
             <div className="grid grid-cols-2 gap-2 sm:gap-3">
               <button
                 onClick={() => setCurrentView('learn')}
@@ -4494,8 +4494,8 @@ const startPracticeMode = async () => {
 
           {/* Intelligence Tools — Compact Grid */}
           <div className="mb-6">
-            <h2 className="text-lg sm:text-xl font-bold text-slate-800 mb-1">Tools</h2>
-            <p className="text-xs text-slate-400 mb-3">Research, strategize, and prepare</p>
+            <h2 className="text-lg sm:text-xl font-bold text-slate-800 mb-1 tracking-tight">Tools</h2>
+            <p className="text-xs text-slate-400 mb-3 font-medium">Research, strategize, and prepare</p>
             <div className="grid grid-cols-4 gap-2 sm:gap-3 mb-2 sm:mb-3">
               {[
                 { view: 'jd-decoder', icon: '📋', label: 'JD Decoder', desc: 'Analyze job descriptions', color: 'from-sky-400 to-blue-500', badge: 'AI' },
