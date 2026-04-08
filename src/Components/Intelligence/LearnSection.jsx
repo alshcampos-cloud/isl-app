@@ -464,7 +464,7 @@ export default function LearnSection({
                             {lesson.title}
                           </p>
                           <p style={{ fontSize: '0.72rem', color: '#94a3b8', margin: 0 }}>
-                            ~{lesson.duration || '3-5'} min
+                            ~{lesson.duration || '3-5 min'}
                           </p>
                         </div>
 
