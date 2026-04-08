@@ -459,16 +459,17 @@ async function writeAgentHealthEvents(
     }
 
     rows.push({
-      agent: 'health-monitor',
       check_name: checkKey,
       slo_key: mapping.sloKey,
       sli_value: sli,
-      target_value: slo.target,
+      slo_target: slo.target,
+      slo_unit: '%',
       status,
       tier: slo.tier,
-      session_id: sessionId,
-      metadata: {
-        latency_ms: check.latency_ms,
+      latency_ms: check.latency_ms || null,
+      details: {
+        agent: 'health-monitor',
+        session_id: sessionId,
         error: check.error,
         configured: check.configured,
       },
@@ -482,15 +483,16 @@ async function writeAgentHealthEvents(
     const breached = slo.alertAt !== undefined && errorRate > slo.alertAt
 
     rows.push({
-      agent: 'health-monitor',
       check_name: 'edge_function_error_rate',
       slo_key: 'EDGE_FUNCTION_ERRORS',
       sli_value: errorRate,
-      target_value: slo.target,
+      slo_target: slo.target,
+      slo_unit: '%',
       status: breached ? 'fail' : 'pass',
       tier: slo.tier,
-      session_id: sessionId,
-      metadata: {
+      details: {
+        agent: 'health-monitor',
+        session_id: sessionId,
         errors_24h: metrics.errors_24h,
         error_rate_1h: metrics.error_rate_1h,
       },
