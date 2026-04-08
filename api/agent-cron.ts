@@ -1,20 +1,6 @@
-/**
- * agent-cron.ts — Vercel Cron Endpoint
- *
- * Triggers Health Monitor every 15 minutes and PM Agent weekly.
- *
- * Vercel cron config (in vercel.json):
- * {
- *   "crons": [
- *     { "path": "/api/agent-cron", "schedule": "*/15 * * * *" }
- *   ]
- * }
- *
- * Query params:
- *   ?agent=health-monitor  (default, runs on every cron tick)
- *   ?agent=pm-agent (with mode=weekly, runs Monday 8am PT only)
- *   ?agent=pm-agent (with mode=alert, triggered by health monitor breach)
- */
+// agent-cron.ts — Vercel Cron / Manual Trigger Endpoint
+// Triggers Health Monitor (every 15 min via pg_cron) or PM Agent (weekly/alert)
+// Query: ?agent=health-monitor or ?agent=pm-agent&mode=weekly
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
