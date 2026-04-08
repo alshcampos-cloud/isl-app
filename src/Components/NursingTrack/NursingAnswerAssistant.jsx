@@ -24,6 +24,7 @@ import { supabase } from '../../lib/supabase';
 import { fetchWithRetry } from '../../utils/fetchWithRetry';
 import { upsertSavedAnswer } from './nursingSupabase';
 import { getFrameworkDetails } from './nursingQuestions';
+import { canUseFeature, incrementUsage } from '../../utils/creditSystem';
 
 // ============================================================
 // PROMPT ENGINEERING — C.O.A.C.H. Protocol + Walled Garden
@@ -244,6 +245,16 @@ export default function NursingAnswerAssistant({
       if (!cleaned) throw new Error('No response from AI');
 
       setConversation([{ role: 'assistant', text: cleaned }]);
+
+      // CHARGE AFTER SUCCESS (Battle Scar #8) — 1 credit per Answer Coach session
+      if (userId) {
+        try {
+          await incrementUsage(supabase, userId, 'nursingCoach');
+          if (refreshUsage) refreshUsage();
+        } catch (e) {
+          console.warn('Usage tracking failed:', e);
+        }
+      }
     } catch (err) {
       console.error('❌ startConversation error:', err);
       setError(err.message || 'Failed to start. Please try again.');
@@ -372,7 +383,9 @@ export default function NursingAnswerAssistant({
       }
 
       const rawContent = data.content?.[0]?.text || data.response || data.feedback || '';
+      console.log('🔍 Synthesis raw response length:', rawContent.length, 'first 100 chars:', rawContent.slice(0, 100));
       const cleaned = cleanAIResponse(rawContent);
+      console.log('🔍 Synthesis cleaned length:', cleaned.length);
 
       // Guard: check total REAL user content, not just AI output length
       // Prevents synthesis from fabricating answers when user gave minimal input
@@ -380,9 +393,16 @@ export default function NursingAnswerAssistant({
       const totalUserWords = userMessages.reduce(
         (sum, m) => sum + m.text.trim().split(/\s+/).filter(Boolean).length, 0
       );
+      console.log('🔍 User messages:', userMessages.length, 'Total user words:', totalUserWords);
 
-      if (!cleaned || cleaned.length < 20 || totalUserWords < 15) {
-        setError('Not enough detail to create a polished answer yet. Share a bit more about your experience — specific examples make the strongest answers!');
+      if (!cleaned || cleaned.length < 20) {
+        setError('The AI returned an empty response. Please try again — sometimes this happens when the service is busy.');
+        setIsLoading(false);
+        return;
+      }
+
+      if (totalUserWords < 10) {
+        setError('Share a bit more about your experience first — even a few sentences about a specific time this came up will help create a stronger answer.');
         setIsLoading(false);
         return;
       }

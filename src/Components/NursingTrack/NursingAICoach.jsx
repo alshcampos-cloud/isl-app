@@ -27,6 +27,7 @@ import { updateStreakAfterSession } from '../../utils/streakSupabase';
 import { CLINICAL_FRAMEWORKS, getQuestionsForSpecialty } from './nursingQuestions';
 import useSpeechRecognition from './useSpeechRecognition';
 import SpeechUnavailableWarning from '../SpeechUnavailableWarning';
+import { loadCoachMessages, saveCoachMessages, clearCoachMessages } from '../../utils/coachPersistence';
 
 // ============================================================
 // THE WALLED GARDEN SYSTEM PROMPT — AIRTIGHT
@@ -216,13 +217,19 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
     `- [${q.category}] [${q.difficulty}] "${q.question}" (Framework: ${q.responseFramework?.toUpperCase() || 'STAR'})${q.bullets?.length ? '\n  Evaluation rubric: ' + q.bullets.join(' | ') : ''}${q.followUps?.length ? '\n  Follow-ups: ' + q.followUps.join(' / ') : ''}`
   ).join('\n');
 
-  // Chat state
-  const [messages, setMessages] = useState([]);
+  // Chat state — restore from localStorage (coach persistence fix)
+  const [messages, setMessages] = useState(() => {
+    const saved = loadCoachMessages('nursing');
+    return saved.messages;
+  });
   const [currentInput, setCurrentInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [creditBlocked, setCreditBlocked] = useState(false);
-  const [messageCount, setMessageCount] = useState(0);
+  const [messageCount, setMessageCount] = useState(() => {
+    const saved = loadCoachMessages('nursing');
+    return saved.messageCount;
+  });
   const [sessionEnded, setSessionEnded] = useState(false);
 
   // Refs
@@ -265,6 +272,13 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Persist messages to localStorage (coach chat persistence fix)
+  useEffect(() => {
+    if (messages.length > 0) {
+      saveCoachMessages(messages, messageCount, 'nursing');
+    }
+  }, [messages, messageCount]);
 
   // Focus input after AI responds
   useEffect(() => {
@@ -506,6 +520,7 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
                   setMessageCount(0);
                   setSessionEnded(false);
                   setError(null);
+                  clearCoachMessages('nursing');
                 }}
                 className="w-full bg-gradient-to-r from-sky-600 to-cyan-500 text-white font-semibold py-3 rounded-xl shadow-lg shadow-sky-500/30 hover:-translate-y-0.5 transition-all"
               >
@@ -547,7 +562,25 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
               <span className="text-lg">{specialty.icon}</span>
               <span className="text-white font-medium text-sm">AI Coach</span>
             </div>
-            <div className="w-16" /> {/* Spacer for centering */}
+            {/* New Chat button — clears persisted conversation */}
+            <div className="w-16 flex justify-end">
+              {messages.length > 0 && (
+                <button
+                  onClick={() => {
+                    setMessages([]);
+                    setMessageCount(0);
+                    setCurrentInput('');
+                    setError(null);
+                    setSessionEnded(false);
+                    clearCoachMessages('nursing');
+                  }}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+                  title="New conversation"
+                >
+                  <Sparkles className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
 

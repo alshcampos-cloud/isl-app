@@ -1,0 +1,33 @@
+{
+  "appId": "ai.interviewanswers.app",
+  "appName": "InterviewAnswers",
+  "webDir": "dist",
+  "server": {
+    "hostname": "interviewanswers.ai",
+    "androidScheme": "https",
+    "iosScheme": "https"
+  },
+  "ios": {
+    "contentInset": "always",
+    "scrollEnabled": true,
+    "backgroundColor": "#0f766e"
+  },
+  "android": {
+    "backgroundColor": "#0f766e"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": false,
+      "backgroundColor": "#0f766e",
+      "showSpinner": false,
+      "androidScaleType": "CENTER_CROP",
+      "splashFullScreen": true,
+      "splashImmersive": true,
+      "fadeOutDuration": 300
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#0f766e"
+    }
+  }
+}

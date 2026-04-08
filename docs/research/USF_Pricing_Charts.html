@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Institutional Pricing — InterviewAnswers.AI</title>
+<style>
+  :root {
+    --teal: #0d9488;
+    --teal-dark: #0f766e;
+    --teal-light: #ccfbf1;
+    --teal-50: #f0fdfa;
+    --navy: #0f172a;
+    --navy-light: #1e293b;
+    --green: #16a34a;
+    --green-light: #dcfce7;
+    --amber: #d97706;
+    --amber-light: #fef3c7;
+    --blue: #2563eb;
+    --purple: #7c3aed;
+    --gray-50: #f8fafc;
+    --gray-100: #f1f5f9;
+    --gray-200: #e2e8f0;
+    --gray-300: #cbd5e1;
+    --gray-400: #94a3b8;
+    --gray-500: #64748b;
+    --gray-700: #334155;
+    --gray-800: #1e293b;
+    --red: #dc2626;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    color: var(--gray-800);
+    background: #fff;
+    line-height: 1.6;
+    font-size: 14px;
+  }
+
+  /* ===== HEADER ===== */
+  .header {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--teal-dark) 100%);
+    color: white;
+    padding: 48px 60px 40px;
+    position: relative;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -40%;
+    right: -15%;
+    width: 400px;
+    height: 400px;
+    border-radius: 50%;
+    background: rgba(13, 148, 136, 0.12);
+  }
+  .header .logo {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--teal-light);
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .header h1 {
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    position: relative;
+    margin-bottom: 6px;
+  }
+  .header .subtitle {
+    font-size: 16px;
+    opacity: 0.75;
+    position: relative;
+  }
+
+  /* ===== CONTENT ===== */
+  .content {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 50px 60px;
+  }
+
+  .section-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 700;
+    color: var(--teal);
+    margin-bottom: 6px;
+  }
+
+  h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 6px;
+  }
+
+  h3 {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--navy);
+    margin: 36px 0 16px;
+  }
+
+  p { margin: 8px 0; color: var(--gray-700); }
+  p.muted { color: var(--gray-500); font-size: 13px; }
+
+  /* ===== CHART CONTAINER ===== */
+  .chart-section {
+    margin: 40px 0 50px;
+    padding: 32px 36px;
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: 16px;
+  }
+
+  .chart-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+  .chart-title .badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 3px 10px;
+    border-radius: 10px;
+  }
+  .badge-nursing { background: var(--teal-light); color: var(--teal-dark); }
+  .badge-general { background: #dbeafe; color: var(--blue); }
+
+  .chart-subtitle {
+    font-size: 13px;
+    color: var(--gray-500);
+    margin-bottom: 28px;
+  }
+
+  /* ===== HORIZONTAL BAR CHART ===== */
+  .bar-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .bar-row {
+    display: grid;
+    grid-template-columns: 140px 1fr 130px;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .bar-label {
+    text-align: right;
+    font-size: 12px;
+    color: var(--gray-700);
+    line-height: 1.3;
+  }
+  .bar-label .passes {
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--navy);
+    display: block;
+  }
+  .bar-label .duration {
+    font-size: 11px;
+    color: var(--gray-400);
+  }
+
+  .bar-track {
+    height: 44px;
+    background: var(--gray-200);
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    padding-left: 14px;
+    font-size: 13px;
+    font-weight: 700;
+    color: white;
+    transition: width 0.8s ease;
+    position: relative;
+  }
+
+  .bar-fill-nursing { background: linear-gradient(90deg, var(--teal-dark), var(--teal)); }
+  .bar-fill-general { background: linear-gradient(90deg, #1e40af, var(--blue)); }
+  .bar-fill-bundle { background: linear-gradient(90deg, var(--purple), #8b5cf6); }
+
+  .bar-fill .bar-price {
+    position: absolute;
+    right: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    opacity: 0.9;
+  }
+
+  .bar-total {
+    text-align: right;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--navy);
+  }
+  .bar-total .per-student {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--teal-dark);
+    display: block;
+  }
+
+  /* ===== COMPARISON CHART ===== */
+  .compare-row {
+    display: grid;
+    grid-template-columns: 140px 1fr 1fr;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+
+  .compare-label {
+    text-align: right;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--navy);
+  }
+
+  .compare-bar-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .compare-bar {
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: white;
+  }
+
+  .compare-bar.retail { background: var(--gray-400); }
+
+  /* ===== SAVINGS CALLOUT ===== */
+  .savings-strip {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+  }
+  .savings-card {
+    flex: 1;
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 12px;
+    padding: 16px 18px;
+    text-align: center;
+  }
+  .savings-card .savings-amount {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--green);
+  }
+  .savings-card .savings-label {
+    font-size: 11px;
+    color: var(--gray-500);
+    margin-top: 2px;
+  }
+  .savings-card .savings-detail {
+    font-size: 11px;
+    color: var(--gray-400);
+    margin-top: 4px;
+  }
+
+  /* ===== DIVIDER ===== */
+  .divider {
+    height: 1px;
+    background: var(--gray-200);
+    margin: 40px 0;
+  }
+
+  /* ===== QUESTIONS SECTION ===== */
+  .question-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin: 20px 0;
+  }
+  .question-card {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 12px;
+    padding: 18px 20px;
+    border-left: 4px solid var(--teal);
+  }
+  .question-card .q-num {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--teal);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+  .question-card .q-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--navy);
+    margin-bottom: 6px;
+  }
+  .question-card .q-why {
+    font-size: 12px;
+    color: var(--gray-500);
+    line-height: 1.5;
+  }
+
+  /* ===== ROADMAP ===== */
+  .roadmap {
+    display: flex;
+    gap: 0;
+    align-items: center;
+    margin: 24px 0;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .roadmap-step {
+    background: white;
+    border: 2px solid var(--teal);
+    border-radius: 10px;
+    padding: 14px 18px;
+    text-align: center;
+    max-width: 160px;
+  }
+  .roadmap-step.active {
+    background: var(--teal);
+    color: white;
+    border-color: var(--teal-dark);
+  }
+  .roadmap-step .step-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 700;
+    color: var(--teal);
+    margin-bottom: 4px;
+  }
+  .roadmap-step.active .step-label { color: rgba(255,255,255,0.7); }
+  .roadmap-step .step-text {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--navy);
+  }
+  .roadmap-step.active .step-text { color: white; }
+  .roadmap-arrow {
+    font-size: 18px;
+    color: var(--teal);
+    padding: 0 6px;
+    font-weight: 700;
+  }
+
+  /* ===== CALLOUT ===== */
+  .callout {
+    border-radius: 10px;
+    padding: 18px 22px;
+    margin: 20px 0;
+    font-size: 13px;
+  }
+  .callout-teal { background: var(--teal-50); border-left: 4px solid var(--teal); }
+  .callout-navy {
+    background: var(--navy);
+    color: white;
+    border-left: 4px solid var(--teal);
+    border-radius: 12px;
+    padding: 24px 28px;
+  }
+  .callout-navy p { color: rgba(255,255,255,0.85); }
+  .callout strong { display: block; margin-bottom: 4px; }
+
+  /* ===== FOOTER ===== */
+  .footer {
+    text-align: center;
+    padding: 30px 40px;
+    border-top: 1px solid var(--gray-200);
+    margin-top: 40px;
+  }
+  .footer p {
+    font-size: 12px;
+    color: var(--gray-400);
+  }
+  .footer .brand {
+    font-weight: 700;
+    color: var(--teal-dark);
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+
+  /* ===== PRINT ===== */
+  @media print {
+    body { font-size: 11px; }
+    .header { padding: 30px 40px 24px; }
+    .header h1 { font-size: 24px; }
+    .content { padding: 20px 30px 30px; }
+    .chart-section { page-break-inside: avoid; }
+    .question-grid { page-break-inside: avoid; }
+    .bar-fill { transition: none; }
+  }
+
+  @media (max-width: 700px) {
+    .bar-row { grid-template-columns: 100px 1fr 110px; }
+    .question-grid { grid-template-columns: 1fr; }
+    .savings-strip { flex-direction: column; }
+    .roadmap { flex-direction: column; }
+    .roadmap-arrow { transform: rotate(90deg); }
+    .compare-row { grid-template-columns: 100px 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<div class="header">
+  <div class="logo">InterviewAnswers.AI &times; NurseInterviewPro</div>
+  <h1>Institutional Pricing Overview</h1>
+  <div class="subtitle">Group pass pricing for career services &amp; institutional partners</div>
+</div>
+
+<div class="content">
+
+<p style="font-size: 15px; margin-bottom: 4px;">We offer two products that can be licensed separately or together:</p>
+<p class="muted"><strong style="color: var(--teal-dark);">NurseInterviewPro</strong> &mdash; AI-powered nursing interview prep with 70 clinically validated questions, SBAR coaching, and mock interviews built on NCSBN frameworks. Reviewed by licensed nurses.</p>
+<p class="muted"><strong style="color: var(--blue);">InterviewAnswers.AI</strong> &mdash; General AI interview prep for all industries. STAR method coaching, mock interviews, real-time speech feedback.</p>
+<p class="muted">Individual prices: <strong>$19.99/30 days</strong> (nursing) and <strong>$14.99/30 days</strong> (general). Group pricing below.</p>
+
+<!-- ===================================================================== -->
+<!-- CHART 1: NURSING                                                        -->
+<!-- ===================================================================== -->
+<div class="chart-section">
+  <div class="chart-title">
+    <h2>NurseInterviewPro</h2>
+    <span class="badge badge-nursing">Nursing</span>
+  </div>
+  <div class="chart-subtitle">Tiers mapped to USF's actual nursing cohorts. Semester price = discounted monthly rate &times; 2.5 months of estimated active use (students prep in bursts across a 4-month semester).</div>
+
+  <!-- Cohort reference -->
+  <div style="background: white; border: 1px solid var(--gray-200); border-radius: 10px; padding: 16px 20px; margin-bottom: 24px; font-size: 12px;">
+    <strong style="color: var(--navy); font-size: 13px; display: block; margin-bottom: 8px;">USF Nursing Cohorts (Source: CA BRN + USF Quick Facts)</strong>
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+      <div><span style="color: var(--teal-dark); font-weight: 700;">BSN Seniors</span><br><span style="color: var(--gray-500);">~250 students &bull; 4th year, entering workforce</span></div>
+      <div><span style="color: var(--teal-dark); font-weight: 700;">ME-MSN</span><br><span style="color: var(--gray-500);">~200 students &bull; Pre-licensure graduates</span></div>
+      <div><span style="color: var(--teal-dark); font-weight: 700;">DNP</span><br><span style="color: var(--gray-500);">~90 students &bull; Advanced practice positions</span></div>
+      <div><span style="color: var(--teal-dark); font-weight: 700;">BSN Juniors</span><br><span style="color: var(--gray-500);">~250 students &bull; 3rd year, clinical rotations</span></div>
+      <div><span style="color: var(--teal-dark); font-weight: 700;">RN-to-MSN / 4+1</span><br><span style="color: var(--gray-500);">~50 students &bull; Career advancement</span></div>
+      <div><span style="color: var(--teal-dark); font-weight: 700;">Total Addressable</span><br><span style="color: var(--navy); font-weight: 700;">~840 nursing students</span></div>
+    </div>
+  </div>
+
+  <div class="bar-chart">
+
+    <div class="bar-row">
+      <div class="bar-label">
+        <span class="passes">Individual</span>
+        <span class="duration">30-day</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill bar-fill-nursing" style="width: 100%;">
+          <span class="bar-price">$19.99/person</span>
+        </div>
+      </div>
+      <div class="bar-total">
+        $19.99
+        <span class="per-student">retail price</span>
+      </div>
+    </div>
+
+    <div class="bar-row">
+      <div class="bar-label">
+        <span class="passes">BSN Seniors</span>
+        <span class="duration">~250 &bull; 30-day</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill bar-fill-nursing" style="width: 70%;">
+          <span class="bar-price">$13.99/person</span>
+        </div>
+      </div>
+      <div class="bar-total">
+        $3,498
+        <span class="per-student">30% off</span>
+      </div>
+    </div>
+
+    <div class="bar-row">
+      <div class="bar-label">
+        <span class="passes">BSN Seniors + ME-MSN</span>
+        <span class="duration">~450 &bull; Semester (&times;2.5)</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill bar-fill-nursing" style="width: 60%;">
+          <span class="bar-price">$11.99/mo &rarr; $29.98/sem</span>
+        </div>
+      </div>
+      <div class="bar-total">
+        $13,491
+        <span class="per-student">63% vs. retail semester</span>
+      </div>
+    </div>
+
+    <div class="bar-row">
+      <div class="bar-label">
+        <span class="passes">+ DNP Graduates</span>
+        <span class="duration">~540 &bull; Semester (&times;2.5)</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill bar-fill-nursing" style="width: 53%;">
+          <span class="bar-price">$11.11/mo &rarr; $27.78/sem</span>
+        </div>
+      </div>
+      <div class="bar-total">
+        $15,001
+        <span class="per-student">65% vs. retail semester</span>
+      </div>
+    </div>
+
+    <div class="bar-row">
+      <div class="bar-label">
+        <span class="passes">All Nursing Students</span>
+        <span class="duration">~840 &bull; Semester (&times;2.5)</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill bar-fill-nursing" style="width: 47%;">
+          <span class="bar-price">$9.52/mo &rarr; $23.80/sem</span>
+        </div>
+      </div>
+      <div class="bar-total">
+        $19,992
+        <span class="per-student">70% vs. retail semester</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="margin-top: 20px; font-size: 12px; color: var(--gray-500); line-height: 1.6;">
+    <strong style="color: var(--navy);">What each tier covers:</strong><br>
+    <strong style="color: var(--teal-dark);">BSN Seniors (~250)</strong> &mdash; Students in their final year, actively interviewing for first nursing positions. Highest urgency.<br>
+    <strong style="color: var(--teal-dark);">+ ME-MSN (~200)</strong> &mdash; Adds Master's Entry pre-licensure graduates, also entering the workforce for the first time.<br>
+    <strong style="color: var(--teal-dark);">+ DNP (~90)</strong> &mdash; Adds Doctor of Nursing Practice students interviewing for advanced practice roles (NP, CRNA, CNS).<br>
+    <strong style="color: var(--teal-dark);">All Nursing (~840)</strong> &mdash; Adds BSN Juniors (building skills early), RN-to-MSN, and 4+1 students. Full program coverage &mdash; no nursing student left out.
+  </div>
+
+  <!-- Apples-to-Apples Comparison -->
+  <div style="background: white; border: 2px solid var(--teal); border-radius: 12px; padding: 20px 24px; margin-top: 24px;">
+    <strong style="color: var(--navy); font-size: 14px; display: block; margin-bottom: 10px;">Apples-to-Apples: Same Time Period Comparison</strong>
+    <p style="font-size: 12px; color: var(--gray-500); margin: 0 0 14px;">Retail = $19.99/month. A full semester = ~4 months. Retail cost for semester access: <strong style="color: var(--navy);">$79.96/student</strong> (4 &times; $19.99). Institutional semester = discounted monthly rate &times; 2.5 months of active use.</p>
+    <table style="width:100%; border-collapse:collapse; font-size:12px; border-radius:8px; overflow:hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.06);">
+      <thead>
+        <tr style="background: var(--navy); color: white;">
+          <th style="padding:8px 12px; text-align:left; font-size:11px; text-transform:uppercase;">Tier</th>
+          <th style="padding:8px 12px; text-align:right; font-size:11px; text-transform:uppercase;">Institutional / Semester</th>
+          <th style="padding:8px 12px; text-align:right; font-size:11px; text-transform:uppercase;">Retail Equivalent / Semester</th>
+          <th style="padding:8px 12px; text-align:right; font-size:11px; text-transform:uppercase;">Equiv. Monthly Cost</th>
+          <th style="padding:8px 12px; text-align:center; font-size:11px; text-transform:uppercase; background: var(--teal-dark);">True Savings</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding:7px 12px; border-bottom:1px solid var(--gray-200); font-weight:600;">BSN Seniors (~250)</td>
+          <td style="padding:7px 12px; border-bottom:1px solid var(--gray-200); text-align:right;">$13.99/student</td>
+          <td style="padding:7px 12px; border-bottom:1px solid var(--gray-200); text-align:right; color:var(--gray-400);">$19.99 (30-day only)</td>
+          <td style="padding:7px 12px; border-bottom:1px solid var(--gray-200); text-align:right;">$13.99/mo</td>
+          <td style="padding:7px 12px; border-bottom:1px solid var(--gray-200); text-align:center; color:var(--green); font-weight:700;">30% off monthly</td>
+        </tr>
+        <tr style="background: var(--gray-50);">
+          <td style="padding:7px 12px; border-bottom:1px solid var(--gray-200); font-weight:600;">BSN + ME-MSN (~450)</td>
+          <td style="padding:7px 12px; border-bottom:1px solid var(--gray-200); text-align:right;">$29.98/student</td>
+          <td style="padding:7px 12px; border-bottom:1px solid var(--gray-200); text-align:right; color:var(--gray-400);">$79.96 (4 months)</td>
+          <td style="padding:7px 12px; border-bottom:1px solid var(--gray-200); text-align:right;">$7.50/mo</td>
+          <td style="padding:7px 12px; border-bottom:1px solid var(--gray-200); text-align:center; color:var(--green); font-weight:700;">63% vs. retail semester</td>
+        </tr>
+        <tr>
+          <td style="padding:7px 12px; border-bottom:1px solid var(--gray-200); font-weight:600;">+ DNP (~540)</td>
+          <td style="padding:7px 12px; border-bottom:1px solid var(--gray-200); text-align:right;">$27.78/student</td>
+          <td style="padding:7px 12px; border-bottom:1px solid var(--gray-200); text-align:right; color:var(--gray-400);">$79.96 (4 months)</td>
+          <td style="padding:7px 12px; border-bottom:1px solid var(--gray-200); text-align:right;">$6.95/mo</td>
+          <td style="padding:7px 12px; border-bottom:1px solid var(--gray-200); text-align:center; color:var(--green); font-weight:700;">65% vs. retail semester</td>
+        </tr>
+        <tr style="background: var(--teal-50);">
+          <td style="padding:7px 12px; font-weight:700;">All Nursing (~840)</td>
+          <td style="padding:7px 12px; text-align:right; font-weight:700;">$23.80/student</td>
+          <td style="padding:7px 12px; text-align:right; color:var(--gray-400);">$79.96 (4 months)</td>
+          <td style="padding:7px 12px; text-align:right; font-weight:700;">$5.95/mo</td>
+          <td style="padding:7px 12px; text-align:center; color:var(--green); font-weight:800; font-size:14px;">70% vs. retail semester</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="font-size: 11px; color: var(--gray-400); margin: 10px 0 0;">Note: BSN Seniors tier is 30-day passes (month-to-month comparison). Semester tiers (450+): discounted monthly rate &times; 2.5 active months, compared against 4 months of retail access ($79.96).</p>
+  </div>
+
+  <!-- Our Cost Basis -->
+  <div style="background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 12px; padding: 20px 24px; margin-top: 16px;">
+    <strong style="color: var(--navy); font-size: 13px; display: block; margin-bottom: 10px;">Our Cost Basis &mdash; Monthly vs. Semester (Internal)</strong>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; font-size: 12px;">
+      <div>
+        <strong style="color: var(--teal-dark);">30-Day Pass (our cost)</strong>
+        <p style="margin: 4px 0; color: var(--gray-500);">Weighted avg API cost: <strong style="color: var(--navy);">$1.24/user/month</strong></p>
+        <p style="margin: 4px 0; color: var(--gray-500);">Source: COST_ANALYSIS.md, verified March 4</p>
+      </div>
+      <div>
+        <strong style="color: var(--teal-dark);">Semester Pass (our cost)</strong>
+        <p style="margin: 4px 0; color: var(--gray-500);">2.5&times; multiplier (active 2&ndash;3 of 4 months): <strong style="color: var(--navy);">$3.10/user/semester</strong></p>
+        <p style="margin: 4px 0; color: var(--gray-500);">Student-adjusted (lower usage): <strong style="color: var(--green);">$2.00&ndash;$2.50/user/semester</strong></p>
+      </div>
+    </div>
+    <p style="font-size: 11px; color: var(--gray-400); margin: 10px 0 0;">Semester passes cost us more per user than 30-day passes (longer access window), but institutional students use less than retail consumers due to competing demands. Net effect: margins hold or improve.</p>
+  </div>
+</div>
+
+<!-- ===================================================================== -->
+<!-- CHART 2: GENERAL                                                        -->
+<!-- ===================================================================== -->
+<div class="chart-section">
+  <div class="chart-title">
+    <h2>InterviewAnswers.AI</h2>
+    <span class="badge badge-general">General</span>
+  </div>
+  <div class="chart-subtitle">For all disciplines &mdash; business, education, arts &amp; sciences, law, and more.</div>
+
+  <div class="bar-chart">
+
+    <div class="bar-row">
+      <div class="bar-label">
+        <span class="passes">Individual</span>
+        <span class="duration">30-day</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill bar-fill-general" style="width: 100%;">
+          <span class="bar-price">$14.99/person</span>
+        </div>
+      </div>
+      <div class="bar-total">
+        $14.99
+        <span class="per-student">retail price</span>
+      </div>
+    </div>
+
+    <div class="bar-row">
+      <div class="bar-label">
+        <span class="passes">250 passes</span>
+        <span class="duration">30-day</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill bar-fill-general" style="width: 73%;">
+          <span class="bar-price">$10.99/person</span>
+        </div>
+      </div>
+      <div class="bar-total">
+        $2,748
+        <span class="per-student">27% off</span>
+      </div>
+    </div>
+
+    <div class="bar-row">
+      <div class="bar-label">
+        <span class="passes">500 passes</span>
+        <span class="duration">30-day</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill bar-fill-general" style="width: 63%;">
+          <span class="bar-price">$9.49/person</span>
+        </div>
+      </div>
+      <div class="bar-total">
+        $4,745
+        <span class="per-student">37% off</span>
+      </div>
+    </div>
+
+    <div class="bar-row">
+      <div class="bar-label">
+        <span class="passes">1,000 passes</span>
+        <span class="duration">Semester (&times;2.5)</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill bar-fill-general" style="width: 47%;">
+          <span class="bar-price">$6.99/mo &rarr; $17.48/sem</span>
+        </div>
+      </div>
+      <div class="bar-total">
+        $17,480
+        <span class="per-student">71% vs. retail semester</span>
+      </div>
+    </div>
+
+    <div class="bar-row">
+      <div class="bar-label">
+        <span class="passes">2,500 passes</span>
+        <span class="duration">Semester (&times;2.5)</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill bar-fill-general" style="width: 30%;">
+          <span class="bar-price">$4.48/mo &rarr; $11.20/sem</span>
+        </div>
+      </div>
+      <div class="bar-total">
+        $28,000
+        <span class="per-student">81% vs. retail semester</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Apples-to-Apples for General -->
+  <div style="background: white; border: 2px solid var(--blue); border-radius: 12px; padding: 20px 24px; margin-top: 24px;">
+    <strong style="color: var(--navy); font-size: 14px; display: block; margin-bottom: 10px;">Apples-to-Apples: Same Time Period Comparison</strong>
+    <p style="font-size: 12px; color: var(--gray-500); margin: 0 0 14px;">Retail = $14.99/month. Full semester retail equivalent: <strong style="color: var(--navy);">$59.96/student</strong> (4 &times; $14.99).</p>
+    <table style="width:100%; border-collapse:collapse; font-size:12px; border-radius:8px; overflow:hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.06);">
+      <thead>
+        <tr style="background: var(--navy); color: white;">
+          <th style="padding:8px 12px; text-align:left; font-size:11px; text-transform:uppercase;">Tier</th>
+          <th style="padding:8px 12px; text-align:right; font-size:11px; text-transform:uppercase;">Institutional Price</th>
+          <th style="padding:8px 12px; text-align:right; font-size:11px; text-transform:uppercase;">Retail Equivalent</th>
+          <th style="padding:8px 12px; text-align:right; font-size:11px; text-transform:uppercase;">Equiv. Monthly</th>
+          <th style="padding:8px 12px; text-align:center; font-size:11px; text-transform:uppercase; background: #1e40af;">True Savings</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding:7px 12px; border-bottom:1px solid var(--gray-200); font-weight:600;">250 passes (30-day)</td>
+          <td style="padding:7px 12px; border-bottom:1px solid var(--gray-200); text-align:right;">$10.99/student</td>
+          <td style="padding:7px 12px; border-bottom:1px solid var(--gray-200); text-align:right; color:var(--gray-400);">$14.99 (30-day)</td>
+          <td style="padding:7px 12px; border-bottom:1px solid var(--gray-200); text-align:right;">$10.99/mo</td>
+          <td style="padding:7px 12px; border-bottom:1px solid var(--gray-200); text-align:center; color:var(--green); font-weight:700;">27% off monthly</td>
+        </tr>
+        <tr style="background: var(--gray-50);">
+          <td style="padding:7px 12px; border-bottom:1px solid var(--gray-200); font-weight:600;">1,000 passes (semester)</td>
+          <td style="padding:7px 12px; border-bottom:1px solid var(--gray-200); text-align:right;">$6.99/student</td>
+          <td style="padding:7px 12px; border-bottom:1px solid var(--gray-200); text-align:right; color:var(--gray-400);">$59.96 (4 months)</td>
+          <td style="padding:7px 12px; border-bottom:1px solid var(--gray-200); text-align:right;">$1.75/mo</td>
+          <td style="padding:7px 12px; border-bottom:1px solid var(--gray-200); text-align:center; color:var(--green); font-weight:700;">88% vs. retail semester</td>
+        </tr>
+        <tr style="background: #eff6ff;">
+          <td style="padding:7px 12px; font-weight:700;">2,500 passes (semester)</td>
+          <td style="padding:7px 12px; text-align:right; font-weight:700;">$4.48/student</td>
+          <td style="padding:7px 12px; text-align:right; color:var(--gray-400);">$59.96 (4 months)</td>
+          <td style="padding:7px 12px; text-align:right; font-weight:700;">$1.12/mo</td>
+          <td style="padding:7px 12px; text-align:center; color:var(--green); font-weight:800; font-size:14px;">93% vs. retail semester</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ===================================================================== -->
+<!-- BUNDLE OPTION                                                           -->
+<!-- ===================================================================== -->
+<div class="chart-section" style="border-color: var(--purple); border-width: 2px;">
+  <div class="chart-title">
+    <h2>Bundle: Nursing + General</h2>
+    <span class="badge badge-nursing">Nursing</span>
+    <span class="badge badge-general">General</span>
+  </div>
+  <div class="chart-subtitle">When both products are licensed together, per-student costs drop further.</div>
+
+  <div class="bar-chart">
+    <div class="bar-row">
+      <div class="bar-label">
+        <span class="passes">850 nursing +<br>2,500 general</span>
+        <span class="duration">Semester</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill bar-fill-bundle" style="width: 100%;">
+          <span class="bar-price">$4.48 blended per student</span>
+        </div>
+      </div>
+      <div class="bar-total">
+        $14,999
+        <span class="per-student">best value</span>
+      </div>
+    </div>
+  </div>
+
+  <p class="muted" style="margin-top: 16px;">Bundle pricing: $7,999 (nursing) + $7,000 (general) = $14,999 total. Blended per-student: $4.48. Compared to buying individually, this saves the institution over $35,000 per semester.</p>
+</div>
+
+<!-- ===================================================================== -->
+<!-- DURATION COMPARISON                                                     -->
+<!-- ===================================================================== -->
+<div class="divider"></div>
+
+<div class="section-label">Pass Duration</div>
+<h2>Why Semester Passes Make More Sense for Students</h2>
+<p class="muted" style="margin-bottom: 16px;">Students aren't typical consumers. They have competing demands &mdash; classes, exams, clinical rotations, part-time jobs &mdash; that limit when they can actively practice. A 30-day window is often too short because real life gets in the way.</p>
+
+<div style="background: white; border: 2px solid var(--amber); border-radius: 12px; padding: 20px 24px; margin-bottom: 24px;">
+  <strong style="color: var(--amber); font-size: 13px; display: block; margin-bottom: 8px;">The Student Reality</strong>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; font-size: 13px;">
+    <div>
+      <strong style="color: var(--navy);">A 30-day pass means:</strong>
+      <ul style="margin: 6px 0 0 16px; color: var(--gray-500); line-height: 1.7;">
+        <li>Midterm week = 1 week lost (25% of the pass)</li>
+        <li>Clinical rotation schedules conflict</li>
+        <li>Part-time job shifts eat into practice time</li>
+        <li>If they need to pivot to a new opportunity, they need a second pass</li>
+      </ul>
+    </div>
+    <div>
+      <strong style="color: var(--navy);">A semester pass means:</strong>
+      <ul style="margin: 6px 0 0 16px; color: var(--gray-500); line-height: 1.7;">
+        <li>Students use it when <em>their</em> schedule allows</li>
+        <li>Exam weeks aren't wasted time</li>
+        <li>Can practice early, revisit before interviews</li>
+        <li>One pass covers all opportunities that semester</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div style="background: var(--green-light); border: 1px solid var(--green); border-radius: 12px; padding: 18px 24px; margin-bottom: 24px; font-size: 13px;">
+  <strong style="color: var(--green); display: block; margin-bottom: 6px;">Lower Usage Overhead for Institutional Clients</strong>
+  <p style="margin: 0; color: var(--gray-700);">Because students spread their usage across a semester with natural gaps (exams, holidays, rotations), the actual API cost per institutional student is <strong>lower than our average consumer user</strong>. Our $3.10/user/semester estimate is a ceiling &mdash; real institutional cost is likely closer to <strong>$2.00&ndash;$2.50/user/semester</strong>. This means our margins improve further on institutional deals.</p>
+</div>
+
+<table style="width:100%; border-collapse:collapse; font-size:13px; border-radius:8px; overflow:hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 24px;">
+  <thead>
+    <tr style="background: var(--navy); color: white;">
+      <th style="padding:10px 14px; text-align:left; font-size:12px; text-transform:uppercase; letter-spacing:0.3px;">Scenario</th>
+      <th style="padding:10px 14px; text-align:center; font-size:12px; text-transform:uppercase;">30-Day Pass</th>
+      <th style="padding:10px 14px; text-align:center; font-size:12px; text-transform:uppercase; background: var(--teal-dark);">Semester Pass &#9733;</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="padding:9px 14px; border-bottom:1px solid var(--gray-200);">Student is actively interviewing now</td>
+      <td style="padding:9px 14px; border-bottom:1px solid var(--gray-200); text-align:center; color:var(--green); font-weight:700;">Works</td>
+      <td style="padding:9px 14px; border-bottom:1px solid var(--gray-200); text-align:center; color:var(--green); font-weight:700;">Works + room to practice more</td>
+    </tr>
+    <tr style="background: var(--gray-50);">
+      <td style="padding:9px 14px; border-bottom:1px solid var(--gray-200);">Student has exams, clinicals, part-time job</td>
+      <td style="padding:9px 14px; border-bottom:1px solid var(--gray-200); text-align:center; color:var(--red); font-weight:600;">Time wasted during conflicts</td>
+      <td style="padding:9px 14px; border-bottom:1px solid var(--gray-200); text-align:center; color:var(--green); font-weight:700;">Uses it around their schedule</td>
+    </tr>
+    <tr>
+      <td style="padding:9px 14px; border-bottom:1px solid var(--gray-200);">Student wants to build skills over time</td>
+      <td style="padding:9px 14px; border-bottom:1px solid var(--gray-200); text-align:center; color:var(--gray-400);">Too short</td>
+      <td style="padding:9px 14px; border-bottom:1px solid var(--gray-200); text-align:center; color:var(--green); font-weight:700;">Best fit</td>
+    </tr>
+    <tr style="background: var(--gray-50);">
+      <td style="padding:9px 14px; border-bottom:1px solid var(--gray-200);">Student may pivot to a new job opportunity</td>
+      <td style="padding:9px 14px; border-bottom:1px solid var(--gray-200); text-align:center; color:var(--amber); font-weight:600;">Needs 2nd pass</td>
+      <td style="padding:9px 14px; border-bottom:1px solid var(--gray-200); text-align:center; color:var(--green); font-weight:700;">Already covered</td>
+    </tr>
+    <tr>
+      <td style="padding:9px 14px; border-bottom:1px solid var(--gray-200);">Career Services wants ongoing engagement data</td>
+      <td style="padding:9px 14px; border-bottom:1px solid var(--gray-200); text-align:center; color:var(--gray-400);">Limited window</td>
+      <td style="padding:9px 14px; border-bottom:1px solid var(--gray-200); text-align:center; color:var(--green); font-weight:700;">Full semester picture</td>
+    </tr>
+    <tr style="background: var(--gray-50);">
+      <td style="padding:9px 14px;">Budget-conscious, test the waters first</td>
+      <td style="padding:9px 14px; text-align:center; color:var(--green); font-weight:700;">Lower upfront</td>
+      <td style="padding:9px 14px; text-align:center; color:var(--gray-400);">Higher upfront, better value</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout callout-teal">
+  <strong>Our Recommendation for Institutions: Semester Passes</strong>
+  <p style="margin:0;">For institutional partners, we recommend semester passes as the default. Students aren't power users on a 30-day sprint &mdash; they're learners building a skill around a busy schedule. Semester access respects the reality of student life and gives Career Services a full picture of engagement. 30-day passes are available for targeted, short-term needs, but semester is where the value is for both sides.</p>
+</div>
+
+<!-- ===================================================================== -->
+<!-- QUESTIONS FOR JESSICA                                                   -->
+<!-- ===================================================================== -->
+<div class="divider"></div>
+
+<div class="section-label">Before We Recommend</div>
+<h2>A Few Questions to Find the Right Fit</h2>
+<p class="muted" style="margin-bottom: 20px;">The right configuration depends on your goals. These questions help us recommend the best setup.</p>
+
+<div class="question-grid">
+
+  <div class="question-card">
+    <div class="q-num">Question 1</div>
+    <div class="q-text">What's the primary goal?</div>
+    <div class="q-why">Is this about giving students prolonged access to build interview skills over time? Or focused prep right before they're actively interviewing? This determines 30-day vs. semester passes.</div>
+  </div>
+
+  <div class="question-card">
+    <div class="q-num">Question 2</div>
+    <div class="q-text">Who are you looking to cover?</div>
+    <div class="q-why">Mainly graduating nursing students entering the workforce? All nursing years? General students across other programs too? This determines volume and which products.</div>
+  </div>
+
+  <div class="question-card">
+    <div class="q-num">Question 3</div>
+    <div class="q-text">How would you distribute?</div>
+    <div class="q-why">Would you want specific codes to hand out to individual students? Broader access for an entire cohort? We're building an access code system where each code activates one pass &mdash; your team controls distribution.</div>
+  </div>
+
+  <div class="question-card">
+    <div class="q-num">Question 4</div>
+    <div class="q-text">Nursing only, or both products?</div>
+    <div class="q-why">Some nursing students benefit from general interview prep too (behavioral questions, STAR method). And Career Services may want to offer general prep across other schools within USF.</div>
+  </div>
+
+</div>
+
+<!-- ===================================================================== -->
+<!-- WHAT WE'RE BUILDING                                                     -->
+<!-- ===================================================================== -->
+<div class="divider"></div>
+
+<div class="section-label">How It Works</div>
+<h2>Institutional Access &mdash; What We're Building</h2>
+<p class="muted" style="margin-bottom: 20px;">We're developing dedicated institutional tools so Career Services has full visibility, control, and accountability.</p>
+
+<div class="roadmap">
+  <div class="roadmap-step">
+    <div class="step-label">Step 1</div>
+    <div class="step-text">Branded USF page<br><span style="font-size:10px; font-weight:400; color:var(--gray-500);">interviewanswers.ai/usf</span></div>
+  </div>
+  <div class="roadmap-arrow">&rarr;</div>
+  <div class="roadmap-step">
+    <div class="step-label">Step 2</div>
+    <div class="step-text">Career Services<br>distributes codes</div>
+  </div>
+  <div class="roadmap-arrow">&rarr;</div>
+  <div class="roadmap-step active">
+    <div class="step-label">Step 3</div>
+    <div class="step-text">Student signs up +<br>verifies student ID</div>
+  </div>
+  <div class="roadmap-arrow">&rarr;</div>
+  <div class="roadmap-step">
+    <div class="step-label">Step 4</div>
+    <div class="step-text">Code + ID activates<br>semester pass</div>
+  </div>
+  <div class="roadmap-arrow">&rarr;</div>
+  <div class="roadmap-step">
+    <div class="step-label">Step 5</div>
+    <div class="step-text">Student uses<br>platform</div>
+  </div>
+  <div class="roadmap-arrow">&rarr;</div>
+  <div class="roadmap-step active">
+    <div class="step-label">Step 6</div>
+    <div class="step-text">Institution dashboard:<br>passes used vs. released</div>
+  </div>
+</div>
+
+<!-- Student ID Verification -->
+<h3 style="margin-top: 30px;">Student ID Verification</h3>
+<p class="muted" style="margin-bottom: 16px;">Access codes alone don't verify that someone is an active, enrolled student. We need to ensure institutional passes go to current students &mdash; not alumni, not former students, not shared accounts.</p>
+
+<div style="background: white; border: 2px solid var(--amber); border-radius: 12px; padding: 20px 24px; margin-bottom: 20px;">
+  <strong style="color: var(--amber); font-size: 13px; display: block; margin-bottom: 10px;">Why This Matters</strong>
+  <p style="font-size: 13px; color: var(--gray-700); margin: 0 0 8px;">USF alumni retain @usfca.edu emails indefinitely. Recent nursing graduates are the most likely to use interview prep tools &mdash; they're actively job-hunting. Without verification, institutional passes could be used by people USF isn't paying for, creating uncapped cost exposure for us and unfair distribution for USF.</p>
+</div>
+
+<table style="width:100%; border-collapse:collapse; font-size:13px; border-radius:8px; overflow:hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 20px;">
+  <thead>
+    <tr style="background: var(--navy); color: white;">
+      <th style="padding:10px 14px; text-align:left; font-size:12px; text-transform:uppercase;">Verification Approach</th>
+      <th style="padding:10px 14px; text-align:left; font-size:12px; text-transform:uppercase;">How It Works</th>
+      <th style="padding:10px 14px; text-align:center; font-size:12px; text-transform:uppercase;">Blocks Alumni?</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="padding:9px 14px; border-bottom:1px solid var(--gray-200); font-weight: 600;">Access code + Student ID number</td>
+      <td style="padding:9px 14px; border-bottom:1px solid var(--gray-200);">Student enters both their access code AND student ID at signup. Career Services provides us a list of valid IDs to check against.</td>
+      <td style="padding:9px 14px; border-bottom:1px solid var(--gray-200); text-align:center; color:var(--green); font-weight:700;">Yes</td>
+    </tr>
+    <tr style="background: var(--gray-50);">
+      <td style="padding:9px 14px; border-bottom:1px solid var(--gray-200); font-weight: 600;">Career Services controlled distribution</td>
+      <td style="padding:9px 14px; border-bottom:1px solid var(--gray-200);">Codes are only distributed to enrolled students through official channels (Canvas, advising, orientation). Semester expiration limits exposure.</td>
+      <td style="padding:9px 14px; border-bottom:1px solid var(--gray-200); text-align:center; color:var(--amber); font-weight:600;">Mostly</td>
+    </tr>
+    <tr>
+      <td style="padding:9px 14px; font-weight: 600;">Third-party verification (SheerID, etc.)</td>
+      <td style="padding:9px 14px;">External service verifies enrollment status in real time. Adds $1&ndash;2/verification to our cost.</td>
+      <td style="padding:9px 14px; text-align:center; color:var(--green); font-weight:700;">Yes</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout callout-teal">
+  <strong>Our Plan</strong>
+  <p style="margin:0;">We want to work with Career Services to determine the right verification approach for USF. The simplest path: <strong>access code + student ID number validation at signup</strong>. Career Services provides a roster of active student IDs each semester, and our system checks against it during code redemption. This ensures every pass goes to a current, enrolled student.</p>
+</div>
+
+<!-- End-of-Semester Reassessment -->
+<h3 style="margin-top: 30px;">End-of-Semester Reassessment</h3>
+<p class="muted" style="margin-bottom: 16px;">We believe in fair pricing. If USF pays for passes that don't get used, we adjust.</p>
+
+<div style="background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%); border-radius: 14px; padding: 28px 32px; margin-bottom: 20px; color: white;">
+  <strong style="color: var(--teal-light); font-size: 16px; display: block; margin-bottom: 14px;">Our Commitment: Passes Used vs. Passes Charged</strong>
+  <p style="color: rgba(255,255,255,0.8); font-size: 13px; margin: 0 0 16px;">At the end of each semester, we provide a full accounting:</p>
+  <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+    <div style="background: rgba(255,255,255,0.08); border-radius: 10px; padding: 14px; text-align: center; border: 1px solid rgba(255,255,255,0.1);">
+      <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.5); margin-bottom: 4px;">Passes Released</div>
+      <div style="font-size: 20px; font-weight: 800; color: var(--teal-light);">850</div>
+      <div style="font-size: 11px; color: rgba(255,255,255,0.5);">Total codes distributed</div>
+    </div>
+    <div style="background: rgba(255,255,255,0.08); border-radius: 10px; padding: 14px; text-align: center; border: 1px solid rgba(255,255,255,0.1);">
+      <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.5); margin-bottom: 4px;">Passes Redeemed</div>
+      <div style="font-size: 20px; font-weight: 800; color: white;">612</div>
+      <div style="font-size: 11px; color: rgba(255,255,255,0.5);">Codes actually activated</div>
+    </div>
+    <div style="background: rgba(255,255,255,0.08); border-radius: 10px; padding: 14px; text-align: center; border: 1px solid rgba(255,255,255,0.1);">
+      <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.5); margin-bottom: 4px;">Active Users</div>
+      <div style="font-size: 20px; font-weight: 800; color: white;">487</div>
+      <div style="font-size: 11px; color: rgba(255,255,255,0.5);">Students who practiced 2+ times</div>
+    </div>
+  </div>
+  <p style="color: rgba(255,255,255,0.8); font-size: 13px; margin: 0 0 12px;"><strong style="color: white; display: inline;">If usage is significantly below what USF paid for</strong>, we adjust the next semester's pricing. Options include:</p>
+  <ul style="margin: 0 0 0 16px; padding: 0; color: rgba(255,255,255,0.75); font-size: 13px; line-height: 1.8;">
+    <li>Reduce the number of passes (and price) to match actual demand</li>
+    <li>Credit unused pass value toward the next semester</li>
+    <li>Work with Career Services to improve distribution and adoption</li>
+  </ul>
+  <div style="margin-top: 16px; padding: 12px 16px; background: rgba(13,148,136,0.2); border-radius: 8px; border: 1px solid rgba(13,148,136,0.3);">
+    <p style="margin: 0; font-size: 13px; color: rgba(255,255,255,0.9);"><strong style="color: var(--teal-light); display: inline;">The principle:</strong> We want to ensure all passes are fairly distributed and that USF is paying for value they're actually receiving. This isn't a one-time sale &mdash; it's a partnership we both want to renew.</p>
+  </div>
+  <p style="font-size: 11px; color: rgba(255,255,255,0.4); margin: 12px 0 0; font-style: italic;">(Numbers above are illustrative &mdash; actual data reported from our platform at semester end.)</p>
+</div>
+
+<!-- Institution Dashboard -->
+<div class="callout callout-navy" style="margin-top: 24px;">
+  <strong style="color: var(--teal-light);">Institution Dashboard (In Development)</strong>
+  <p>We intend to launch a supplemental institutional login that lets Career Services see: <strong style="color: white; display:inline;">passes released vs. passes redeemed</strong>, student engagement metrics, feature usage by category, and semester-over-semester comparisons. This gives your team the data to demonstrate ROI, justify renewal, and identify where students need more support.</p>
+</div>
+
+<!-- Scalability -->
+<h3 style="margin-top: 30px;">Built to Scale</h3>
+<div style="background: var(--teal-50); border: 1px solid var(--teal); border-radius: 12px; padding: 20px 24px; margin-bottom: 20px;">
+  <p style="font-size: 13px; color: var(--gray-700); margin: 0 0 12px;">Everything we build for USF is designed as a <strong style="color: var(--navy);">reusable template</strong> for institutional partnerships. The branded page system, access code infrastructure, student verification, usage reporting, and reassessment process are all scalable &mdash; so as we grow to serve more institutions, USF benefits from the improvements.</p>
+  <p style="font-size: 13px; color: var(--gray-700); margin: 0;">For USF specifically, scaling means: start with the cohorts you want to cover, add more codes mid-semester if demand is higher than expected, and expand to new programs or products in future semesters. We handle the infrastructure; Career Services controls the pace.</p>
+</div>
+
+<p class="muted" style="margin-top: 20px;"><strong style="color: var(--navy);">Ongoing updates:</strong> We're continuously expanding both platforms. Our nursing content is developed with an advisory board of licensed nurses from top hospitals, and we're actively adding new questions, improving AI feedback models, and building new features. Any institutional partner gets every update automatically &mdash; no additional cost.</p>
+
+</div><!-- /content -->
+
+<div class="footer">
+  <p class="brand">InterviewAnswers.AI &times; NurseInterviewPro</p>
+  <p>Questions? alex@interviewanswers.ai</p>
+</div>
+
+</body>
+</html>

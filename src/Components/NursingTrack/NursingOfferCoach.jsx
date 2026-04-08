@@ -5,7 +5,7 @@
 // value framing, completeness) — NEVER recommends specific dollar amounts.
 //
 // Pattern: Mirrors NursingPracticeMode.jsx closely.
-// Credit feature: 'practiceMode' (shared with Practice + SBAR + AI Coach + Confidence)
+// Credit feature: 'nursingCoach' (shared with AI Coach + Answer Assistant + Confidence)
 // Session history: localStorage (nursingNegotiationHistory)
 //
 // Battle Scars enforced:
@@ -290,9 +290,9 @@ export default function NursingOfferCoach({ specialty, onBack, userData, refresh
   useEffect(() => {
     if (userData && !userData.loading && userData.usage) {
       const check = canUseFeature(
-        { practice_mode: userData.usage.practiceMode?.used || 0 },
+        { nursing_coach: userData.usage.nursingCoach?.used || 0 },
         userData.tier,
-        'practiceMode'
+        'nursingCoach'
       );
       if (!check.allowed) setCreditBlocked(true);
     }
@@ -341,6 +341,7 @@ export default function NursingOfferCoach({ specialty, onBack, userData, refresh
           },
           body: JSON.stringify({
             mode: 'nursing-coach',
+            nursingFeature: 'nursingOfferCoach',
             systemPrompt: NEGOTIATION_SYSTEM_PROMPT(selectedScenario),
             conversationHistory: [],
             userMessage: userAnswer.trim(),
@@ -405,7 +406,7 @@ export default function NursingOfferCoach({ specialty, onBack, userData, refresh
       // CHARGE AFTER SUCCESS (Battle Scar #8)
       if (userData?.user?.id) {
         try {
-          await incrementUsage(supabase, userData.user.id, 'practiceMode');
+          await incrementUsage(supabase, userData.user.id, 'nursingCoach');
           if (refreshUsage) refreshUsage();
         } catch (chargeErr) {
           console.warn('Usage increment failed (non-blocking):', chargeErr);
@@ -457,7 +458,7 @@ export default function NursingOfferCoach({ specialty, onBack, userData, refresh
   };
 
   const isUnlimited = userData?.isBeta || userData?.tier === 'nursing_pass' || userData?.tier === 'annual' || userData?.tier === 'pro' || userData?.tier === 'beta';
-  const creditInfo = userData?.usage?.practiceMode;
+  const creditInfo = userData?.usage?.nursingCoach;
   const scenariosPracticed = new Set(history.map(h => h.scenarioId)).size;
   const historyAvg = history.length > 0
     ? (history.filter(h => h.avgScore !== null).reduce((sum, h) => sum + h.avgScore, 0) /

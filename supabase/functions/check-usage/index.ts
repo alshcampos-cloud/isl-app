@@ -20,6 +20,31 @@ const TIER_LIMITS: Record<string, Record<string, number>> = {
     question_gen: 5,
     live_prompter_questions: 10,
   },
+  // Nursing pass holders get free-tier limits for general features
+  nursing_pass: {
+    ai_interviewer: 3,
+    practice_mode: 10,
+    answer_assistant: 5,
+    question_gen: 5,
+    live_prompter_questions: 10,
+  },
+  // General pass holders get unlimited general features
+  general_pass: {
+    ai_interviewer: 999999,
+    practice_mode: 999999,
+    answer_assistant: 999999,
+    question_gen: 999999,
+    live_prompter_questions: 999999,
+  },
+  // Annual = both passes
+  annual: {
+    ai_interviewer: 999999,
+    practice_mode: 999999,
+    answer_assistant: 999999,
+    question_gen: 999999,
+    live_prompter_questions: 999999,
+  },
+  // Trial tier removed — free tier is the new onramp
   pro: {
     ai_interviewer: 999999,
     practice_mode: 999999,
@@ -88,10 +113,10 @@ serve(async (req: Request) => {
 
     console.log('check-usage: Checking feature:', feature);
 
-    // Get user's tier from user_profiles
+    // Get user's tier from user_profiles (including pass expiry columns)
     const { data: profile, error: profileError } = await supabase
       .from('user_profiles')
-      .select('tier, subscription_status')
+      .select('tier, subscription_status, nursing_pass_expires, general_pass_expires')
       .eq('user_id', user.id)
       .maybeSingle();
 
@@ -99,8 +124,21 @@ serve(async (req: Request) => {
       console.error('Profile fetch error:', profileError);
     }
 
-    let tier = profile?.tier || 'free';
-    console.log('check-usage: User tier from profile:', tier);
+    // Resolve effective tier (mirrors creditSystem.js resolveEffectiveTier)
+    const now = new Date();
+    const nursingActive = profile?.nursing_pass_expires &&
+      new Date(profile.nursing_pass_expires) > now;
+    const generalActive = profile?.general_pass_expires &&
+      new Date(profile.general_pass_expires) > now;
+    const isLegacyPro = profile?.tier === 'pro' && profile?.subscription_status === 'active';
+
+    let tier = 'free';
+    if (nursingActive && generalActive) tier = 'annual';
+    else if (generalActive) tier = 'general_pass';
+    else if (nursingActive) tier = 'nursing_pass';
+    else if (isLegacyPro) tier = 'pro';
+
+    console.log('check-usage: Resolved effective tier:', tier);
 
     // Check beta_testers table for unlimited access
     const { data: betaUser } = await supabase
@@ -114,8 +152,9 @@ serve(async (req: Request) => {
       console.log('check-usage: User is beta tester with unlimited access');
     }
 
-    // Pro/Beta users have unlimited access
-    if (tier === 'pro' || tier === 'beta') {
+    // Unlimited tiers — short circuit
+    const unlimitedTiers = ['pro', 'beta', 'annual', 'general_pass'];
+    if (unlimitedTiers.includes(tier)) {
       console.log('check-usage: Unlimited access granted for tier:', tier);
       return new Response(
         JSON.stringify({
@@ -130,8 +169,7 @@ serve(async (req: Request) => {
       );
     }
 
-    // Get current period (YYYY-MM format)
-    const now = new Date();
+    // Get current period (YYYY-MM format) — reuses `now` from tier resolution above
     const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
     console.log('check-usage: Checking period:', period);

@@ -25,6 +25,7 @@ export const TIER_LIMITS = {
     nursing_mock: 2,              // 2 free full mock interview sessions/month
     nursing_sbar: 2,              // 2 nursing SBAR drill sessions/month
     nursing_coach: 0,             // AI Coach is pass-only
+    hd_audio: false,               // HD audio is premium only
   },
 
   // ── 30-Day Pass: Nursing ($19.99) ──────────────────────────
@@ -43,6 +44,7 @@ export const TIER_LIMITS = {
     nursing_mock: 999999,
     nursing_sbar: 999999,
     nursing_coach: 999999,        // Unlimited AI Coach (~$0.011/msg, cost negligible)
+    hd_audio: true,                // HD audio via server TTS
   },
 
   // ── 30-Day Pass: General ($14.99) ──────────────────────────
@@ -61,6 +63,7 @@ export const TIER_LIMITS = {
     nursing_mock: 2,
     nursing_sbar: 2,
     nursing_coach: 0,
+    hd_audio: true,                // HD audio via server TTS
   },
 
   // ── Annual All-Access ($149.99/year) ───────────────────────
@@ -79,6 +82,7 @@ export const TIER_LIMITS = {
     nursing_mock: 999999,
     nursing_sbar: 999999,
     nursing_coach: 999999,
+    hd_audio: true,                // HD audio via server TTS
   },
 
   // ── Legacy Pro ($29.99/month subscription) — backward compat ─
@@ -96,7 +100,10 @@ export const TIER_LIMITS = {
     nursing_mock: 999999,
     nursing_sbar: 999999,
     nursing_coach: 999999,        // Legacy pro gets unlimited coach
+    hd_audio: true,                // HD audio via server TTS
   },
+
+  // Trial tier removed — free tier is the new onramp
 
   // ── Beta Testers — unlimited everything ────────────────────
   beta: {
@@ -113,6 +120,7 @@ export const TIER_LIMITS = {
     nursing_mock: 999999,
     nursing_sbar: 999999,
     nursing_coach: 999999,        // Beta gets unlimited coach
+    hd_audio: true,               // HD audio via server TTS
   }
 };
 
@@ -145,6 +153,30 @@ export function resolveEffectiveTier(profile, isBeta = false) {
   if (profile?.tier === 'pro' && profile?.subscription_status === 'active') return 'pro';
 
   return 'free';
+}
+
+// Helper: Does this user have HD audio access (trial, paid, or beta)?
+export function hasHDAudioAccess(profile, isBeta = false) {
+  const tier = resolveEffectiveTier(profile, isBeta);
+  return TIER_LIMITS[tier]?.hd_audio === true;
+}
+
+// Helper: Get trial info for display (countdown, expired status)
+export function getTrialInfo(profile) {
+  if (!profile?.premium_trial_ends) return null;
+  const now = new Date();
+  const ends = new Date(profile.premium_trial_ends);
+  const msLeft = ends - now;
+  const hoursLeft = Math.max(0, Math.ceil(msLeft / (1000 * 60 * 60)));
+  const minutesLeft = Math.max(0, Math.ceil(msLeft / (1000 * 60)));
+  return {
+    ends,
+    hoursLeft,
+    minutesLeft,
+    isActive: msLeft > 0,
+    isExpired: msLeft <= 0,
+    isExpiringSoon: msLeft > 0 && hoursLeft <= 4,
+  };
 }
 
 // Helper: Does this user have an active nursing pass (or better)?

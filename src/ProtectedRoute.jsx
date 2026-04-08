@@ -76,6 +76,17 @@ function ProtectedRoute({ children }) {
       setLoading(false); // Show auth screen even if session check fails
     });
 
+    // SAFETY NET: If getSession/getUser hangs (slow network, Supabase outage),
+    // clear loading after 5 seconds so user isn't stuck on spinner forever.
+    const safetyTimer = setTimeout(() => {
+      setLoading((prev) => {
+        if (prev) {
+          console.warn('⚠️ ProtectedRoute: session check timed out after 5s — clearing loading');
+        }
+        return false;
+      });
+    }, 5000);
+
     // Fallback: If getSession doesn't trigger PASSWORD_RECOVERY within 3 seconds
     // but we have a recovery token, show the modal anyway
     // Check both hash (implicit flow) and query params (PKCE flow)
@@ -93,11 +104,15 @@ function ProtectedRoute({ children }) {
       }, 3000);
       return () => {
         clearTimeout(fallbackTimer);
+        clearTimeout(safetyTimer);
         subscription.unsubscribe();
       };
     }
 
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(safetyTimer);
+      subscription.unsubscribe();
+    };
   }, [])
 
   // Poll for email verification (cross-device support)

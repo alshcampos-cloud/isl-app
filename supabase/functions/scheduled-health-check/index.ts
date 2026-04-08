@@ -47,6 +47,39 @@ interface HealthCheckRun {
   details: Record<string, unknown>
 }
 
+// ── SLO Definitions (inlined — Deno can't import from /agents/) ────
+
+interface SLODefinition {
+  target: number;
+  unit: string;
+  tier: 'CRITICAL' | 'HIGH';
+  alertAt?: number;
+}
+
+const SLO_DEFS: Record<string, SLODefinition> = {
+  CTA_ROUTING: { target: 100, unit: '%', tier: 'CRITICAL' },
+  STRIPE_WEBHOOK: { target: 100, unit: '%', tier: 'CRITICAL' },
+  DB_CONNECTIVITY: { target: 100, unit: '%', tier: 'CRITICAL' },
+  ANTHROPIC_API: { target: 99.5, unit: '%', tier: 'HIGH', alertAt: 2.0 },
+  EDGE_FUNCTION_ERRORS: { target: 0.5, unit: '%', tier: 'HIGH', alertAt: 2.0 },
+}
+
+// Map from existing check keys to SLO keys
+const CHECK_TO_SLO: Record<string, { sloKey: string; sliExtractor: (check: CheckResult, metrics: Record<string, unknown>) => number | null }> = {
+  database: {
+    sloKey: 'DB_CONNECTIVITY',
+    sliExtractor: (check) => check.status === 'ok' ? 100 : 0,
+  },
+  anthropic: {
+    sloKey: 'ANTHROPIC_API',
+    sliExtractor: (check) => check.status === 'ok' ? 100 : 0,
+  },
+  stripe: {
+    sloKey: 'STRIPE_WEBHOOK',
+    sliExtractor: (check) => check.status === 'ok' ? 100 : 0,
+  },
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers':
@@ -389,6 +422,194 @@ async function createNotifications(
   }
 }
 
+// ── Agent Health Events & Alerts ────────────────────────────────────
+
+async function writeAgentHealthEvents(
+  supabase: ReturnType<typeof createClient>,
+  checks: Record<string, CheckResult>,
+  metrics: Awaited<ReturnType<typeof gatherMetrics>>,
+  sessionId: string,
+): Promise<void> {
+  const rows: Record<string, unknown>[] = []
+
+  // Write an event for each check that has an SLO mapping
+  for (const [checkKey, mapping] of Object.entries(CHECK_TO_SLO)) {
+    const check = checks[checkKey]
+    if (!check) continue
+
+    const sli = mapping.sliExtractor(check, metrics as unknown as Record<string, unknown>)
+    const slo = SLO_DEFS[mapping.sloKey]
+    if (!slo) continue
+
+    let status: 'pass' | 'fail' | 'degraded' = 'pass'
+    if (sli === null) {
+      status = 'degraded'
+    } else if (slo.tier === 'CRITICAL' && sli < slo.target) {
+      status = 'fail'
+    } else if (slo.tier === 'HIGH' && slo.alertAt !== undefined && sli < (100 - slo.alertAt)) {
+      // For error-rate SLOs: alertAt is the error % threshold
+      // For availability SLOs: fail if value drops below target
+      status = 'fail'
+    }
+
+    // Simpler: for HIGH tier, breach if measured error rate > alertAt
+    // But our SLI is availability %, so re-derive from check status
+    if (slo.tier === 'HIGH' && check.status === 'error') {
+      status = 'fail'
+    }
+
+    rows.push({
+      agent: 'health-monitor',
+      check_name: checkKey,
+      slo_key: mapping.sloKey,
+      sli_value: sli,
+      target_value: slo.target,
+      status,
+      tier: slo.tier,
+      session_id: sessionId,
+      metadata: {
+        latency_ms: check.latency_ms,
+        error: check.error,
+        configured: check.configured,
+      },
+    })
+  }
+
+  // Also write edge function error rate if we have metrics
+  if (metrics.error_rate_1h !== null) {
+    const slo = SLO_DEFS.EDGE_FUNCTION_ERRORS
+    const errorRate = metrics.error_rate_1h
+    const breached = slo.alertAt !== undefined && errorRate > slo.alertAt
+
+    rows.push({
+      agent: 'health-monitor',
+      check_name: 'edge_function_error_rate',
+      slo_key: 'EDGE_FUNCTION_ERRORS',
+      sli_value: errorRate,
+      target_value: slo.target,
+      status: breached ? 'fail' : 'pass',
+      tier: slo.tier,
+      session_id: sessionId,
+      metadata: {
+        errors_24h: metrics.errors_24h,
+        error_rate_1h: metrics.error_rate_1h,
+      },
+    })
+  }
+
+  if (rows.length === 0) return
+
+  try {
+    const { error } = await supabase.from('agent_health_events').insert(rows)
+    if (error) {
+      console.error('[health-check] Failed to write agent_health_events:', error.message)
+    } else {
+      console.log(`[health-check] Wrote ${rows.length} agent_health_events`)
+    }
+  } catch (e) {
+    console.error('[health-check] agent_health_events insert error:', e)
+  }
+}
+
+async function fireAgentAlerts(
+  supabase: ReturnType<typeof createClient>,
+  checks: Record<string, CheckResult>,
+  metrics: Awaited<ReturnType<typeof gatherMetrics>>,
+): Promise<number> {
+  let alertCount = 0
+
+  const alertCandidates: { sloKey: string; tier: string; title: string; message: string; measured: number | null; target: number }[] = []
+
+  // CRITICAL checks: alert on any failure
+  for (const [checkKey, mapping] of Object.entries(CHECK_TO_SLO)) {
+    const check = checks[checkKey]
+    const slo = SLO_DEFS[mapping.sloKey]
+    if (!check || !slo) continue
+
+    if (slo.tier === 'CRITICAL' && check.status === 'error') {
+      alertCandidates.push({
+        sloKey: mapping.sloKey,
+        tier: 'CRITICAL',
+        title: `${mapping.sloKey} — CRITICAL FAILURE`,
+        message: `${checkKey} check failed: ${check.error ?? 'Unknown error'}`,
+        measured: 0,
+        target: slo.target,
+      })
+    }
+  }
+
+  // HIGH checks: alert on SLO breach
+  // Anthropic API down
+  if (checks.anthropic?.status === 'error') {
+    const slo = SLO_DEFS.ANTHROPIC_API
+    alertCandidates.push({
+      sloKey: 'ANTHROPIC_API',
+      tier: 'HIGH',
+      title: 'ANTHROPIC_API — SLO BREACH',
+      message: `Anthropic API check failed: ${checks.anthropic.error ?? 'Unknown error'}`,
+      measured: 0,
+      target: slo.target,
+    })
+  }
+
+  // Edge function error rate breach
+  if (metrics.error_rate_1h !== null) {
+    const slo = SLO_DEFS.EDGE_FUNCTION_ERRORS
+    if (slo.alertAt !== undefined && metrics.error_rate_1h > slo.alertAt) {
+      alertCandidates.push({
+        sloKey: 'EDGE_FUNCTION_ERRORS',
+        tier: 'HIGH',
+        title: 'EDGE_FUNCTION_ERRORS — SLO BREACH',
+        message: `Edge Function error rate ${metrics.error_rate_1h}% exceeds alert threshold ${slo.alertAt}%`,
+        measured: metrics.error_rate_1h,
+        target: slo.target,
+      })
+    }
+  }
+
+  // Insert alerts with deduplication
+  for (const candidate of alertCandidates) {
+    try {
+      // Dedup: check for unresolved alert with same title in last 60 min
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+
+      const { count } = await supabase
+        .from('agent_alerts')
+        .select('id', { count: 'exact', head: true })
+        .eq('title', candidate.title)
+        .eq('resolved', false)
+        .gte('created_at', oneHourAgo)
+
+      if (count && count > 0) {
+        console.log(`[health-check] Skipping duplicate agent_alert: "${candidate.title}"`)
+        continue
+      }
+
+      const { error } = await supabase.from('agent_alerts').insert({
+        agent: 'health-monitor',
+        severity: candidate.tier.toLowerCase(),
+        slo_key: candidate.sloKey,
+        title: candidate.title,
+        message: candidate.message,
+        measured_value: candidate.measured,
+        threshold_value: candidate.target,
+        resolved: false,
+      })
+
+      if (error) {
+        console.error(`[health-check] Failed to insert agent_alert "${candidate.title}":`, error.message)
+      } else {
+        alertCount++
+        console.warn(`[health-check] AGENT ALERT [${candidate.tier}]: ${candidate.title}`)
+      }
+    } catch (e) {
+      console.error('[health-check] agent_alert insert error:', e)
+    }
+  }
+
+  return alertCount
+}
+
 // ── Main Handler ────────────────────────────────────────────────────
 
 serve(async (req: Request) => {
@@ -465,22 +686,31 @@ serve(async (req: Request) => {
   // ── 6. Create notifications for anomalies ──
   await createNotifications(supabase, anomalies)
 
+  // ── 6b. Write structured agent_health_events for PM Agent digest ──
+  const sessionId = `shc-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`
+  await writeAgentHealthEvents(supabase, checks, metrics, sessionId)
+
+  // ── 6c. Fire agent_alerts on CRITICAL/HIGH SLO breaches ──
+  const agentAlertsFired = await fireAgentAlerts(supabase, checks, metrics)
+
   // ── 7. Build response ──
   const response = {
     status: overallStatus,
     timestamp: new Date().toISOString(),
-    version: '1.0.0',
+    version: '2.0.0',
     checks,
     metrics,
     anomalies,
     notifications_created: anomalies.length,
+    agent_alerts_fired: agentAlertsFired,
+    session_id: sessionId,
     business_hours: isBusinessHours(),
   }
 
   const httpStatus = overallStatus === 'unhealthy' ? 503 : 200
 
   console.log(
-    `[health-check] Completed: ${overallStatus} | anomalies: ${anomalies.length} | db: ${database.latency_ms ?? 'ERR'}ms | anthropic: ${anthropic.latency_ms ?? 'ERR'}ms`,
+    `[health-check] Completed: ${overallStatus} | anomalies: ${anomalies.length} | agent_alerts: ${agentAlertsFired} | db: ${database.latency_ms ?? 'ERR'}ms | anthropic: ${anthropic.latency_ms ?? 'ERR'}ms`,
   )
 
   return new Response(JSON.stringify(response, null, 2), {

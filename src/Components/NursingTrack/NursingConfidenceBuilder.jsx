@@ -15,7 +15,7 @@
 //   #9  — Beta users bypass limits
 //   #19 — AI NEVER generates clinical content
 //
-// Credit feature: 'practiceMode' (shares with Practice + SBAR + AI Coach)
+// Credit feature: 'nursingCoach' (shares with AI Coach + Answer Assistant + Offer Coach)
 // localStorage keys: nursingConfidenceProfile, nursingConfidenceBrief
 //
 // D.R.A.F.T. Protocol: NEW file. No existing code modified.
@@ -282,9 +282,9 @@ export default function NursingConfidenceBuilder({ specialty, onBack, userData, 
   useEffect(() => {
     if (userData && !userData.loading && userData.usage) {
       const check = canUseFeature(
-        { practice_mode: userData.usage.practiceMode?.used || 0 },
+        { nursing_coach: userData.usage.nursingCoach?.used || 0 },
         userData.tier,
-        'practiceMode'
+        'nursingCoach'
       );
       if (!check.allowed) setCreditBlocked(true);
     }
@@ -365,7 +365,7 @@ export default function NursingConfidenceBuilder({ specialty, onBack, userData, 
       // CHARGE AFTER SUCCESS (Battle Scar #8)
       if (userData?.user?.id) {
         try {
-          await incrementUsage(supabase, userData.user.id, 'practiceMode');
+          await incrementUsage(supabase, userData.user.id, 'nursingCoach');
           if (refreshUsage) refreshUsage();
         } catch (chargeErr) {
           console.warn('Usage increment failed (non-blocking):', chargeErr);
@@ -402,7 +402,7 @@ export default function NursingConfidenceBuilder({ specialty, onBack, userData, 
   // Check if profile has meaningful data
   const profileHasData = profile.yearsExperience || profile.currentRole || profile.clinicalStrengths;
   const isUnlimited = userData?.isBeta || userData?.tier === 'nursing_pass' || userData?.tier === 'annual' || userData?.tier === 'pro' || userData?.tier === 'beta';
-  const creditInfo = userData?.usage?.practiceMode;
+  const creditInfo = userData?.usage?.nursingCoach;
 
   // ============================================================
   // RENDER
