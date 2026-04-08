@@ -209,6 +209,9 @@ const ISL = () => {
   const [filterPriority, setFilterPriority] = useState('All');
   const [aiSpeaking, setAiSpeaking] = useState(false);
   const [aiSubtitle, setAiSubtitle] = useState('');
+  const [voiceMuted, setVoiceMuted] = useState(() => {
+    try { return localStorage.getItem('isl_voice_muted') === 'true'; } catch { return true; }
+  });
   const [questionHistory, setQuestionHistory] = useState([]);
   const [showResumeToast, setShowResumeToast] = useState(false);
   // Phase 4J: Time Pressure Practice
@@ -2593,27 +2596,56 @@ useEffect(() => {
     
     if (currentMode) { window.addEventListener('keydown', handleKeyDown); window.addEventListener('keyup', handleKeyUp); return () => { window.removeEventListener('keydown', handleKeyDown); window.removeEventListener('keyup', handleKeyUp); }; }
   }, [currentMode, spacebarHeld, isListening, interviewSessionActive, isCapturing]);
-  // TTS with smart voice selection via voiceManager
-  const speakText = (text) => {
+  // TTS with smart voice selection — supports HD (Google Cloud Neural2) and Web Speech fallback
+  const speakText = async (text) => {
+    // Respect mute toggle
+    if (voiceMuted) {
+      console.log('🔇 Voice muted — skipping TTS');
+      return;
+    }
+
+    // Try HD voice first (paid users + free trial: 3 uses)
+    const hasHD = userTier !== 'free' || (() => {
+      try {
+        const used = parseInt(localStorage.getItem('isl_hd_voice_trials') || '0', 10);
+        return used < 3;
+      } catch { return false; }
+    })();
+
+    if (hasHD) {
+      try {
+        const { generateTTSAudio } = await import('./utils/ttsService');
+        const blobUrl = await generateTTSAudio([text], { voice: 'nova', speed: 1.0 });
+        if (blobUrl) {
+          // Track free trial usage
+          if (userTier === 'free') {
+            try {
+              const used = parseInt(localStorage.getItem('isl_hd_voice_trials') || '0', 10);
+              localStorage.setItem('isl_hd_voice_trials', String(used + 1));
+            } catch {}
+          }
+          const audio = new Audio(blobUrl);
+          setAiSpeaking(true); setAiSubtitle(text);
+          audio.onended = () => { setAiSpeaking(false); setAiSubtitle(''); URL.revokeObjectURL(blobUrl); };
+          audio.onerror = () => { setAiSpeaking(false); setAiSubtitle(''); };
+          await audio.play();
+          return;
+        }
+      } catch (err) {
+        console.warn('HD voice failed, falling back to Web Speech:', err.message);
+      }
+    }
+
+    // Fallback: Web Speech API
     if (!synthRef.current) { console.warn('TTS not available'); return; }
     synthRef.current.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     const voices = synthRef.current.getVoices();
-
-    // Smart voice selection — scores all voices by quality indicators
-    // (Premium, Neural, Enhanced, Natural) + known good voices (Samantha, etc.)
     const selectedVoice = getPreferredVoice(voices);
-
-    if (selectedVoice) {
-      utterance.voice = selectedVoice;
-      console.log('🎙️ Voice:', selectedVoice.name);
-    }
-
-    // Optimized settings for interview coaching
+    if (selectedVoice) { utterance.voice = selectedVoice; }
     utterance.rate = VOICE_SETTINGS.rate;
     utterance.pitch = VOICE_SETTINGS.pitch;
     utterance.volume = VOICE_SETTINGS.volume;
-
     utterance.onstart = () => { setAiSpeaking(true); setAiSubtitle(text); };
     utterance.onend = () => { setAiSpeaking(false); setAiSubtitle(''); };
     synthRef.current.speak(utterance);
@@ -5050,10 +5082,32 @@ const startPracticeMode = async () => {
                 </div>
               </div>
               
-              {/* AI Name */}
-              <h3 className="text-3xl font-bold text-white text-center mb-6">
+              {/* AI Name + Voice Toggle */}
+              <h3 className="text-3xl font-bold text-white text-center mb-2">
                 {aiSpeaking ? '🎙️ AI Interviewer Speaking...' : '💭 AI Interviewer'}
               </h3>
+              <div className="flex justify-center mb-4">
+                <button
+                  onClick={() => {
+                    const newMuted = !voiceMuted;
+                    setVoiceMuted(newMuted);
+                    try { localStorage.setItem('isl_voice_muted', String(newMuted)); } catch {}
+                    if (newMuted && synthRef.current) { synthRef.current.cancel(); setAiSpeaking(false); setAiSubtitle(''); }
+                  }}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                    voiceMuted
+                      ? 'bg-white/10 text-white/60 hover:bg-white/20'
+                      : 'bg-teal-500/20 text-teal-300 hover:bg-teal-500/30 ring-1 ring-teal-500/40'
+                  }`}
+                >
+                  {voiceMuted ? '🔇 Voice Off' : '🔊 Voice On'}
+                  {!voiceMuted && userTier === 'free' && (
+                    <span className="text-xs bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full">
+                      HD Trial: {Math.max(0, 3 - parseInt(localStorage.getItem('isl_hd_voice_trials') || '0', 10))} left
+                    </span>
+                  )}
+                </button>
+              </div>
               
               {/* SUBTITLE DISPLAY */}
               <div className="relative min-h-32">
