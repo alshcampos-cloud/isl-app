@@ -316,3 +316,12 @@ These rules apply universally across all agent code. They are derived from failu
 *This audit covers 50+ distinct lessons from 4 Koda Labs project documents and 2 agent specification documents. Every lesson was learned through real failures, real bugs, and real user impact. The agent system exists to prevent these failures from recurring.*
 
 *Compiled April 8, 2026 -- Koda Labs LLC*
+
+---
+
+## Agent System Specific (Discovered During Build)
+
+**April 7, 2026 | Vercel serverless function bundling limitation**
+- **What happened:** Agent code in `/agents/` directory couldn't be imported by Vercel serverless functions in `/api/` because Vercel's bundler only follows imports within the function's own directory tree. Static imports, dynamic imports, and `includeFiles` config all failed to resolve cross-directory TypeScript modules.
+- **Prevention:** For Phase 1, deploy agent logic as Supabase Edge Functions (Deno) which already work. The `/agents/` TypeScript code serves as the canonical architecture reference. When ready for Vercel Pro or a dedicated server, the Node.js agent code can be used directly.
+- **Application:** Any future agent code that needs to run on Vercel must either live within `/api/` or be deployed to a different runtime (Supabase Edge Functions, standalone server, etc.)
