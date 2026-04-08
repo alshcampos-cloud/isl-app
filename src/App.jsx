@@ -7790,11 +7790,12 @@ const startPracticeMode = async () => {
                 </button>
                 <button onClick={() => setShowTemplateLibrary(true)} className="px-3 sm:px-4 py-2 sm:py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-semibold flex items-center gap-1.5 sm:gap-2 shadow-sm hover:shadow-md transition-all active:scale-[0.98] text-sm">
                   <BookOpen className="w-4 h-4" />
-                  Templates
+                  Question Catalog
                 </button>
                 {showTemplateLibrary && (
                   <TemplateLibrary
                     onClose={() => setShowTemplateLibrary(false)}
+                    existingQuestions={questions}
                     onOpenAICoach={handleOpenAICoachFromTemplate}
                     checkUsageLimit={checkAIUsageLimit}
                     onImport={async (importedQuestions) => {
@@ -8750,6 +8751,7 @@ const startPracticeMode = async () => {
             onClick={(e) => e.stopPropagation()}
           >
             <TemplateLibrary
+              existingQuestions={questions}
               onClose={() => {
                 console.log('🔵 Closing Template Library modal');
                 setShowTemplateLibrary(false);
