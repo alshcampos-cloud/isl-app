@@ -174,7 +174,7 @@ async function hasPendingProposal(
       .from('agent_proposals')
       .select('id')
       .contains('related_slos', [sloKey])
-      .eq('status', 'proposed')
+      .eq('status', 'pending')
       .limit(1);
 
     if (error) {
@@ -239,7 +239,7 @@ export async function generateProposals(
       related_slos: [sloKey],
       estimated_effort: template.estimatedEffort,
       priority: tierToPriority(slo.tier),
-      status: 'proposed',
+      status: 'pending',
       metadata: {
         sliValue: check.sliValue,
         target: check.target,

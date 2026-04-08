@@ -122,7 +122,8 @@ async function getAlertCounts(
       counts[sev] = (counts[sev] ?? 0) + 1;
     }
     return counts;
-  } catch {
+  } catch (err) {
+    console.error('[report-builder] getAlertCounts error:', err);
     return {};
   }
 }
@@ -141,7 +142,8 @@ async function getPendingProposals(): Promise<
 
     if (error || !data) return [];
     return data as Array<{ title: string; priority: string }>;
-  } catch {
+  } catch (err) {
+    console.error('[report-builder] getPendingProposals error:', err);
     return [];
   }
 }
@@ -168,7 +170,8 @@ async function getKeyMetrics(
       totalUsers: usersResult.count ?? null,
       sessionsThisPeriod: sessionsResult.count ?? null,
     };
-  } catch {
+  } catch (err) {
+    console.error('[report-builder] getKeyMetrics error:', err);
     return { totalUsers: null, sessionsThisPeriod: null };
   }
 }
