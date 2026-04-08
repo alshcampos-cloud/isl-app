@@ -215,7 +215,7 @@ export default function TemplateLibrary({ onImport, onClose, onOpenAICoach, chec
 
                             {/* Expanded question details */}
                             {qExpanded && (
-                              <div className="px-4 pb-4 pl-[60px] space-y-3 bg-gray-50">
+                              <div className="px-4 pb-4 pl-[60px] space-y-3 bg-gray-50" onClick={(e) => e.stopPropagation()}>
                                 {/* Bullets */}
                                 {dq.bullets && dq.bullets.length > 0 && (
                                   <div>
@@ -249,7 +249,8 @@ export default function TemplateLibrary({ onImport, onClose, onOpenAICoach, chec
                                 <div className="flex flex-wrap gap-2 pt-1">
                                   {!added && (
                                     <button
-                                      onClick={() => handleAddOne(dq)}
+                                      onClick={(e) => { e.stopPropagation(); handleAddOne(dq); }}
+                                      onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); handleAddOne(dq); }}
                                       className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 active:bg-teal-800 transition-colors"
                                     >
                                       <Plus className="w-4 h-4" />
@@ -258,7 +259,8 @@ export default function TemplateLibrary({ onImport, onClose, onOpenAICoach, chec
                                   )}
                                   {onOpenAICoach && (
                                     <button
-                                      onClick={() => handlePracticeWithCoach(dq)}
+                                      onClick={(e) => { e.stopPropagation(); handlePracticeWithCoach(dq); }}
+                                      onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); handlePracticeWithCoach(dq); }}
                                       className="inline-flex items-center gap-1.5 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 active:bg-purple-800 transition-colors"
                                     >
                                       <Sparkles className="w-4 h-4" />
