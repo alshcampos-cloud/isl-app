@@ -1,14 +1,14 @@
-// agent-cron.ts — Vercel Cron / Manual Trigger Endpoint
-// Triggers Health Monitor (every 15 min via pg_cron) or PM Agent (weekly/alert)
+// agent-cron.ts — Agent trigger endpoint
+// Called by Supabase pg_cron every 15 min or manually
 // Query: ?agent=health-monitor or ?agent=pm-agent&mode=weekly
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { runHealthMonitor } from '../agents/health-monitor/index';
+import { runPMAgent } from '../agents/pm-agent/index';
 
-// Auth: Vercel cron sends CRON_SECRET header
 const CRON_SECRET = process.env.CRON_SECRET || '';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Verify this is a legitimate cron call
   const authHeader = req.headers.authorization;
   if (CRON_SECRET && authHeader !== `Bearer ${CRON_SECRET}`) {
     return res.status(401).json({ error: 'Unauthorized' });
@@ -20,10 +20,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     if (agent === 'health-monitor') {
-      // Dynamic import to keep cold starts fast
-      const { runHealthMonitor } = await import('../agents/health-monitor/index');
       const result: any = await runHealthMonitor();
-
       return res.status(200).json({
         agent: 'health-monitor',
         status: result?.status || 'unknown',
@@ -33,9 +30,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (agent === 'pm-agent') {
-      const { runPMAgent } = await import('../agents/pm-agent/index');
       const result: any = await runPMAgent({ mode: mode as 'weekly' | 'alert-triggered' });
-
       return res.status(200).json({
         agent: 'pm-agent',
         mode,
