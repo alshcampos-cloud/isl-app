@@ -101,8 +101,8 @@ function isAtRisk(sloKey: SLOKey, sliValue: number): boolean {
   const slo = SLO[sloKey];
   if (slo.target === null) return false;
 
-  const threshold = slo.alertAt ?? slo.target;
-  const direction = slo.direction ?? 'above';
+  const threshold = (slo as any).alertAt ?? slo.target;
+  const direction = (slo as any).direction ?? 'above';
 
   if (direction === 'above') {
     // Bad when rising. At risk if above 80% of the threshold distance.

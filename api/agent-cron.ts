@@ -22,26 +22,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (agent === 'health-monitor') {
       // Dynamic import to keep cold starts fast
       const { runHealthMonitor } = await import('../agents/health-monitor/index');
-      const result = await runHealthMonitor();
+      const result: any = await runHealthMonitor();
 
       return res.status(200).json({
         agent: 'health-monitor',
-        status: result.status,
+        status: result?.status || 'unknown',
         duration_ms: Date.now() - startTime,
-        checks: result.details,
+        result,
       });
     }
 
     if (agent === 'pm-agent') {
       const { runPMAgent } = await import('../agents/pm-agent/index');
-      const result = await runPMAgent({ mode: mode as 'weekly' | 'alert-triggered' });
+      const result: any = await runPMAgent({ mode: mode as 'weekly' | 'alert-triggered' });
 
       return res.status(200).json({
         agent: 'pm-agent',
         mode,
-        status: result.status,
+        status: result?.status || 'unknown',
         duration_ms: Date.now() - startTime,
-        summary: result.summary,
+        result,
       });
     }
 
