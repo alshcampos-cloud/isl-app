@@ -17,7 +17,9 @@ import QuestionAssistant from './Components/QuestionAssistant';
 import AnswerAssistant from './Components/AnswerAssistant';
 import TemplateLibrary from './TemplateLibrary';
 import Tutorial from './Components/Tutorial';
-import { DEFAULT_QUESTIONS } from './default_questions';
+import { DEFAULT_QUESTIONS, QUESTION_GROUPS, getDefaultActiveGroups, filterQuestionsByGroups, getQuestionCountsByGroup } from './default_questions';
+import QuestionGroupFilter from './Components/QuestionGroupFilter';
+import { loadPersistedGroups } from './Components/QuestionGroupFilter';
 import { canUseFeature, incrementUsage, getUsageStats, TIER_LIMITS, isBetaUser, resolveEffectiveTier } from './utils/creditSystem';
 import { fetchWithRetry } from './utils/fetchWithRetry';
 import UsageLimitModal from './Components/UsageLimitModal';
@@ -206,6 +208,9 @@ const ISL = () => {
   const [showFollowUps, setShowFollowUps] = useState(false);
   const [spacebarHeld, setSpacebarHeld] = useState(false);
   const [filterCategory, setFilterCategory] = useState('All');
+  const [activeGroups, setActiveGroups] = useState(() => {
+    try { return loadPersistedGroups ? loadPersistedGroups() : getDefaultActiveGroups(); } catch { return getDefaultActiveGroups(); }
+  });
   const [filterPriority, setFilterPriority] = useState('All');
   const [aiSpeaking, setAiSpeaking] = useState(false);
   const [aiSubtitle, setAiSubtitle] = useState('');
@@ -5727,6 +5732,24 @@ const startPracticeMode = async () => {
           </div>
         </div>
         <div className="container mx-auto px-4 py-8 max-w-4xl">
+          {/* Question Group Filter */}
+          <div className="mb-4">
+            <QuestionGroupFilter
+              groups={QUESTION_GROUPS}
+              activeGroups={activeGroups}
+              onToggle={(groupId) => {
+                setActiveGroups(prev => {
+                  const next = new Set(prev);
+                  if (next.has(groupId)) next.delete(groupId);
+                  else next.add(groupId);
+                  try { localStorage.setItem('isl_active_groups', JSON.stringify([...next])); } catch {}
+                  return next;
+                });
+              }}
+              questionCounts={getQuestionCountsByGroup(questions.length > 0 ? questions : DEFAULT_QUESTIONS)}
+              compact
+            />
+          </div>
           {/* Phase 4J: Timer controls & overlay */}
           {timedMode && (
             <div className="mb-4 flex items-center justify-between bg-white rounded-xl shadow-sm p-3 border border-slate-200">
