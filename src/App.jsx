@@ -707,6 +707,8 @@ const ISL = () => {
         bullets: q.bullets,
         narrative: q.narrative,
         follow_ups: q.followUps,
+        question_group: q.group || null,
+        difficulty: q.difficulty || null,
         is_default: true,
         created_at: new Date().toISOString()
       }));
@@ -2770,7 +2772,9 @@ Respond in this exact JSON format:
         priority: question.priority,
         bullets: question.bullets || [],
         narrative: question.narrative || '',
-        keywords: question.keywords || []
+        keywords: question.keywords || [],
+        question_group: question.group || question.question_group || null,
+        difficulty: question.difficulty || null
       }])
       .select()
       .single();
@@ -2795,7 +2799,9 @@ Respond in this exact JSON format:
         priority: updatedQ.priority,
         bullets: updatedQ.bullets || [],
         narrative: updatedQ.narrative || '',
-        keywords: updatedQ.keywords || []
+        keywords: updatedQ.keywords || [],
+        question_group: updatedQ.group || updatedQ.question_group || null,
+        difficulty: updatedQ.difficulty || null
       })
       .eq('id', id);
 
@@ -3064,7 +3070,10 @@ Respond in this exact JSON format:
     
     // Set UI state IMMEDIATELY (no await blocking)
     accumulatedTranscript.current = '';
-    const pool = getFilteredQuestions(questions, currentUser?.id);
+    let pool = getFilteredQuestions(questions, currentUser?.id);
+    // Apply question group filter
+    pool = pool.filter(q => !q.question_group || activeGroups.has(q.question_group));
+    if (pool.length === 0) pool = getFilteredQuestions(questions, currentUser?.id); // fallback if all filtered out
     if (!pool || pool.length === 0) { console.error('No questions available'); return; }
     const randomQ = pool[Math.floor(Math.random() * pool.length)];
     setCurrentQuestion(randomQ);
@@ -3116,7 +3125,10 @@ const startPracticeMode = async () => {
     
     // Set UI state IMMEDIATELY (no await blocking)
     accumulatedTranscript.current = '';
-    const pool = getFilteredQuestions(questions, currentUser?.id);
+    let pool = getFilteredQuestions(questions, currentUser?.id);
+    // Apply question group filter
+    pool = pool.filter(q => !q.question_group || activeGroups.has(q.question_group));
+    if (pool.length === 0) pool = getFilteredQuestions(questions, currentUser?.id); // fallback if all filtered out
     if (!pool || pool.length === 0) { console.error('No questions available'); return; }
     const randomQ = pool[Math.floor(Math.random() * pool.length)];
     setCurrentQuestion(randomQ);
@@ -3141,9 +3153,11 @@ const startPracticeMode = async () => {
   // Navigation functions for prev/next question
   const goToNextQuestion = () => {
     if (!currentQuestion || questions.length === 0) return;
-    const currentIndex = questions.findIndex(q => q.id === currentQuestion.id);
-    const nextIndex = (currentIndex + 1) % questions.length;
-    const nextQ = questions[nextIndex];
+    const filtered = questions.filter(q => !q.question_group || activeGroups.has(q.question_group));
+    const pool = filtered.length > 0 ? filtered : questions;
+    const currentIdx = pool.findIndex(q => q.id === currentQuestion?.id);
+    const nextIdx = (currentIdx + 1) % pool.length;
+    const nextQ = pool[nextIdx];
     setCurrentQuestion(nextQ);
     setUserAnswer('');
     setSpokenAnswer('');
@@ -3159,9 +3173,11 @@ const startPracticeMode = async () => {
 
   const goToPreviousQuestion = () => {
     if (!currentQuestion || questions.length === 0) return;
-    const currentIndex = questions.findIndex(q => q.id === currentQuestion.id);
-    const prevIndex = (currentIndex - 1 + questions.length) % questions.length;
-    const prevQ = questions[prevIndex];
+    const filtered = questions.filter(q => !q.question_group || activeGroups.has(q.question_group));
+    const pool = filtered.length > 0 ? filtered : questions;
+    const currentIdx = pool.findIndex(q => q.id === currentQuestion?.id);
+    const prevIdx = (currentIdx - 1 + pool.length) % pool.length;
+    const prevQ = pool[prevIdx];
     setCurrentQuestion(prevQ);
     setUserAnswer('');
     setSpokenAnswer('');
@@ -3175,7 +3191,7 @@ const startPracticeMode = async () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   
-  const startFlashcardMode = () => { if (questions.length === 0) { alert('Add questions first!'); return; } let available = questions; if (filterCategory !== 'All') available = available.filter(q => q.category === filterCategory); if (available.length === 0) { alert('No matching questions!'); return; } const sorted = [...available].sort((a, b) => { if (a.practiceCount === 0) return -1; if (b.practiceCount === 0) return 1; return a.averageScore - b.averageScore; }); setCurrentQuestion(sorted[0]); setCurrentMode('flashcard'); setCurrentView('flashcard'); setFlashcardSide('question'); setShowBullets(false); setShowNarrative(false); };
+  const startFlashcardMode = () => { if (questions.length === 0) { alert('Add questions first!'); return; } let available = questions.filter(q => !q.question_group || activeGroups.has(q.question_group)); if (available.length === 0) available = questions; if (filterCategory !== 'All') available = available.filter(q => q.category === filterCategory); if (available.length === 0) { alert('No matching questions!'); return; } const sorted = [...available].sort((a, b) => { if (a.practiceCount === 0) return -1; if (b.practiceCount === 0) return 1; return a.averageScore - b.averageScore; }); setCurrentQuestion(sorted[0]); setCurrentMode('flashcard'); setCurrentView('flashcard'); setFlashcardSide('question'); setShowBullets(false); setShowNarrative(false); };
 
   // ============================================================================
   // CALLBACK FIX: Stable handlers to prevent stale closure issues
@@ -3901,7 +3917,7 @@ const startPracticeMode = async () => {
 
             <div className="space-y-4 mb-6">
               <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
-                <h3 className="font-bold text-teal-400 mb-2">📦 Load 12 Default Questions</h3>
+                <h3 className="font-bold text-teal-400 mb-2">📦 Load Default Questions</h3>
                 <p className="text-sm text-gray-400">
                   Get common interview questions to start using Live Prompter immediately
                 </p>
@@ -3936,12 +3952,12 @@ const startPracticeMode = async () => {
                     await loadQuestions();
                     localStorage.setItem(`isl_defaults_initialized_${currentUser.id}`, 'true');
                     setShowDeleteChoiceModal(false);
-                    console.log('✅ Loaded 12 default questions');
+                    console.log(`✅ Loaded ${DEFAULT_QUESTIONS.length} default questions`);
                   }
                 }}
                 className="flex-1 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg"
               >
-                Load 12 Defaults
+                Load Default Questions
               </button>
             </div>
           </div>

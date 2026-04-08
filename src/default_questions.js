@@ -2440,7 +2440,7 @@ export const getDefaultActiveGroups = () => {
  */
 export const filterQuestionsByGroups = (questions, activeGroups) => {
   if (!activeGroups || activeGroups.size === 0) return questions;
-  return questions.filter(q => activeGroups.has(q.group));
+  return questions.filter(q => activeGroups.has(q.question_group || q.group));
 };
 
 /**
@@ -2449,7 +2449,8 @@ export const filterQuestionsByGroups = (questions, activeGroups) => {
 export const getQuestionCountsByGroup = (questions) => {
   const counts = {};
   for (const q of questions) {
-    counts[q.group] = (counts[q.group] || 0) + 1;
+    const groupKey = q.question_group || q.group;
+    counts[groupKey] = (counts[groupKey] || 0) + 1;
   }
   return counts;
 };
