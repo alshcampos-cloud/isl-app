@@ -130,7 +130,7 @@ function computeTrend(
 
   if (Math.abs(delta) < threshold) return 'stable';
 
-  const slo = SLO[sloKey];
+  const slo = SLO[sloKey] as any;
   const direction = slo.direction ?? 'above';
 
   if (direction === 'above') {
