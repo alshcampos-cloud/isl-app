@@ -12,8 +12,8 @@
  *
  * Query params:
  *   ?agent=health-monitor  (default, runs on every cron tick)
- *   ?agent=pm-agent&mode=weekly  (runs Monday 8am PT only)
- *   ?agent=pm-agent&mode=alert   (triggered by health monitor breach)
+ *   ?agent=pm-agent (with mode=weekly, runs Monday 8am PT only)
+ *   ?agent=pm-agent (with mode=alert, triggered by health monitor breach)
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
