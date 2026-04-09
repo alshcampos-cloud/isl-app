@@ -3,9 +3,11 @@ import { flushSync } from 'react-dom';
 
 import {
   Brain, Database, Play, Plus, Edit2, Trash2, TrendingUp, Download, Upload,
-  Mic, MicOff, Volume2, Eye, EyeOff, Settings, Sparkles, ChevronRight, ChevronDown, X,
+  Mic, MicOff, Volume2, VolumeX, Eye, EyeOff, Settings, Sparkles, ChevronRight, ChevronDown, X,
   Zap, CheckCircle, Target, Bot, BookOpen, SkipForward, Pause, Award, Filter,
-  Crown, Lightbulb, Square, Calendar, AlertCircle, Mail, MessageSquare, MessageCircle
+  Crown, Lightbulb, Square, Calendar, AlertCircle, Mail, MessageSquare, MessageCircle,
+  Star, BarChart2, ClipboardList, Trophy, RotateCcw, ArrowRight, Globe, Smartphone,
+  Headphones, GraduationCap, MapPin, Briefcase, FileText, Layers
 } from 'lucide-react';
 
 import SupabaseTest from './SupabaseTest';
@@ -3645,7 +3647,7 @@ const startPracticeMode = async () => {
       {showAddQuestionsPrompt && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
           <div 
-            className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl max-w-2xl w-full p-8 shadow-2xl border-2 border-teal-500/50 my-auto"
+            className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl max-w-2xl w-full p-8 shadow-lg border-2 border-teal-500/50 my-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="text-center mb-6">
@@ -3677,7 +3679,7 @@ const startPracticeMode = async () => {
                       Enter your target role, background, and job description. AI generates personalized questions.
                     </p>
                     <span className="inline-block px-3 py-1 bg-teal-500/20 text-teal-300 text-xs font-bold rounded-full border border-teal-500/50">
-                      ⭐ RECOMMENDED
+                      <Star className="w-3 h-3 inline mr-1" /> RECOMMENDED
                     </span>
                   </div>
                 </div>
@@ -3733,7 +3735,7 @@ const startPracticeMode = async () => {
 
             <div className="bg-teal-500/20 border-2 border-teal-400/50 rounded-xl p-4 mb-6">
               <p className="text-sm text-teal-200">
-                <strong>💡 Tip:</strong> You need at least a few questions to use Live Prompter, AI Interviewer, and Practice modes.
+                <strong><Lightbulb className="w-4 h-4 inline" /> Tip:</strong> You need at least a few questions to use Live Prompter, AI Interviewer, and Practice modes.
               </p>
             </div>
 
@@ -3750,7 +3752,7 @@ const startPracticeMode = async () => {
       {/* WELCOME MODAL - First-time user onboarding */}
       {showWelcomeModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl max-w-2xl w-full p-8 shadow-2xl border border-teal-500/30">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl max-w-2xl w-full p-8 shadow-lg border border-teal-500/30">
             <div className="text-center mb-6">
               <div className="w-20 h-20 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Sparkles className="w-10 h-10 text-white" />
@@ -3760,7 +3762,7 @@ const startPracticeMode = async () => {
             </div>
 
             <div className="bg-gray-800/50 rounded-xl p-6 mb-6">
-              <h3 className="font-bold text-lg mb-3 text-teal-400">✨ You can now use:</h3>
+              <h3 className="font-bold text-lg mb-3 text-teal-400">You can now use:</h3>
               <ul className="space-y-2 text-gray-300">
                 <li className="flex items-start gap-2">
                   <span className="text-teal-400 font-bold">✓</span>
@@ -3778,7 +3780,7 @@ const startPracticeMode = async () => {
             </div>
 
             <div className="bg-teal-900/30 rounded-xl p-6 mb-8 border border-teal-500/30">
-              <h3 className="font-bold text-lg mb-3 text-teal-300">💡 Pro Tip:</h3>
+              <h3 className="font-bold text-lg mb-3 text-teal-300"><Lightbulb className="w-4 h-4 inline" /> Pro Tip:</h3>
               <p className="text-gray-300 mb-3">
                 These default questions work great, but <strong>customizing them for YOUR specific role</strong> makes 
                 Live Prompter 10x more accurate.
@@ -3818,7 +3820,7 @@ const startPracticeMode = async () => {
       {/* CUSTOMIZATION NUDGE - After sessions 4 and 6 */}
       {showCustomizationNudge && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl max-w-lg w-full p-8 shadow-2xl border border-yellow-500/30">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl max-w-lg w-full p-8 shadow-lg border border-yellow-500/30">
             <div className="text-center mb-6">
               <div className="w-16 h-16 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <TrendingUp className="w-8 h-8 text-gray-900" />
@@ -3828,7 +3830,7 @@ const startPracticeMode = async () => {
             </div>
 
             <div className="bg-yellow-900/20 rounded-xl p-6 mb-6 border border-yellow-500/30">
-              <h3 className="font-bold mb-3 text-yellow-300">💡 Want better accuracy?</h3>
+              <h3 className="font-bold mb-3 text-yellow-300"><Lightbulb className="w-4 h-4 inline" /> Want better accuracy?</h3>
               <p className="text-gray-300 mb-4">
                 Customizing questions for YOUR specific role and adding more keywords can boost 
                 match rates to 90%+
@@ -3865,7 +3867,7 @@ const startPracticeMode = async () => {
       {/* DELETE ALL CONFIRMATION MODAL */}
       {showDeleteAllConfirm && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl">
+          <div className="bg-white rounded-xl max-w-md w-full p-8 shadow-lg">
             <div className="text-center mb-6">
               <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <AlertCircle className="w-10 h-10 text-red-600" />
@@ -3907,7 +3909,7 @@ const startPracticeMode = async () => {
       {/* DELETE CHOICE MODAL - After deleting all questions */}
       {showDeleteChoiceModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl max-w-lg w-full p-8 shadow-2xl border border-teal-500/30">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl max-w-lg w-full p-8 shadow-lg border border-teal-500/30">
             <div className="text-center mb-6">
               <div className="w-20 h-20 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="w-10 h-10 text-teal-600" />
@@ -3918,14 +3920,14 @@ const startPracticeMode = async () => {
 
             <div className="space-y-4 mb-6">
               <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
-                <h3 className="font-bold text-teal-400 mb-2">📦 Load Default Questions</h3>
+                <h3 className="font-bold text-teal-400 mb-2">Load Default Questions</h3>
                 <p className="text-sm text-gray-400">
                   Get common interview questions to start using Live Prompter immediately
                 </p>
               </div>
               
               <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
-                <h3 className="font-bold text-teal-400 mb-2">🗑️ Keep Question Bank Empty</h3>
+                <h3 className="font-bold text-teal-400 mb-2"><Trash2 className="w-4 h-4 inline" /> Keep Question Bank Empty</h3>
                 <p className="text-sm text-gray-400">
                   Start fresh - you can add custom questions or load defaults anytime in Command Center
                 </p>
@@ -4021,7 +4023,7 @@ const startPracticeMode = async () => {
       {showLivePrompterWarning && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 overflow-y-auto">
           <div 
-            className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-auto shadow-2xl my-auto"
+            className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-auto shadow-lg my-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-6">
@@ -4075,7 +4077,7 @@ const startPracticeMode = async () => {
 
               {/* Browser compatibility notice */}
               <div className="bg-teal-50 border-l-4 border-teal-400 rounded p-3 mb-4">
-                <p className="font-bold text-teal-900 text-xs mb-1">🌐 Browser Compatibility:</p>
+                <p className="font-bold text-teal-900 text-xs mb-1"><Globe className="w-3 h-3 inline" /> Browser Compatibility:</p>
                 <p className="text-teal-800 text-xs mb-2">
                   Voice recognition works in:
                 </p>
@@ -4085,7 +4087,7 @@ const startPracticeMode = async () => {
                   <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-medium">✓ Samsung Internet (Android)</span>
                 </div>
                 <p className="text-red-600 text-xs font-medium mb-1">
-                  📱 iPhone users: Use <strong>Safari</strong> only. Chrome, Edge, and Firefox on iPhone do not support voice.
+                  <Smartphone className="w-3 h-3 inline" /> iPhone users: Use <strong>Safari</strong> only. Chrome, Edge, and Firefox on iPhone do not support voice.
                 </p>
                 <p className="text-teal-700 text-xs">
                   <strong>Not supported for voice:</strong> Edge, Firefox, Opera, Brave.
@@ -4153,7 +4155,7 @@ const startPracticeMode = async () => {
 
               {/* Dropdown - UNCHANGED */}
               {showProfileDropdown && (
-                <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-xl shadow-2xl overflow-hidden z-50">
+                <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-xl shadow-lg overflow-hidden z-50">
                   <div className="bg-gradient-to-r from-teal-600 to-emerald-600 p-4 text-white">
                     <p className="font-bold text-lg">
                       {currentUser?.user_metadata?.full_name || currentUser?.email?.split('@')[0] || 'User'}
@@ -4245,8 +4247,8 @@ const startPracticeMode = async () => {
 
           {/* Clean Centered Title */}
           <div className="text-center mb-4 sm:mb-6">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent mb-1 sm:mb-2 tracking-tight">InterviewAnswers.ai</h1>
-            <p className="text-base sm:text-lg md:text-xl text-slate-400 font-medium">Master Your Interview Answers with AI</p>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-navy-700 font-['DM_Sans'] mb-1 sm:mb-2 tracking-tight">InterviewAnswers.ai</h1>
+            <p className="text-base sm:text-lg md:text-xl text-slate-500 font-medium">Master Your Interview Answers with AI</p>
 
             {/* Track Switcher — only shown in targeted native builds, hidden on web */}
             {showNursingFeatures() && isTargetedBuild() && (
@@ -4279,12 +4281,12 @@ const startPracticeMode = async () => {
 
           {/* Compact Stats Row */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-2 sm:gap-3 mb-4 sm:mb-6">
-            <div className="bg-gradient-to-br from-teal-50 to-emerald-50 rounded-xl sm:rounded-2xl p-3 sm:p-4 text-slate-800 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 border border-teal-100/60 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.06)] cursor-pointer" onClick={() => {
+            <div className="bg-white rounded-xl p-3 sm:p-4 text-slate-800 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 border border-slate-200 shadow-sm cursor-pointer" onClick={() => {
               setCurrentView('command-center');
               setCommandCenterTab('bank');
             }}>
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-teal-400 to-teal-600 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-teal-400 to-teal-600 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
                   <Database className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
                 <div className="min-w-0">
@@ -4293,12 +4295,12 @@ const startPracticeMode = async () => {
                 </div>
               </div>
             </div>
-            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl sm:rounded-2xl p-3 sm:p-4 text-slate-800 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 border border-indigo-100/60 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.06)] cursor-pointer" onClick={() => {
+            <div className="bg-white rounded-xl p-3 sm:p-4 text-slate-800 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 border border-slate-200 shadow-sm cursor-pointer" onClick={() => {
               setCurrentView('command-center');
               setCommandCenterTab('progress');
             }}>
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-indigo-400 to-purple-600 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-navy-500 to-navy-700 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
                   <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
                 <div className="min-w-0">
@@ -4309,11 +4311,11 @@ const startPracticeMode = async () => {
             </div>
             {/* Usage Dashboard Link Card */}
             <div
-              className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl sm:rounded-2xl p-3 sm:p-4 text-slate-800 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 cursor-pointer border border-amber-100/60 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.06)]"
+              className="bg-white rounded-xl p-3 sm:p-4 text-slate-800 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 cursor-pointer border border-slate-200 shadow-sm"
               onClick={() => setShowUsageDashboard(true)}
             >
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-amber-400 to-orange-600 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-amber-400 to-orange-600 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
                   <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
                 <div className="min-w-0">
@@ -4328,14 +4330,14 @@ const startPracticeMode = async () => {
             </div>
             {/* Days Until Interview Card */}
             <div
-              className="bg-gradient-to-br from-sky-50 to-blue-50 rounded-xl sm:rounded-2xl p-3 sm:p-4 text-slate-800 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 cursor-pointer border border-sky-100/60 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.06)]"
+              className="bg-white rounded-xl p-3 sm:p-4 text-slate-800 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 cursor-pointer border border-slate-200 shadow-sm"
               onClick={() => {
                 setCurrentView('command-center');
                 setCommandCenterTab('prep');
               }}
             >
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-sky-400 to-blue-600 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-sky-400 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
                   <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
                 <div className="min-w-0">
@@ -4367,9 +4369,9 @@ const startPracticeMode = async () => {
 
           {/* Quick Start Tip - Enhanced */}
           {questions.length === 0 && (
-            <div className="bg-gradient-to-r from-teal-50 to-emerald-50 border-2 border-teal-200 rounded-2xl p-6 text-slate-800 mb-6 shadow-sm">
+            <div className="bg-white border border-slate-200 rounded-xl p-6 text-slate-800 mb-6 shadow-sm">
               <div className="flex items-start gap-4">
-                <div className="text-4xl">👋</div>
+                <div className="text-4xl font-bold text-navy-700">Welcome</div>
                 <div className="flex-1">
                   <p className="text-xl font-black mb-2">Welcome{currentUser?.user_metadata?.full_name ? `, ${currentUser.user_metadata.full_name.split(' ')[0]}` : ''}! Let's build your confidence.</p>
                   <p className="text-base text-slate-600 font-medium mb-4">Start with a quick practice or explore your question bank.</p>
@@ -4424,17 +4426,17 @@ const startPracticeMode = async () => {
 
             let rec = null;
             if (daysUntil === 0) {
-              rec = { icon: '⭐', text: "It's interview day! Review your prep and breathe.", action: 'interview-day', btn: 'Enter Day Mode', color: 'from-rose-500 to-pink-500', bg: 'from-rose-50 to-pink-50', border: 'border-rose-200' };
+              rec = { icon: <Star className="w-5 h-5 inline text-rose-500" />, text: "It's interview day! Review your prep and breathe.", action: 'interview-day', btn: 'Enter Day Mode', color: 'from-rose-500 to-pink-500', bg: 'from-rose-50 to-pink-50', border: 'border-rose-200' };
             } else if (questions.length === 0) {
               rec = null; // Welcome banner handles this
             } else if (!hasJD && questions.length > 0) {
-              rec = { icon: '📋', text: 'Decode your job description to unlock tailored questions and strategy.', action: 'jd-decoder', btn: 'Decode JD', color: 'from-sky-500 to-blue-500', bg: 'from-sky-50 to-blue-50', border: 'border-sky-200' };
+              rec = { icon: <ClipboardList className="w-5 h-5 inline text-sky-500" />, text: 'Decode your job description to unlock tailored questions and strategy.', action: 'jd-decoder', btn: 'Decode JD', color: 'from-sky-500 to-blue-500', bg: 'from-sky-50 to-blue-50', border: 'border-sky-200' };
             } else if (practiceHistory.length === 0) {
-              rec = { icon: '🎯', text: 'Start your first practice session to build momentum.', action: 'practice', btn: 'Start Practicing', color: 'from-teal-500 to-emerald-500', bg: 'from-teal-50 to-emerald-50', border: 'border-teal-200' };
+              rec = { icon: <Target className="w-5 h-5 inline text-teal-500" />, text: 'Start your first practice session to build momentum.', action: 'practice', btn: 'Start Practicing', color: 'from-teal-500 to-emerald-500', bg: 'from-teal-50 to-emerald-50', border: 'border-teal-200' };
             } else if (!hasStories && practiceHistory.length >= 5) {
-              rec = { icon: '📖', text: 'You\'ve practiced enough to build your Story Bank — 7 stories cover 50 questions.', action: 'story-bank', btn: 'Build Stories', color: 'from-emerald-500 to-teal-500', bg: 'from-emerald-50 to-teal-50', border: 'border-emerald-200' };
+              rec = { icon: <BookOpen className="w-5 h-5 inline text-emerald-500" />, text: 'You\'ve practiced enough to build your Story Bank — 7 stories cover 50 questions.', action: 'story-bank', btn: 'Build Stories', color: 'from-emerald-500 to-teal-500', bg: 'from-emerald-50 to-teal-50', border: 'border-emerald-200' };
             } else if (coverage < 50 && practiceHistory.length >= 3) {
-              rec = { icon: '📊', text: `You've covered ${coverage}% of your questions. Keep going to build full coverage.`, action: 'practice', btn: 'Practice More', color: 'from-amber-500 to-orange-500', bg: 'from-amber-50 to-orange-50', border: 'border-amber-200' };
+              rec = { icon: <BarChart2 className="w-5 h-5 inline text-amber-500" />, text: `You've covered ${coverage}% of your questions. Keep going to build full coverage.`, action: 'practice', btn: 'Practice More', color: 'from-amber-500 to-orange-500', bg: 'from-amber-50 to-orange-50', border: 'border-amber-200' };
             } else if (daysUntil !== null && daysUntil <= 3 && daysUntil > 0) {
               rec = { icon: '🔥', text: `${daysUntil} day${daysUntil !== 1 ? 's' : ''} until your interview! Focus on your weakest areas.`, action: 'weak-drill', btn: 'STAR Drill', color: 'from-orange-500 to-red-500', bg: 'from-orange-50 to-red-50', border: 'border-orange-200' };
             }
@@ -4456,64 +4458,64 @@ const startPracticeMode = async () => {
 
           {/* Practice Modes — PRIMARY ACTIONS (above everything else) */}
           <div className="mb-6">
-            <h2 className="text-lg sm:text-xl font-bold text-slate-800 mb-1 tracking-tight">Practice</h2>
-            <p className="text-slate-400 text-xs sm:text-sm mb-3 font-medium">Build your skills with hands-on training</p>
+            <h2 className="text-lg sm:text-xl font-semibold text-navy-700 mb-1 tracking-tight font-['DM_Sans']">Practice</h2>
+            <p className="text-slate-500 text-xs sm:text-sm mb-3 font-medium">Build your skills with hands-on training</p>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
               {/* Live Prompter - Enhanced */}
-              <div className="bg-white rounded-2xl shadow-[0_2px_16px_-4px_rgba(0,0,0,0.08)] p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:shadow-xl hover:shadow-teal-500/20 hover:-translate-y-1 active:scale-[0.97] cursor-pointer group relative overflow-hidden border border-slate-100/80">
-                <div className="absolute inset-0 bg-gradient-to-br from-teal-400/0 to-emerald-500/0 group-hover:from-teal-400/10 group-hover:to-emerald-500/10 transition-all duration-300"></div>
+              <div className="bg-white rounded-xl shadow-sm p-4 sm:p-5 lg:p-6 transition-all duration-200 hover:shadow-md active:scale-[0.98] cursor-pointer group relative overflow-hidden border border-slate-200">
+                <div className="absolute inset-0 transition-all duration-200"></div>
                 <div className="text-center flex flex-col h-full relative z-10">
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300 shadow-md">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-105 transition-transform duration-200 shadow-sm">
                     <Mic className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-white" />
                   </div>
-                  <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-1 sm:mb-2 text-slate-800">Live Prompter</h3>
+                  <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-1 sm:mb-2 text-navy-700">Live Prompter</h3>
                   <p className="text-slate-500 text-xs sm:text-sm mb-3 sm:mb-4 flex-1 font-medium">Real-time bullet prompts</p>
-                  <button onClick={(e) => { e.stopPropagation(); startPrompterMode(); }} className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg hover:brightness-110 active:scale-[0.98] text-sm sm:text-base">
+                  <button onClick={(e) => { e.stopPropagation(); startPrompterMode(); }} className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.98] text-sm sm:text-base">
                     Start Practice
                   </button>
                 </div>
               </div>
 
               {/* AI Interviewer - Enhanced */}
-              <div className="bg-white rounded-2xl shadow-[0_2px_16px_-4px_rgba(0,0,0,0.08)] p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/20 hover:-translate-y-1 active:scale-[0.97] cursor-pointer group relative overflow-hidden border border-slate-100/80">
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-400/0 to-indigo-500/0 group-hover:from-purple-400/10 group-hover:to-indigo-500/10 transition-all duration-300"></div>
+              <div className="bg-white rounded-xl shadow-sm p-4 sm:p-5 lg:p-6 transition-all duration-200 hover:shadow-md active:scale-[0.98] cursor-pointer group relative overflow-hidden border border-slate-200">
+                <div className="absolute inset-0 transition-all duration-200"></div>
                 <div className="text-center flex flex-col h-full relative z-10">
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300 shadow-md">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-navy-600 to-navy-700 rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-105 transition-transform duration-200 shadow-sm">
                     <Bot className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-white" />
                   </div>
-                  <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-1 sm:mb-2 text-slate-800">AI Interviewer</h3>
+                  <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-1 sm:mb-2 text-navy-700">AI Interviewer</h3>
                   <p className="text-slate-500 text-xs sm:text-sm mb-3 sm:mb-4 flex-1 font-medium">Realistic interview practice</p>
-                  <button onClick={(e) => { e.stopPropagation(); startAIInterviewer(); }} className="w-full bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg hover:brightness-110 active:scale-[0.98] text-sm sm:text-base">
+                  <button onClick={(e) => { e.stopPropagation(); startAIInterviewer(); }} className="w-full bg-gradient-to-r from-navy-600 to-navy-800 hover:from-navy-700 hover:to-navy-900 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.98] text-sm sm:text-base">
                     Start Interview
                   </button>
                 </div>
               </div>
 
               {/* Practice Mode - Enhanced */}
-              <div className="bg-white rounded-2xl shadow-[0_2px_16px_-4px_rgba(0,0,0,0.08)] p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/20 hover:-translate-y-1 active:scale-[0.97] cursor-pointer group relative overflow-hidden border border-slate-100/80">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-400/0 to-cyan-500/0 group-hover:from-blue-400/10 group-hover:to-cyan-500/10 transition-all duration-300"></div>
+              <div className="bg-white rounded-xl shadow-sm p-4 sm:p-5 lg:p-6 transition-all duration-200 hover:shadow-md active:scale-[0.98] cursor-pointer group relative overflow-hidden border border-slate-200">
+                <div className="absolute inset-0 transition-all duration-200"></div>
                 <div className="text-center flex flex-col h-full relative z-10">
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300 shadow-md">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-105 transition-transform duration-200 shadow-sm">
                     <Target className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-white" />
                   </div>
-                  <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-1 sm:mb-2 text-slate-800">Practice</h3>
+                  <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-1 sm:mb-2 text-navy-700">Practice</h3>
                   <p className="text-slate-500 text-xs sm:text-sm mb-3 sm:mb-4 flex-1 font-medium">AI-powered feedback</p>
-                  <button onClick={(e) => { e.stopPropagation(); startPracticeMode(); }} className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg hover:brightness-110 active:scale-[0.98] text-sm sm:text-base">
+                  <button onClick={(e) => { e.stopPropagation(); startPracticeMode(); }} className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.98] text-sm sm:text-base">
                     Start Session
                   </button>
                 </div>
               </div>
 
               {/* Flashcard - Enhanced */}
-              <div className="bg-white rounded-2xl shadow-[0_2px_16px_-4px_rgba(0,0,0,0.08)] p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:shadow-xl hover:shadow-orange-500/20 hover:-translate-y-1 active:scale-[0.97] cursor-pointer group relative overflow-hidden border border-slate-100/80">
-                <div className="absolute inset-0 bg-gradient-to-br from-orange-400/0 to-amber-500/0 group-hover:from-orange-400/10 group-hover:to-amber-500/10 transition-all duration-300"></div>
+              <div className="bg-white rounded-xl shadow-sm p-4 sm:p-5 lg:p-6 transition-all duration-200 hover:shadow-md active:scale-[0.98] cursor-pointer group relative overflow-hidden border border-slate-200">
+                <div className="absolute inset-0 transition-all duration-200"></div>
                 <div className="text-center flex flex-col h-full relative z-10">
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300 shadow-md">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-105 transition-transform duration-200 shadow-sm">
                     <BookOpen className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-white" />
                   </div>
-                  <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-1 sm:mb-2 text-slate-800">Flashcard</h3>
+                  <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-1 sm:mb-2 text-navy-700">Flashcard</h3>
                   <p className="text-slate-500 text-xs sm:text-sm mb-3 sm:mb-4 flex-1 font-medium">Quick memory drill</p>
-                  <button onClick={(e) => { e.stopPropagation(); startFlashcardMode(); }} className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg hover:brightness-110 active:scale-[0.98] text-sm sm:text-base">
+                  <button onClick={(e) => { e.stopPropagation(); startFlashcardMode(); }} className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.98] text-sm sm:text-base">
                     Start Review
                   </button>
                 </div>
@@ -4523,23 +4525,23 @@ const startPracticeMode = async () => {
 
           {/* Learn & Listen — Featured Section */}
           <div className="mb-6">
-            <h2 className="text-lg sm:text-xl font-bold text-slate-800 mb-1 tracking-tight">Learn & Listen</h2>
-            <p className="text-xs text-slate-400 mb-3 font-medium">Master interview skills at your own pace</p>
+            <h2 className="text-lg sm:text-xl font-semibold text-navy-700 mb-1 tracking-tight font-['DM_Sans']">Learn & Listen</h2>
+            <p className="text-xs text-slate-500 mb-3 font-medium">Master interview skills at your own pace</p>
             <div className="grid grid-cols-2 gap-2 sm:gap-3">
               <button
                 onClick={() => setCurrentView('learn')}
-                className="bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl p-4 sm:p-5 text-left text-white hover:shadow-lg hover:shadow-violet-500/30 hover:scale-[1.02] transition-all relative overflow-hidden group"
+                className="bg-gradient-to-br from-teal-600 to-emerald-600 rounded-xl p-4 sm:p-5 text-left text-white hover:shadow-md hover:shadow-teal-500/30 hover:scale-[1.02] transition-all relative overflow-hidden group"
               >
                 <span className="absolute top-2 right-2 px-1.5 py-0.5 bg-white/20 text-white rounded-full text-[9px] font-bold">NEW</span>
-                <div className="text-2xl sm:text-3xl mb-2">🎓</div>
+                <div className="mb-2"><GraduationCap className="w-7 h-7 sm:w-8 sm:h-8 inline text-white" /></div>
                 <p className="text-sm sm:text-base font-bold">Learn</p>
                 <p className="text-[10px] sm:text-xs text-white/70 mt-0.5">20 lessons • Quizzes • Daily goals</p>
               </button>
               <button
                 onClick={() => setCurrentView('prep-radio')}
-                className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl p-4 sm:p-5 text-left text-white hover:shadow-lg hover:shadow-purple-500/30 hover:scale-[1.02] transition-all relative overflow-hidden group"
+                className="bg-gradient-to-br from-navy-600 to-navy-700 rounded-xl p-4 sm:p-5 text-left text-white hover:shadow-md hover:shadow-navy-500/30 hover:scale-[1.02] transition-all relative overflow-hidden group"
               >
-                <div className="text-2xl sm:text-3xl mb-2">🎧</div>
+                <div className="mb-2"><Headphones className="w-7 h-7 sm:w-8 sm:h-8 inline text-white" /></div>
                 <p className="text-sm sm:text-base font-bold">Prep Radio</p>
                 <p className="text-[10px] sm:text-xs text-white/70 mt-0.5">8 playlists • Hands-free audio prep</p>
               </button>
@@ -4548,48 +4550,48 @@ const startPracticeMode = async () => {
 
           {/* Intelligence Tools — Compact Grid */}
           <div className="mb-6">
-            <h2 className="text-lg sm:text-xl font-bold text-slate-800 mb-1 tracking-tight">Tools</h2>
-            <p className="text-xs text-slate-400 mb-3 font-medium">Research, strategize, and prepare</p>
+            <h2 className="text-lg sm:text-xl font-semibold text-navy-700 mb-1 tracking-tight font-['DM_Sans']">Tools</h2>
+            <p className="text-xs text-slate-500 mb-3 font-medium">Research, strategize, and prepare</p>
             <div className="grid grid-cols-4 gap-2 sm:gap-3 mb-2 sm:mb-3">
               {[
-                { view: 'jd-decoder', icon: '📋', label: 'JD Decoder', desc: 'Analyze job descriptions', color: 'from-sky-400 to-blue-500', badge: 'AI' },
-                { view: 'story-bank', icon: '📖', label: 'Story Bank', desc: 'Build STAR stories', color: 'from-emerald-400 to-teal-500', badge: null },
-                { view: 'interview-coach', icon: '💬', label: 'AI Coach', desc: 'Guided strategy', color: 'from-amber-400 to-orange-500', badge: null },
-                { view: 'weak-drill', icon: '🎯', label: 'STAR Drill', desc: 'Target your weak areas', color: 'from-orange-400 to-red-500', badge: null },
+                { view: 'jd-decoder', icon: <ClipboardList className="w-4 h-4 text-white" />, label: 'JD Decoder', desc: 'Analyze job descriptions', color: 'from-sky-400 to-blue-500', badge: 'AI' },
+                { view: 'story-bank', icon: <BookOpen className="w-4 h-4 text-white" />, label: 'Story Bank', desc: 'Build STAR stories', color: 'from-emerald-400 to-teal-500', badge: null },
+                { view: 'interview-coach', icon: <MessageCircle className="w-4 h-4 text-white" />, label: 'AI Coach', desc: 'Guided strategy', color: 'from-amber-400 to-orange-500', badge: null },
+                { view: 'weak-drill', icon: <Target className="w-4 h-4 text-white" />, label: 'STAR Drill', desc: 'Target your weak areas', color: 'from-orange-400 to-red-500', badge: null },
               ].map(tool => (
                 <button
                   key={tool.view}
                   onClick={() => setCurrentView(tool.view)}
-                  className="bg-white rounded-xl p-2.5 sm:p-3 border border-slate-200 shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all text-center group"
+                  className="bg-white rounded-xl p-2.5 sm:p-3 border border-slate-200 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all text-center group"
                 >
                   {tool.badge && (
                     <span className="absolute top-1.5 right-1.5 px-1 py-0.5 bg-teal-100 text-teal-700 rounded-full text-[8px] font-bold">{tool.badge}</span>
                   )}
-                  <div className={`w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br ${tool.color} rounded-lg flex items-center justify-center mx-auto mb-1 sm:mb-1.5 shadow-sm group-hover:scale-110 transition-transform`}>
-                    <span className="text-sm sm:text-base">{tool.icon}</span>
+                  <div className={`w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br ${tool.color} rounded-lg flex items-center justify-center mx-auto mb-1 sm:mb-1.5 shadow-sm group-hover:scale-105 transition-transform`}>
+                    {tool.icon}
                   </div>
-                  <p className="text-[10px] sm:text-xs font-bold text-slate-800 leading-tight">{tool.label}</p>
+                  <p className="text-[10px] sm:text-xs font-bold text-navy-700 leading-tight">{tool.label}</p>
                   <p className="text-[8px] sm:text-[9px] text-slate-400 leading-tight mt-0.5 hidden sm:block">{tool.desc}</p>
                 </button>
               ))}
             </div>
             <div className="grid grid-cols-5 gap-2 sm:gap-3">
               {[
-                { view: 'portfolio', icon: '💼', label: 'Portfolio', desc: 'Your past work', color: 'from-indigo-400 to-purple-500' },
-                { view: 'interview-day', icon: '⭐', label: 'Day Mode', desc: 'Interview day prep', color: 'from-pink-400 to-rose-500' },
-                { view: 'follow-up-email', icon: '✉️', label: 'Follow-Up', desc: 'Thank-you email', color: 'from-amber-400 to-orange-500' },
-                { view: 'stealth-prompter', icon: '📝', label: 'Notes', desc: 'Stealth interview notes', color: 'from-gray-400 to-slate-500' },
-                { view: 'flashcard', icon: '🃏', label: 'Flashcards', desc: 'Quick review', color: 'from-orange-400 to-amber-500' },
+                { view: 'portfolio', icon: <Briefcase className="w-4 h-4 text-white" />, label: 'Portfolio', desc: 'Your past work', color: 'from-indigo-400 to-purple-500' },
+                { view: 'interview-day', icon: <Star className="w-4 h-4 text-white" />, label: 'Day Mode', desc: 'Interview day prep', color: 'from-pink-400 to-rose-500' },
+                { view: 'follow-up-email', icon: <Mail className="w-4 h-4 text-white" />, label: 'Follow-Up', desc: 'Thank-you email', color: 'from-amber-400 to-orange-500' },
+                { view: 'stealth-prompter', icon: <FileText className="w-4 h-4 text-white" />, label: 'Notes', desc: 'Stealth interview notes', color: 'from-gray-400 to-slate-500' },
+                { view: 'flashcard', icon: <Layers className="w-4 h-4 text-white" />, label: 'Flashcards', desc: 'Quick review', color: 'from-orange-400 to-amber-500' },
               ].map(tool => (
                 <button
                   key={tool.view}
                   onClick={() => tool.view === 'flashcard' ? startFlashcardMode() : setCurrentView(tool.view)}
-                  className="bg-white rounded-xl p-2.5 sm:p-3 border border-slate-200 shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all text-center group"
+                  className="bg-white rounded-xl p-2.5 sm:p-3 border border-slate-200 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all text-center group"
                 >
-                  <div className={`w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br ${tool.color} rounded-lg flex items-center justify-center mx-auto mb-1 sm:mb-1.5 shadow-sm group-hover:scale-110 transition-transform`}>
-                    <span className="text-sm sm:text-base">{tool.icon}</span>
+                  <div className={`w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br ${tool.color} rounded-lg flex items-center justify-center mx-auto mb-1 sm:mb-1.5 shadow-sm group-hover:scale-105 transition-transform`}>
+                    {tool.icon}
                   </div>
-                  <p className="text-[10px] sm:text-xs font-bold text-slate-800 leading-tight">{tool.label}</p>
+                  <p className="text-[10px] sm:text-xs font-bold text-navy-700 leading-tight">{tool.label}</p>
                   <p className="text-[8px] sm:text-[9px] text-slate-400 leading-tight mt-0.5 hidden sm:block">{tool.desc}</p>
                 </button>
               ))}
@@ -4597,11 +4599,11 @@ const startPracticeMode = async () => {
           </div>
 
           {/* Command Center - Enhanced */}
-          <div data-tutorial="command-center" className="bg-gradient-to-r from-teal-600 to-emerald-600 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-xl hover:shadow-teal-500/30 p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:-translate-y-0.5 cursor-pointer border border-teal-500/20 relative overflow-hidden group" onClick={() => setCurrentView('command-center')}>
-            <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 transform translate-x-full group-hover:translate-x-[-100%] transition-transform duration-1000"></div>
+          <div data-tutorial="command-center" className="bg-gradient-to-r from-teal-600 to-emerald-600 rounded-xl shadow-sm hover:shadow-md p-4 sm:p-5 lg:p-6 transition-all duration-200 cursor-pointer border border-teal-500/20 relative overflow-hidden group" onClick={() => setCurrentView('command-center')}>
+            <div className="absolute inset-0"></div>
             <div className="flex items-center justify-between gap-3 sm:gap-4 relative z-10">
               <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-                <div className="text-3xl sm:text-4xl lg:text-5xl flex-shrink-0 leading-none group-hover:scale-110 transition-transform duration-300">🎯</div>
+                <div className="flex-shrink-0 leading-none group-hover:scale-105 transition-transform duration-300"><Target className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-white" /></div>
                 <div className="text-white min-w-0 flex-1">
                   <h3 className="text-lg sm:text-xl lg:text-2xl font-bold mb-0.5 sm:mb-1">Command Center</h3>
                   <p className="text-xs sm:text-sm lg:text-base text-white/80 font-medium">Track progress, manage questions, prep interviews</p>
@@ -4766,7 +4768,7 @@ const startPracticeMode = async () => {
                   <div className="flex items-center gap-3 bg-teal-500/20 px-4 py-2 rounded-lg border-2 border-teal-500">
                     <div className={`w-3 h-3 rounded-full ${isCapturing ? 'bg-red-500 animate-pulse' : 'bg-teal-500'}`}></div>
                     <span className="font-bold text-sm">
-                      {isCapturing ? '🔴 CAPTURING...' : '🟢 Session Active'}
+                      {isCapturing ? <><span className="w-2 h-2 rounded-full bg-red-500 inline-block" /> CAPTURING...</> : <><span className="w-2 h-2 rounded-full bg-green-500 inline-block" /> Session Active</>}
                     </span>
                   </div>
                   <button
@@ -4798,17 +4800,17 @@ const startPracticeMode = async () => {
                   <p className="text-xl text-gray-300 mb-8">Click "Start Session" to begin</p>
                   <SpeechUnavailableWarning variant="banner" darkMode className="mt-4 mb-6 max-w-2xl mx-auto" />
                   <div className="mt-12 bg-teal-900/30 rounded-lg p-6 max-w-2xl mx-auto">
-                    <h4 className="font-bold mb-3">💡 Session Mode Benefits:</h4>
+                    <h4 className="font-bold mb-3"><Lightbulb className="w-4 h-4 inline" /> Session Mode Benefits:</h4>
                     <ul className="text-left text-sm space-y-2">
-                      <li>✅ Only 2 sounds (start + end) - no annoying beeps!</li>
-                      <li>✅ Hold SPACEBAR to capture questions</li>
-                      <li>✅ Your answers NOT recorded</li>
-                      <li>✅ Clean separation between questions</li>
-                      <li>✅ Works with external keyboard on mobile</li>
+                      <li><CheckCircle className="w-4 h-4 inline text-teal-400" /> Only 2 sounds (start + end) - no annoying beeps!</li>
+                      <li><CheckCircle className="w-4 h-4 inline text-teal-400" /> Hold SPACEBAR to capture questions</li>
+                      <li><CheckCircle className="w-4 h-4 inline text-teal-400" /> Your answers NOT recorded</li>
+                      <li><CheckCircle className="w-4 h-4 inline text-teal-400" /> Clean separation between questions</li>
+                      <li><CheckCircle className="w-4 h-4 inline text-teal-400" /> Works with external keyboard on mobile</li>
                     </ul>
                     {!document.documentElement.classList.contains('capacitor') && (
                       <div className="mt-4 pt-4 border-t border-teal-500/30">
-                        <h5 className="font-bold mb-2 text-teal-300">🎧 For Teams/Zoom Calls:</h5>
+                        <h5 className="font-bold mb-2 text-teal-300"><Headphones className="w-4 h-4 inline" /> For Teams/Zoom Calls:</h5>
                         <p className="text-sm text-gray-300">Click "Tab Audio" before starting to capture audio from the browser tab where your Teams/Zoom call is running.</p>
                       </div>
                     )}
@@ -4817,7 +4819,7 @@ const startPracticeMode = async () => {
                         onClick={() => setCurrentView('stealth-prompter')}
                         className="text-sm text-gray-500 hover:text-gray-300 transition-colors"
                       >
-                        📝 Prefer a quieter view? Try Notes Mode
+                        <FileText className="w-4 h-4 inline" /> Prefer a quieter view? Try Notes Mode
                       </button>
                     </div>
                   </div>
@@ -4826,12 +4828,12 @@ const startPracticeMode = async () => {
                 <>
                   {getBrowserInfo().hasReliableSpeech ? (
                     <>
-                      <p className="text-xl text-teal-300 mb-4">✨ Session Active - Ready to capture questions!</p>
+                      <p className="text-xl text-teal-300 mb-4">Session Active - Ready to capture questions!</p>
                       <p className="text-lg text-gray-300 mb-8">Hold SPACEBAR when interviewer asks a question</p>
                     </>
                   ) : (
                     <>
-                      <p className="text-xl text-teal-300 mb-4">✨ Session Active — Use Text Search Below</p>
+                      <p className="text-xl text-teal-300 mb-4">Session Active — Use Text Search Below</p>
                       <SpeechUnavailableWarning variant="banner" darkMode className="max-w-2xl mx-auto mb-8" />
                     </>
                   )}
@@ -4839,7 +4841,7 @@ const startPracticeMode = async () => {
                   {transcript && (
                     <div className="mt-8 bg-gray-800 rounded-lg p-6 max-w-2xl mx-auto">
                       <p className="text-sm text-gray-400 mb-2">
-                        {isCapturing ? '🔴 Capturing...' : '✅ Last captured:'}
+                        {isCapturing ? <><span className="w-2 h-2 rounded-full bg-red-500 inline-block" /> Capturing...</> : <><CheckCircle className="w-4 h-4 inline text-teal-400" /> Last captured:</>}
                       </p>
                       <p className="text-lg">{transcript}</p>
                     </div>
@@ -4848,7 +4850,7 @@ const startPracticeMode = async () => {
                   {/* Voice instructions — only shown when speech is available */}
                   {getBrowserInfo().hasReliableSpeech && (
                   <div className="mt-12 bg-teal-900/30 rounded-lg p-6 max-w-2xl mx-auto border-2 border-teal-500/50">
-                    <h4 className="font-bold mb-3 text-teal-300">🎤 How to Use (Session Mode):</h4>
+                    <h4 className="font-bold mb-3 text-teal-300"><Mic className="w-4 h-4 inline" /> How to Use (Session Mode):</h4>
                     <ol className="text-left text-sm space-y-2">
                       <li>1. Interviewer asks: "Tell me about yourself"</li>
                       <li>2. <strong>Hold SPACEBAR</strong> → Mic captures question</li>
@@ -4897,7 +4899,7 @@ const startPracticeMode = async () => {
             </div>
           ) : (
             <div className="max-w-5xl mx-auto">
-              <div className="bg-gradient-to-br from-teal-600 to-emerald-700 rounded-2xl p-8 mb-6 shadow-2xl">
+              <div className="bg-gradient-to-br from-teal-600 to-emerald-700 rounded-xl p-8 mb-6 shadow-lg">
                 <div className="flex items-center gap-3 mb-6">
                   <CheckCircle className="w-10 h-10" />
                   <h2 className="text-3xl font-bold">Matched!</h2>
@@ -4906,7 +4908,7 @@ const startPracticeMode = async () => {
                   <h3 className="text-4xl font-bold">{matchedQuestion.question}</h3>
                 </div>
               </div>
-              <div className="bg-gray-800 rounded-2xl p-8 mb-6">
+              <div className="bg-gray-800 rounded-xl p-8 mb-6">
                 <h4 className="text-2xl font-bold mb-6 flex items-center gap-3">
                   <Target className="w-8 h-8 text-yellow-400" />
                   Your Key Points:
@@ -4932,7 +4934,7 @@ const startPracticeMode = async () => {
                     {showNarrative ? 'Hide' : 'Show'} Full Narrative
                   </button>
                   {showNarrative && (
-                    <div className="bg-gray-800 rounded-2xl p-8">
+                    <div className="bg-gray-800 rounded-xl p-8">
                       <h4 className="text-xl font-bold mb-4">Full Narrative:</h4>
                       <p className="text-xl leading-relaxed whitespace-pre-line">{matchedQuestion.narrative}</p>
                     </div>
@@ -4948,11 +4950,11 @@ const startPracticeMode = async () => {
             <div className="fixed bottom-8 right-8 z-50">
               {/* LIVE TRANSCRIPT BOX - Shows what mic is hearing in real-time */}
               {(isCapturing || liveTranscript) && (
-                <div className="absolute bottom-24 right-0 w-80 max-w-[90vw] bg-black/90 backdrop-blur-lg rounded-2xl p-4 shadow-2xl border border-teal-500/50 animate-fadeIn">
+                <div className="absolute bottom-24 right-0 w-80 max-w-[90vw] bg-black/90 backdrop-blur-lg rounded-xl p-4 shadow-lg border border-teal-500/50 animate-fadeIn">
                   <div className="flex items-center gap-2 mb-2">
                     <div className={`w-3 h-3 rounded-full ${isCapturing ? 'bg-red-500 animate-pulse' : 'bg-teal-500'}`}></div>
                     <span className="text-xs font-bold text-gray-400 uppercase tracking-wide">
-                      {isCapturing ? '🎤 Listening...' : '✓ Captured'}
+                      {isCapturing ? <><Mic className="w-3 h-3 inline" /> Listening...</> : '✓ Captured'}
                     </span>
                     {matchConfidence > 0 && !isCapturing && (
                       <span className={`ml-auto text-xs font-bold px-2 py-1 rounded ${
@@ -4996,7 +4998,7 @@ const startPracticeMode = async () => {
                   e.preventDefault();
                   if (interviewSessionActive) handleSpacebarUp('touch');
                 }}
-                className={`relative w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 shadow-2xl ${
+                className={`relative w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg ${
                   isCapturing
                     ? 'bg-red-500 hover:bg-red-600 animate-pulse'
                     : 'bg-teal-500 hover:bg-teal-600'
@@ -5055,7 +5057,7 @@ const startPracticeMode = async () => {
           
           <div className="max-w-4xl mx-auto mb-8 min-h-[55vh] flex items-center justify-center">
             {/* CLOUD AVATAR CONTAINER */}
-            <div ref={aiQuestionRef} className="relative bg-gradient-to-br from-teal-800/50 to-slate-800/50 backdrop-blur-lg rounded-3xl p-12 shadow-2xl w-full">
+            <div ref={aiQuestionRef} className="relative bg-gradient-to-br from-teal-800/50 to-slate-800/50 backdrop-blur-lg rounded-xl p-12 shadow-lg w-full">
               {/* Animated Cloud Avatar */}
               <div className="flex justify-center mb-8">
                 <div className="relative">
@@ -5099,7 +5101,7 @@ const startPracticeMode = async () => {
               
               {/* AI Name + Voice Toggle */}
               <h3 className="text-3xl font-bold text-white text-center mb-2">
-                {aiSpeaking ? '🎙️ AI Interviewer Speaking...' : '💭 AI Interviewer'}
+                {aiSpeaking ? <><Mic className="w-6 h-6 inline" /> AI Interviewer Speaking...</> : <><MessageSquare className="w-6 h-6 inline" /> AI Interviewer</>}
               </h3>
               <div className="flex justify-center mb-4">
                 <button
@@ -5115,7 +5117,7 @@ const startPracticeMode = async () => {
                       : 'bg-teal-500/20 text-teal-300 hover:bg-teal-500/30 ring-1 ring-teal-500/40'
                   }`}
                 >
-                  {voiceMuted ? '🔇 Voice Off' : '🔊 Voice On'}
+                  {voiceMuted ? <><VolumeX className="w-4 h-4 inline" /> Voice Off</> : <><Volume2 className="w-4 h-4 inline" /> Voice On</>}
                   {!voiceMuted && userTier === 'free' && (
                     <span className="text-xs bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full">
                       HD Trial: {Math.max(0, 3 - parseInt(localStorage.getItem('isl_hd_voice_trials') || '0', 10))} left
@@ -5127,14 +5129,14 @@ const startPracticeMode = async () => {
               {/* SUBTITLE DISPLAY */}
               <div className="relative min-h-32">
                 {aiSubtitle ? (
-                  <div className="bg-black/70 backdrop-blur rounded-2xl p-8 border-2 border-white/30 shadow-xl">
+                  <div className="bg-black/70 backdrop-blur rounded-xl p-8 border-2 border-white/30 shadow-xl">
                     <div className="flex items-start gap-4">
                       <Volume2 className="w-8 h-8 text-teal-400 flex-shrink-0 animate-pulse" />
                       <p className="text-3xl text-white font-medium leading-relaxed">"{aiSubtitle}"</p>
                     </div>
                   </div>
                 ) : (
-                  <div className="bg-white/20 backdrop-blur rounded-2xl p-6 border-2 border-white/20">
+                  <div className="bg-white/20 backdrop-blur rounded-xl p-6 border-2 border-white/20">
 <p className="text-2xl text-white/90 text-center italic">{followUpQuestion || currentQuestion.question}</p>
                   </div>
                 )}
@@ -5159,7 +5161,7 @@ const startPracticeMode = async () => {
           
           {/* INPUT SECTION - Only show when NO feedback */}
           {!feedback && (
-            <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-2xl p-8">
+            <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-8">
               <h3 className="text-2xl font-bold mb-6">Your Answer:</h3>
               
               {/* SPEECH INPUT SECTION */}
@@ -5179,7 +5181,7 @@ const startPracticeMode = async () => {
                   onTouchEnd={stopListening}
                   className={`w-full py-6 rounded-lg font-bold text-lg transition mb-4 ${isListening ? 'bg-red-600 text-white animate-pulse' : 'bg-teal-600 hover:bg-teal-700 text-white'}`}
                 >
-                  {isListening ? '🎤 Release to Stop Recording' : '🎤 Hold to Speak Your Answer'}
+                  {isListening ? <><Mic className="w-5 h-5 inline" /> Release to Stop Recording</> : <><Mic className="w-5 h-5 inline" /> Hold to Speak Your Answer</>}
                 </button>
                 <p className="text-xs text-center text-gray-600">Hold SPACEBAR or this button to speak. Your answer will appear below.</p>
               </div>
@@ -5205,7 +5207,7 @@ const startPracticeMode = async () => {
                     </button>
                   </div>
                   <p className="text-lg text-gray-800 leading-relaxed">{spokenAnswer || transcript || 'Start speaking...'}</p>
-                  <p className="text-xs text-gray-500 mt-2">📊 Word count: {(spokenAnswer || transcript).split(' ').filter(w => w).length}</p>
+                  <p className="text-xs text-gray-500 mt-2"><BarChart2 className="w-3 h-3 inline" /> Word count: {(spokenAnswer || transcript).split(' ').filter(w => w).length}</p>
                 </div>
               )}
               
@@ -5233,15 +5235,15 @@ const startPracticeMode = async () => {
                       className="text-sm bg-gradient-to-r from-teal-100 to-sky-100 hover:from-teal-200 hover:to-sky-200 text-teal-700 px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2"
                     >
                       <Lightbulb className="w-4 h-4" />
-                      💡 Can't Think of an Answer? AI Can Help
+                      Can't Think of an Answer? AI Can Help
                     </button>
                   ) : (
                     <button
-                      onClick={(e) => { e.stopPropagation(); alert('⭐ Pro Feature\n\nGet a 30-Day Pass ($14.99) for UNLIMITED access!\n\n✓ Unlimited AI Answer Coach sessions\n✓ Unlimited AI Interview practice\n✓ Unlimited Practice Mode\n✓ No subscription — just one payment!'); }}
+                      onClick={(e) => { e.stopPropagation(); alert('Pro Feature\n\nGet a 30-Day Pass ($14.99) for UNLIMITED access!\n\n✓ Unlimited AI Answer Coach sessions\n✓ Unlimited AI Interview practice\n✓ Unlimited Practice Mode\n✓ No subscription — just one payment!'); }}
                       className="text-sm bg-gradient-to-r from-yellow-100 to-amber-100 hover:from-yellow-200 hover:to-amber-200 text-yellow-800 px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2"
                     >
                       <Crown className="w-4 h-4" />
-                      💡 Can't Think of an Answer? Upgrade for AI Help
+                      Can't Think of an Answer? Upgrade for AI Help
                     </button>
                   )}
                 </div>
@@ -5268,11 +5270,11 @@ const startPracticeMode = async () => {
           )}
 
  {feedback && (
-  <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-2xl p-8">
+  <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-8">
     {/* AI DISCLAIMER */}
     <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded p-3 mb-4">
       <p className="text-xs text-yellow-900">
-        <span className="font-semibold">🤖 AI-Generated:</span> For practice only. Not professional advice.
+        <span className="font-semibold"><Bot className="w-4 h-4 inline" /> AI-Generated:</span> For practice only. Not professional advice.
       </p>
     </div>
     
@@ -5288,7 +5290,7 @@ const startPracticeMode = async () => {
           }}
           className="text-sm bg-teal-100 hover:bg-teal-200 text-teal-700 px-4 py-2 rounded-lg font-semibold transition-all"
         >
-          ⚡ Show All
+          <Zap className="w-4 h-4 inline" /> Show All
         </button>
       )}
     </div>
@@ -5311,9 +5313,9 @@ const startPracticeMode = async () => {
         const actual = feedback.overall;
         const predicted = confidenceRating * 2;
         const gap = Math.abs(actual - predicted);
-        const msg = gap <= 1 ? '🎯 Great self-awareness! Your confidence matched your score.'
-          : actual > predicted ? '💪 You scored higher than expected! Trust yourself more.'
-          : `📚 You rated ${confidenceRating}/5 but scored ${actual.toFixed(1)}/10. More practice needed here.`;
+        const msg = gap <= 1 ? 'Great self-awareness! Your confidence matched your score.'
+          : actual > predicted ? 'You scored higher than expected! Trust yourself more.'
+          : `You rated ${confidenceRating}/5 but scored ${actual.toFixed(1)}/10. More practice needed here.`;
         return <p className="mt-3 text-sm opacity-90">{msg}</p>;
       })()}
     </div>
@@ -5327,7 +5329,7 @@ const startPracticeMode = async () => {
         >
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-teal-500 rounded-full flex items-center justify-center">
-              <span className="text-2xl">💡</span>
+              <Lightbulb className="w-6 h-6 text-white" />
             </div>
             <div className="text-left">
               <span className="font-bold text-teal-900 text-lg block">Example of Strong Answer</span>
@@ -5352,7 +5354,7 @@ const startPracticeMode = async () => {
             <div className="bg-teal-50 rounded-lg p-5 border-2 border-teal-400">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-lg">⭐</span>
+                  <Star className="w-4 h-4 text-white" />
                 </div>
                 <h5 className="font-bold text-teal-900">Strong Example</h5>
               </div>
@@ -5405,7 +5407,7 @@ const startPracticeMode = async () => {
           className="w-full bg-amber-50 hover:bg-amber-100 border-2 border-amber-300 rounded-xl p-4 flex items-center justify-between transition-all mb-3"
         >
           <h4 className="font-bold text-amber-900 text-xl flex items-center gap-2">
-            <span className="text-3xl">📈</span> 
+            <TrendingUp className="w-8 h-8 text-teal-600" /> 
             <span>Growth Areas ({feedback.gaps.length})</span>
           </h4>
           <span className="text-amber-600 text-xl font-bold">{showGaps ? '▼' : '▶'}</span>
@@ -5433,7 +5435,7 @@ const startPracticeMode = async () => {
       <div className={`mb-6 feedback-section ${isSectionVisible(4) ? 'visible' : ''}`}>
         <div className="bg-teal-50 border-2 border-teal-300 rounded-xl p-4 mb-3">
           <h4 className="font-bold text-teal-900 text-xl flex items-center gap-2">
-            <span className="text-3xl">🎯</span> 
+            <Target className="w-8 h-8 text-teal-600" /> 
             <span>Action Steps ({feedback.specific_improvements.length})</span>
           </h4>
           <p className="text-sm text-teal-700 mt-1">Specific ways to improve your answer</p>
@@ -5459,7 +5461,7 @@ const startPracticeMode = async () => {
       <div className={`mb-6 feedback-section ${isSectionVisible(5) ? 'visible' : ''}`}>
         <div className="bg-gradient-to-r from-teal-50 to-sky-50 border-2 border-teal-300 rounded-xl p-4 mb-4">
           <h4 className="font-bold text-teal-900 text-xl flex items-center gap-2">
-            <span className="text-3xl">⭐</span> 
+            <Star className="w-8 h-8 text-amber-500" /> 
             <span>STAR Framework Analysis</span>
           </h4>
           <p className="text-sm text-teal-700 mt-1">How your answer maps to the STAR method</p>
@@ -5478,7 +5480,7 @@ const startPracticeMode = async () => {
                   ? 'bg-green-500' 
                   : 'bg-gray-400'
               }`}>
-                <span className="text-2xl">📍</span>
+                <MapPin className="w-5 h-5 text-teal-600" />
               </div>
               <h5 className="font-bold text-gray-900">Situation</h5>
             </div>
@@ -5497,7 +5499,7 @@ const startPracticeMode = async () => {
                   ? 'bg-green-500' 
                   : 'bg-gray-400'
               }`}>
-                <span className="text-2xl">🎯</span>
+                <Target className="w-5 h-5 text-teal-600" />
               </div>
               <h5 className="font-bold text-gray-900">Task</h5>
             </div>
@@ -5516,7 +5518,7 @@ const startPracticeMode = async () => {
                   ? 'bg-green-500' 
                   : 'bg-gray-400'
               }`}>
-                <span className="text-2xl">⚡</span>
+                <Zap className="w-5 h-5 text-amber-500" />
               </div>
               <h5 className="font-bold text-gray-900">Action</h5>
             </div>
@@ -5535,7 +5537,7 @@ const startPracticeMode = async () => {
                   ? 'bg-green-500' 
                   : 'bg-gray-400'
               }`}>
-                <span className="text-2xl">🏆</span>
+                <Trophy className="w-5 h-5 text-amber-500" />
               </div>
               <h5 className="font-bold text-gray-900">Result</h5>
             </div>
@@ -5577,7 +5579,7 @@ const startPracticeMode = async () => {
     {(feedback.points_covered || feedback.points_missed) && isSectionVisible(6) && (
       <div className={`bg-gray-50 rounded-xl p-6 mb-6 border-2 border-gray-300 feedback-section ${isSectionVisible(6) ? 'visible' : ''}`}>
         <h4 className="font-bold text-gray-900 text-xl mb-4 flex items-center gap-2">
-          <span className="text-2xl">📊</span>
+          <BarChart2 className="w-5 h-5 text-teal-600" />
           <span>Key Points Coverage</span>
         </h4>
         
@@ -5629,7 +5631,7 @@ const startPracticeMode = async () => {
           }} 
           className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 rounded-xl transition-all hover:scale-105 shadow-lg"
         >
-          🔄 Try Again
+          <RotateCcw className="w-4 h-4 inline" /> Try Again
         </button>
         <button 
           onClick={() => { 
@@ -5643,7 +5645,7 @@ const startPracticeMode = async () => {
           }} 
           className="flex-1 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-bold py-4 rounded-xl transition-all hover:scale-105 shadow-lg"
         >
-          ➡️ Next Question
+          <ArrowRight className="w-4 h-4 inline" /> Next Question
         </button>
       </div>
     )}
@@ -5773,14 +5775,14 @@ const startPracticeMode = async () => {
             </div>
           )}
 
-          <div className="bg-white rounded-2xl shadow-lg p-8 mb-6">
+          <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
             <h2 className="text-4xl font-bold mb-4">{currentQuestion.question}</h2>
             {/* Phase 4E: Teach Me button */}
             <button
               onClick={() => setSparkNotesQuestion(currentQuestion)}
               className="mb-6 px-4 py-1.5 bg-purple-50 text-purple-600 rounded-full text-sm font-medium hover:bg-purple-100 transition-colors border border-purple-200"
             >
-              📚 Teach Me This Question
+              <BookOpen className="w-4 h-4 inline" /> Teach Me This Question
             </button>
 
             {/* Phase 4M: Confidence Calibration - pre-answer rating */}
@@ -5831,7 +5833,7 @@ const startPracticeMode = async () => {
                     onTouchEnd={stopListening}
                     className={`w-full py-6 rounded-lg font-bold text-lg transition mb-4 ${isListening ? 'bg-red-600 text-white animate-pulse' : 'bg-teal-600 hover:bg-teal-700 text-white'}`}
                   >
-                    {isListening ? '🎤 Release to Stop' : '🎤 Hold to Speak (or use SPACEBAR)'}
+                    {isListening ? <><Mic className="w-5 h-5 inline" /> Release to Stop</> : <><Mic className="w-5 h-5 inline" /> Hold to Speak (or use SPACEBAR)</>}
                   </button>
                 </div>
                 )}
@@ -5852,7 +5854,7 @@ const startPracticeMode = async () => {
                       </button>
                     </div>
                     <p className="text-lg text-gray-800 leading-relaxed">{spokenAnswer || transcript}</p>
-                    <p className="text-xs text-gray-500 mt-2">📊 {(spokenAnswer || transcript).split(' ').filter(w => w).length} words</p>
+                    <p className="text-xs text-gray-500 mt-2"><BarChart2 className="w-3 h-3 inline" /> {(spokenAnswer || transcript).split(' ').filter(w => w).length} words</p>
                   </div>
                 )}
                 
@@ -5879,15 +5881,15 @@ const startPracticeMode = async () => {
                         className="text-sm bg-gradient-to-r from-teal-100 to-sky-100 hover:from-teal-200 hover:to-sky-200 text-teal-700 px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2"
                       >
                         <Lightbulb className="w-4 h-4" />
-                        💡 Can't Think of an Answer? AI Can Help
+                        Can't Think of an Answer? AI Can Help
                       </button>
                     ) : (
                       <button
-                        onClick={(e) => { e.stopPropagation(); alert('⭐ Pro Feature\n\nGet a 30-Day Pass ($14.99) for UNLIMITED access!\n\n✓ Unlimited AI Answer Coach sessions\n✓ Unlimited AI Interview practice\n✓ Unlimited Practice Mode\n✓ No subscription — just one payment!'); }}
+                        onClick={(e) => { e.stopPropagation(); alert('Pro Feature\n\nGet a 30-Day Pass ($14.99) for UNLIMITED access!\n\n✓ Unlimited AI Answer Coach sessions\n✓ Unlimited AI Interview practice\n✓ Unlimited Practice Mode\n✓ No subscription — just one payment!'); }}
                         className="text-sm bg-gradient-to-r from-yellow-100 to-amber-100 hover:from-yellow-200 hover:to-amber-200 text-yellow-800 px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2"
                       >
                         <Crown className="w-4 h-4" />
-                        💡 Can't Think of an Answer? Upgrade for AI Help
+                        Can't Think of an Answer? Upgrade for AI Help
                       </button>
                     )}
                   </div>
@@ -5915,11 +5917,11 @@ const startPracticeMode = async () => {
             )}
 
  {feedback && (
-  <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-2xl p-8">
+  <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-8">
     {/* AI DISCLAIMER */}
     <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded p-3 mb-4">
       <p className="text-xs text-yellow-900">
-        <span className="font-semibold">🤖 AI-Generated:</span> For practice only. Not professional advice.
+        <span className="font-semibold"><Bot className="w-4 h-4 inline" /> AI-Generated:</span> For practice only. Not professional advice.
       </p>
     </div>
     
@@ -5935,7 +5937,7 @@ const startPracticeMode = async () => {
           }}
           className="text-sm bg-teal-100 hover:bg-teal-200 text-teal-700 px-4 py-2 rounded-lg font-semibold transition-all"
         >
-          ⚡ Show All
+          <Zap className="w-4 h-4 inline" /> Show All
         </button>
       )}
     </div>
@@ -5958,9 +5960,9 @@ const startPracticeMode = async () => {
         const actual = feedback.overall;
         const predicted = confidenceRating * 2;
         const gap = Math.abs(actual - predicted);
-        const msg = gap <= 1 ? '🎯 Great self-awareness! Your confidence matched your score.'
-          : actual > predicted ? '💪 You scored higher than expected! Trust yourself more.'
-          : `📚 You rated ${confidenceRating}/5 but scored ${actual.toFixed(1)}/10. More practice needed here.`;
+        const msg = gap <= 1 ? 'Great self-awareness! Your confidence matched your score.'
+          : actual > predicted ? 'You scored higher than expected! Trust yourself more.'
+          : `You rated ${confidenceRating}/5 but scored ${actual.toFixed(1)}/10. More practice needed here.`;
         return <p className="mt-3 text-sm opacity-90">{msg}</p>;
       })()}
     </div>
@@ -5974,7 +5976,7 @@ const startPracticeMode = async () => {
         >
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-teal-500 rounded-full flex items-center justify-center">
-              <span className="text-2xl">💡</span>
+              <Lightbulb className="w-6 h-6 text-white" />
             </div>
             <div className="text-left">
               <span className="font-bold text-teal-900 text-lg block">Example of Strong Answer</span>
@@ -5999,7 +6001,7 @@ const startPracticeMode = async () => {
             <div className="bg-teal-50 rounded-lg p-5 border-2 border-teal-400">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-lg">⭐</span>
+                  <Star className="w-4 h-4 text-white" />
                 </div>
                 <h5 className="font-bold text-teal-900">Strong Example</h5>
               </div>
@@ -6052,7 +6054,7 @@ const startPracticeMode = async () => {
           className="w-full bg-amber-50 hover:bg-amber-100 border-2 border-amber-300 rounded-xl p-4 flex items-center justify-between transition-all mb-3"
         >
           <h4 className="font-bold text-amber-900 text-xl flex items-center gap-2">
-            <span className="text-3xl">📈</span> 
+            <TrendingUp className="w-8 h-8 text-teal-600" /> 
             <span>Growth Areas ({feedback.gaps.length})</span>
           </h4>
           <span className="text-amber-600 text-xl font-bold">{showGaps ? '▼' : '▶'}</span>
@@ -6080,7 +6082,7 @@ const startPracticeMode = async () => {
       <div className={`mb-6 feedback-section ${isSectionVisible(4) ? 'visible' : ''}`}>
         <div className="bg-teal-50 border-2 border-teal-300 rounded-xl p-4 mb-3">
           <h4 className="font-bold text-teal-900 text-xl flex items-center gap-2">
-            <span className="text-3xl">🎯</span> 
+            <Target className="w-8 h-8 text-teal-600" /> 
             <span>Action Steps ({feedback.specific_improvements.length})</span>
           </h4>
           <p className="text-sm text-teal-700 mt-1">Specific ways to improve your answer</p>
@@ -6106,7 +6108,7 @@ const startPracticeMode = async () => {
       <div className={`mb-6 feedback-section ${isSectionVisible(5) ? 'visible' : ''}`}>
         <div className="bg-gradient-to-r from-teal-50 to-sky-50 border-2 border-teal-300 rounded-xl p-4 mb-4">
           <h4 className="font-bold text-teal-900 text-xl flex items-center gap-2">
-            <span className="text-3xl">⭐</span> 
+            <Star className="w-8 h-8 text-amber-500" /> 
             <span>STAR Framework Analysis</span>
           </h4>
           <p className="text-sm text-teal-700 mt-1">How your answer maps to the STAR method</p>
@@ -6125,7 +6127,7 @@ const startPracticeMode = async () => {
                   ? 'bg-green-500' 
                   : 'bg-gray-400'
               }`}>
-                <span className="text-2xl">📍</span>
+                <MapPin className="w-5 h-5 text-teal-600" />
               </div>
               <h5 className="font-bold text-gray-900">Situation</h5>
             </div>
@@ -6144,7 +6146,7 @@ const startPracticeMode = async () => {
                   ? 'bg-green-500' 
                   : 'bg-gray-400'
               }`}>
-                <span className="text-2xl">🎯</span>
+                <Target className="w-5 h-5 text-teal-600" />
               </div>
               <h5 className="font-bold text-gray-900">Task</h5>
             </div>
@@ -6163,7 +6165,7 @@ const startPracticeMode = async () => {
                   ? 'bg-green-500' 
                   : 'bg-gray-400'
               }`}>
-                <span className="text-2xl">⚡</span>
+                <Zap className="w-5 h-5 text-amber-500" />
               </div>
               <h5 className="font-bold text-gray-900">Action</h5>
             </div>
@@ -6182,7 +6184,7 @@ const startPracticeMode = async () => {
                   ? 'bg-green-500' 
                   : 'bg-gray-400'
               }`}>
-                <span className="text-2xl">🏆</span>
+                <Trophy className="w-5 h-5 text-amber-500" />
               </div>
               <h5 className="font-bold text-gray-900">Result</h5>
             </div>
@@ -6224,7 +6226,7 @@ const startPracticeMode = async () => {
     {(feedback.points_covered || feedback.points_missed) && isSectionVisible(6) && (
       <div className={`bg-gray-50 rounded-xl p-6 mb-6 border-2 border-gray-300 feedback-section ${isSectionVisible(6) ? 'visible' : ''}`}>
         <h4 className="font-bold text-gray-900 text-xl mb-4 flex items-center gap-2">
-          <span className="text-2xl">📊</span>
+          <BarChart2 className="w-5 h-5 text-teal-600" />
           <span>Key Points Coverage</span>
         </h4>
         
@@ -6276,7 +6278,7 @@ const startPracticeMode = async () => {
           }} 
           className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 rounded-xl transition-all hover:scale-105 shadow-lg"
         >
-          🔄 Try Again
+          <RotateCcw className="w-4 h-4 inline" /> Try Again
         </button>
         <button 
           onClick={() => { 
@@ -6290,7 +6292,7 @@ const startPracticeMode = async () => {
           }} 
           className="flex-1 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-bold py-4 rounded-xl transition-all hover:scale-105 shadow-lg"
         >
-          ➡️ Next Question
+          <ArrowRight className="w-4 h-4 inline" /> Next Question
         </button>
       </div>
     )}
@@ -6457,14 +6459,14 @@ const startPracticeMode = async () => {
               {/* Left Arrow - Desktop Only */}
               <button
                 onClick={goToPreviousCard}
-                className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-16 w-12 h-12 bg-white/20 hover:bg-white/30 backdrop-blur rounded-full items-center justify-center text-white text-2xl font-bold transition-all hover:scale-110 z-10"
+                className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-16 w-12 h-12 bg-white/20 hover:bg-white/30 backdrop-blur rounded-full items-center justify-center text-white text-2xl font-bold transition-all hover:scale-105 z-10"
               >
                 ←
               </button>
 
               {/* Flashcard - Swipeable on Mobile, Clickable to Flip */}
               <div 
-                className="bg-white rounded-2xl shadow-2xl p-8 md:p-12 min-h-[400px] flex items-center justify-center cursor-pointer transition-all select-none"
+                className="bg-white rounded-xl shadow-lg p-8 md:p-12 min-h-[400px] flex items-center justify-center cursor-pointer transition-all select-none"
                 onClick={flipCard}
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
@@ -6500,7 +6502,7 @@ const startPracticeMode = async () => {
               {/* Right Arrow - Desktop Only */}
               <button
                 onClick={goToNextCard}
-                className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-16 w-12 h-12 bg-white/20 hover:bg-white/30 backdrop-blur rounded-full items-center justify-center text-white text-2xl font-bold transition-all hover:scale-110 z-10"
+                className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-16 w-12 h-12 bg-white/20 hover:bg-white/30 backdrop-blur rounded-full items-center justify-center text-white text-2xl font-bold transition-all hover:scale-105 z-10"
               >
                 →
               </button>
@@ -6568,7 +6570,7 @@ const startPracticeMode = async () => {
                           { emoji: '😐', label: 'Vague', rating: 2 },
                           { emoji: '🙂', label: 'Okay', rating: 3 },
                           { emoji: '😊', label: 'Good', rating: 4 },
-                          { emoji: '🎯', label: 'Mastered', rating: 5 }
+                          { emoji: '✓', label: 'Mastered', rating: 5 }
                         ].map((option) => (
                           <button
                             key={option.rating}
@@ -6607,7 +6609,7 @@ const startPracticeMode = async () => {
                   onClick={() => setShowNarrative(!showNarrative)}
                   className="flex-1 bg-white/20 hover:bg-white/30 backdrop-blur text-white font-bold py-3 rounded-xl transition text-sm"
                 >
-                  {showNarrative ? '📖 Hide' : '📖 Show'} Narrative
+                  {showNarrative ? <><BookOpen className="w-4 h-4 inline" /> Hide</> : <><BookOpen className="w-4 h-4 inline" /> Show</>} Narrative
                 </button>
               )}
             </div>
@@ -6770,7 +6772,7 @@ const startPracticeMode = async () => {
             <button onClick={() => setCurrentView('home')} className="text-slate-600 hover:text-slate-900 font-semibold text-sm sm:text-base flex items-center gap-1 hover:gap-2 transition-all">
               ← <span className="hidden sm:inline">Back</span>
             </button>
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-800">🎯 Command Center</h1>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-navy-700"><Target className="w-6 h-6 inline" /> Command Center</h1>
             <div className="w-12 sm:w-16"></div>
           </div>
         </div>
@@ -6787,7 +6789,7 @@ const startPracticeMode = async () => {
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                📊 Analytics
+                <BarChart2 className="w-4 h-4 inline" /> Analytics
               </button>
               <button
                 onClick={() => setCommandCenterTab('queue')}
@@ -6797,7 +6799,7 @@ const startPracticeMode = async () => {
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                🎯 Queue
+                <Target className="w-4 h-4 inline" /> Queue
               </button>
               <button
                 onClick={() => setCommandCenterTab('prep')}
@@ -6817,7 +6819,7 @@ const startPracticeMode = async () => {
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                📚 Bank
+                <BookOpen className="w-4 h-4 inline" /> Bank
               </button>
               <button
                 onClick={() => setCommandCenterTab('progress')}
@@ -6827,7 +6829,7 @@ const startPracticeMode = async () => {
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                📈 Progress
+                <TrendingUp className="w-4 h-4 inline" /> Progress
               </button>
             </div>
           </div>
@@ -6840,26 +6842,26 @@ const startPracticeMode = async () => {
             <div>
               {/* Stats Overview */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 lg:gap-4 mb-5 sm:mb-6">
-                <div className="bg-gradient-to-br from-teal-500 to-emerald-600 rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-5 text-white cursor-pointer hover:scale-[1.02] hover:shadow-lg transition-all" onClick={() => setCommandCenterTab('progress')}>
+                <div className="bg-gradient-to-br from-teal-500 to-emerald-600 rounded-xl sm:rounded-xl p-3 sm:p-4 lg:p-5 text-white cursor-pointer hover:scale-[1.02] hover:shadow-md transition-all" onClick={() => setCommandCenterTab('progress')}>
                   <p className="text-xs sm:text-sm text-white/90 font-medium mb-0.5 sm:mb-1">Total Sessions</p>
                   <p className="text-2xl sm:text-3xl lg:text-4xl font-black">{practiceHistory.length}</p>
-                  <p className="text-[10px] sm:text-xs text-white/75 mt-0.5 sm:mt-1">🎯 Keep it up!</p>
+                  <p className="text-[10px] sm:text-xs text-white/75 mt-0.5 sm:mt-1">Keep it up!</p>
                 </div>
-                <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-5 text-white cursor-pointer hover:scale-[1.02] hover:shadow-lg transition-all" onClick={() => setCommandCenterTab('progress')}>
+                <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl sm:rounded-xl p-3 sm:p-4 lg:p-5 text-white cursor-pointer hover:scale-[1.02] hover:shadow-md transition-all" onClick={() => setCommandCenterTab('progress')}>
                   <p className="text-xs sm:text-sm text-white/90 font-medium mb-0.5 sm:mb-1">Average Score</p>
                   <p className="text-2xl sm:text-3xl lg:text-4xl font-black">
                     {practiceHistory.length > 0
                       ? (practiceHistory.reduce((sum, s) => sum + (s.feedback?.overall || 0), 0) / practiceHistory.length).toFixed(1)
                       : '0.0'}
                   </p>
-                  <p className="text-[10px] sm:text-xs text-white/75 mt-0.5 sm:mt-1">📈 Improving</p>
+                  <p className="text-[10px] sm:text-xs text-white/75 mt-0.5 sm:mt-1">Improving</p>
                 </div>
-                <div className="bg-gradient-to-br from-teal-500 to-sky-600 rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-5 text-white cursor-pointer hover:scale-[1.02] hover:shadow-lg transition-all" onClick={() => setCommandCenterTab('bank')}>
+                <div className="bg-gradient-to-br from-teal-500 to-sky-600 rounded-xl sm:rounded-xl p-3 sm:p-4 lg:p-5 text-white cursor-pointer hover:scale-[1.02] hover:shadow-md transition-all" onClick={() => setCommandCenterTab('bank')}>
                   <p className="text-xs sm:text-sm text-white/90 font-medium mb-0.5 sm:mb-1">Practiced</p>
                   <p className="text-2xl sm:text-3xl lg:text-4xl font-black">{questions.filter(q => q.practiceCount > 0).length}</p>
                   <p className="text-[10px] sm:text-xs text-white/75 mt-0.5 sm:mt-1">of {questions.length} total</p>
                 </div>
-                <div className="bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-5 text-white cursor-pointer hover:scale-[1.02] hover:shadow-lg transition-all" onClick={() => setCommandCenterTab('prep')}>
+                <div className="bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl sm:rounded-xl p-3 sm:p-4 lg:p-5 text-white cursor-pointer hover:scale-[1.02] hover:shadow-md transition-all" onClick={() => setCommandCenterTab('prep')}>
                   <p className="text-xs sm:text-sm text-white/90 font-medium mb-0.5 sm:mb-1">This Month</p>
                   <p className="text-2xl sm:text-3xl lg:text-4xl font-black">
                     {practiceHistory.filter(s => {
@@ -6874,8 +6876,8 @@ const startPracticeMode = async () => {
               </div>
 
               {/* Most Practiced Questions */}
-              <div className="bg-white rounded-xl sm:rounded-2xl shadow-md border border-slate-100 p-4 sm:p-5 mb-5 sm:mb-6">
-                <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-slate-800">🔥 Most practiced</h3>
+              <div className="bg-white rounded-xl sm:rounded-xl shadow-md border border-slate-100 p-4 sm:p-5 mb-5 sm:mb-6">
+                <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-navy-700">Most practiced</h3>
                 {(() => {
                   // Calculate practice counts and averages from history
                   const questionStats = {};
@@ -6972,7 +6974,7 @@ const startPracticeMode = async () => {
             <div>
               {/* Never Practiced */}
               <div className="bg-white rounded-xl shadow-md p-5 mb-6">
-                <h3 className="text-xl font-bold mb-4 text-red-600">🎯 Let's Strengthen These {questions.filter(q => q.practiceCount === 0).length} Questions!</h3>
+                <h3 className="text-xl font-bold mb-4 text-red-600"><Target className="w-5 h-5 inline" /> Let's Strengthen These {questions.filter(q => q.practiceCount === 0).length} Questions!</h3>
                 {questions.filter(q => q.practiceCount === 0).length === 0 ? (
                   <div className="text-center py-8">
                     <p className="text-2xl mb-2">🎉</p>
@@ -7027,10 +7029,10 @@ const startPracticeMode = async () => {
 
               {/* Needs Improvement */}
               <div className="bg-white rounded-xl shadow-md p-5">
-                <h3 className="text-xl font-bold mb-4 text-amber-600">📈 Almost There - Keep Going!</h3>
+                <h3 className="text-xl font-bold mb-4 text-amber-600"><TrendingUp className="w-5 h-5 inline" /> Almost There - Keep Going!</h3>
                 {questions.filter(q => q.practiceCount > 0 && q.averageScore < 7).length === 0 ? (
                   <div className="text-center py-8">
-                    <p className="text-2xl mb-2">⭐</p>
+                    <p className="mb-2"><Star className="w-6 h-6 inline text-amber-500" /></p>
                     <p className="text-gray-800 text-base font-bold mb-1">You're crushing it!</p>
                     <p className="text-sm text-gray-600">All practiced questions scored 7+ average!</p>
                   </div>
@@ -7096,7 +7098,7 @@ const startPracticeMode = async () => {
         onClick={() => setSelectedSession(null)}
       >
         <div 
-          className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-slideUp"
+          className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-lg animate-slideUp"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Modal Header */}
@@ -7107,7 +7109,7 @@ const startPracticeMode = async () => {
                 <div className="flex items-center gap-4 text-sm opacity-90">
                   <span>📅 {new Date(selectedSession.date).toLocaleDateString()}</span>
                   <span>🕐 {new Date(selectedSession.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                  <span>⭐ Score: {(selectedSession.feedback?.overall || selectedSession.feedback?.match_percentage / 10).toFixed(1)}/10</span>
+                  <span><Star className="w-4 h-4 inline" /> Score: {(selectedSession.feedback?.overall || selectedSession.feedback?.match_percentage / 10).toFixed(1)}/10</span>
                 </div>
               </div>
               <button 
@@ -7124,7 +7126,7 @@ const startPracticeMode = async () => {
             {/* Your Answer */}
             <div className="bg-gradient-to-br from-teal-50 to-sky-50 rounded-xl p-6 border-2 border-teal-200">
               <h4 className="font-bold text-lg mb-3 text-teal-900 flex items-center gap-2">
-                <span className="text-2xl">💬</span>
+                <MessageCircle className="w-6 h-6 text-teal-600" />
                 Your Answer
               </h4>
               <p className="text-gray-800 leading-relaxed whitespace-pre-line">
@@ -7136,7 +7138,7 @@ const startPracticeMode = async () => {
             {selectedSession.feedback?.ideal_answer && (
               <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border-2 border-green-200">
                 <h4 className="font-bold text-lg mb-3 text-green-900 flex items-center gap-2">
-                  <span className="text-2xl">⭐</span>
+                  <Star className="w-6 h-6 text-green-600" />
                   Example Strong Answer
                 </h4>
                 <p className="text-gray-800 leading-relaxed">
@@ -7149,7 +7151,7 @@ const startPracticeMode = async () => {
             {selectedSession.feedback?.strengths && selectedSession.feedback.strengths.length > 0 && (
               <div className="bg-green-50 rounded-xl p-6 border-2 border-green-200">
                 <h4 className="font-bold text-lg mb-4 text-green-900 flex items-center gap-2">
-                  <span className="text-2xl">✅</span>
+                  <CheckCircle className="w-6 h-6 text-green-600" />
                   Strengths ({selectedSession.feedback.strengths.length})
                 </h4>
                 <div className="space-y-3">
@@ -7169,7 +7171,7 @@ const startPracticeMode = async () => {
             {selectedSession.feedback?.gaps && selectedSession.feedback.gaps.length > 0 && (
               <div className="bg-amber-50 rounded-xl p-6 border-2 border-amber-200">
                 <h4 className="font-bold text-lg mb-4 text-amber-900 flex items-center gap-2">
-                  <span className="text-2xl">📈</span>
+                  <TrendingUp className="w-6 h-6 text-amber-600" />
                   Growth Areas ({selectedSession.feedback.gaps.length})
                 </h4>
                 <div className="space-y-3">
@@ -7189,7 +7191,7 @@ const startPracticeMode = async () => {
             {selectedSession.feedback?.specific_improvements && selectedSession.feedback.specific_improvements.length > 0 && (
               <div className="bg-teal-50 rounded-xl p-6 border-2 border-teal-200">
                 <h4 className="font-bold text-lg mb-4 text-teal-900 flex items-center gap-2">
-                  <span className="text-2xl">🎯</span>
+                  <Target className="w-5 h-5 text-teal-600" />
                   Action Steps ({selectedSession.feedback.specific_improvements.length})
                 </h4>
                 <div className="space-y-3">
@@ -7220,12 +7222,12 @@ const startPracticeMode = async () => {
     )}
 
     {/* Overall Progress Timeline */}
-    <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
-      <h3 className="text-2xl font-bold mb-6">📈 Overall Progress Timeline</h3>
+    <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
+      <h3 className="text-2xl font-bold mb-6"><TrendingUp className="w-6 h-6 inline" /> Overall Progress Timeline</h3>
       
       {practiceHistory.length === 0 ? (
         <div className="text-center py-16 bg-gradient-to-br from-teal-50 to-sky-50 rounded-xl border-2 border-dashed border-teal-200">
-          <div className="text-6xl mb-4">📊</div>
+          <div className="mb-4"><BarChart2 className="w-16 h-16 inline text-teal-400" /></div>
           <h4 className="text-2xl font-bold text-gray-900 mb-2">No Practice Data Yet</h4>
           <p className="text-gray-600 mb-6">Complete some practice sessions to see your progress!</p>
           <button 
@@ -7336,7 +7338,7 @@ const startPracticeMode = async () => {
                   </svg>
                 </div>
                 {validSessions.length > 10 && (
-                  <p className="text-xs text-gray-500 text-center mt-2">💡 Scroll horizontally to see all {validSessions.length} data points →</p>
+                  <p className="text-xs text-gray-500 text-center mt-2">Scroll horizontally to see all {validSessions.length} data points</p>
                 )}
               </div>
             );
@@ -7395,8 +7397,8 @@ const startPracticeMode = async () => {
     </div>
 
     {/* Question-by-Question Progress */}
-    <div className="bg-white rounded-2xl shadow-lg p-8">
-      <h3 className="text-2xl font-bold mb-6">📊 Question-by-Question Progress</h3>
+    <div className="bg-white rounded-xl shadow-lg p-8">
+      <h3 className="text-2xl font-bold mb-6"><BarChart2 className="w-6 h-6 inline" /> Question-by-Question Progress</h3>
       
       {(() => {
         // Build question stats from practice history
@@ -7455,8 +7457,8 @@ const startPracticeMode = async () => {
                     <div className="flex-1">
                       <h4 className="font-bold text-base md:text-lg mb-2">{qStat.question}</h4>
                       <div className="flex gap-4 text-sm text-gray-600">
-                        <span>📊 {qStat.sessions.length} attempts</span>
-                        <span>⭐ {average.toFixed(1)} avg</span>
+                        <span><BarChart2 className="w-3 h-3 inline" /> {qStat.sessions.length} attempts</span>
+                        <span><Star className="w-3 h-3 inline" /> {average.toFixed(1)} avg</span>
                         {trend !== 0 && (
                           <span className={trend > 0 ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
                             {trend > 0 ? '↗' : '↘'} {Math.abs(trend).toFixed(1)}
@@ -7560,7 +7562,7 @@ const startPracticeMode = async () => {
                   
                   <details className="mt-4 pt-4 border-t">
                     <summary className="cursor-pointer text-sm font-bold text-teal-600">
-                      📋 View {qStat.sessions.length} attempts →
+                      <ClipboardList className="w-4 h-4 inline" /> View {qStat.sessions.length} attempts
                     </summary>
                     <div className="mt-4 space-y-2">
                       {qStat.sessions.slice().reverse().map((session, sIdx) => {
@@ -7611,7 +7613,7 @@ const startPracticeMode = async () => {
                   className="w-full bg-gradient-to-br from-teal-50 via-sky-50 to-emerald-50 rounded-xl p-4 border-2 border-teal-300 hover:border-teal-400 transition flex items-center justify-between"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="text-3xl">✨</div>
+                    <div><Sparkles className="w-8 h-8 text-teal-500" /></div>
                     <div className="text-left">
                       <h3 className="text-lg font-bold text-gray-900">AI Question Generator</h3>
                       <p className="text-sm text-gray-600">Generate personalized interview questions</p>
@@ -7673,7 +7675,7 @@ const startPracticeMode = async () => {
                               
                               if (!error && data) {
                                 setQuestions([...questions, data]);
-                                alert('✅ Question added to bank!');
+                                alert('Question added to bank!');
                                 setAiGeneratorCollapsed(true); // Collapse after adding
                               }
                             }
@@ -7698,11 +7700,11 @@ const startPracticeMode = async () => {
                         <div className="bg-teal-50 rounded-lg p-4 mb-6 max-w-sm mx-auto">
                           <p className="text-sm font-semibold text-teal-900 mb-2">💎 Pro Benefits:</p>
                           <ul className="text-sm text-left text-teal-800 space-y-1">
-                            <li>✨ <strong>UNLIMITED</strong> Question Generator</li>
-                            <li>✨ <strong>UNLIMITED</strong> AI Interviewer</li>
-                            <li>✨ <strong>UNLIMITED</strong> Practice Mode</li>
-                            <li>✨ <strong>UNLIMITED</strong> Answer Assistant</li>
-                            <li>✨ <strong>UNLIMITED</strong> Live Prompter</li>
+                            <li><CheckCircle className="w-4 h-4 inline text-teal-500" /> <strong>UNLIMITED</strong> Question Generator</li>
+                            <li><CheckCircle className="w-4 h-4 inline text-teal-500" /> <strong>UNLIMITED</strong> AI Interviewer</li>
+                            <li><CheckCircle className="w-4 h-4 inline text-teal-500" /> <strong>UNLIMITED</strong> Practice Mode</li>
+                            <li><CheckCircle className="w-4 h-4 inline text-teal-500" /> <strong>UNLIMITED</strong> Answer Assistant</li>
+                            <li><CheckCircle className="w-4 h-4 inline text-teal-500" /> <strong>UNLIMITED</strong> Live Prompter</li>
                           </ul>
                         </div>
                         <button
@@ -7738,7 +7740,7 @@ const startPracticeMode = async () => {
               {currentUser && cachedFavorites && (
                 <div className="mb-4 flex items-center justify-between bg-indigo-50 rounded-lg px-4 py-3 border border-indigo-200">
                   <div>
-                    <span className="text-sm font-semibold text-indigo-800">🎯 Focus Mode</span>
+                    <span className="text-sm font-semibold text-indigo-800"><Target className="w-4 h-4 inline" /> Focus Mode</span>
                     <p className="text-xs text-indigo-600">
                       {focusModeActive ? 'Practicing only job-relevant questions' : 'Practicing all questions'}
                     </p>
@@ -7761,7 +7763,7 @@ const startPracticeMode = async () => {
               )}
 
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 mb-5 sm:mb-6">
-                <button onClick={() => setEditingQuestion({ question: '', keywords: [], category: 'Core Narrative', priority: 'Must-Know', bullets: [''], narrative: '', followups: [] })} className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all active:scale-[0.98] text-sm sm:text-base">
+                <button onClick={() => setEditingQuestion({ question: '', keywords: [], category: 'Core Narrative', priority: 'Must-Know', bullets: [''], narrative: '', followups: [] })} className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl flex items-center justify-center gap-2 shadow-md hover:shadow-md transition-all active:scale-[0.98] text-sm sm:text-base">
                   <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                   Add Question
                 </button>
@@ -7845,9 +7847,9 @@ const startPracticeMode = async () => {
                         // FIXED: Show accurate count with duplicate info
                         const skipped = importedQuestions.length - newQuestions.length;
                         if (skipped > 0) {
-                          alert(`✅ Imported ${newQuestions.length} new question(s)!\n\n(${skipped} duplicate(s) skipped)`);
+                          alert(`Imported ${newQuestions.length} new question(s)!\n\n(${skipped} duplicate(s) skipped)`);
                         } else {
-                          alert(`✅ Imported ${newQuestions.length} template question(s)!`);
+                          alert(`Imported ${newQuestions.length} template question(s)!`);
                         }
                       } catch (error) {
                         console.error('Error importing:', error);
@@ -7860,7 +7862,7 @@ const startPracticeMode = async () => {
               
               {editingQuestion && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-                  <div className="bg-white rounded-2xl p-6 max-w-3xl w-full my-8">
+                  <div className="bg-white rounded-xl p-6 max-w-3xl w-full my-8">
                     <div className="flex items-center justify-between mb-6">
                       <h3 className="text-2xl font-bold">{editingQuestion.id ? 'Edit' : 'Add'} Question</h3>
                       <button onClick={() => setEditingQuestion(null)} className="text-gray-500 hover:text-gray-700">
@@ -7933,7 +7935,7 @@ const startPracticeMode = async () => {
                           <span className={`px-2 py-1 rounded text-xs font-semibold ${q.priority === 'Must-Know' ? 'bg-red-100 text-red-800' : q.priority === 'Technical' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'}`}>{q.priority}</span>
                           <span className="px-2 py-1 bg-gray-100 rounded text-xs">{q.category}</span>
                           {focusModeActive && cachedFavorites?.questionIds?.includes(q.id) && (
-                            <span className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs font-semibold">🎯 Focus</span>
+                            <span className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs font-semibold"><Target className="w-3 h-3 inline" /> Focus</span>
                           )}
                         </div>
                         <h3 className="text-xl font-bold mb-2">{q.question}</h3>
@@ -7944,8 +7946,8 @@ const startPracticeMode = async () => {
                         )}
                         {q.practiceCount > 0 && (
                           <div className="flex gap-4 text-sm text-gray-600 mt-4">
-                            <span>📊 Practiced: {q.practiceCount}x</span>
-                            <span>⭐ Avg: {q.averageScore.toFixed(1)}/10</span>
+                            <span><BarChart2 className="w-3 h-3 inline" /> Practiced: {q.practiceCount}x</span>
+                            <span><Star className="w-3 h-3 inline" /> Avg: {q.averageScore.toFixed(1)}/10</span>
                           </div>
                         )}
                       </div>
@@ -8059,8 +8061,8 @@ const startPracticeMode = async () => {
           <h1 className="text-2xl font-bold mb-6">Settings</h1>
 
           {/* Account */}
-          <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 mb-4">
-            <h3 className="text-sm font-semibold text-slate-800 mb-2">Account</h3>
+          <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200 mb-4">
+            <h3 className="text-sm font-semibold text-navy-700 mb-2">Account</h3>
             <p className="text-xs text-slate-500">{user?.email || 'Not signed in'}</p>
           </div>
 
@@ -8134,8 +8136,8 @@ const startPracticeMode = async () => {
           </div>
 
           {/* AI Data Sharing */}
-          <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 mb-4">
-            <h3 className="text-sm font-semibold text-slate-800 mb-2">AI Data Sharing</h3>
+          <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200 mb-4">
+            <h3 className="text-sm font-semibold text-navy-700 mb-2">AI Data Sharing</h3>
             <p className="text-xs text-slate-500 mb-3">
               Your interview practice responses are sent to Anthropic's Claude AI service for personalized coaching feedback. Audio is transcribed on your device — only text is sent.
             </p>
@@ -8193,7 +8195,7 @@ const startPracticeMode = async () => {
             <button
               onClick={async () => {
                 if (window.confirm(
-                  '🔄 Reset Practice Progress?\n\n' +
+                  'Reset Practice Progress?\n\n' +
                   'This will reset:\n' +
                   '• All practice scores and session history\n' +
                   '• Streaks and learning progress\n' +
@@ -8212,7 +8214,7 @@ const startPracticeMode = async () => {
                       setPracticeHistory([]);
                       setSessionCount(0);
                       await loadQuestions(); // Refresh stats (practiceCount/averageScore reset)
-                      alert('✅ Progress reset! Your questions and answers are still here. Fresh start!');
+                      alert('Progress reset! Your questions and answers are still here. Fresh start!');
                     } else {
                       alert('⚠️ Progress partially reset. Some operations may have failed.\n\n' + (result.errors || []).join('\n'));
                     }
@@ -8224,7 +8226,7 @@ const startPracticeMode = async () => {
               }}
               className="w-full flex justify-between items-center py-3 px-3 bg-amber-50 hover:bg-amber-100 border-2 border-amber-300 rounded-lg text-sm transition-all"
             >
-              <span className="font-medium text-amber-800">🔄 Reset Progress for New Job</span>
+              <span className="font-medium text-amber-800"><RotateCcw className="w-4 h-4 inline" /> Reset Progress for New Job</span>
               <ChevronRight className="w-4 h-4 text-amber-500" />
             </button>
             <p className="text-xs text-gray-500 mt-2">
@@ -8297,7 +8299,7 @@ const startPracticeMode = async () => {
                       // Clear ALL localStorage (including consent so user starts fresh)
                       localStorage.clear();
                       
-                      alert('✅ All data deleted. You will be signed out.');
+                      alert('All data deleted. You will be signed out.');
                       
                       // Sign out user completely with timeout
                       try {
@@ -8322,7 +8324,7 @@ const startPracticeMode = async () => {
               }}
               className="w-full bg-red-50 hover:bg-red-100 border-2 border-red-400 text-red-700 font-bold py-3 px-4 rounded-lg text-sm"
             >
-              🗑️ Delete All My Data
+              <Trash2 className="w-4 h-4 inline" /> Delete All My Data
             </button>
             
             <p className="text-xs text-gray-500 mt-2">
@@ -8805,9 +8807,9 @@ const startPracticeMode = async () => {
                   // FIXED: Show accurate count with duplicate info
                   const skipped = importedQuestions.length - newQuestions.length;
                   if (skipped > 0) {
-                    alert(`✅ Imported ${newQuestions.length} new question(s)!\n\n(${skipped} duplicate(s) skipped)`);
+                    alert(`Imported ${newQuestions.length} new question(s)!\n\n(${skipped} duplicate(s) skipped)`);
                   } else {
-                    alert(`✅ Imported ${newQuestions.length} template question(s)!`);
+                    alert(`Imported ${newQuestions.length} template question(s)!`);
                   }
                 } catch (error) {
                   console.error('Error importing:', error);
@@ -8829,7 +8831,7 @@ const startPracticeMode = async () => {
         <button
           onClick={() => setCurrentView('interview-coach')}
           onTouchEnd={(e) => { e.preventDefault(); setCurrentView('interview-coach'); }}
-          className="fixed bottom-6 right-6 z-40 w-14 h-14 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-full shadow-lg shadow-teal-500/30 flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-200"
+          className="fixed bottom-6 right-6 z-40 w-14 h-14 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-full shadow-lg shadow-teal-500/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-200"
           aria-label="Open Interview Coach"
         >
           <MessageCircle className="w-6 h-6 text-white" />

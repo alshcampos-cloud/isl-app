@@ -16,9 +16,9 @@ const convertQuestion = (dq) => ({
 
 // Difficulty badge colors
 const DIFFICULTY_STYLES = {
-  foundation: { bg: 'bg-emerald-100', text: 'text-emerald-700', label: 'Foundation' },
-  intermediate: { bg: 'bg-amber-100', text: 'text-amber-700', label: 'Intermediate' },
-  advanced: { bg: 'bg-red-100', text: 'text-red-700', label: 'Advanced' },
+  foundation: { bg: 'bg-slate-100', text: 'text-slate-600', label: 'Foundation' },
+  intermediate: { bg: 'bg-amber-50', text: 'text-amber-700', label: 'Intermediate' },
+  advanced: { bg: 'bg-rose-50', text: 'text-rose-700', label: 'Advanced' },
 };
 
 export default function TemplateLibrary({ onImport, onClose, onOpenAICoach, checkUsageLimit, existingQuestions = [] }) {
@@ -86,20 +86,20 @@ export default function TemplateLibrary({ onImport, onClose, onOpenAICoach, chec
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white">
       {/* Header */}
-      <div className="flex-shrink-0 border-b border-gray-200 bg-white px-4 py-4 sm:px-6">
+      <div className="flex-shrink-0 border-b border-slate-200 bg-white px-4 py-4 sm:px-6">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
-            <h2 className="text-xl font-bold text-gray-900 sm:text-2xl">Question Catalog</h2>
-            <p className="mt-0.5 text-sm text-gray-500">Add questions to your practice bank</p>
+            <h2 className="text-xl font-bold text-slate-800 sm:text-2xl tracking-tight">Question Catalog</h2>
+            <p className="mt-0.5 text-sm text-slate-500">Add questions to your practice bank</p>
           </div>
           <div className="flex items-center gap-3 ml-4">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-50 px-3 py-1 text-sm font-medium text-teal-700 whitespace-nowrap">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700 whitespace-nowrap">
               <Check className="w-4 h-4" />
               {totalInBank} of {DEFAULT_QUESTIONS.length} in your bank
             </span>
             <button
               onClick={onClose}
-              className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+              className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
               aria-label="Close"
             >
               <X className="w-5 h-5" />
@@ -119,12 +119,12 @@ export default function TemplateLibrary({ onImport, onClose, onOpenAICoach, chec
             const groupQuestions = DEFAULT_QUESTIONS.filter(q => q.group === group.id);
 
             return (
-              <div key={group.id} className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+              <div key={group.id} className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
                 {/* Group header */}
                 <button
                   onClick={() => toggleGroup(group.id)}
                   onTouchEnd={(e) => { e.preventDefault(); toggleGroup(group.id); }}
-                  className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-gray-50 min-h-[56px] ${
+                  className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-slate-50 min-h-[56px] ${
                     isExpanded ? 'border-l-4 border-l-teal-500' : 'border-l-4 border-l-transparent'
                   }`}
                 >
@@ -133,30 +133,30 @@ export default function TemplateLibrary({ onImport, onClose, onOpenAICoach, chec
                   </span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-gray-900">{group.label}</span>
+                      <span className="font-semibold text-slate-800">{group.label}</span>
                       <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
                         allAdded
                           ? 'bg-teal-100 text-teal-700'
-                          : 'bg-gray-100 text-gray-600'
+                          : 'bg-slate-100 text-slate-600'
                       }`}>
                         {counts.inBank}/{counts.total} added
                       </span>
                     </div>
-                    <p className="text-sm text-gray-500 truncate">{group.description}</p>
+                    <p className="text-sm text-slate-500 truncate">{group.description}</p>
                   </div>
                   {isExpanded ? (
-                    <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                    <ChevronDown className="w-5 h-5 text-slate-400 flex-shrink-0" />
                   ) : (
-                    <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                    <ChevronRight className="w-5 h-5 text-slate-400 flex-shrink-0" />
                   )}
                 </button>
 
                 {/* Expanded content */}
                 {isExpanded && (
-                  <div className="border-t border-gray-100">
+                  <div className="border-t border-slate-100">
                     {/* Add All New button */}
                     {!allAdded && (
-                      <div className="px-4 py-2.5 bg-gray-50 border-b border-gray-100">
+                      <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100">
                         <button
                           onClick={(e) => { e.stopPropagation(); handleAddAllInGroup(group.id); }}
                           className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-3.5 py-2 text-sm font-medium text-white hover:bg-teal-700 active:bg-teal-800 transition-colors"
@@ -168,7 +168,7 @@ export default function TemplateLibrary({ onImport, onClose, onOpenAICoach, chec
                     )}
 
                     {/* Question list */}
-                    <div className="divide-y divide-gray-100">
+                    <div className="divide-y divide-slate-100">
                       {groupQuestions.map((dq) => {
                         const added = isInBank(dq);
                         const qExpanded = !!expandedQuestions[dq.id];
@@ -180,7 +180,7 @@ export default function TemplateLibrary({ onImport, onClose, onOpenAICoach, chec
                             <div
                               onClick={() => toggleQuestion(dq.id)}
                               onTouchEnd={(e) => { e.preventDefault(); toggleQuestion(dq.id); }}
-                              className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors min-h-[48px]"
+                              className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50 transition-colors min-h-[48px]"
                               role="button"
                               tabIndex={0}
                             >
@@ -199,7 +199,7 @@ export default function TemplateLibrary({ onImport, onClose, onOpenAICoach, chec
                                 </button>
                               )}
                               <div className="flex-1 min-w-0">
-                                <p className={`text-sm ${added ? 'text-gray-500' : 'text-gray-900'} ${!qExpanded ? 'truncate' : ''}`}>
+                                <p className={`text-sm ${added ? 'text-slate-400' : 'text-slate-800'} ${!qExpanded ? 'truncate' : ''}`}>
                                   {dq.question}
                                 </p>
                               </div>
@@ -215,14 +215,14 @@ export default function TemplateLibrary({ onImport, onClose, onOpenAICoach, chec
 
                             {/* Expanded question details */}
                             {qExpanded && (
-                              <div className="px-4 pb-4 pl-[60px] space-y-3 bg-gray-50" onClick={(e) => e.stopPropagation()}>
+                              <div className="px-4 pb-4 pl-[60px] space-y-3 bg-slate-50" onClick={(e) => e.stopPropagation()}>
                                 {/* Bullets */}
                                 {dq.bullets && dq.bullets.length > 0 && (
                                   <div>
-                                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Answer Scaffolding</p>
+                                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Answer Scaffolding</p>
                                     <ul className="space-y-1">
                                       {dq.bullets.map((b, i) => (
-                                        <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
+                                        <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
                                           <span className="text-teal-400 mt-1 flex-shrink-0">&#8226;</span>
                                           <span>{b}</span>
                                         </li>
@@ -233,25 +233,25 @@ export default function TemplateLibrary({ onImport, onClose, onOpenAICoach, chec
 
                                 {/* Why They Ask This */}
                                 {dq.whyTheyAsk && (
-                                  <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-100">
+                                  <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-100/60">
                                     <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wide mb-1">Why They Ask This</p>
-                                    <p className="text-sm text-indigo-900">{dq.whyTheyAsk}</p>
+                                    <p className="text-sm text-slate-700">{dq.whyTheyAsk}</p>
                                   </div>
                                 )}
 
                                 {/* Coaching Tip */}
                                 {dq.coachingTip && (
-                                  <div className="bg-amber-50 rounded-lg p-3 border border-amber-100">
+                                  <div className="bg-amber-50 rounded-lg p-3 border border-amber-100/60">
                                     <p className="text-xs font-semibold text-amber-600 uppercase tracking-wide mb-1">Coaching Tip</p>
-                                    <p className="text-sm text-amber-900">{dq.coachingTip}</p>
+                                    <p className="text-sm text-slate-700">{dq.coachingTip}</p>
                                   </div>
                                 )}
 
                                 {/* Recommended Structure */}
                                 {dq.recommendedStructure && (
                                   <div className="flex items-center gap-2">
-                                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Best Structure:</span>
-                                    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-200">
+                                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Best Structure:</span>
+                                    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
                                       {dq.recommendedStructure === 'star' ? '⭐ STAR Method' :
                                        dq.recommendedStructure === 'prep' ? '📋 PREP' :
                                        dq.recommendedStructure === 'psb' ? '🎯 Problem-Solution-Benefit' :
@@ -267,10 +267,10 @@ export default function TemplateLibrary({ onImport, onClose, onOpenAICoach, chec
                                 {/* Follow-ups */}
                                 {dq.followUps && dq.followUps.length > 0 && (
                                   <div>
-                                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Likely Follow-ups</p>
+                                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Likely Follow-ups</p>
                                     <ul className="space-y-1">
                                       {dq.followUps.map((f, i) => (
-                                        <li key={i} className="text-sm text-gray-600 italic">
+                                        <li key={i} className="text-sm text-slate-600 italic">
                                           &ldquo;{f}&rdquo;
                                         </li>
                                       ))}
@@ -294,7 +294,7 @@ export default function TemplateLibrary({ onImport, onClose, onOpenAICoach, chec
                                     <button
                                       onClick={(e) => { e.stopPropagation(); handlePracticeWithCoach(dq); }}
                                       onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); handlePracticeWithCoach(dq); }}
-                                      className="inline-flex items-center gap-1.5 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 active:bg-purple-800 transition-colors"
+                                      className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 active:bg-teal-800 transition-colors"
                                     >
                                       <Sparkles className="w-4 h-4" />
                                       Practice with AI Coach
@@ -316,14 +316,14 @@ export default function TemplateLibrary({ onImport, onClose, onOpenAICoach, chec
       </div>
 
       {/* Footer */}
-      <div className="flex-shrink-0 border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+      <div className="flex-shrink-0 border-t border-slate-200 bg-white px-4 py-3 sm:px-6">
         <div className="flex items-center justify-between max-w-3xl mx-auto">
-          <p className="text-sm text-gray-500">
-            <span className="font-medium text-gray-900">{totalInBank}</span> question{totalInBank !== 1 ? 's' : ''} in your bank
+          <p className="text-sm text-slate-500">
+            <span className="font-medium text-slate-800">{totalInBank}</span> question{totalInBank !== 1 ? 's' : ''} in your bank
           </p>
           <button
             onClick={onClose}
-            className="rounded-lg bg-gray-100 px-5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 active:bg-gray-300 transition-colors"
+            className="rounded-lg bg-slate-100 px-5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200 active:bg-slate-300 transition-colors"
           >
             Close
           </button>

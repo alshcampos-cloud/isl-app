@@ -142,23 +142,23 @@ export default function GeneralPricing({ userData, onClose }) {
   const isAnnual = tier === 'annual';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xl">
-      <div className="relative bg-slate-900 border border-white/10 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl shadow-black/40">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
+      <div className="relative bg-white border border-slate-200 rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-lg">
         {/* Close button — floating pill */}
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 z-10 flex items-center justify-center w-8 h-8 rounded-full bg-white/10 backdrop-blur-md text-slate-400 hover:text-white hover:bg-white/20 transition-all"
+          className="absolute top-3 right-3 z-10 flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:text-slate-700 hover:bg-slate-200 transition-all"
         >
           <X className="w-4 h-4" />
         </button>
 
         {/* Header */}
-        <div className="p-5 pb-4 border-b border-white/10">
+        <div className="p-5 pb-4 border-b border-slate-200">
           <div className="flex items-center gap-2 mb-1">
-            <Sparkles className="w-5 h-5 text-teal-400" />
-            <h2 className="text-white font-bold text-lg">Interview Prep Pro</h2>
+            <Sparkles className="w-5 h-5 text-teal-600" />
+            <h2 className="text-navy-700 font-bold text-lg">Interview Prep Pro</h2>
           </div>
-          <p className="text-slate-400 text-xs">Unlimited AI-powered interview practice</p>
+          <p className="text-slate-500 text-xs">Unlimited AI-powered interview practice</p>
         </div>
 
         {/* Pricing cards */}
@@ -166,22 +166,22 @@ export default function GeneralPricing({ userData, onClose }) {
           {/* 30-Day Pass */}
           <div className={`border rounded-xl p-5 transition-all ${
             hasActivePass && !isAnnual
-              ? 'border-indigo-500/40 bg-indigo-500/5'
-              : 'border-white/10 hover:border-indigo-500/30 bg-white/[0.02]'
+              ? 'border-teal-500 bg-teal-50/50'
+              : 'border-slate-200 hover:border-slate-300 bg-white'
           }`}>
             <div className="flex items-start justify-between mb-3">
               <div>
                 <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-indigo-400" />
-                  <h3 className="text-white font-semibold">30-Day Pass</h3>
+                  <Clock className="w-4 h-4 text-slate-500" />
+                  <h3 className="text-navy-700 font-semibold">30-Day Pass</h3>
                 </div>
-                <p className="text-slate-400 text-xs mt-1">Full access for 30 days — no subscription, no commitment</p>
+                <p className="text-slate-500 text-xs mt-1">Full access for 30 days — no subscription, no commitment</p>
               </div>
               <div className="text-right">
-                <p className="text-white font-bold">
-                  <span className="text-lg align-top">$</span>
-                  <span className="text-4xl font-extrabold bg-gradient-to-r from-indigo-300 to-indigo-500 bg-clip-text text-transparent">14</span>
-                  <span className="text-lg text-slate-300">.99</span>
+                <p className="font-bold">
+                  <span className="text-lg align-top text-navy-700">$</span>
+                  <span className="text-4xl font-extrabold text-navy-700">14</span>
+                  <span className="text-lg text-slate-400">.99</span>
                 </p>
                 <p className="text-slate-500 text-[10px]">one-time</p>
               </div>
@@ -197,9 +197,9 @@ export default function GeneralPricing({ userData, onClose }) {
                 'Full question bank access',
                 'Session history & analytics',
               ].map((item) => (
-                <li key={item} className="flex items-center gap-2.5 text-slate-300 text-xs">
-                  <span className="flex items-center justify-center w-4 h-4 rounded-full bg-teal-500/20 flex-shrink-0">
-                    <CheckCircle className="w-3 h-3 text-teal-400" />
+                <li key={item} className="flex items-center gap-2.5 text-slate-600 text-xs">
+                  <span className="flex items-center justify-center w-4 h-4 rounded-full bg-teal-50 flex-shrink-0">
+                    <CheckCircle className="w-3 h-3 text-teal-500" />
                   </span>
                   {item}
                 </li>
@@ -210,7 +210,7 @@ export default function GeneralPricing({ userData, onClose }) {
               <button
                 onClick={() => handleCheckout('general_30day')}
                 disabled={!!isLoading}
-                className="w-full py-3 rounded-xl text-sm font-medium transition-all active:scale-[0.98] bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-600/30"
+                className="w-full py-3 rounded-md text-sm font-medium transition-all active:scale-[0.98] bg-teal-50 text-teal-700 border border-teal-200 hover:bg-teal-100"
               >
                 {isLoading === 'general_30day' ? (
                   <span className="flex items-center justify-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Processing...</span>
@@ -222,10 +222,10 @@ export default function GeneralPricing({ userData, onClose }) {
               <button
                 onClick={() => handleCheckout('general_30day')}
                 disabled={!!isLoading || isAnnual}
-                className={`w-full py-3 rounded-xl text-sm font-semibold transition-all active:scale-[0.98] ${
+                className={`w-full py-3 rounded-md text-sm font-semibold transition-all active:scale-[0.98] ${
                   isAnnual
-                    ? 'bg-white/5 text-slate-500 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white shadow-lg shadow-teal-600/25'
+                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                    : 'bg-teal-600 hover:bg-teal-700 text-white shadow-sm'
                 }`}
               >
                 {isLoading === 'general_30day' ? (
@@ -242,12 +242,12 @@ export default function GeneralPricing({ userData, onClose }) {
           {/* Annual All-Access */}
           <div className={`border rounded-xl p-5 relative overflow-hidden transition-all ring-2 ${
             isAnnual
-              ? 'border-amber-500/40 bg-amber-500/5 ring-amber-500/30'
-              : 'border-teal-500/30 ring-teal-500/40 bg-gradient-to-br from-teal-500/[0.04] to-emerald-500/[0.04]'
+              ? 'border-amber-300 bg-amber-50/50 ring-amber-200'
+              : 'border-teal-500 ring-teal-500/20 bg-white'
           }`}>
             {/* Best value badge */}
             {!isAnnual && (
-              <div className="absolute top-0 right-0 bg-gradient-to-r from-teal-500 to-emerald-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg tracking-wide shadow-lg">
+              <div className="absolute top-0 right-0 bg-navy-700 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg tracking-wide">
                 MOST POPULAR
               </div>
             )}
@@ -255,20 +255,20 @@ export default function GeneralPricing({ userData, onClose }) {
             <div className="flex items-start justify-between mb-3">
               <div>
                 <div className="flex items-center gap-2">
-                  <Crown className="w-4 h-4 text-teal-400" />
-                  <h3 className="text-white font-semibold">Annual All-Access</h3>
+                  <Crown className="w-4 h-4 text-teal-600" />
+                  <h3 className="text-navy-700 font-semibold">Annual All-Access</h3>
                 </div>
-                <p className="text-slate-400 text-xs mt-1">
+                <p className="text-slate-500 text-xs mt-1">
                   {showNursingFeatures()
                     ? 'General + Nursing interview prep — save over 50%'
                     : 'Complete interview prep — save over 50%'}
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-white font-bold">
-                  <span className="text-lg align-top">$</span>
-                  <span className="text-4xl font-extrabold bg-gradient-to-r from-teal-300 to-emerald-400 bg-clip-text text-transparent">149</span>
-                  <span className="text-lg text-slate-300">.99</span>
+                <p className="font-bold">
+                  <span className="text-lg align-top text-navy-700">$</span>
+                  <span className="text-4xl font-extrabold text-navy-700">149</span>
+                  <span className="text-lg text-slate-400">.99</span>
                 </p>
                 <p className="text-slate-500 text-[10px]">/year (~$12.50/mo)</p>
               </div>
@@ -282,9 +282,9 @@ export default function GeneralPricing({ userData, onClose }) {
                 'Year-round access',
                 'Priority support',
               ].map((item) => (
-                <li key={item} className="flex items-center gap-2.5 text-slate-300 text-xs">
-                  <span className="flex items-center justify-center w-4 h-4 rounded-full bg-teal-500/20 flex-shrink-0">
-                    <CheckCircle className="w-3 h-3 text-teal-400" />
+                <li key={item} className="flex items-center gap-2.5 text-slate-600 text-xs">
+                  <span className="flex items-center justify-center w-4 h-4 rounded-full bg-teal-50 flex-shrink-0">
+                    <CheckCircle className="w-3 h-3 text-teal-500" />
                   </span>
                   {item}
                 </li>
@@ -294,10 +294,10 @@ export default function GeneralPricing({ userData, onClose }) {
             <button
               onClick={() => handleCheckout('annual_all_access')}
               disabled={!!isLoading || isAnnual}
-              className={`w-full py-3 rounded-xl text-sm font-semibold transition-all active:scale-[0.98] ${
+              className={`w-full py-3 rounded-md text-sm font-semibold transition-all active:scale-[0.98] ${
                 isAnnual
-                  ? 'bg-teal-500/20 text-teal-300 border border-teal-500/30 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white shadow-lg shadow-teal-600/25 hover:-translate-y-0.5'
+                  ? 'bg-teal-50 text-teal-700 border border-teal-200 cursor-not-allowed'
+                  : 'bg-teal-600 hover:bg-teal-700 text-white shadow-sm'
               }`}
             >
               {isLoading === 'annual_all_access' ? (
@@ -312,11 +312,11 @@ export default function GeneralPricing({ userData, onClose }) {
 
           {/* Error display */}
           {error && (
-            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3">
-              <p className="text-red-400 text-xs">{error}</p>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+              <p className="text-red-600 text-xs">{error}</p>
               <button
                 onClick={() => setError(null)}
-                className="text-red-500 text-[10px] mt-1 hover:text-red-300"
+                className="text-red-500 text-[10px] mt-1 hover:text-red-700"
               >
                 Dismiss
               </button>
@@ -325,14 +325,14 @@ export default function GeneralPricing({ userData, onClose }) {
 
           {/* Trust signals */}
           <div className="flex items-center justify-center gap-6 pt-3 pb-1">
-            <div className="flex items-center gap-2 text-slate-400 text-[11px]">
-              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-white/5">
+            <div className="flex items-center gap-2 text-slate-500 text-[11px]">
+              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-slate-100">
                 <Shield className="w-3 h-3" />
               </span>
               Secure checkout
             </div>
-            <div className="flex items-center gap-2 text-slate-400 text-[11px]">
-              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-white/5">
+            <div className="flex items-center gap-2 text-slate-500 text-[11px]">
+              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-slate-100">
                 <Zap className="w-3 h-3" />
               </span>
               Instant access

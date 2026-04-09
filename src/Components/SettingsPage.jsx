@@ -261,7 +261,7 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
 
   const SectionHeader = ({ title }) => (
     <div className="flex items-center gap-2.5 mb-3 px-1">
-      <div className="w-1 h-4 rounded-full bg-teal-500" />
+      <div className="w-1 h-4 rounded-full bg-navy-600" />
       <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
         {title}
       </h2>
@@ -271,30 +271,30 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
   // ── Render ────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100/80 pb-24">
+    <div className="min-h-screen bg-slate-50 pb-24">
       {/* Header */}
-      <div className="sticky top-0 z-10 backdrop-blur-xl bg-white/80 border-b border-slate-200/60 px-4 py-3">
+      <div className="sticky top-0 z-10 backdrop-blur-xl bg-white/80 border-b border-slate-200 px-4 py-3">
         <div className="flex items-center gap-3">
           <button
             onClick={onBack}
             onTouchEnd={onBack}
-            className="p-2 -ml-2 rounded-2xl hover:bg-slate-100 active:scale-[0.96] transition-all duration-200"
+            className="p-2 -ml-2 rounded-lg hover:bg-slate-100 active:scale-[0.96] transition-all duration-200"
           >
             <ChevronLeft className="w-5 h-5 text-slate-600" />
           </button>
-          <h1 className="text-lg font-semibold text-slate-900">Settings</h1>
+          <h1 className="text-lg font-semibold text-navy-700">Settings</h1>
         </div>
       </div>
 
       <div className="px-4 py-6 space-y-5">
         {/* Profile Avatar Card */}
-        <div className="rounded-2xl border border-slate-200/60 bg-gradient-to-br from-white to-slate-50/80 p-5 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.08)]">
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-teal-200/50">
+            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-navy-600 to-navy-800 flex items-center justify-center flex-shrink-0 shadow-sm">
               <span className="text-xl font-bold text-white leading-none">{userInitial}</span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-base font-semibold text-slate-900 truncate">{email}</p>
+              <p className="text-base font-semibold text-navy-700 truncate">{email}</p>
               <div className="flex items-center gap-2 mt-1">
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${tierBadgeStyle}`}>
                   {tierLabel}
@@ -308,7 +308,7 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
         {sections.map((section) => (
           <div key={section.title}>
             <SectionHeader title={section.title} />
-            <div className="rounded-2xl border border-slate-200/60 bg-gradient-to-br from-white to-slate-50/30 overflow-hidden divide-y divide-slate-100/80 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.08)]">
+            <div className="rounded-xl border border-slate-200 bg-white overflow-hidden divide-y divide-slate-100 shadow-sm">
               {section.items.map((item) => {
                 const Icon = item.icon;
                 const style = getIconStyle(item.iconName);
@@ -324,7 +324,7 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
                         : ''
                     }`}
                   >
-                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 ${style.bg} transition-all duration-200`}>
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${style.bg} transition-all duration-200`}>
                       {item.loading ? (
                         <Loader2 className={`w-[18px] h-[18px] ${style.text} animate-spin`} />
                       ) : (
@@ -362,14 +362,14 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
         {/* Data Management Section */}
         <div>
           <SectionHeader title="Data Management" />
-          <div className="rounded-2xl border border-slate-200/60 bg-gradient-to-br from-white to-slate-50/30 overflow-hidden shadow-[0_2px_12px_-4px_rgba(0,0,0,0.08)]">
+          <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
             {/* Reset Progress */}
             <button
               onClick={() => setShowResetConfirm(true)}
               onTouchEnd={(e) => { e.preventDefault(); setShowResetConfirm(true); }}
               className="w-full flex items-center gap-3.5 px-4 min-h-[52px] py-3.5 text-left hover:bg-slate-50/80 active:bg-slate-100 active:scale-[0.98] transition-all duration-200"
             >
-              <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 bg-amber-50 transition-all duration-200">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-amber-50 transition-all duration-200">
                 <RotateCcw className="w-[18px] h-[18px] text-amber-600" />
               </div>
               <div className="flex-1 min-w-0">
@@ -383,26 +383,26 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
 
         {/* Reset Confirmation */}
         {showResetConfirm && (
-          <div className="rounded-2xl border border-amber-200/60 bg-gradient-to-br from-amber-50/80 to-amber-50/40 p-5 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.06)] transition-all duration-300">
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 shadow-sm transition-all duration-300">
             <div className="flex flex-col items-center text-center">
               <div className="w-14 h-14 rounded-full flex items-center justify-center mb-3 bg-amber-100 shadow-sm">
                 <RotateCcw className="w-6 h-6 text-amber-600" />
               </div>
-              <h3 className="text-base font-semibold text-slate-900 mb-2">Reset All Progress?</h3>
+              <h3 className="text-base font-semibold text-navy-700 mb-2">Reset All Progress?</h3>
               <p className="text-xs text-slate-600 mb-5 leading-relaxed">
                 This will reset your practice scores, session history, and streaks. Your saved questions and answers will not be affected.
               </p>
               <div className="flex gap-3 w-full">
                 <button
                   onClick={() => setShowResetConfirm(false)}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 active:scale-[0.98] transition-all duration-200"
+                  className="flex-1 py-2.5 rounded-md text-sm font-medium bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 active:scale-[0.98] transition-all duration-200"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleResetProgress}
                   disabled={resetLoading}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-amber-500 text-white hover:bg-amber-600 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm shadow-amber-200/50"
+                  className="flex-1 py-2.5 rounded-md text-sm font-medium bg-amber-500 text-white hover:bg-amber-600 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm"
                 >
                   {resetLoading ? (
                     <>
@@ -418,7 +418,7 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
 
         {/* Reset Success Toast */}
         {resetDone && (
-          <div className="rounded-2xl border border-emerald-200/60 bg-gradient-to-r from-emerald-50 to-emerald-50/60 p-4 flex items-center gap-3 shadow-sm transition-all duration-300">
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 flex items-center gap-3 shadow-sm transition-all duration-300">
             <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
               <CheckCircle className="w-4 h-4 text-emerald-600" />
             </div>
@@ -429,9 +429,9 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
         {/* Danger Zone — Delete Account */}
         <div>
           <SectionHeader title="Danger Zone" />
-          <div className="rounded-2xl border border-red-200/60 bg-gradient-to-br from-red-50/50 to-red-50/20 overflow-hidden p-4 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.06)]">
+          <div className="rounded-xl border border-red-200 bg-red-50 overflow-hidden p-4 shadow-sm">
             <div className="flex items-start gap-3.5">
-              <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 bg-red-100/80">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-red-100/80">
                 <AlertTriangle className="w-[18px] h-[18px] text-red-500" />
               </div>
               <div className="flex-1 min-w-0">
@@ -453,7 +453,7 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
                     setDeleteLoading(false);
                     setShowDeleteConfirm(true);
                   }}
-                  className="mt-3 px-4 py-2 rounded-xl text-xs font-medium bg-red-100 text-red-700 hover:bg-red-200 active:bg-red-200 active:scale-[0.98] transition-all duration-200 min-h-[40px]"
+                  className="mt-3 px-4 py-2 rounded-md text-xs font-medium bg-red-100 text-red-700 hover:bg-red-200 active:bg-red-200 active:scale-[0.98] transition-all duration-200 min-h-[40px]"
                 >
                   Delete My Account...
                 </button>
@@ -464,12 +464,12 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
 
         {/* Delete Account Confirmation */}
         {showDeleteConfirm && (
-          <div className="rounded-2xl border border-red-200/60 bg-gradient-to-br from-red-50/80 to-red-50/40 p-5 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.06)] transition-all duration-300">
+          <div className="rounded-xl border border-red-200 bg-red-50 p-5 shadow-sm transition-all duration-300">
             <div className="flex flex-col items-center text-center">
               <div className="w-14 h-14 rounded-full flex items-center justify-center mb-3 bg-red-100 shadow-sm">
                 <Trash2 className="w-6 h-6 text-red-500" />
               </div>
-              <h3 className="text-base font-semibold text-slate-900 mb-2">Delete Your Account?</h3>
+              <h3 className="text-base font-semibold text-navy-700 mb-2">Delete Your Account?</h3>
               <p className="text-xs text-slate-600 mb-3 leading-relaxed">
                 This will permanently delete all your data:
               </p>
@@ -481,7 +481,7 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
                 <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0" /> Your account and profile</li>
               </ul>
 
-              <div className="flex items-start gap-2.5 rounded-xl p-3 mb-4 w-full bg-white/60 border border-slate-200/60">
+              <div className="flex items-start gap-2.5 rounded-lg p-3 mb-4 w-full bg-white border border-slate-200">
                 <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-500" />
                 <p className="text-xs text-slate-600 leading-relaxed">
                   Type <span className="font-mono font-bold text-red-600">DELETE</span> to confirm. Active subscriptions must be cancelled separately through Stripe or the App Store.
@@ -493,7 +493,7 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
                 value={deleteInput}
                 onChange={(e) => setDeleteInput(e.target.value)}
                 placeholder='Type "DELETE" to confirm'
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm text-center focus:outline-none focus:ring-2 focus:ring-red-300/60 focus:border-red-300 placeholder:text-slate-400 transition-all duration-200"
+                className="w-full px-4 py-3 rounded-md border border-slate-200 bg-white text-sm text-center focus:outline-none focus:ring-2 focus:ring-red-300/60 focus:border-red-300 placeholder:text-slate-400 transition-all duration-200"
               />
 
               {deleteError && (
@@ -503,14 +503,14 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
               <div className="flex gap-3 w-full mt-4">
                 <button
                   onClick={() => setShowDeleteConfirm(false)}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 active:scale-[0.98] transition-all duration-200"
+                  className="flex-1 py-2.5 rounded-md text-sm font-medium bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 active:scale-[0.98] transition-all duration-200"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleDeleteAccount}
                   disabled={deleteInput !== 'DELETE' || deleteLoading}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-red-600 text-white hover:bg-red-700 active:scale-[0.98] transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm shadow-red-200/50"
+                  className="flex-1 py-2.5 rounded-md text-sm font-medium bg-red-600 text-white hover:bg-red-700 active:scale-[0.98] transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm"
                 >
                   {deleteLoading ? (
                     <>
@@ -526,7 +526,7 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
 
         {/* Deletion Success */}
         {deleteDone && (
-          <div className="rounded-2xl border border-emerald-200/60 bg-gradient-to-r from-emerald-50 to-emerald-50/60 p-4 flex items-center gap-3 shadow-sm transition-all duration-300">
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 flex items-center gap-3 shadow-sm transition-all duration-300">
             <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
               <CheckCircle className="w-4 h-4 text-emerald-600" />
             </div>
@@ -539,7 +539,7 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
           onClick={handleSignOut}
           onTouchEnd={(e) => { e.preventDefault(); handleSignOut(); }}
           disabled={loggingOut}
-          className="w-full flex items-center justify-center gap-2.5 py-4 min-h-[52px] rounded-2xl border border-red-200/40 bg-gradient-to-br from-white to-red-50/30 text-red-500 font-medium hover:bg-red-50/60 active:bg-red-100/60 active:scale-[0.98] transition-all duration-200 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.06)]"
+          className="w-full flex items-center justify-center gap-2.5 py-4 min-h-[52px] rounded-xl border border-red-200 bg-white text-red-500 font-medium hover:bg-red-50 active:bg-red-100 active:scale-[0.98] transition-all duration-200 shadow-sm"
         >
           <LogOut className="w-4.5 h-4.5" />
           <span className="text-sm">{loggingOut ? 'Signing out...' : 'Sign Out'}</span>

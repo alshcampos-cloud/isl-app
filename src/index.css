@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap');
 
 @tailwind base;
@@ -12,13 +13,16 @@
    ============================================================ */
 
 @layer base {
-  /* Serif headings — the single biggest premium differentiator */
+  /* DM Sans headings — geometric sans, professional & confident */
   h1, h2, h3, h4 {
-    font-family: 'Source Serif 4 Variable', 'Source Serif 4', Georgia, Cambria, serif;
+    font-family: 'DM Sans', 'Inter', system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
   }
 
-  /* Antialiased text rendering */
+  /* Base body font + antialiased rendering */
   body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -39,7 +43,7 @@
 @layer components {
   /* --- CARDS --- */
   .polish-card {
-    @apply bg-white rounded-2xl p-5 border border-warm-200/60
+    @apply bg-white rounded-xl p-5 border border-warm-200/60
            shadow-[0_2px_12px_-4px_rgba(0,0,0,0.05)]
            transition-all duration-200;
   }
@@ -54,7 +58,7 @@
   /* --- BUTTONS --- */
   /* Primary CTA — teal with color-tinted shadow */
   .polish-btn-primary {
-    @apply font-semibold px-6 py-3 rounded-2xl
+    @apply font-semibold px-6 py-3 rounded-lg
            transition-all duration-200 active:scale-[0.97]
            shadow-md;
     /* Color-tinted shadow for teal buttons */
@@ -62,7 +66,7 @@
   }
   /* Secondary button */
   .polish-btn-secondary {
-    @apply bg-white text-warm-700 font-semibold px-6 py-3 rounded-2xl
+    @apply bg-white text-warm-700 font-semibold px-6 py-3 rounded-lg
            border border-warm-200 transition-all duration-200 active:scale-[0.97]
            hover:bg-warm-50;
   }

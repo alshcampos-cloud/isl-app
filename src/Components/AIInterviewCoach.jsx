@@ -244,13 +244,13 @@ function extractCitations(text) {
   return citations;
 }
 
-// Citation badge color map
+// Citation badge color map — muted teal pills for professional consistency
 const CITATION_COLORS = {
-  teal: 'bg-teal-50 text-teal-700 border-teal-200',
-  blue: 'bg-blue-50 text-blue-700 border-blue-200',
-  purple: 'bg-purple-50 text-purple-700 border-purple-200',
-  emerald: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  amber: 'bg-amber-50 text-amber-700 border-amber-200',
+  teal: 'bg-teal-50 text-teal-600 border-teal-200',
+  blue: 'bg-teal-50 text-teal-600 border-teal-200',
+  purple: 'bg-teal-50 text-teal-600 border-teal-200',
+  emerald: 'bg-teal-50 text-teal-600 border-teal-200',
+  amber: 'bg-teal-50 text-teal-600 border-teal-200',
 };
 
 // ============================================================
@@ -529,50 +529,51 @@ export default function AIInterviewCoach({ user, userData, questions = [], onClo
       : null;
 
     return (
-      <div className="flex flex-col bg-gray-50" style={{ height: '100vh' }}>
+      <div className="flex flex-col bg-white" style={{ height: '100vh' }}>
         {/* Header */}
-        <div className="border-b sticky top-0 z-30 backdrop-blur-xl bg-white/80 border-gray-200/60"
+        <div className="border-b sticky top-0 z-30 bg-white border-slate-200"
           style={{ WebkitBackdropFilter: 'blur(40px)' }}>
           <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
             <button
               onClick={onClose}
               onTouchEnd={(e) => { e.preventDefault(); onClose(); }}
-              className="flex items-center gap-2 px-2 py-1.5 rounded-2xl transition-colors text-gray-500 hover:text-gray-700 hover:bg-gray-100/80"
+              className="flex items-center gap-2 px-2 py-1.5 rounded-md transition-colors text-slate-500 hover:text-slate-700 hover:bg-slate-100"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span className="text-sm">Back</span>
+              <span className="text-sm font-medium">Back</span>
             </button>
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-xl flex items-center justify-center bg-teal-100">
-                <MessageSquare className="w-3.5 h-3.5 text-teal-600" />
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-slate-800">
+                <MessageSquare className="w-3.5 h-3.5 text-white" />
               </div>
-              <span className="font-semibold text-sm text-gray-800">Interview Coach</span>
+              <span className="font-semibold text-sm text-slate-800">Interview Coach</span>
+              <span className="text-[10px] font-medium text-slate-400 tracking-wide uppercase">Powered by AI</span>
             </div>
             <div className="w-16" />
           </div>
         </div>
 
         {/* Content */}
-        <div className="flex-1 flex items-center justify-center p-4 overflow-y-auto">
+        <div className="flex-1 flex items-center justify-center p-6 overflow-y-auto">
           <div className="max-w-lg w-full">
             {/* Welcome */}
             <div className="text-center mb-8">
-              <div className="w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-lg bg-gradient-to-br from-teal-100 to-emerald-100 shadow-teal-200/40">
-                <MessageSquare className="w-8 h-8 text-teal-600" />
+              <div className="w-14 h-14 rounded-lg flex items-center justify-center mx-auto mb-4 bg-slate-800">
+                <MessageSquare className="w-7 h-7 text-white" />
               </div>
-              <h2 className="text-2xl font-bold mb-2 text-gray-800">
+              <h2 className="text-2xl font-bold tracking-tight mb-2 text-navy-700">
                 Interview Coach
               </h2>
-              <p className="text-sm leading-relaxed max-w-sm mx-auto text-gray-500">
-                I'm your personal interview strategist. Ask me about preparation strategy,
+              <p className="text-sm leading-relaxed max-w-sm mx-auto text-slate-500">
+                Your personal interview strategist. Ask about preparation strategy,
                 answer structure, confidence building, or what to practice next.
               </p>
 
               {/* Practice stats badge */}
               {(totalSessions > 0 || totalAISessions > 0) && (
-                <div className="mt-3 inline-flex items-center gap-2 rounded-full px-3 py-1 border bg-teal-50 border-teal-200">
-                  <Sparkles className="w-3.5 h-3.5 text-teal-500" />
-                  <span className="text-xs font-medium text-teal-700">
+                <div className="mt-3 inline-flex items-center gap-2 rounded-full px-3 py-1 border bg-slate-50 border-slate-200">
+                  <Sparkles className="w-3.5 h-3.5 text-teal-600" />
+                  <span className="text-xs font-medium text-slate-600">
                     {totalSessions + totalAISessions} practice sessions completed
                   </span>
                 </div>
@@ -581,10 +582,10 @@ export default function AIInterviewCoach({ user, userData, questions = [], onClo
 
             {/* Credits */}
             {creditCheck && !isUnlimited && (
-              <div className={`text-xs mb-4 px-3 py-2 rounded-lg text-center ${
+              <div className={`text-xs mb-4 px-3 py-2 rounded-md text-center ${
                 creditBlocked
                   ? 'bg-red-50 border border-red-200 text-red-600'
-                  : 'bg-teal-50 border border-teal-200 text-teal-600'
+                  : 'bg-slate-50 border border-slate-200 text-slate-600'
               }`}>
                 {creditBlocked ? (
                   <p>You've used all your free coaching messages this month. Upgrade for unlimited access.</p>
@@ -594,15 +595,15 @@ export default function AIInterviewCoach({ user, userData, questions = [], onClo
               </div>
             )}
             {isUnlimited && (
-              <div className="text-xs mb-4 px-3 py-2 rounded-lg bg-teal-50 border border-teal-200 text-teal-600 text-center">
+              <div className="text-xs mb-4 px-3 py-2 rounded-md bg-slate-50 border border-slate-200 text-slate-600 text-center">
                 {isBeta ? 'Beta Tester -- Unlimited access' : 'Unlimited coaching'}
               </div>
             )}
 
             {/* Conversation Starters */}
-            <div className="space-y-2 mb-6">
-              <p className="text-xs font-medium uppercase tracking-wider mb-3 text-center text-gray-500">
-                Conversation starters
+            <div className="space-y-1.5 mb-6">
+              <p className="text-xs font-medium uppercase tracking-widest mb-3 text-center text-slate-400">
+                How can I help?
               </p>
               {CONVERSATION_STARTERS.map((starter, idx) => {
                 const StarterIcon = starter.Icon;
@@ -612,14 +613,14 @@ export default function AIInterviewCoach({ user, userData, questions = [], onClo
                     onClick={creditBlocked ? undefined : () => sendMessage(starter.prompt)}
                     onTouchEnd={creditBlocked ? undefined : (e) => { e.preventDefault(); sendMessage(starter.prompt); }}
                     disabled={creditBlocked}
-                    className={`w-full text-left border rounded-2xl px-4 py-3.5 flex items-center gap-3 transition-all ${
+                    className={`w-full text-left border rounded-lg px-4 py-3 flex items-center gap-3 transition-colors duration-150 ${
                       creditBlocked
                         ? 'opacity-50 cursor-not-allowed'
-                        : 'bg-white border-gray-200/60 hover:bg-teal-50 hover:border-teal-200 shadow-[0_2px_8px_-3px_rgba(0,0,0,0.05)] active:scale-[0.98]'
+                        : 'bg-white border-slate-200 hover:bg-teal-50/50 hover:border-teal-300 text-slate-700 hover:text-slate-900'
                     }`}
                   >
-                    <StarterIcon className="w-4 h-4 flex-shrink-0 text-teal-500" />
-                    <span className="text-sm text-gray-700">{starter.label}</span>
+                    <StarterIcon className="w-4 h-4 flex-shrink-0 text-slate-400" />
+                    <span className="text-sm font-medium">{starter.label}</span>
                   </button>
                 );
               })}
@@ -636,17 +637,17 @@ export default function AIInterviewCoach({ user, userData, questions = [], onClo
                     onKeyDown={handleKeyDown}
                     placeholder="Or ask your own question..."
                     rows={2}
-                    className="w-full border rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-1 bg-white text-gray-800 placeholder-gray-400 focus:border-teal-400 focus:ring-teal-300 border-gray-200"
+                    className="w-full border rounded-lg px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 bg-white text-slate-800 placeholder-slate-400 border-slate-300 transition-colors"
                   />
                 </div>
                 <button
                   onClick={() => sendMessage()}
                   onTouchEnd={(e) => { e.preventDefault(); sendMessage(); }}
                   disabled={!currentInput.trim() || isLoading}
-                  className={`p-3 rounded-xl transition-all flex-shrink-0 ${
+                  className={`p-3 rounded-lg transition-colors duration-150 flex-shrink-0 ${
                     currentInput.trim() && !isLoading
-                      ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/30 hover:-translate-y-0.5'
-                      : 'bg-gray-100 text-gray-300 cursor-not-allowed'
+                      ? 'bg-teal-600 text-white hover:bg-teal-700'
+                      : 'bg-slate-100 text-slate-300 cursor-not-allowed'
                   }`}
                 >
                   <ArrowUp className="w-5 h-5" />
@@ -655,7 +656,7 @@ export default function AIInterviewCoach({ user, userData, questions = [], onClo
             )}
 
             {/* Disclaimer */}
-            <p className="text-xs mt-4 text-center text-gray-400">
+            <p className="text-xs mt-4 text-center text-slate-400">
               AI coaching is for practice preparation only. Not a substitute for professional career counseling.
             </p>
           </div>
@@ -668,26 +669,26 @@ export default function AIInterviewCoach({ user, userData, questions = [], onClo
   // RENDER: ACTIVE CHAT SESSION
   // ============================================================
   return (
-    <div className="flex flex-col bg-gray-50" style={{ height: '100vh' }}>
+    <div className="flex flex-col bg-slate-50" style={{ height: '100vh' }}>
       {/* Header */}
-      <div className="border-b sticky top-0 z-30 backdrop-blur-xl bg-white/80 border-gray-200/60"
+      <div className="border-b sticky top-0 z-30 bg-white border-slate-200"
         style={{ WebkitBackdropFilter: 'blur(40px)' }}>
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
           <button
             onClick={onClose}
             onTouchEnd={(e) => { e.preventDefault(); onClose(); }}
-            className="flex items-center gap-2 px-2 py-1.5 rounded-2xl transition-colors text-gray-500 hover:text-gray-700 hover:bg-gray-100/80"
+            className="flex items-center gap-2 px-2 py-1.5 rounded-md transition-colors text-slate-500 hover:text-slate-700 hover:bg-slate-100"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span className="text-sm">Back</span>
+            <span className="text-sm font-medium">Back</span>
           </button>
 
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-xl flex items-center justify-center bg-teal-100">
-              <MessageSquare className="w-3.5 h-3.5 text-teal-600" />
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-slate-800">
+              <MessageSquare className="w-3.5 h-3.5 text-white" />
             </div>
-            <span className="font-semibold text-sm text-gray-800">Interview Coach</span>
-            <span className="text-xs text-gray-400">
+            <span className="font-semibold text-sm text-slate-800">Interview Coach</span>
+            <span className="text-xs text-slate-400">
               {messageCount} {messageCount === 1 ? 'reply' : 'replies'}
             </span>
           </div>
@@ -696,7 +697,7 @@ export default function AIInterviewCoach({ user, userData, questions = [], onClo
           <button
             onClick={handleNewChat}
             onTouchEnd={(e) => { e.preventDefault(); handleNewChat(); }}
-            className="p-2 rounded-xl text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+            className="p-2 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors duration-150"
             title="New conversation"
           >
             <Sparkles className="w-5 h-5" />
@@ -706,7 +707,7 @@ export default function AIInterviewCoach({ user, userData, questions = [], onClo
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-6">
-        <div className="max-w-3xl mx-auto space-y-4">
+        <div className="max-w-3xl mx-auto space-y-5">
           {messages.map((msg, idx) => (
             <div
               key={idx}
@@ -714,16 +715,16 @@ export default function AIInterviewCoach({ user, userData, questions = [], onClo
             >
               {/* AI avatar */}
               {msg.role === 'assistant' && (
-                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1 bg-teal-100">
-                  <MessageSquare className="w-4 h-4 text-teal-600" />
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-1 bg-slate-800">
+                  <MessageSquare className="w-4 h-4 text-white" />
                 </div>
               )}
 
               {/* Message bubble */}
-              <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+              <div className={`max-w-[80%] px-4 py-3 ${
                 msg.role === 'user'
-                  ? 'bg-teal-600 text-white rounded-br-md shadow-sm'
-                  : 'bg-white border border-gray-200/60 text-gray-800 rounded-bl-md shadow-[0_2px_8px_-3px_rgba(0,0,0,0.05)]'
+                  ? 'bg-teal-600 text-white rounded-lg rounded-br-sm shadow-sm'
+                  : 'bg-white border-l-2 border-l-teal-500 border border-slate-200 text-slate-800 rounded-lg rounded-bl-sm shadow-sm'
               }`}>
                 {/* Message content */}
                 {msg.role === 'assistant' ? (
@@ -731,7 +732,7 @@ export default function AIInterviewCoach({ user, userData, questions = [], onClo
                     {parseAIContent(msg.content).map((section, sIdx) => (
                       <div key={sIdx}>
                         {section.header && (
-                          <p className="font-semibold text-gray-700 mt-2 mb-1">{section.header}</p>
+                          <p className="font-semibold text-slate-800 mt-2 mb-1">{section.header}</p>
                         )}
                         <div className="space-y-1">
                           {renderMarkdownBlock(section.lines.join('\n').trim())}
@@ -741,11 +742,11 @@ export default function AIInterviewCoach({ user, userData, questions = [], onClo
 
                     {/* Citation badges */}
                     {msg.citations && msg.citations.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 mt-3 pt-2 border-t border-gray-100">
+                      <div className="flex flex-wrap gap-1.5 mt-3 pt-2 border-t border-slate-100">
                         {msg.citations.map((cite, cIdx) => (
                           <span
                             key={cIdx}
-                            className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${CITATION_COLORS[cite.color] || CITATION_COLORS.teal}`}
+                            className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-teal-50 text-teal-600 border border-teal-200"
                           >
                             {cite.label}
                           </span>
@@ -758,7 +759,7 @@ export default function AIInterviewCoach({ user, userData, questions = [], onClo
                 )}
 
                 {/* Timestamp */}
-                <div className={`text-[10px] mt-1.5 ${msg.role === 'user' ? 'text-white/60' : 'text-gray-400'}`}>
+                <div className={`text-[10px] mt-1.5 ${msg.role === 'user' ? 'text-white/60' : 'text-slate-400'}`}>
                   {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </div>
               </div>
@@ -771,14 +772,14 @@ export default function AIInterviewCoach({ user, userData, questions = [], onClo
           {/* Typing indicator */}
           {isLoading && (
             <div className="flex gap-3">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-teal-100">
-                <MessageSquare className="w-4 h-4 text-teal-600" />
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-slate-800">
+                <MessageSquare className="w-4 h-4 text-white" />
               </div>
-              <div className="border rounded-2xl rounded-bl-md px-4 py-3 bg-white border-gray-200/60 shadow-[0_2px_8px_-3px_rgba(0,0,0,0.05)]">
+              <div className="border border-slate-200 border-l-2 border-l-teal-500 rounded-lg rounded-bl-sm px-4 py-3 bg-white shadow-sm">
                 <div className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-teal-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <span className="w-2 h-2 rounded-full bg-teal-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <span className="w-2 h-2 rounded-full bg-teal-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-pulse" style={{ animationDelay: '0ms' }} />
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-pulse" style={{ animationDelay: '300ms' }} />
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-pulse" style={{ animationDelay: '600ms' }} />
                 </div>
               </div>
             </div>
@@ -786,7 +787,7 @@ export default function AIInterviewCoach({ user, userData, questions = [], onClo
 
           {/* Error message */}
           {error && (
-            <div className={`${errorType === 'rate_limited' ? 'bg-amber-50 border-amber-200' : 'bg-red-50 border-red-200'} border rounded-xl p-3 flex items-center gap-2`}>
+            <div className={`${errorType === 'rate_limited' ? 'bg-amber-50 border-amber-200' : 'bg-red-50 border-red-200'} border rounded-lg p-3 flex items-center gap-2`}>
               <AlertCircle className={`w-4 h-4 ${errorType === 'rate_limited' ? 'text-amber-500' : 'text-red-500'} flex-shrink-0`} />
               <span className={`${errorType === 'rate_limited' ? 'text-amber-700' : 'text-red-600'} text-sm flex-1`}>{error}</span>
               {lastUserMessage && (
@@ -798,7 +799,7 @@ export default function AIInterviewCoach({ user, userData, questions = [], onClo
                       sendMessage(lastUserMessage);
                     }, errorType === 'rate_limited' ? 2000 : 500);
                   }}
-                  className={`${errorType === 'rate_limited' ? 'text-amber-600 hover:text-amber-800 border-amber-300' : 'text-red-600 hover:text-red-800 border-red-300'} text-xs font-medium px-2 py-1 border rounded-lg flex-shrink-0`}
+                  className={`${errorType === 'rate_limited' ? 'text-amber-600 hover:text-amber-800 border-amber-300' : 'text-red-600 hover:text-red-800 border-red-300'} text-xs font-semibold px-2.5 py-1 border rounded-md flex-shrink-0 transition-colors duration-150`}
                 >
                   Try Again
                 </button>
@@ -814,8 +815,8 @@ export default function AIInterviewCoach({ user, userData, questions = [], onClo
 
           {/* Credit blocked warning */}
           {creditBlocked && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center">
-              <p className="text-amber-700 text-sm mb-2">
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-center">
+              <p className="text-amber-700 text-sm font-medium mb-1">
                 You've reached your free coaching limit for this month.
               </p>
               <p className="text-amber-600 text-xs">
@@ -830,8 +831,8 @@ export default function AIInterviewCoach({ user, userData, questions = [], onClo
 
       {/* Input Area */}
       {!creditBlocked && (
-        <div className="border-t p-4 backdrop-blur-xl bg-white/80 border-gray-200/60"
-          style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))', WebkitBackdropFilter: 'blur(40px)' }}>
+        <div className="border-t p-4 bg-white border-slate-200"
+          style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}>
           <div className="max-w-3xl mx-auto flex items-end gap-2">
             <div className="flex-1 relative">
               <textarea
@@ -841,7 +842,7 @@ export default function AIInterviewCoach({ user, userData, questions = [], onClo
                 onKeyDown={handleKeyDown}
                 placeholder="Ask your coach anything..."
                 rows={1}
-                className="w-full border rounded-xl px-4 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-teal-300/50 focus:border-teal-300 bg-white text-gray-800 placeholder-gray-400 border-gray-200 transition-all"
+                className="w-full border rounded-lg px-4 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 bg-white text-slate-800 placeholder-slate-400 border-slate-300 transition-colors"
                 style={{ maxHeight: '120px' }}
               />
             </div>
@@ -849,14 +850,14 @@ export default function AIInterviewCoach({ user, userData, questions = [], onClo
               onClick={() => sendMessage()}
               onTouchEnd={(e) => { e.preventDefault(); sendMessage(); }}
               disabled={!currentInput.trim() || isLoading}
-              className="p-2.5 bg-gradient-to-r from-teal-500 to-emerald-500 text-white rounded-xl disabled:opacity-40 hover:from-teal-600 hover:to-emerald-600 transition-all active:scale-[0.95] flex-shrink-0"
+              className="p-2.5 bg-teal-600 text-white rounded-lg disabled:opacity-40 hover:bg-teal-700 transition-colors duration-150 flex-shrink-0"
             >
               {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
             </button>
           </div>
 
           {/* Disclaimer */}
-          <p className="text-[10px] text-center text-gray-400 mt-2 max-w-3xl mx-auto">
+          <p className="text-[10px] text-center text-slate-400 mt-2 max-w-3xl mx-auto">
             AI coaching is for practice preparation only
           </p>
         </div>

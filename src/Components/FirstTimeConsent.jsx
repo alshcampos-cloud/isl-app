@@ -99,44 +99,44 @@ export default function FirstTimeConsent({ user, onAccepted, onAlreadyAccepted }
         to { opacity: 1; transform: scale(1) translateY(0); }
       }
     `}</style>
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xl overflow-y-auto p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm overflow-y-auto p-4">
       <div
-        className="bg-white rounded-3xl shadow-2xl max-w-md w-full mx-4 p-8 my-auto animate-[modalIn_0.3s_ease-out]"
+        className="bg-white rounded-xl shadow-lg max-w-md w-full mx-4 p-8 my-auto animate-[modalIn_0.3s_ease-out]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome to InterviewAnswers.ai</h2>
-          <p className="text-gray-600">Before we begin, please review our policies</p>
+          <h2 className="text-2xl font-bold text-navy-700 mb-2">Welcome to InterviewAnswers.ai</h2>
+          <p className="text-slate-600">Before we begin, please review our policies</p>
         </div>
 
-        <div className="flex gap-2 mb-4 bg-slate-100 rounded-full p-1">
+        <div className="flex gap-1 mb-4 bg-slate-100 rounded-lg p-1">
           <button
             onClick={() => setActiveTab('summary')}
-            className={`flex-1 py-2 text-sm font-medium rounded-full transition-all ${activeTab === 'summary' ? 'bg-teal-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
+            className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${activeTab === 'summary' ? 'bg-navy-700 text-white shadow-sm' : 'text-slate-600 hover:text-slate-800 hover:bg-slate-200'}`}
           >
             Summary
           </button>
           <button
             onClick={() => setActiveTab('privacy')}
-            className={`flex-1 py-2 text-sm font-medium rounded-full transition-all ${activeTab === 'privacy' ? 'bg-teal-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
+            className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${activeTab === 'privacy' ? 'bg-navy-700 text-white shadow-sm' : 'text-slate-600 hover:text-slate-800 hover:bg-slate-200'}`}
           >
             Privacy
           </button>
           <button
             onClick={() => setActiveTab('terms')}
-            className={`flex-1 py-2 text-sm font-medium rounded-full transition-all ${activeTab === 'terms' ? 'bg-teal-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
+            className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${activeTab === 'terms' ? 'bg-navy-700 text-white shadow-sm' : 'text-slate-600 hover:text-slate-800 hover:bg-slate-200'}`}
           >
             Terms
           </button>
         </div>
 
         <div className="relative mb-6">
-        <div className="bg-gray-50 rounded-xl p-4 max-h-64 overflow-y-auto text-sm text-gray-700" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 4%, black 92%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 4%, black 92%, transparent 100%)' }}>
+        <div className="bg-slate-50 rounded-lg p-4 max-h-64 overflow-y-auto text-sm text-slate-700" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 4%, black 92%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 4%, black 92%, transparent 100%)' }}>
           {activeTab === 'summary' && (
             <div>
               {/* PROMINENT AI DATA DISCLOSURE — Apple Guideline 5.1.1(i) & 5.1.2(i) */}
-              <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 mb-3" style={{ borderLeft: '4px solid', borderImage: 'linear-gradient(to bottom, #60a5fa, #2dd4bf) 1' }}>
-                <h4 className="font-semibold text-slate-900 text-sm mb-1">Third-Party AI Data Disclosure</h4>
+              <div className="bg-slate-50 border border-slate-200 border-l-4 border-l-navy-600 rounded-lg p-3 mb-3">
+                <h4 className="font-semibold text-navy-700 text-sm mb-1">Third-Party AI Data Disclosure</h4>
                 <p className="text-slate-700 text-xs mb-1">
                   Your practice responses are sent to <strong>Anthropic's Claude AI</strong> (a third-party service) to generate personalized coaching feedback.
                 </p>
@@ -148,7 +148,7 @@ export default function FirstTimeConsent({ user, onAccepted, onAlreadyAccepted }
                 </ul>
               </div>
 
-              <label className="flex items-start gap-3 mt-3 p-3 bg-teal-50 rounded-xl border border-teal-200 cursor-pointer transition hover:border-teal-300">
+              <label className="flex items-start gap-3 mt-3 p-3 bg-slate-50 rounded-lg border border-slate-200 cursor-pointer transition hover:border-slate-300">
                 <input
                   type="checkbox"
                   checked={aiConsentChecked}
@@ -170,7 +170,7 @@ export default function FirstTimeConsent({ user, onAccepted, onAlreadyAccepted }
                 </div>
               )}
 
-              <h3 className="font-semibold text-gray-900 mb-2">Quick Summary:</h3>
+              <h3 className="font-semibold text-navy-700 mb-2">Quick Summary:</h3>
               <ul className="space-y-2">
                 <li>• We collect your email to create your account</li>
                 <li>• Microphone access is used for interview practice</li>
@@ -188,7 +188,7 @@ export default function FirstTimeConsent({ user, onAccepted, onAlreadyAccepted }
               <p className="text-xs text-gray-500">Last updated: February 28, 2026</p>
               <p>InterviewAnswers.ai is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and protect your personal information.</p>
 
-              <h4 className="font-semibold text-gray-900">Information We Collect</h4>
+              <h4 className="font-semibold text-navy-700">Information We Collect</h4>
               <ul className="list-disc pl-5 space-y-1">
                 <li>Email address for account creation and authentication</li>
                 <li>Audio recordings of your practice interview responses</li>
@@ -198,7 +198,7 @@ export default function FirstTimeConsent({ user, onAccepted, onAlreadyAccepted }
                 <li>Usage data and analytics to improve our services</li>
               </ul>
 
-              <h4 className="font-semibold text-gray-900">How We Use Your Information</h4>
+              <h4 className="font-semibold text-navy-700">How We Use Your Information</h4>
               <ul className="list-disc pl-5 space-y-1">
                 <li>Authenticate your account and enable access across devices</li>
                 <li>Generate AI-powered feedback on your interview responses</li>
@@ -208,10 +208,10 @@ export default function FirstTimeConsent({ user, onAccepted, onAlreadyAccepted }
                 <li>Provide customer support when requested</li>
               </ul>
 
-              <h4 className="font-semibold text-gray-900">Data Storage and Security</h4>
+              <h4 className="font-semibold text-navy-700">Data Storage and Security</h4>
               <p>We use Supabase as our database provider. Audio recordings are stored locally on your device. All data transmitted between your device and our servers is encrypted using industry-standard HTTPS/TLS protocols. Data at rest is encrypted using AES-256 encryption.</p>
 
-              <h4 className="font-semibold text-gray-900">Third-Party Services</h4>
+              <h4 className="font-semibold text-navy-700">Third-Party Services</h4>
               <ul className="list-disc pl-5 space-y-1">
                 <li><strong>Supabase:</strong> Database and authentication services</li>
                 <li><strong>Anthropic (Claude API):</strong> AI-powered coaching and feedback generation</li>
@@ -220,14 +220,14 @@ export default function FirstTimeConsent({ user, onAccepted, onAlreadyAccepted }
               </ul>
               <p>We do not sell, rent, or share your personal information with third parties for their marketing purposes.</p>
 
-              <h4 className="font-semibold text-gray-900">AI Data Processing — Anthropic (Claude)</h4>
+              <h4 className="font-semibold text-navy-700">AI Data Processing — Anthropic (Claude)</h4>
               <p>Your interview practice responses and coaching conversations are sent to <strong>Anthropic's Claude API</strong> to generate personalized AI feedback. We do not send your email, password, or personal identifiers to Anthropic. Audio is processed on your device — only text transcripts are sent to Anthropic. Anthropic processes your data in accordance with their Privacy Policy and provides protection of user data consistent with the standards described in this Privacy Policy. Anthropic does not use data submitted via its API to train or improve its AI models. For details, see <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Anthropic's Privacy Policy</a>.</p>
 
-              <h4 className="font-semibold text-gray-900">Microphone Access and Recording</h4>
+              <h4 className="font-semibold text-navy-700">Microphone Access and Recording</h4>
               <p>InterviewAnswers.ai requests microphone access to record your practice interview responses. You have complete control over when recording occurs. Audio is used solely to generate transcriptions and provide feedback.</p>
               <p><strong>Important:</strong> If you use the Live Prompter feature during actual interviews, you are solely responsible for obtaining consent from all parties being recorded and complying with applicable recording laws.</p>
 
-              <h4 className="font-semibold text-gray-900">Your Rights and Data Control</h4>
+              <h4 className="font-semibold text-navy-700">Your Rights and Data Control</h4>
               <ul className="list-disc pl-5 space-y-1">
                 <li><strong>Access:</strong> View all your data within the app</li>
                 <li><strong>Deletion:</strong> Delete all your data at any time from Settings</li>
@@ -236,10 +236,10 @@ export default function FirstTimeConsent({ user, onAccepted, onAlreadyAccepted }
                 <li><strong>Opt-out:</strong> Opt-out of non-essential communications</li>
               </ul>
 
-              <h4 className="font-semibold text-gray-900">Children's Privacy</h4>
+              <h4 className="font-semibold text-navy-700">Children's Privacy</h4>
               <p>InterviewAnswers.ai is not intended for children under the age of 13. We do not knowingly collect personal information from children under 13.</p>
 
-              <h4 className="font-semibold text-gray-900">Contact Us</h4>
+              <h4 className="font-semibold text-navy-700">Contact Us</h4>
               <p>Email: support@interviewanswers.ai</p>
             </div>
           )}
@@ -248,13 +248,13 @@ export default function FirstTimeConsent({ user, onAccepted, onAlreadyAccepted }
             <div className="space-y-4">
               <p className="text-xs text-gray-500">Last updated: January 12, 2026</p>
 
-              <h4 className="font-semibold text-gray-900">1. Acceptance of Terms</h4>
+              <h4 className="font-semibold text-navy-700">1. Acceptance of Terms</h4>
               <p>By accessing or using InterviewAnswers.ai, you agree to be bound by these Terms of Service and all applicable laws and regulations. If you do not agree with these terms, you may not use InterviewAnswers.ai.</p>
 
-              <h4 className="font-semibold text-gray-900">2. Description of Service</h4>
+              <h4 className="font-semibold text-navy-700">2. Description of Service</h4>
               <p>InterviewAnswers.ai is an AI-powered interview preparation platform that provides practice questions, real-time feedback, and performance tracking to help users improve their interview skills.</p>
 
-              <h4 className="font-semibold text-gray-900">3. User Accounts</h4>
+              <h4 className="font-semibold text-navy-700">3. User Accounts</h4>
               <ul className="list-disc pl-5 space-y-1">
                 <li>You must provide accurate and complete registration information</li>
                 <li>You are responsible for maintaining the security of your account</li>
@@ -262,28 +262,28 @@ export default function FirstTimeConsent({ user, onAccepted, onAlreadyAccepted }
                 <li>One person may not maintain more than one account</li>
               </ul>
 
-              <h4 className="font-semibold text-gray-900">4. Subscription and Billing</h4>
+              <h4 className="font-semibold text-navy-700">4. Subscription and Billing</h4>
               <p>InterviewAnswers.ai offers free and paid subscription plans. Paid subscriptions are billed monthly. You may cancel your subscription at any time through the Stripe customer portal.</p>
 
-              <h4 className="font-semibold text-gray-900">5. Acceptable Use</h4>
+              <h4 className="font-semibold text-navy-700">5. Acceptable Use</h4>
               <p>You agree not to misuse the service, including but not limited to: attempting to gain unauthorized access, interfering with the service, using the service for illegal purposes, or distributing malware.</p>
 
-              <h4 className="font-semibold text-gray-900">6. Intellectual Property</h4>
+              <h4 className="font-semibold text-navy-700">6. Intellectual Property</h4>
               <p>The service and its original content, features, and functionality are owned by InterviewAnswers.ai. Your practice responses and custom content remain your property.</p>
 
-              <h4 className="font-semibold text-gray-900">7. AI-Generated Content Disclaimer</h4>
+              <h4 className="font-semibold text-navy-700">7. AI-Generated Content Disclaimer</h4>
               <p>AI-generated feedback and suggestions are provided for educational purposes only. They should not be considered professional career advice. We make no guarantees about interview outcomes based on using our service.</p>
 
-              <h4 className="font-semibold text-gray-900">8. Recording Disclaimer</h4>
+              <h4 className="font-semibold text-navy-700">8. Recording Disclaimer</h4>
               <p>You are solely responsible for compliance with all applicable recording and wiretapping laws when using audio features, especially the Live Prompter feature during actual interviews.</p>
 
-              <h4 className="font-semibold text-gray-900">9. Limitation of Liability</h4>
+              <h4 className="font-semibold text-navy-700">9. Limitation of Liability</h4>
               <p>InterviewAnswers.ai shall not be liable for any indirect, incidental, special, consequential, or punitive damages resulting from your use of the service.</p>
 
-              <h4 className="font-semibold text-gray-900">10. Termination</h4>
+              <h4 className="font-semibold text-navy-700">10. Termination</h4>
               <p>We may terminate or suspend your account at any time for violations of these terms. You may delete your account at any time from the Settings page.</p>
 
-              <h4 className="font-semibold text-gray-900">11. Contact Us</h4>
+              <h4 className="font-semibold text-navy-700">11. Contact Us</h4>
               <p>Email: support@interviewanswers.ai</p>
             </div>
           )}
@@ -293,20 +293,20 @@ export default function FirstTimeConsent({ user, onAccepted, onAlreadyAccepted }
         <div className="flex gap-3">
           <button
             onClick={handleReject}
-            className="flex-1 px-4 py-3 border-2 border-gray-200 text-gray-600 rounded-xl font-medium hover:bg-gray-50 transition-all active:scale-[0.98]"
+            className="flex-1 px-4 py-3 border border-slate-300 text-slate-600 rounded-md font-medium hover:bg-slate-50 transition-all active:scale-[0.98]"
           >
             Decline
           </button>
           <button
             onClick={handleAccept}
             disabled={!aiConsentChecked}
-            className={`flex-1 px-4 py-3 rounded-xl font-medium transition-all ${aiConsentChecked ? 'bg-gradient-to-r from-teal-600 to-emerald-600 text-white shadow-lg shadow-teal-600/25 hover:shadow-xl hover:shadow-teal-600/30 active:scale-[0.98]' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
+            className={`flex-1 px-4 py-3 rounded-md font-medium transition-all ${aiConsentChecked ? 'bg-teal-600 text-white shadow-sm hover:bg-teal-700 active:scale-[0.98]' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}
           >
             Accept & Continue
           </button>
         </div>
 
-        <p className="text-xs text-gray-500 text-center mt-4">
+        <p className="text-xs text-slate-500 text-center mt-4">
           By clicking "Accept & Continue" you agree to our Terms and Privacy Policy, including the use of Anthropic's Claude AI to analyze your practice responses
         </p>
       </div>

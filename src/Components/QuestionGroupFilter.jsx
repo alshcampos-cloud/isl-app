@@ -109,8 +109,8 @@ const QuestionGroupFilter = ({
             font-medium transition-all duration-150
             active:scale-[0.95] select-none shrink-0
             ${allActive || noneActive
-              ? 'bg-teal-600 text-white shadow-sm'
-              : 'bg-white border border-slate-200 text-slate-600 hover:border-slate-300'
+              ? 'bg-slate-800 text-white shadow-sm'
+              : 'bg-white border border-slate-200 text-slate-600 hover:border-slate-400'
             }
           `}
         >
@@ -121,8 +121,8 @@ const QuestionGroupFilter = ({
                 inline-flex items-center justify-center rounded-full font-semibold
                 ${badgeSize}
                 ${allActive || noneActive
-                  ? 'bg-teal-500 text-teal-50'
-                  : 'bg-slate-100 text-slate-500'
+                  ? 'bg-slate-600 text-slate-100'
+                  : 'bg-slate-100 text-slate-400'
                 }
               `}
             >
@@ -151,8 +151,8 @@ const QuestionGroupFilter = ({
                 font-medium transition-all duration-150
                 active:scale-[0.95] select-none shrink-0
                 ${isActive
-                  ? 'bg-teal-600 text-white shadow-sm'
-                  : 'bg-white border border-slate-200 text-slate-600 hover:border-teal-300'
+                  ? 'bg-slate-800 text-white shadow-sm'
+                  : 'bg-white border border-slate-200 text-slate-600 hover:border-slate-400'
                 }
               `}
             >
@@ -164,8 +164,8 @@ const QuestionGroupFilter = ({
                     inline-flex items-center justify-center rounded-full font-semibold
                     ${badgeSize}
                     ${isActive
-                      ? 'bg-teal-500 text-teal-50'
-                      : 'bg-slate-100 text-slate-500'
+                      ? 'bg-slate-600 text-slate-100'
+                      : 'bg-slate-100 text-slate-400'
                     }
                   `}
                 >
