@@ -40,8 +40,8 @@ function computeTrend(scores) {
 
 function ScoreTrendSparkline({
   practiceHistory = [],
-  width = 280,
-  height = 64,
+  width = 1200,  // FIXED 2026-04-09: was 280, caused 4.3x horizontal stretch at 1440px desktop
+  height = 300,  // FIXED 2026-04-09: was 64, bumped with width to maintain 4:1 ratio (not 19:1)
   onClick,
 }) {
   // Extract valid scores in chronological order
@@ -77,7 +77,7 @@ function ScoreTrendSparkline({
         </div>
         <div
           className="flex items-center justify-center rounded-lg bg-slate-50"
-          style={{ height: `${height}px` }}
+          style={{ height: '80px' }}
         >
           <p className="text-xs text-slate-400">Practice more to see your trend</p>
         </div>
@@ -117,7 +117,7 @@ function ScoreTrendSparkline({
 
   return (
     <div
-      className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-slate-200 shadow-sm cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all group"
+      className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-slate-200 shadow-sm cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all group h-full"
       onClick={onClick}
       role="button"
       tabIndex={0}
@@ -140,12 +140,13 @@ function ScoreTrendSparkline({
         </div>
       </div>
 
-      {/* SVG Sparkline */}
+      {/* SVG Sparkline — FIXED: preserveAspectRatio="xMidYMid meet" so the line doesn't horizontally stretch on wide viewports.
+          Height is controlled by aspect ratio (4:1) via className, not inline style. */}
       <svg
         viewBox={`0 0 ${width} ${height}`}
         className="w-full"
-        style={{ height: `${height}px`, maxHeight: '80px' }}
-        preserveAspectRatio="none"
+        style={{ aspectRatio: `${width} / ${height}`, maxHeight: '180px' }}
+        preserveAspectRatio="xMidYMid meet"
       >
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">

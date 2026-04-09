@@ -256,7 +256,7 @@ const CITATION_COLORS = {
 // ============================================================
 // COMPONENT
 // ============================================================
-export default function AIInterviewCoach({ user, userData, questions = [], onClose }) {
+export default function AIInterviewCoach({ user, userData, questions = [], practiceHistory = [], userContextData = {}, onClose, isPanel = false }) {
   // Chat state — restore from localStorage with 24h expiry
   const [messages, setMessages] = useState(() => loadCoachMessages('general').messages);
   const [currentInput, setCurrentInput] = useState('');
@@ -315,30 +315,80 @@ export default function AIInterviewCoach({ user, userData, questions = [], onClo
     }
   }, [messages, messageCount]);
 
-  // Build coach context for system prompt
+  // Build coach context for system prompt — uses REAL practice data
   const getCoachContext = useCallback(() => {
-    // Calculate weakest category from questions
-    const categories = ['Core Narrative', 'System-Level', 'Behavioral', 'Technical'];
-    let weakest = null;
-    let lowestPct = 101;
-
-    for (const cat of categories) {
-      const catQ = questions.filter(q => q.category === cat);
-      if (catQ.length === 0) continue;
-      // We don't have practice history directly, so just note the category sizes
-      const pct = catQ.length;
-      if (pct < lowestPct) {
-        lowestPct = pct;
-        weakest = cat;
+    // Calculate weakest category by ACTUAL average score (not question count)
+    const catScores = {};
+    questions.forEach(q => {
+      const cat = q.category || 'Other';
+      if (!catScores[cat]) catScores[cat] = { total: 0, count: 0 };
+      if (typeof q.averageScore === 'number' && q.averageScore > 0) {
+        catScores[cat].total += q.averageScore;
+        catScores[cat].count += 1;
       }
-    }
+    });
+
+    // Find actual weakest (lowest avg score with at least 1 practiced question)
+    let weakestCategory = null;
+    let weakestAvg = 11;
+    let strongestCategory = null;
+    let strongestAvg = -1;
+    Object.entries(catScores).forEach(([cat, { total, count }]) => {
+      if (count === 0) return;
+      const avg = total / count;
+      if (avg < weakestAvg) { weakestAvg = avg; weakestCategory = cat; }
+      if (avg > strongestAvg) { strongestAvg = avg; strongestCategory = cat; }
+    });
+
+    // Overall average across all practiced questions
+    const practicedQuestions = questions.filter(q => q.practiceCount > 0);
+    const overallAvg = practicedQuestions.length > 0
+      ? practicedQuestions.reduce((sum, q) => sum + (q.averageScore || 0), 0) / practicedQuestions.length
+      : null;
+
+    // Recent scores (last 5 sessions)
+    const recentScores = practiceHistory
+      .slice(-5)
+      .map(h => h.feedback?.overall)
+      .filter(s => typeof s === 'number');
+
+    // Top 3 lowest-scoring questions (if practiced 2+ times)
+    const strugglingQuestions = practicedQuestions
+      .filter(q => (q.practiceCount || 0) >= 2)
+      .sort((a, b) => (a.averageScore || 0) - (b.averageScore || 0))
+      .slice(0, 3)
+      .map(q => ({ question: q.question, avgScore: q.averageScore, attempts: q.practiceCount }));
+
+    // Recent feedback themes (last 3 sessions gaps)
+    const recentGaps = practiceHistory
+      .slice(-3)
+      .flatMap(h => h.feedback?.gaps || [])
+      .slice(0, 5);
 
     return {
+      // User identity context
+      targetRole: userContextData.targetRole || '',
+      targetCompany: userContextData.targetCompany || '',
+      interviewType: userContextData.interviewType || '',
+      background: userContextData.background || '',
+      jobDescription: userContextData.jobDescription || '',
+      interviewDate: userContextData.interviewDate || '',
+      daysUntil: userContextData.interviewDate ? Math.max(0, Math.round((new Date(userContextData.interviewDate + 'T00:00:00').getTime() - Date.now()) / 86400000)) : null,
+      // Practice stats
       questionCount: questions.length,
+      practicedCount: practicedQuestions.length,
       sessionCount: totalSessions + totalAISessions,
-      weakestCategory: weakest,
+      overallAverage: overallAvg,
+      // Performance breakdown
+      weakestCategory,
+      weakestCategoryAvg: weakestCategory ? Math.round(weakestAvg * 10) / 10 : null,
+      strongestCategory,
+      strongestCategoryAvg: strongestCategory ? Math.round(strongestAvg * 10) / 10 : null,
+      recentScores,
+      strugglingQuestions,
+      recentGaps,
     };
-  }, [questions, totalSessions, totalAISessions]);
+  }, [questions, practiceHistory, userContextData, totalSessions, totalAISessions]);
 
   // ============================================================
   // SEND MESSAGE
@@ -529,27 +579,38 @@ export default function AIInterviewCoach({ user, userData, questions = [], onClo
       : null;
 
     return (
-      <div className="flex flex-col bg-white" style={{ height: '100vh' }}>
+      <div className={`flex flex-col bg-white ${isPanel ? 'h-full rounded-t-2xl' : ''}`} style={isPanel ? {} : { height: '100vh' }}>
         {/* Header */}
-        <div className="border-b sticky top-0 z-30 bg-white border-slate-200"
-          style={{ WebkitBackdropFilter: 'blur(40px)' }}>
+        <div className={`border-b bg-white border-slate-200 flex-shrink-0 ${isPanel ? 'rounded-t-2xl' : 'sticky top-0 z-30'}`}>
           <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-            <button
-              onClick={onClose}
-              onTouchEnd={(e) => { e.preventDefault(); onClose(); }}
-              className="flex items-center gap-2 px-2 py-1.5 rounded-md transition-colors text-slate-500 hover:text-slate-700 hover:bg-slate-100"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span className="text-sm font-medium">Back</span>
-            </button>
+            {!isPanel && (
+              <button
+                onClick={onClose}
+                onTouchEnd={(e) => { e.preventDefault(); onClose(); }}
+                className="flex items-center gap-2 px-2 py-1.5 rounded-md transition-colors text-slate-500 hover:text-slate-700 hover:bg-slate-100"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span className="text-sm font-medium">Back</span>
+              </button>
+            )}
             <div className="flex items-center gap-2.5">
               <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-slate-800">
                 <MessageSquare className="w-3.5 h-3.5 text-white" />
               </div>
               <span className="font-semibold text-sm text-slate-800">Interview Coach</span>
-              <span className="text-[10px] font-medium text-slate-400 tracking-wide uppercase">Powered by AI</span>
             </div>
-            <div className="w-16" />
+            {isPanel ? (
+              <button
+                onClick={onClose}
+                onTouchEnd={(e) => { e.preventDefault(); onClose(); }}
+                className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                aria-label="Close"
+              >
+                <XCircle className="w-5 h-5" />
+              </button>
+            ) : (
+              <div className="w-16" />
+            )}
           </div>
         </div>
 
@@ -557,11 +618,13 @@ export default function AIInterviewCoach({ user, userData, questions = [], onClo
         <div className="flex-1 flex items-center justify-center p-6 overflow-y-auto">
           <div className="max-w-lg w-full">
             {/* Welcome */}
-            <div className="text-center mb-8">
-              <div className="w-14 h-14 rounded-lg flex items-center justify-center mx-auto mb-4 bg-slate-800">
-                <MessageSquare className="w-7 h-7 text-white" />
-              </div>
-              <h2 className="text-2xl font-bold tracking-tight mb-2 text-navy-700">
+            <div className="text-center mb-6">
+              {!isPanel && (
+                <div className="w-14 h-14 rounded-lg flex items-center justify-center mx-auto mb-4 bg-slate-800">
+                  <MessageSquare className="w-7 h-7 text-white" />
+                </div>
+              )}
+              <h2 className={`font-bold tracking-tight mb-2 text-navy-700 ${isPanel ? 'text-xl' : 'text-2xl'}`}>
                 Interview Coach
               </h2>
               <p className="text-sm leading-relaxed max-w-sm mx-auto text-slate-500">
@@ -669,19 +732,20 @@ export default function AIInterviewCoach({ user, userData, questions = [], onClo
   // RENDER: ACTIVE CHAT SESSION
   // ============================================================
   return (
-    <div className="flex flex-col bg-slate-50" style={{ height: '100vh' }}>
+    <div className={`flex flex-col bg-slate-50 ${isPanel ? 'h-full rounded-t-2xl' : ''}`} style={isPanel ? {} : { height: '100vh' }}>
       {/* Header */}
-      <div className="border-b sticky top-0 z-30 bg-white border-slate-200"
-        style={{ WebkitBackdropFilter: 'blur(40px)' }}>
+      <div className={`border-b bg-white border-slate-200 flex-shrink-0 ${isPanel ? 'rounded-t-2xl' : 'sticky top-0 z-30'}`}>
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-          <button
-            onClick={onClose}
-            onTouchEnd={(e) => { e.preventDefault(); onClose(); }}
-            className="flex items-center gap-2 px-2 py-1.5 rounded-md transition-colors text-slate-500 hover:text-slate-700 hover:bg-slate-100"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span className="text-sm font-medium">Back</span>
-          </button>
+          {!isPanel && (
+            <button
+              onClick={onClose}
+              onTouchEnd={(e) => { e.preventDefault(); onClose(); }}
+              className="flex items-center gap-2 px-2 py-1.5 rounded-md transition-colors text-slate-500 hover:text-slate-700 hover:bg-slate-100"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="text-sm font-medium">Back</span>
+            </button>
+          )}
 
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-slate-800">
@@ -693,15 +757,27 @@ export default function AIInterviewCoach({ user, userData, questions = [], onClo
             </span>
           </div>
 
-          {/* New Chat button */}
-          <button
-            onClick={handleNewChat}
-            onTouchEnd={(e) => { e.preventDefault(); handleNewChat(); }}
-            className="p-2 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors duration-150"
-            title="New conversation"
+          <div className="flex items-center gap-1">
+            {/* New Chat button */}
+            <button
+              onClick={handleNewChat}
+              onTouchEnd={(e) => { e.preventDefault(); handleNewChat(); }}
+              className="p-2 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors duration-150"
+              title="New conversation"
           >
             <Sparkles className="w-5 h-5" />
           </button>
+            {isPanel && (
+              <button
+                onClick={onClose}
+                onTouchEnd={(e) => { e.preventDefault(); onClose(); }}
+                className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                aria-label="Close"
+              >
+                <XCircle className="w-5 h-5" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

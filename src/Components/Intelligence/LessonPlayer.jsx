@@ -18,7 +18,7 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import {
   ArrowLeft, Play, Pause, SkipForward, SkipBack,
   Volume2, Loader2, Wifi, WifiOff, CheckCircle2,
-  Star, ChevronRight, RotateCcw
+  Star, ChevronRight, RotateCcw, BookOpen
 } from 'lucide-react'
 import { getPreferredVoice, VOICE_SETTINGS } from '../../utils/voiceManager'
 import { generateTTSAudio, revokeTTSAudio } from '../../utils/ttsService'
@@ -204,14 +204,16 @@ export default function LessonPlayer({
 
     utterance.onend = advanceToNext
 
-    // Fallback: estimate duration based on text length and check
+    // Fallback: estimate duration and force-advance even if speechSynthesis.speaking is stuck true
+    // Chrome sometimes reports speaking=true even after utterance completes (known browser bug)
     const estimatedMs = Math.max(2000, (text.length / 12) * 1000 / (speedRef.current || 1))
     const fallbackTimer = setTimeout(() => {
-      if (!endFired && !cancelledRef.current && !speechSynthesis.speaking) {
-        console.log('[LessonPlayer] iOS fallback: advancing past line', index)
+      if (!endFired && !cancelledRef.current) {
+        console.log('[LessonPlayer] Fallback timer: force-advancing past line', index, 'speaking:', speechSynthesis.speaking)
+        speechSynthesis.cancel() // Force stop any stuck utterance
         advanceToNext()
       }
-    }, estimatedMs + 1500)
+    }, estimatedMs + 2000)
 
     utterance.onerror = () => {
       clearTimeout(fallbackTimer)
@@ -227,7 +229,16 @@ export default function LessonPlayer({
   }, [])
 
   // ─── Start Playback ────────────────────────────────────────
+  const playbackLockRef = useRef(false)
   const startPlayback = useCallback(async () => {
+    // Guard against rapid double-invocation (double-click, re-render, etc.)
+    if (playbackLockRef.current) {
+      console.log('[LessonPlayer] Ignoring duplicate startPlayback call')
+      return
+    }
+    playbackLockRef.current = true
+    setTimeout(() => { playbackLockRef.current = false }, 500) // unlock after 500ms
+
     cancelledRef.current = true
     if (pauseTimerRef.current) clearTimeout(pauseTimerRef.current)
     if (isSpeechSupported) speechSynthesis.cancel()
@@ -235,47 +246,62 @@ export default function LessonPlayer({
     if (audioBlobUrl) revokeTTSAudio(audioBlobUrl)
 
     const content = lesson.audioScript || []
+    if (content.length === 0) {
+      console.warn('[LessonPlayer] No audio script content for lesson:', lesson.id)
+      return
+    }
     linesRef.current = content
     setCurrentLine(0)
     setAudioProgress(0)
     setAudioCurrentTime(0)
     setAudioDuration(0)
 
-    if (hasHDAudio) setIsGenerating(true)
-    setAudioMode(null)
+    // Helper: start Web Speech fallback (small delay after cancel for Chrome)
+    const startSpeechFallback = () => {
+      console.log('[LessonPlayer] Starting Web Speech fallback, lines:', content.length)
+      if (isSpeechSupported && content.length > 0) {
+        setAudioMode('speech')
+        setIsGenerating(false)
+        // CRITICAL: Reset cancelled BEFORE the timeout so speakLine doesn't bail
+        cancelledRef.current = false
+        // Chrome needs ~100ms after speechSynthesis.cancel() before speaking again
+        setTimeout(() => {
+          if (cancelledRef.current) return // component unmounted during delay
+          setIsPlaying(true)
+          speakLine(content[0], 0)
+        }, 150)
+      } else {
+        console.warn('[LessonPlayer] Web Speech API not supported in this browser')
+        setIsGenerating(false)
+      }
+    }
 
+    // Try pre-generated MP3 first (hosted on Supabase Storage or local /audio/lessons/)
+    // Fall back to Web Speech API if MP3 not available
+    const mp3Url = `/audio/lessons/lesson-${lesson.id}.mp3`
     try {
-      if (!hasHDAudio) throw new Error('HD audio requires premium')
-
-      const blobUrl = await generateTTSAudio(content, { voice: 'nova', speed })
-      if (blobUrl && audioRef.current) {
-        setAudioBlobUrl(blobUrl)
+      const headResp = await fetch(mp3Url, { method: 'HEAD' })
+      if (headResp.ok && audioRef.current) {
+        console.log('[LessonPlayer] Found pre-generated MP3:', mp3Url)
         setAudioMode('mp3')
         setIsGenerating(false)
-        audioRef.current.src = blobUrl
+        audioRef.current.src = mp3Url
         audioRef.current.playbackRate = speed
         cancelledRef.current = false
         setIsPlaying(true)
-        try { await audioRef.current.play() } catch {
-          // Autoplay blocked — fall through to speech
-          throw new Error('Autoplay blocked')
+        try {
+          await audioRef.current.play()
+          return // MP3 playing successfully
+        } catch (playErr) {
+          console.log('[LessonPlayer] MP3 autoplay blocked, trying speech:', playErr.message)
         }
-        return
       }
-      throw new Error('No audio generated')
     } catch {
-      // Fallback to Web Speech API
-      if (audioBlobUrl) revokeTTSAudio(audioBlobUrl)
-      setAudioBlobUrl(null)
-      setIsGenerating(false)
-
-      if (isSpeechSupported) {
-        setAudioMode('speech')
-        cancelledRef.current = false
-        setIsPlaying(true)
-        speakLine(content[0], 0)
-      }
+      // MP3 not available, fall through to speech
     }
+
+    // Fall back to Web Speech API
+    startSpeechFallback()
   }, [lesson, hasHDAudio, speed, audioBlobUrl, speakLine])
 
   // ─── Toggle play/pause ─────────────────────────────────────
@@ -414,7 +440,7 @@ export default function LessonPlayer({
 
             {/* Duration estimate */}
             <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)', marginTop: '1rem' }}>
-              ~{lesson.duration || '3-5'} min lesson
+              ~{(lesson.duration || '3-5 min').replace(/\s*min\s*$/, '')} min lesson
             </p>
           </div>
 
@@ -528,6 +554,64 @@ export default function LessonPlayer({
             >
               Quiz <SkipForward size={14} />
             </button>
+          </div>
+
+          {/* Read Along Transcript */}
+          <div style={{ padding: '0 1rem 1rem' }}>
+            <details open style={{
+              borderRadius: '0.75rem',
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              overflow: 'hidden',
+            }}>
+              <summary style={{
+                padding: '0.75rem 1rem',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                color: 'rgba(255,255,255,0.5)',
+                cursor: 'pointer',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                userSelect: 'none',
+                listStyle: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+              }}>
+                <BookOpen size={14} style={{ opacity: 0.6 }} />
+                Read Along
+              </summary>
+              <div style={{
+                padding: '0 1rem 1rem',
+                maxHeight: '40vh',
+                overflowY: 'auto',
+              }}>
+                {(lesson.audioScript || []).map((line, idx) => {
+                  if (line === '...') return null
+                  const isActive = idx === currentLine && isPlaying
+                  const isPast = idx < currentLine
+                  return (
+                    <p key={idx} style={{
+                      fontSize: '0.85rem',
+                      lineHeight: 1.7,
+                      margin: '0.25rem 0',
+                      padding: '0.35rem 0.6rem',
+                      borderRadius: '0.4rem',
+                      color: isActive
+                        ? '#fff'
+                        : isPast
+                          ? 'rgba(255,255,255,0.35)'
+                          : 'rgba(255,255,255,0.55)',
+                      background: isActive ? 'rgba(99,102,241,0.2)' : 'transparent',
+                      borderLeft: isActive ? '3px solid #818cf8' : '3px solid transparent',
+                      transition: 'all 0.3s ease',
+                    }}>
+                      {line}
+                    </p>
+                  )
+                })}
+              </div>
+            </details>
           </div>
 
           {/* Audio completed banner */}

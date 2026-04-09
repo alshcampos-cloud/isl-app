@@ -340,8 +340,8 @@ export default function PortfolioIntake({
                 </span>
               </div>
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center flex-shrink-0">
-                  <MessageSquare className="w-6 h-6 text-white" />
+                <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center flex-shrink-0">
+                  <MessageSquare className="w-6 h-6 text-slate-600" />
                 </div>
                 <div className="flex-1">
                   <h4 className="font-semibold text-slate-800 group-hover:text-purple-600 transition-colors">Help me build it</h4>
@@ -358,8 +358,8 @@ export default function PortfolioIntake({
               className="w-full bg-white rounded-2xl shadow-sm border border-slate-200 p-5 text-left hover:border-indigo-300 hover:shadow-md transition-all group"
             >
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-400 to-slate-600 flex items-center justify-center flex-shrink-0">
-                  <FileText className="w-6 h-6 text-white" />
+                <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center flex-shrink-0">
+                  <FileText className="w-6 h-6 text-slate-600" />
                 </div>
                 <div className="flex-1">
                   <h4 className="font-semibold text-slate-800 group-hover:text-indigo-600 transition-colors">I already have content</h4>

@@ -85,8 +85,8 @@ export default function FeaturesSection() {
                 className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-gray-100"
                 variants={itemVariants}
               >
-                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-5`}>
-                  <Icon className="w-7 h-7 text-white" />
+                <div className="w-14 h-14 rounded-2xl bg-teal-50 flex items-center justify-center mb-5">
+                  <Icon className="w-7 h-7 text-teal-600" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-3">{feature.name}</h3>
                 <p className="text-gray-600 leading-relaxed mb-4">{feature.description}</p>
@@ -119,8 +119,8 @@ export default function FeaturesSection() {
                 className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-gray-100"
                 variants={itemVariants}
               >
-                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-5`}>
-                  <Icon className="w-7 h-7 text-white" />
+                <div className="w-14 h-14 rounded-2xl bg-teal-50 flex items-center justify-center mb-5">
+                  <Icon className="w-7 h-7 text-teal-600" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-3">{feature.name}</h3>
                 <p className="text-gray-600 leading-relaxed mb-4">{feature.description}</p>

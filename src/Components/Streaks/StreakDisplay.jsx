@@ -6,6 +6,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Flame, Snowflake, Trophy, X } from 'lucide-react';
+import { StreakStatIcon } from '../icons/FeatureIcons';
 import { AnimatePresence, motion } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { fetchStreak, activateFreeze } from '../../utils/streakSupabase';
@@ -96,7 +97,7 @@ export default function StreakDisplay({ refreshTrigger, variant = 'dark' }) {
       <div
         className={`rounded-xl sm:rounded-2xl p-3 sm:p-4 hover:scale-[1.02] transition-all duration-200 cursor-pointer relative ${
           variant === 'light'
-            ? 'bg-gradient-to-br from-rose-50 to-pink-50 text-slate-800 border border-rose-100/60 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.06)] hover:shadow-lg active:scale-[0.98]'
+            ? 'bg-white text-slate-800 border border-slate-200 shadow-sm hover:shadow-md active:scale-[0.98]'
             : 'bg-white/10 backdrop-blur-lg text-white border border-white/20 hover:bg-white/15'
         }`}
         onClick={() => setShowPopover(true)}
@@ -112,8 +113,8 @@ export default function StreakDisplay({ refreshTrigger, variant = 'dark' }) {
         }}
       >
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className={`w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br ${gradientFrom} ${gradientTo} rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 shadow-md`}>
-            <Flame className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+          <div className={`w-10 h-10 sm:w-12 sm:h-12 ${variant === 'light' ? 'bg-amber-50' : 'bg-amber-500/20'} rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0`}>
+            <StreakStatIcon size={26} />
           </div>
           <div className="min-w-0">
             <p className="text-2xl font-bold leading-tight">
@@ -153,8 +154,8 @@ export default function StreakDisplay({ refreshTrigger, variant = 'dark' }) {
 
               {/* Header */}
               <div className="text-center mb-6">
-                <div className={`w-16 h-16 mx-auto mb-3 bg-gradient-to-br ${gradientFrom} ${gradientTo} rounded-2xl flex items-center justify-center shadow-lg`}>
-                  <Flame className="w-8 h-8 text-white" />
+                <div className="w-16 h-16 mx-auto mb-3 bg-amber-500/20 rounded-2xl flex items-center justify-center">
+                  <StreakStatIcon size={38} />
                 </div>
                 <h3 className="text-2xl font-black text-white">{currentStreak} Day{currentStreak !== 1 ? 's' : ''}</h3>
                 <p className="text-sm text-slate-400 mt-1">

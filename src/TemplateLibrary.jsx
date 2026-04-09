@@ -79,7 +79,8 @@ export default function TemplateLibrary({ onImport, onClose, onOpenAICoach, chec
 
   const handlePracticeWithCoach = (dq) => {
     if (onOpenAICoach) {
-      onOpenAICoach(dq.question);
+      // Pass the full question object, not just the string — handler needs .question, .category, .priority, .bullets
+      onOpenAICoach(dq);
     }
   };
 

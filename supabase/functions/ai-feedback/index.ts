@@ -171,6 +171,67 @@ const TOKEN_COSTS: Record<string, { input: number; output: number }> = {
   'claude-sonnet-4-20250514':  { input: 0.000003, output: 0.000015 },
 }
 
+/**
+ * Build format-specific interviewer persona for the Mock Interviewer feature.
+ * Returns a text block to PREPEND to the generic ai-interviewer system prompt.
+ * Returns empty string when format is missing (backward compatible).
+ */
+function buildInterviewerPersona(
+  format?: string | null,
+  stage?: string | null,
+  slotType?: string | null,
+  questionNumber?: number | null,
+  totalQuestions?: number | null,
+): string {
+  if (!format) return '';
+
+  let persona = '';
+
+  if (format === 'behavioral') {
+    persona = `INTERVIEWER PERSONA — BEHAVIORAL HIRING MANAGER:
+You are a warm but probing hiring manager conducting a structured behavioral interview. Your follow-ups dig into specifics — "What exactly did YOU do?" "What was the measurable result?" "How did the team respond?" You are looking for STAR structure, ownership, and concrete details. Be encouraging but never let vague answers slide.`;
+  } else if (format === 'phoneScreen') {
+    persona = `INTERVIEWER PERSONA — RECRUITER PHONE SCREEN:
+You are a friendly recruiter conducting a 15-minute phone screening call. Your job is to verify basic fit and move the candidate to the next round — NOT to deep-dive. Keep follow-ups light and efficient. After 1 brief follow-up at most, move on. You are assessing: communication clarity, basic qualifications, availability, and enthusiasm. No detailed STAR probing.`;
+  } else if (format === 'panel') {
+    // Rotate panelist role based on slotType
+    let panelRole = 'the hiring manager';
+    if (slotType === 'behavioral' || slotType === 'leadership') {
+      panelRole = 'the hiring manager';
+    } else if (slotType === 'communication' || slotType === 'situational') {
+      panelRole = 'a cross-functional peer';
+    } else if (slotType === 'curveball') {
+      panelRole = 'a senior engineer';
+    } else if (slotType === 'first-impressions' || slotType === 'closing') {
+      panelRole = 'the HR lead';
+    }
+    persona = `INTERVIEWER PERSONA — PANEL INTERVIEW:
+You are one of several interviewers on a panel. For this specific question, you are playing the role of ${panelRole}. Attribute your follow-ups naturally: "From my perspective as ${panelRole}, I'd want to know..." Each panelist has a different angle — be that angle. Stay in character for this question.`;
+  } else if (format === 'finalRound') {
+    persona = `INTERVIEWER PERSONA — FINAL-ROUND EXECUTIVE:
+You are a senior executive (VP+) conducting the final-round interview. You have already seen the candidate's resume and previous interview notes — you are evaluating LEADERSHIP PHILOSOPHY, STRATEGIC JUDGMENT, and CULTURAL ALIGNMENT. Your tone is measured and thoughtful. Follow-ups probe long-term thinking, values, and how the candidate would operate at the senior level. Not about tactics — about mindset and fit.`;
+  } else {
+    return '';
+  }
+
+  // Pacing guidance based on question position in sequence
+  let pacing = '';
+  if (typeof questionNumber === 'number' && typeof totalQuestions === 'number' && totalQuestions > 0) {
+    if (questionNumber < totalQuestions) {
+      pacing = `\n\nPACING: This is question ${questionNumber} of ${totalQuestions}. After at most 1-2 follow-ups, wrap up this question with continue_conversation: false so we can move to the next one. Do NOT give final comprehensive feedback yet — just a brief acknowledgment.`;
+    } else if (questionNumber === totalQuestions) {
+      pacing = `\n\nPACING: This is the FINAL question of the interview. Go deeper with follow-ups if helpful. After the candidate's answer is complete, return comprehensive feedback across the entire session with continue_conversation: false.`;
+    }
+  }
+
+  let stageLine = '';
+  if (stage) {
+    stageLine = `\n\nINTERVIEW STAGE: ${stage}`;
+  }
+
+  return persona + stageLine + pacing + '\n\n';
+}
+
 /** Fire-and-forget: log successful API call metrics */
 function logMetrics(params: { functionName: string; mode: string; userId: string; model: string; latencyMs: number; inputTokens?: number; outputTokens?: number }) {
   const costs = TOKEN_COSTS[params.model] || { input: 0.000003, output: 0.000015 };
@@ -211,7 +272,7 @@ serve(async (req) => {
   let userId: string | undefined;
 
   try {
-    const { questionText, userAnswer, expectedBullets, mode, userContext, conversationHistory, exchangeCount, question, conversation, answer, systemPrompt, userMessage, nursingFeature, selfEfficacyData, rushMode, portfolioContext, currentBullets, currentKeywords } = await req.json()
+    const { questionText, userAnswer, expectedBullets, mode, userContext, conversationHistory, exchangeCount, question, conversation, answer, systemPrompt, userMessage, nursingFeature, selfEfficacyData, rushMode, portfolioContext, currentBullets, currentKeywords, interviewFormat, interviewStage, slotType, questionNumber, totalQuestions } = await req.json()
     requestMode = mode || 'unknown';
     
     // Build context section if user provided background info
@@ -944,7 +1005,12 @@ Format citations as [Source: Learn Center] or [Source: Question Bank]
 
     } else {
       // Original practice/ai-interviewer modes
-      promptContent = `You are an expert interview coach conducting ${mode === 'ai-interviewer' ? 'an interactive mock interview' : 'a practice session'}.
+      // Format-specific persona (only applied to ai-interviewer mode when interviewFormat is provided)
+      const interviewerPersona = mode === 'ai-interviewer'
+        ? buildInterviewerPersona(interviewFormat, interviewStage, slotType, questionNumber, totalQuestions)
+        : '';
+
+      promptContent = `${interviewerPersona}You are an expert interview coach conducting ${mode === 'ai-interviewer' ? 'an interactive mock interview' : 'a practice session'}.
 
 ${contextSection}
 

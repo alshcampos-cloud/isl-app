@@ -2,7 +2,7 @@
  * LearnSection.jsx — Duolingo-style course map for interview learning path.
  * Phase 5, Sprint 5. D.R.A.F.T. protocol: NEW file.
  *
- * Shows 4 modules × 5 lessons each = 20 lessons.
+ * Shows 5 modules × 5 lessons each = 25 lessons.
  * Modules unlock progressively (complete Module N to unlock N+1).
  * Daily goal: complete 1 lesson per day.
  * Stars earned from active recall quizzes (0-3 per lesson).
@@ -166,7 +166,7 @@ export default function LearnSection({
               Your Interview Masterclass
             </p>
             <p style={{ fontSize: '0.85rem', opacity: 0.85, margin: '0 0 1rem', lineHeight: 1.5 }}>
-              20 bite-sized audio lessons with quizzes and daily goals. Learn the STAR method, handle curveballs, and nail your interview.
+              25 bite-sized audio lessons with quizzes and daily goals. Learn the STAR method, handle curveballs, negotiate salary, and nail your interview.
             </p>
             <button
               onClick={() => setActiveLessonId('1-1')}
@@ -549,7 +549,7 @@ export default function LearnSection({
               Course Complete!
             </h3>
             <p style={{ fontSize: '0.9rem', color: '#475569', margin: 0 }}>
-              You've mastered all 20 lessons. You're ready to ace your interview!
+              You've mastered all 25 lessons. You're ready to ace your interview!
             </p>
           </div>
         )}

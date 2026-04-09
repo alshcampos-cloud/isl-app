@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { isNativeApp } from '../utils/platform';
-import { restorePurchases } from '../utils/nativePurchases';
+import { restorePurchases, getManageSubscriptionURL, logoutIAP } from '../utils/nativePurchases';
 import { resetAllProgress } from '../utils/resetProgress';
 
 // Tier display labels
@@ -29,7 +29,7 @@ const TIER_BADGE_STYLES = {
   annual: 'bg-amber-50 text-amber-700',
 };
 
-export default function SettingsPage({ user, userData, supabase: supabaseProp, onBack, onNavigate }) {
+export default function SettingsPage({ user, userData, supabase: supabaseProp, onBack, onNavigate, onOpenPricing }) {
   // Delete account state
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteInput, setDeleteInput] = useState('');
@@ -60,12 +60,32 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
 
   const handleSignOut = async () => {
     setLoggingOut(true);
+    // Log out of RevenueCat first (clears entitlements on shared native devices)
+    try { await logoutIAP(); } catch {}
     try {
       await supabase.auth.signOut();
     } catch (err) {
       console.warn('Sign-out error:', err.message);
     }
     window.location.href = '/';
+  };
+
+  /**
+   * Manage subscription — platform-aware:
+   * - iOS native → deep link to Apple subscription management
+   * - Android native → Google Play subscriptions
+   * - Web → open pricing page modal via onOpenPricing prop
+   */
+  const handleManageSubscription = () => {
+    if (isNativeApp()) {
+      const url = getManageSubscriptionURL();
+      window.open(url, '_blank');
+    } else if (onOpenPricing) {
+      onOpenPricing();
+    } else if (onNavigate) {
+      // Fallback — shouldn't happen but gracefully degrade
+      onNavigate('pricing');
+    }
   };
 
   const handleResetProgress = async () => {
@@ -103,16 +123,14 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
     setDeleteError(null);
 
     try {
-      // Try Edge Function first (bypasses RLS)
-      const { data, error: fnError } = await supabase.functions.invoke('delete-account');
+      // FIX: Call the delete_user RPC (migration 20260405_delete_user_account.sql)
+      // — the previous 'delete-account' Edge Function was never deployed.
+      // The RPC runs as SECURITY DEFINER and handles full account + data deletion.
+      const { error: rpcError } = await supabase.rpc('delete_user');
 
-      if (fnError) throw fnError;
+      if (rpcError) throw rpcError;
 
-      if (data?.success) {
-        console.log('[AccountDeletion] Edge Function succeeded');
-      } else {
-        throw new Error(data?.error || 'Deletion failed');
-      }
+      console.log('[AccountDeletion] delete_user RPC succeeded');
 
       // Clear localStorage
       try {
@@ -194,8 +212,8 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
           icon: CreditCard,
           iconName: 'CreditCard',
           label: 'Subscription',
-          subtitle: tierLabel,
-          action: () => onNavigate('pricing'),
+          subtitle: isNativeApp() ? 'Manage via App Store' : tierLabel,
+          action: handleManageSubscription,
           actionLabel: 'Manage',
           tierBadge: true,
         },
@@ -246,13 +264,8 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
           subtitle: 'support@interviewanswers.ai',
           action: () => { window.location.href = 'mailto:support@interviewanswers.ai'; },
         },
-        {
-          icon: Star,
-          iconName: 'Star',
-          label: 'Rate the App',
-          subtitle: 'Help us improve with your feedback',
-          action: () => window.open('https://apps.apple.com/app/interviewanswers-ai/id0000000000', '_blank'),
-        },
+        // Rate the App removed — will be re-enabled with real Apple App ID post-launch.
+        // Previous placeholder ID ('id0000000000') would break for reviewers.
       ],
     },
   ];
@@ -548,7 +561,7 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
         {/* Version Footer */}
         <div className="pt-4 pb-2">
           <p className="text-center text-[11px] text-slate-400 leading-relaxed">
-            InterviewAnswers.ai v1.0.0
+            InterviewAnswers.ai v{typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.0.0'}
           </p>
           <p className="text-center text-[11px] text-slate-300 mt-0.5">
             Made with &#9829; by Koda Labs LLC

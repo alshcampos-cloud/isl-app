@@ -146,7 +146,7 @@ function QuickAddQuestion({ onQuestionsAdded, onOpenGenerator }) {
       {/* FAB Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-24 right-4 z-40 w-14 h-14 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-full shadow-lg flex items-center justify-center text-white hover:from-teal-600 hover:to-emerald-600 active:scale-90 transition-all"
+        className="fixed bottom-24 right-4 z-40 w-14 h-14 bg-slate-800 rounded-full shadow-lg flex items-center justify-center text-white hover:bg-slate-700 active:scale-90 transition-all"
         style={{ boxShadow: '0 6px 20px -4px rgba(13, 148, 136, 0.5)' }}
       >
         <Plus className="w-7 h-7" />

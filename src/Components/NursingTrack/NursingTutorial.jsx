@@ -120,7 +120,7 @@ export default function NursingTutorial({ onComplete }) {
               MOST POPULAR
             </div>
             <div className="flex items-start gap-3">
-              <div className="w-9 h-9 bg-gradient-to-br from-sky-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+              <div className="w-9 h-9 bg-teal-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
                 <Bot className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -133,7 +133,7 @@ export default function NursingTutorial({ onComplete }) {
           {/* Quick Practice */}
           <div className="bg-white/5 border border-white/10 rounded-xl p-3">
             <div className="flex items-start gap-3">
-              <div className="w-9 h-9 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-lg flex items-center justify-center flex-shrink-0">
+              <div className="w-9 h-9 bg-teal-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
                 <Target className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -146,7 +146,7 @@ export default function NursingTutorial({ onComplete }) {
           {/* SBAR */}
           <div className="bg-white/5 border border-white/10 rounded-xl p-3">
             <div className="flex items-start gap-3">
-              <div className="w-9 h-9 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
+              <div className="w-9 h-9 bg-teal-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
                 <MessageSquare className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -234,7 +234,7 @@ export default function NursingTutorial({ onComplete }) {
           {/* AI Coach */}
           <div className="bg-gradient-to-br from-sky-500/10 to-teal-500/10 border border-sky-500/20 rounded-xl p-3">
             <div className="flex items-start gap-3">
-              <div className="w-9 h-9 bg-gradient-to-br from-sky-500 to-teal-500 rounded-lg flex items-center justify-center flex-shrink-0">
+              <div className="w-9 h-9 bg-teal-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
                 <Brain className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -247,7 +247,7 @@ export default function NursingTutorial({ onComplete }) {
           {/* Confidence Builder */}
           <div className="bg-white/5 border border-white/10 rounded-xl p-3">
             <div className="flex items-start gap-3">
-              <div className="w-9 h-9 bg-gradient-to-br from-amber-500 to-orange-600 rounded-lg flex items-center justify-center flex-shrink-0">
+              <div className="w-9 h-9 bg-amber-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
                 <Shield className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -263,7 +263,7 @@ export default function NursingTutorial({ onComplete }) {
           {/* Offer Negotiation */}
           <div className="bg-white/5 border border-white/10 rounded-xl p-3">
             <div className="flex items-start gap-3">
-              <div className="w-9 h-9 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
+              <div className="w-9 h-9 bg-emerald-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
                 <DollarSign className="w-5 h-5 text-white" />
               </div>
               <div>

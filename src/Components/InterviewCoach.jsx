@@ -307,7 +307,7 @@ function InterviewCoach({
         {messages.length === 0 && (
           <div className="pt-8">
             <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-gradient-to-br from-teal-100 to-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+              <div className="w-16 h-16 bg-teal-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
                 <MessageSquare className="w-8 h-8 text-teal-600" />
               </div>
               <h3 className="text-xl font-bold text-warm-800 mb-1">Let's get you ready</h3>

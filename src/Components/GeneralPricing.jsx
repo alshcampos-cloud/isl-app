@@ -339,6 +339,45 @@ export default function GeneralPricing({ userData, onClose }) {
             </div>
           </div>
 
+          {/*
+            Apple-required subscription disclosure (Guideline 3.1.2).
+            VERBATIM text — do NOT paraphrase. This is the most commonly cited reason
+            for subscription app rejection. Only shown on iOS native builds since
+            web builds use Stripe with its own terms.
+          */}
+          {isNativeApp() && (
+            <div className="mt-4 px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg">
+              <p className="text-[11px] text-slate-600 leading-relaxed">
+                Payment will be charged to your Apple ID account at confirmation of purchase.
+                Subscription automatically renews unless auto-renew is turned off at least
+                24 hours before the end of the current period. Your account will be charged
+                for renewal within 24 hours prior to the end of the current period at the
+                cost of the selected plan. You can manage and cancel your subscription by
+                going to your Apple ID Account Settings after purchase. Any unused portion
+                of a free trial, if offered, will be forfeited when you purchase a subscription.
+              </p>
+              <p className="text-[11px] text-slate-600 mt-2">
+                <a
+                  href="https://www.interviewanswers.ai/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline text-teal-700 hover:text-teal-800"
+                >
+                  Privacy Policy
+                </a>
+                {' • '}
+                <a
+                  href="https://www.interviewanswers.ai/terms"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline text-teal-700 hover:text-teal-800"
+                >
+                  Terms of Use (EULA)
+                </a>
+              </p>
+            </div>
+          )}
+
           {/* Restore Purchases — visible only in native app for App Store compliance */}
           {isNativeApp() && (
             <div className="text-center mt-4">

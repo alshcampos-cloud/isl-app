@@ -130,7 +130,7 @@ export default function IRSDisplay({ refreshTrigger }) {
     <>
       {/* IRS Hero Card — full-width, above stats grid */}
       <div
-        className="mb-4 sm:mb-6 bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 text-slate-800 border border-slate-200 cursor-pointer hover:shadow-xl shadow-lg shadow-slate-200/50 transition-all duration-200"
+        className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 text-slate-800 border border-slate-200 cursor-pointer hover:shadow-xl shadow-lg shadow-slate-200/50 transition-all duration-200 h-full"
         onClick={() => setShowDetail(true)}
         onTouchEnd={(e) => { e.preventDefault(); setShowDetail(true); }}
       >

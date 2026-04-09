@@ -411,8 +411,8 @@ export default function NursingDashboard({ specialty, onStartMode, onChangeSpeci
 
                 <div className="flex items-start gap-4">
                   {/* Icon */}
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${mode.color} flex items-center justify-center flex-shrink-0`}>
-                    <Icon className="w-6 h-6 text-white" />
+                  <div className="w-12 h-12 rounded-xl bg-teal-50 flex items-center justify-center flex-shrink-0">
+                    <Icon className="w-6 h-6 text-teal-600" />
                   </div>
 
                   <div className="flex-1 min-w-0">

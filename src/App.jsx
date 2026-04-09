@@ -10,6 +10,13 @@ import {
   Headphones, GraduationCap, MapPin, Briefcase, FileText, Layers
 } from 'lucide-react';
 
+import {
+  GradientDefs, PrompterIcon, InterviewerIcon, PracticeIcon, FlashcardIcon,
+  LearnIcon, RadioIcon, CoachIcon, DecoderIcon, StoryBankIcon, StarDrillIcon,
+  PortfolioIcon, InterviewDayIcon, FollowUpIcon, NotesIcon, FlashcardCompactIcon,
+  CommandCenterIcon, IconContainer,
+  QuestionsStatIcon, SessionsStatIcon, UnlimitedStatIcon, DaysStatIcon, StreakStatIcon
+} from './Components/icons/FeatureIcons';
 import SupabaseTest from './SupabaseTest';
 import ProtectedRoute from './ProtectedRoute';
 import { supabase } from './lib/supabase';
@@ -22,6 +29,10 @@ import Tutorial from './Components/Tutorial';
 import { DEFAULT_QUESTIONS, QUESTION_GROUPS, getDefaultActiveGroups, filterQuestionsByGroups, getQuestionCountsByGroup } from './default_questions';
 import QuestionGroupFilter from './Components/QuestionGroupFilter';
 import AIInterviewCoach from './Components/AIInterviewCoach';
+import HomePageV2 from './Components/HomePageV2';
+import InterviewFormatModal from './Components/Intelligence/InterviewFormatModal';
+import CuratedInterviewsScreen from './Components/Intelligence/CuratedInterviewsScreen';
+import { buildInterviewSequence, buildSequenceFromCurated, swapQuestionInSequence, generateSessionSeed, getFormatById } from './utils/interviewFormats';
 import { loadPersistedGroups } from './Components/QuestionGroupFilter';
 import { canUseFeature, incrementUsage, getUsageStats, TIER_LIMITS, isBetaUser, resolveEffectiveTier } from './utils/creditSystem';
 import { fetchWithRetry } from './utils/fetchWithRetry';
@@ -198,6 +209,15 @@ const ISL = () => {
   const [conversationMode, setConversationMode] = useState(false);
   const [followUpQuestion, setFollowUpQuestion] = useState(null);
   const [exchangeCount, setExchangeCount] = useState(0);
+  // Structured Mock Interviewer — format-driven sequencing (see src/utils/interviewFormats.js)
+  const [showFormatModal, setShowFormatModal] = useState(false);
+  const [showCuratedInterviews, setShowCuratedInterviews] = useState(false); // NEW: shown after format picked
+  const [selectedFormat, setSelectedFormat] = useState(null);        // format object
+  const [selectedCuratedInterview, setSelectedCuratedInterview] = useState(null); // NEW: the chosen playlist
+  const [sessionSeed, setSessionSeed] = useState(null);              // numeric seed for reproducibility
+  const [interviewSequence, setInterviewSequence] = useState([]);    // [{slotIndex, stage, slotType, label, question}]
+  const [sequenceIndex, setSequenceIndex] = useState(0);             // current position in sequence
+  const [sessionFeedback, setSessionFeedback] = useState([]);        // per-slot feedback accumulated across session
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   // P0 FIX: Track analyzing state for stale detection and late-response safety
   const isAnalyzingRef = useRef(false); // Mirror of isAnalyzing for visibility handler (avoids stale closure)
@@ -212,7 +232,7 @@ const ISL = () => {
   const [spacebarHeld, setSpacebarHeld] = useState(false);
   const [filterCategory, setFilterCategory] = useState('All');
   const [activeGroups, setActiveGroups] = useState(() => {
-    try { return loadPersistedGroups ? loadPersistedGroups() : getDefaultActiveGroups(); } catch { return getDefaultActiveGroups(); }
+    try { const persisted = loadPersistedGroups ? loadPersistedGroups() : null; return persisted || getDefaultActiveGroups(); } catch { return getDefaultActiveGroups(); }
   });
   const [filterPriority, setFilterPriority] = useState('All');
   const [aiSpeaking, setAiSpeaking] = useState(false);
@@ -287,6 +307,7 @@ const ISL = () => {
   const [userTier, setUserTier] = useState('free');
   // trialInfo state removed — trial system killed
   const [showPricingPage, setShowPricingPage] = useState(false);
+  const [showCoachPanel, setShowCoachPanel] = useState(false);
   const [showSubscriptionManagement, setShowSubscriptionManagement] = useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState('inactive');
   const [showUsageDashboard, setShowUsageDashboard] = useState(false);
@@ -3045,46 +3066,100 @@ Respond in this exact JSON format:
     setPendingMode(null);
     setShowLivePrompterWarning(false);
   };
- const startAIInterviewer = async () => { 
+ const startAIInterviewer = async () => {
     console.log('🎬 startAIInterviewer called');
-    
-    if (questions.length === 0) { 
-      alert('Add questions first!'); 
-      return; 
+
+    if (questions.length === 0) {
+      alert('Add questions first!');
+      return;
     }
-    
+
     if (!hasConsented) {
       console.log('⚠️ No consent - showing dialog');
       setPendingMode('ai-interviewer');
       setShowConsentDialog(true);
       return;
     }
-    
-    console.log('✅ Has consent - starting AI Interviewer');
-    await actuallyStartAIInterviewer();
+
+    console.log('✅ Has consent - showing format modal');
+    // NEW: Show format selection modal before starting the interview
+    setShowFormatModal(true);
   };
-  
-  const actuallyStartAIInterviewer = async () => {
+
+  /**
+   * Called from InterviewFormatModal when the user picks a format.
+   * NEW BEHAVIOR: Opens the CuratedInterviewsScreen (list of named playlists)
+   * instead of starting the interview immediately.
+   */
+  const handleFormatSelected = async (format, seed) => {
+    console.log('🎯 Format selected:', format.id, 'seed:', seed);
+    setShowFormatModal(false);
+    setSelectedFormat(format);
+    setSessionSeed(seed);
+    // Show the curated interviews screen for this format
+    setShowCuratedInterviews(true);
+  };
+
+  /**
+   * Called from CuratedInterviewsScreen when the user picks a specific curated playlist.
+   * Builds the sequence from the curated interview's ordered question list
+   * (rather than randomly picking from the bank) and starts the interview.
+   */
+  const handleCuratedInterviewSelected = async (curatedInterview, seed) => {
+    console.log('🎬 Curated interview selected:', curatedInterview.id);
+    setShowCuratedInterviews(false);
+
+    // Build the question pool from user's bank
+    let pool = getFilteredQuestions(questions, currentUser?.id);
+    pool = pool.filter(q => !q.question_group || activeGroups.has(q.question_group));
+    if (pool.length === 0) pool = getFilteredQuestions(questions, currentUser?.id);
+
+    // Build sequence from the CURATED interview's specific question list
+    // (falls back to curated suggestedText when user's bank has no match)
+    const sequence = buildSequenceFromCurated(curatedInterview, pool);
+    if (!sequence || sequence.length === 0) {
+      console.error('Failed to build sequence from curated interview');
+      alert('Unable to start this curated interview.');
+      return;
+    }
+
+    console.log(`📋 Built curated sequence: ${sequence.length} questions from "${curatedInterview.title}"`);
+
+    setSelectedCuratedInterview(curatedInterview);
+    setInterviewSequence(sequence);
+    setSequenceIndex(0);
+    setSessionFeedback([]);
+
+    // Launch the interview with the first question
+    await actuallyStartAIInterviewer(sequence);
+  };
+
+  const actuallyStartAIInterviewer = async (sequence) => {
     console.log('🚀 Actually starting AI Interviewer');
 
     // AUTHORITATIVE FIX: Server-side usage check (cannot be bypassed)
     const canUse = await checkUsageServerSide('ai_interviewer', 'AI Interviewer');
     if (!canUse) return;
-    
-    // Set UI state IMMEDIATELY (no await blocking)
+
+    // Reset transcript & use first slot from the sequence
     accumulatedTranscript.current = '';
-    let pool = getFilteredQuestions(questions, currentUser?.id);
-    // Apply question group filter
-    pool = pool.filter(q => !q.question_group || activeGroups.has(q.question_group));
-    if (pool.length === 0) pool = getFilteredQuestions(questions, currentUser?.id); // fallback if all filtered out
-    if (!pool || pool.length === 0) { console.error('No questions available'); return; }
-    const randomQ = pool[Math.floor(Math.random() * pool.length)];
-    setCurrentQuestion(randomQ);
+    const seqToUse = sequence || interviewSequence;
+    if (!seqToUse || seqToUse.length === 0) {
+      console.error('No interview sequence available');
+      return;
+    }
+    const firstSlot = seqToUse[0];
+    if (!firstSlot || !firstSlot.question) {
+      console.error('First slot has no question');
+      return;
+    }
+
+    setCurrentQuestion(firstSlot.question);
     setCurrentMode('ai-interviewer');
     setCurrentView('ai-interviewer');
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    setUserAnswer(''); 
-    setSpokenAnswer(''); 
+    setUserAnswer('');
+    setSpokenAnswer('');
     flushSync(() => {
       setFeedback(null);
     });
@@ -3095,10 +3170,67 @@ Respond in this exact JSON format:
 
     // BUG 7 FIX: Usage now tracked AFTER successful feedback (not at session start)
     // Prevents charging users for failed API calls or abandoned sessions
-    // See handleAIInterviewerSubmit() for tracking location
 
     // Start interview
-    setTimeout(() => { speakText(randomQ.question); }, 500);
+    setTimeout(() => { speakText(firstSlot.question.question); }, 500);
+  };
+
+  /**
+   * Swap the current question for another of the same slot type.
+   * Preserves the rest of the sequence and the seed.
+   */
+  const handleSwapQuestion = () => {
+    if (!interviewSequence || interviewSequence.length === 0) return;
+    let pool = getFilteredQuestions(questions, currentUser?.id);
+    pool = pool.filter(q => !q.question_group || activeGroups.has(q.question_group));
+    if (pool.length === 0) pool = getFilteredQuestions(questions, currentUser?.id);
+
+    const newSequence = swapQuestionInSequence(interviewSequence, sequenceIndex, pool, sessionSeed);
+    setInterviewSequence(newSequence);
+    const newQuestion = newSequence[sequenceIndex]?.question;
+    if (!newQuestion) {
+      alert('No alternative question available for this slot.');
+      return;
+    }
+    setCurrentQuestion(newQuestion);
+    setUserAnswer('');
+    setSpokenAnswer('');
+    setConversationHistory([]);
+    setFollowUpQuestion(null);
+    setExchangeCount(0);
+    setFeedback(null);
+    setTimeout(() => { speakText(newQuestion.question); }, 300);
+  };
+
+  /**
+   * Advance to the next question in the sequence after the current one is done.
+   * Called from handleAIInterviewerSubmit when the backend signals continue_conversation: false
+   * AND there are still questions remaining in the sequence.
+   */
+  const advanceToNextSlot = () => {
+    const nextIndex = sequenceIndex + 1;
+    if (nextIndex >= interviewSequence.length) {
+      console.log('🏁 Interview sequence complete');
+      return false; // signal to caller: show final feedback
+    }
+    const nextSlot = interviewSequence[nextIndex];
+    if (!nextSlot || !nextSlot.question) return false;
+
+    console.log(`➡️  Advancing to slot ${nextIndex + 1}/${interviewSequence.length}: ${nextSlot.label}`);
+    setSequenceIndex(nextIndex);
+    setCurrentQuestion(nextSlot.question);
+    setUserAnswer('');
+    setSpokenAnswer('');
+    setConversationHistory([]);
+    setFollowUpQuestion(null);
+    setExchangeCount(0);
+    // Do NOT clear feedback — we'll show aggregated at the end
+    // Speak the next question with a transition
+    const transition = nextIndex === interviewSequence.length - 1
+      ? "One last question. "
+      : "Great. Next question. ";
+    setTimeout(() => { speakText(transition + nextSlot.question.question); }, 500);
+    return true; // signal to caller: we advanced, don't show feedback
   };
 const startPracticeMode = async () => { 
     console.log('🎬 startPracticeMode called');
@@ -3431,6 +3563,12 @@ const startPracticeMode = async () => {
               mode: 'ai-interviewer',
               conversationHistory: conversationHistory,
               exchangeCount: exchangeCount,
+              // NEW: Structured interview format context
+              interviewFormat: selectedFormat?.id || null,
+              interviewStage: interviewSequence[sequenceIndex]?.stage || null,
+              slotType: interviewSequence[sequenceIndex]?.slotType || null,
+              questionNumber: interviewSequence.length > 0 ? sequenceIndex + 1 : null,
+              totalQuestions: interviewSequence.length || null,
               selfEfficacyData: {
                 previousScores: practiceHistory.slice(-10).map(h => h.feedback?.overall).filter(Boolean),
                 streakDays: 0, // TODO Phase 3: wire to streak system
@@ -3511,8 +3649,7 @@ const startPracticeMode = async () => {
           return Promise.resolve();
 
         } else {
-          // CONVERSATION ENDED - Show final feedback
-          // Build complete conversation summary
+          // CONVERSATION ENDED for this slot - build conversation summary
           const fullConversation = [
             ...conversationHistory,
             {
@@ -3520,8 +3657,32 @@ const startPracticeMode = async () => {
               answer: answer
             }
           ];
-          
-          // Create a text summary of the entire conversation
+
+          // STRUCTURED FORMAT: Accumulate per-slot feedback and advance through sequence
+          if (interviewSequence && interviewSequence.length > 0) {
+            // Save this slot's feedback to the running aggregate
+            const slotFeedback = {
+              slotIndex: sequenceIndex,
+              slotLabel: interviewSequence[sequenceIndex]?.label,
+              question: currentQuestion.question,
+              conversation: fullConversation,
+              feedback: feedbackJson,
+            };
+            setSessionFeedback(prev => [...prev, slotFeedback]);
+
+            // Check if there are more slots to go
+            const isLastSlot = sequenceIndex >= interviewSequence.length - 1;
+            if (!isLastSlot) {
+              // Advance to next slot — do NOT show feedback yet
+              console.log(`✅ Slot ${sequenceIndex + 1} complete, advancing...`);
+              setTimeout(() => advanceToNextSlot(), 600);
+              return Promise.resolve();
+            }
+            // else fall through to show final aggregated feedback
+            console.log('🏁 Final slot complete, showing session feedback');
+          }
+
+          // Create a text summary of the entire conversation (for DB save)
           const conversationSummary = fullConversation
             .map((exchange, idx) => `Q${idx + 1}: ${exchange.question}\nA${idx + 1}: ${exchange.answer}`)
             .join('\n\n');
@@ -3603,9 +3764,9 @@ const startPracticeMode = async () => {
         });
       });
   }, [
-    spokenAnswer, 
-    userAnswer, 
-    currentQuestion, 
+    spokenAnswer,
+    userAnswer,
+    currentQuestion,
     followUpQuestion,
     conversationHistory,
     exchangeCount,
@@ -3613,7 +3774,11 @@ const startPracticeMode = async () => {
     accumulatedTranscript,
     supabase,
     getUserContext,
-    speakText
+    speakText,
+    // Structured format state
+    selectedFormat,
+    interviewSequence,
+    sequenceIndex,
   ]);
 
   // ==========================================
@@ -4129,13 +4294,45 @@ const startPracticeMode = async () => {
   if (currentView === 'home') {
     const categories = ['All', ...new Set(questions.map(q => q.category))];
     const priorities = ['All', ...new Set(questions.map(q => q.priority))];
-    
+
     // Calculate user progress metrics
     const totalSessions = practiceHistory.length;
     const questionsCount = questions.length;
-    
+
+    // FEATURE FLAG: HomePageV2 Hero+Feed layout.
+    // Enable in browser console: localStorage.setItem('isl_home_v2', '1')
+    // Disable: localStorage.removeItem('isl_home_v2')
+    const useHomeV2 = typeof window !== 'undefined' && localStorage.getItem('isl_home_v2') === '1';
+    if (useHomeV2) {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-sky-50">
+          <GradientDefs />
+          <HomePageV2
+            currentUser={currentUser}
+            userData={{ user: currentUser, tier: userTier, usage: usageStats, streak: null }}
+            userTier={userTier}
+            questions={questions}
+            practiceHistory={practiceHistory}
+            activeGroups={activeGroups}
+            streakRefreshTrigger={streakRefreshTrigger}
+            interviewDate={interviewDate}
+            onStartPractice={startPracticeMode}
+            onStartAIInterviewer={startAIInterviewer}
+            onStartPrompter={startPrompterMode}
+            onStartFlashcard={startFlashcardMode}
+            onNavigate={(view) => setCurrentView(view)}
+            onOpenCoachPanel={() => setShowCoachPanel(true)}
+            onOpenUsageDashboard={() => setShowUsageDashboard(true)}
+            onOpenPricing={() => setShowPricingPage(true)}
+            onOpenProfileMenu={() => setShowProfileDropdown(true)}
+          />
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-sky-50">
+        <GradientDefs />
         {/* Trial banner removed — free tier is the new onramp */}
         <div className="container mx-auto px-4 pt-6 pb-8">
 
@@ -4263,12 +4460,12 @@ const startPracticeMode = async () => {
             )}
           </div>
 
-          {/* IRS Hero Card — Phase 3 Unit 2 */}
-          <IRSDisplay refreshTrigger={streakRefreshTrigger} />
-
-          {/* Score Trend Sparkline — Phase 4A */}
-          {practiceHistory.length >= 2 && (
-            <div className="mb-4 sm:mb-6">
+          {/* IRS Hero + Score Trend side-by-side on lg:, stacked on mobile.
+              FIXED 2026-04-09: was two full-width banners creating "panel soup" on desktop.
+              Viewport auditor flagged this as the #1 layout fix. */}
+          <div className={`${practiceHistory.length >= 2 ? 'grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-5' : ''} mb-4 sm:mb-6`}>
+            <IRSDisplay refreshTrigger={streakRefreshTrigger} />
+            {practiceHistory.length >= 2 && (
               <ScoreTrendSparkline
                 practiceHistory={practiceHistory}
                 onClick={() => {
@@ -4276,8 +4473,8 @@ const startPracticeMode = async () => {
                   setCommandCenterTab('progress');
                 }}
               />
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Compact Stats Row */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-2 sm:gap-3 mb-4 sm:mb-6">
@@ -4286,11 +4483,11 @@ const startPracticeMode = async () => {
               setCommandCenterTab('bank');
             }}>
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-teal-400 to-teal-600 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
-                  <Database className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-teal-600 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <QuestionsStatIcon size={24} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-2xl font-bold leading-tight">{questions.length}</p>
+                  <p className="text-2xl font-bold leading-tight text-slate-800">{questions.length}</p>
                   <p className="text-xs text-slate-500 leading-tight font-medium">Questions</p>
                 </div>
               </div>
@@ -4300,11 +4497,11 @@ const startPracticeMode = async () => {
               setCommandCenterTab('progress');
             }}>
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-navy-500 to-navy-700 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
-                  <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-teal-600 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <SessionsStatIcon size={24} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-2xl font-bold leading-tight">{practiceHistory.length}</p>
+                  <p className="text-2xl font-bold leading-tight text-slate-800">{practiceHistory.length}</p>
                   <p className="text-xs text-slate-500 leading-tight font-medium">Sessions</p>
                 </div>
               </div>
@@ -4315,11 +4512,11 @@ const startPracticeMode = async () => {
               onClick={() => setShowUsageDashboard(true)}
             >
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-amber-400 to-orange-600 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
-                  <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-amber-500 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <UnlimitedStatIcon size={24} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-2xl font-bold leading-tight">
+                  <p className="text-2xl font-bold leading-tight text-slate-800">
                     {(userTier === 'pro' || userTier === 'general_pass' || userTier === 'annual' || userTier === 'beta') ? '∞' : 'View'}
                   </p>
                   <p className="text-xs text-slate-500 leading-tight font-medium whitespace-nowrap">
@@ -4337,16 +4534,16 @@ const startPracticeMode = async () => {
               }}
             >
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-sky-400 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
-                  <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-slate-600 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <DaysStatIcon size={24} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-2xl font-bold leading-tight">
+                  <p className="text-2xl font-bold leading-tight text-slate-800">
                     {interviewDate
                       ? (() => {
                           const today = new Date();
                           today.setHours(0, 0, 0, 0);
-                          const interview = new Date(interviewDate + 'T00:00:00'); // local time, not UTC
+                          const interview = new Date(interviewDate + 'T00:00:00');
                           const diffTime = interview.getTime() - today.getTime();
                           const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
                           return Math.max(0, diffDays);
@@ -4456,66 +4653,62 @@ const startPracticeMode = async () => {
             );
           })()}
 
-          {/* Practice Modes — PRIMARY ACTIONS (above everything else) */}
+          {/* Practice Modes — PRIMARY ACTIONS */}
           <div className="mb-6">
             <h2 className="text-lg sm:text-xl font-semibold text-navy-700 mb-1 tracking-tight font-['DM_Sans']">Practice</h2>
             <p className="text-slate-500 text-xs sm:text-sm mb-3 font-medium">Build your skills with hands-on training</p>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
-              {/* Live Prompter - Enhanced */}
-              <div className="bg-white rounded-xl shadow-sm p-4 sm:p-5 lg:p-6 transition-all duration-200 hover:shadow-md active:scale-[0.98] cursor-pointer group relative overflow-hidden border border-slate-200">
-                <div className="absolute inset-0 transition-all duration-200"></div>
-                <div className="text-center flex flex-col h-full relative z-10">
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-105 transition-transform duration-200 shadow-sm">
-                    <Mic className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-white" />
-                  </div>
+              {/* Live Prompter */}
+              <div className="bg-white rounded-xl shadow-sm p-4 sm:p-5 lg:p-6 transition-all duration-200 hover:shadow-md active:scale-[0.98] cursor-pointer group border border-slate-200/80 hover:border-teal-300">
+                <div className="text-center flex flex-col h-full">
+                  <IconContainer color="teal" size="lg" className="mx-auto mb-3 sm:mb-4">
+                    <PrompterIcon size={28} gradient="teal" />
+                  </IconContainer>
                   <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-1 sm:mb-2 text-navy-700">Live Prompter</h3>
                   <p className="text-slate-500 text-xs sm:text-sm mb-3 sm:mb-4 flex-1 font-medium">Real-time bullet prompts</p>
-                  <button onClick={(e) => { e.stopPropagation(); startPrompterMode(); }} className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.98] text-sm sm:text-base">
+                  <button onClick={(e) => { e.stopPropagation(); startPrompterMode(); }} onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); startPrompterMode(); }} className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-lg transition-all shadow-sm hover:shadow-md text-sm sm:text-base active:scale-[0.98]">
                     Start Practice
                   </button>
                 </div>
               </div>
 
-              {/* AI Interviewer - Enhanced */}
-              <div className="bg-white rounded-xl shadow-sm p-4 sm:p-5 lg:p-6 transition-all duration-200 hover:shadow-md active:scale-[0.98] cursor-pointer group relative overflow-hidden border border-slate-200">
-                <div className="absolute inset-0 transition-all duration-200"></div>
-                <div className="text-center flex flex-col h-full relative z-10">
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-navy-600 to-navy-700 rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-105 transition-transform duration-200 shadow-sm">
-                    <Bot className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-white" />
-                  </div>
+              {/* AI Interviewer */}
+              <div className="bg-white rounded-xl shadow-sm p-4 sm:p-5 lg:p-6 transition-all duration-200 hover:shadow-md active:scale-[0.98] cursor-pointer group border border-slate-200/80 hover:border-slate-300">
+                <div className="text-center flex flex-col h-full">
+                  <IconContainer color="navy" size="lg" className="mx-auto mb-3 sm:mb-4">
+                    <InterviewerIcon size={28} gradient="navy" />
+                  </IconContainer>
                   <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-1 sm:mb-2 text-navy-700">AI Interviewer</h3>
                   <p className="text-slate-500 text-xs sm:text-sm mb-3 sm:mb-4 flex-1 font-medium">Realistic interview practice</p>
-                  <button onClick={(e) => { e.stopPropagation(); startAIInterviewer(); }} className="w-full bg-gradient-to-r from-navy-600 to-navy-800 hover:from-navy-700 hover:to-navy-900 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.98] text-sm sm:text-base">
+                  <button onClick={(e) => { e.stopPropagation(); startAIInterviewer(); }} onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); startAIInterviewer(); }} className="w-full bg-gradient-to-r from-slate-700 to-slate-900 hover:from-slate-800 hover:to-slate-950 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-lg transition-all shadow-sm hover:shadow-md text-sm sm:text-base active:scale-[0.98]">
                     Start Interview
                   </button>
                 </div>
               </div>
 
-              {/* Practice Mode - Enhanced */}
-              <div className="bg-white rounded-xl shadow-sm p-4 sm:p-5 lg:p-6 transition-all duration-200 hover:shadow-md active:scale-[0.98] cursor-pointer group relative overflow-hidden border border-slate-200">
-                <div className="absolute inset-0 transition-all duration-200"></div>
-                <div className="text-center flex flex-col h-full relative z-10">
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-105 transition-transform duration-200 shadow-sm">
-                    <Target className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-white" />
-                  </div>
+              {/* Practice Mode */}
+              <div className="bg-white rounded-xl shadow-sm p-4 sm:p-5 lg:p-6 transition-all duration-200 hover:shadow-md active:scale-[0.98] cursor-pointer group border border-slate-200/80 hover:border-teal-300">
+                <div className="text-center flex flex-col h-full">
+                  <IconContainer color="teal" size="lg" className="mx-auto mb-3 sm:mb-4">
+                    <PracticeIcon size={28} gradient="teal" />
+                  </IconContainer>
                   <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-1 sm:mb-2 text-navy-700">Practice</h3>
                   <p className="text-slate-500 text-xs sm:text-sm mb-3 sm:mb-4 flex-1 font-medium">AI-powered feedback</p>
-                  <button onClick={(e) => { e.stopPropagation(); startPracticeMode(); }} className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.98] text-sm sm:text-base">
+                  <button onClick={(e) => { e.stopPropagation(); startPracticeMode(); }} onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); startPracticeMode(); }} className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-lg transition-all shadow-sm hover:shadow-md text-sm sm:text-base active:scale-[0.98]">
                     Start Session
                   </button>
                 </div>
               </div>
 
-              {/* Flashcard - Enhanced */}
-              <div className="bg-white rounded-xl shadow-sm p-4 sm:p-5 lg:p-6 transition-all duration-200 hover:shadow-md active:scale-[0.98] cursor-pointer group relative overflow-hidden border border-slate-200">
-                <div className="absolute inset-0 transition-all duration-200"></div>
-                <div className="text-center flex flex-col h-full relative z-10">
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-105 transition-transform duration-200 shadow-sm">
-                    <BookOpen className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-white" />
-                  </div>
-                  <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-1 sm:mb-2 text-navy-700">Flashcard</h3>
+              {/* Flashcard */}
+              <div className="bg-white rounded-xl shadow-sm p-4 sm:p-5 lg:p-6 transition-all duration-200 hover:shadow-md active:scale-[0.98] cursor-pointer group border border-slate-200/80 hover:border-amber-300">
+                <div className="text-center flex flex-col h-full">
+                  <IconContainer color="amber" size="lg" className="mx-auto mb-3 sm:mb-4">
+                    <FlashcardIcon size={28} gradient="amber" />
+                  </IconContainer>
+                  <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-1 sm:mb-2 text-navy-700">Flashcards</h3>
                   <p className="text-slate-500 text-xs sm:text-sm mb-3 sm:mb-4 flex-1 font-medium">Quick memory drill</p>
-                  <button onClick={(e) => { e.stopPropagation(); startFlashcardMode(); }} className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.98] text-sm sm:text-base">
+                  <button onClick={(e) => { e.stopPropagation(); startFlashcardMode(); }} onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); startFlashcardMode(); }} className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-lg transition-all shadow-sm hover:shadow-md text-sm sm:text-base active:scale-[0.98]">
                     Start Review
                   </button>
                 </div>
@@ -4523,95 +4716,98 @@ const startPracticeMode = async () => {
             </div>
           </div>
 
-          {/* Learn & Listen — Featured Section */}
+          {/* Learn & Listen */}
           <div className="mb-6">
             <h2 className="text-lg sm:text-xl font-semibold text-navy-700 mb-1 tracking-tight font-['DM_Sans']">Learn & Listen</h2>
             <p className="text-xs text-slate-500 mb-3 font-medium">Master interview skills at your own pace</p>
-            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
               <button
                 onClick={() => setCurrentView('learn')}
-                className="bg-gradient-to-br from-teal-600 to-emerald-600 rounded-xl p-4 sm:p-5 text-left text-white hover:shadow-md hover:shadow-teal-500/30 hover:scale-[1.02] transition-all relative overflow-hidden group"
+                onTouchEnd={(e) => { e.preventDefault(); setCurrentView('learn'); }}
+                className="bg-gradient-to-br from-teal-600 to-emerald-600 rounded-xl p-4 sm:p-5 text-left text-white hover:shadow-lg hover:shadow-teal-500/20 hover:scale-[1.02] transition-all active:scale-[0.98] relative overflow-hidden group"
               >
-                <span className="absolute top-2 right-2 px-1.5 py-0.5 bg-white/20 text-white rounded-full text-[9px] font-bold">NEW</span>
-                <div className="mb-2"><GraduationCap className="w-7 h-7 sm:w-8 sm:h-8 inline text-white" /></div>
+                <span className="absolute top-2.5 right-2.5 px-1.5 py-0.5 bg-white/20 text-white rounded text-[9px] font-bold">NEW</span>
+                <LearnIcon size={28} gradient="teal" className="mb-2" />
                 <p className="text-sm sm:text-base font-bold">Learn</p>
-                <p className="text-[10px] sm:text-xs text-white/70 mt-0.5">20 lessons • Quizzes • Daily goals</p>
+                <p className="text-[10px] sm:text-xs text-white/70 mt-0.5">25 lessons • Quizzes • Daily goals</p>
               </button>
               <button
                 onClick={() => setCurrentView('prep-radio')}
-                className="bg-gradient-to-br from-navy-600 to-navy-700 rounded-xl p-4 sm:p-5 text-left text-white hover:shadow-md hover:shadow-navy-500/30 hover:scale-[1.02] transition-all relative overflow-hidden group"
+                onTouchEnd={(e) => { e.preventDefault(); setCurrentView('prep-radio'); }}
+                className="bg-gradient-to-br from-slate-700 to-slate-900 rounded-xl p-4 sm:p-5 text-left text-white hover:shadow-lg hover:shadow-slate-500/20 hover:scale-[1.02] transition-all active:scale-[0.98] overflow-hidden group"
               >
-                <div className="mb-2"><Headphones className="w-7 h-7 sm:w-8 sm:h-8 inline text-white" /></div>
+                <RadioIcon size={28} gradient="navy" className="mb-2" />
                 <p className="text-sm sm:text-base font-bold">Prep Radio</p>
                 <p className="text-[10px] sm:text-xs text-white/70 mt-0.5">8 playlists • Hands-free audio prep</p>
               </button>
             </div>
           </div>
 
-          {/* Intelligence Tools — Compact Grid */}
+          {/* Tools */}
           <div className="mb-6">
             <h2 className="text-lg sm:text-xl font-semibold text-navy-700 mb-1 tracking-tight font-['DM_Sans']">Tools</h2>
             <p className="text-xs text-slate-500 mb-3 font-medium">Research, strategize, and prepare</p>
             <div className="grid grid-cols-4 gap-2 sm:gap-3 mb-2 sm:mb-3">
               {[
-                { view: 'jd-decoder', icon: <ClipboardList className="w-4 h-4 text-white" />, label: 'JD Decoder', desc: 'Analyze job descriptions', color: 'from-sky-400 to-blue-500', badge: 'AI' },
-                { view: 'story-bank', icon: <BookOpen className="w-4 h-4 text-white" />, label: 'Story Bank', desc: 'Build STAR stories', color: 'from-emerald-400 to-teal-500', badge: null },
-                { view: 'interview-coach', icon: <MessageCircle className="w-4 h-4 text-white" />, label: 'AI Coach', desc: 'Guided strategy', color: 'from-amber-400 to-orange-500', badge: null },
-                { view: 'weak-drill', icon: <Target className="w-4 h-4 text-white" />, label: 'STAR Drill', desc: 'Target your weak areas', color: 'from-orange-400 to-red-500', badge: null },
+                { view: 'jd-decoder', icon: <DecoderIcon size={20} gradient="teal" />, label: 'JD Decoder', desc: 'Analyze job descriptions', badge: 'AI' },
+                { view: 'story-bank', icon: <StoryBankIcon size={20} gradient="teal" />, label: 'Story Bank', desc: 'Build STAR stories', badge: null },
+                { view: 'interview-coach', icon: <CoachIcon size={20} gradient="slate" />, label: 'AI Coach', desc: 'Guided strategy', badge: null },
+                { view: 'weak-drill', icon: <StarDrillIcon size={20} gradient="amber" />, label: 'STAR Drill', desc: 'Target weak areas', badge: null },
               ].map(tool => (
                 <button
                   key={tool.view}
-                  onClick={() => setCurrentView(tool.view)}
-                  className="bg-white rounded-xl p-2.5 sm:p-3 border border-slate-200 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all text-center group"
+                  onClick={() => tool.view === 'interview-coach' ? setShowCoachPanel(true) : setCurrentView(tool.view)}
+                  onTouchEnd={(e) => { e.preventDefault(); tool.view === 'interview-coach' ? setShowCoachPanel(true) : setCurrentView(tool.view); }}
+                  className="bg-white rounded-xl p-2.5 sm:p-3 border border-slate-200/80 hover:border-slate-300 hover:shadow-md transition-all text-center group relative"
                 >
                   {tool.badge && (
-                    <span className="absolute top-1.5 right-1.5 px-1 py-0.5 bg-teal-100 text-teal-700 rounded-full text-[8px] font-bold">{tool.badge}</span>
+                    <span className="absolute top-1.5 right-1.5 px-1 py-0.5 bg-teal-50 text-teal-700 rounded text-[8px] font-bold">{tool.badge}</span>
                   )}
-                  <div className={`w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br ${tool.color} rounded-lg flex items-center justify-center mx-auto mb-1 sm:mb-1.5 shadow-sm group-hover:scale-105 transition-transform`}>
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center mx-auto mb-1 sm:mb-1.5">
                     {tool.icon}
                   </div>
-                  <p className="text-[10px] sm:text-xs font-bold text-navy-700 leading-tight">{tool.label}</p>
+                  <p className="text-[10px] sm:text-xs font-semibold text-slate-700 leading-tight">{tool.label}</p>
                   <p className="text-[8px] sm:text-[9px] text-slate-400 leading-tight mt-0.5 hidden sm:block">{tool.desc}</p>
                 </button>
               ))}
             </div>
             <div className="grid grid-cols-5 gap-2 sm:gap-3">
               {[
-                { view: 'portfolio', icon: <Briefcase className="w-4 h-4 text-white" />, label: 'Portfolio', desc: 'Your past work', color: 'from-indigo-400 to-purple-500' },
-                { view: 'interview-day', icon: <Star className="w-4 h-4 text-white" />, label: 'Day Mode', desc: 'Interview day prep', color: 'from-pink-400 to-rose-500' },
-                { view: 'follow-up-email', icon: <Mail className="w-4 h-4 text-white" />, label: 'Follow-Up', desc: 'Thank-you email', color: 'from-amber-400 to-orange-500' },
-                { view: 'stealth-prompter', icon: <FileText className="w-4 h-4 text-white" />, label: 'Notes', desc: 'Stealth interview notes', color: 'from-gray-400 to-slate-500' },
-                { view: 'flashcard', icon: <Layers className="w-4 h-4 text-white" />, label: 'Flashcards', desc: 'Quick review', color: 'from-orange-400 to-amber-500' },
+                { view: 'portfolio', icon: <PortfolioIcon size={20} gradient="slate" />, label: 'Portfolio', desc: 'Your past work' },
+                { view: 'interview-day', icon: <InterviewDayIcon size={20} gradient="amber" />, label: 'Day Mode', desc: 'Interview day prep' },
+                { view: 'follow-up-email', icon: <FollowUpIcon size={20} gradient="teal" />, label: 'Follow-Up', desc: 'Thank-you email' },
+                { view: 'stealth-prompter', icon: <NotesIcon size={20} gradient="slate" />, label: 'Notes', desc: 'Stealth notes' },
+                { view: 'flashcard', icon: <FlashcardCompactIcon size={20} gradient="amber" />, label: 'Flashcards', desc: 'Quick review' },
               ].map(tool => (
                 <button
                   key={tool.view}
                   onClick={() => tool.view === 'flashcard' ? startFlashcardMode() : setCurrentView(tool.view)}
-                  className="bg-white rounded-xl p-2.5 sm:p-3 border border-slate-200 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all text-center group"
+                  onTouchEnd={(e) => { e.preventDefault(); tool.view === 'flashcard' ? startFlashcardMode() : setCurrentView(tool.view); }}
+                  className="bg-white rounded-xl p-2.5 sm:p-3 border border-slate-200/80 hover:border-slate-300 hover:shadow-md transition-all text-center group"
                 >
-                  <div className={`w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br ${tool.color} rounded-lg flex items-center justify-center mx-auto mb-1 sm:mb-1.5 shadow-sm group-hover:scale-105 transition-transform`}>
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center mx-auto mb-1 sm:mb-1.5">
                     {tool.icon}
                   </div>
-                  <p className="text-[10px] sm:text-xs font-bold text-navy-700 leading-tight">{tool.label}</p>
+                  <p className="text-[10px] sm:text-xs font-semibold text-slate-700 leading-tight">{tool.label}</p>
                   <p className="text-[8px] sm:text-[9px] text-slate-400 leading-tight mt-0.5 hidden sm:block">{tool.desc}</p>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Command Center - Enhanced */}
-          <div data-tutorial="command-center" className="bg-gradient-to-r from-teal-600 to-emerald-600 rounded-xl shadow-sm hover:shadow-md p-4 sm:p-5 lg:p-6 transition-all duration-200 cursor-pointer border border-teal-500/20 relative overflow-hidden group" onClick={() => setCurrentView('command-center')}>
-            <div className="absolute inset-0"></div>
-            <div className="flex items-center justify-between gap-3 sm:gap-4 relative z-10">
+          {/* Command Center */}
+          <div data-tutorial="command-center" className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-xl hover:shadow-lg p-4 sm:p-5 lg:p-6 transition-all duration-200 cursor-pointer group" onClick={() => setCurrentView('command-center')} onTouchEnd={(e) => { e.preventDefault(); setCurrentView('command-center'); }}>
+            <div className="flex items-center justify-between gap-3 sm:gap-4">
               <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-                <div className="flex-shrink-0 leading-none group-hover:scale-105 transition-transform duration-300"><Target className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-white" /></div>
+                <div className="flex-shrink-0"><CommandCenterIcon size={32} gradient="teal" /></div>
                 <div className="text-white min-w-0 flex-1">
                   <h3 className="text-lg sm:text-xl lg:text-2xl font-bold mb-0.5 sm:mb-1">Command Center</h3>
-                  <p className="text-xs sm:text-sm lg:text-base text-white/80 font-medium">Track progress, manage questions, prep interviews</p>
+                  <p className="text-xs sm:text-sm text-slate-400 font-medium">Track progress, manage questions, prep interviews</p>
                 </div>
               </div>
               <div className="flex items-center gap-1 sm:gap-2 text-white font-bold flex-shrink-0 group-hover:translate-x-1 transition-transform duration-300">
-                <span className="hidden sm:inline text-sm lg:text-lg">Open</span>
-                <span className="text-xl sm:text-2xl lg:text-3xl">→</span>
+                <span className="hidden sm:inline text-sm lg:text-lg text-slate-400">Open</span>
+                <ChevronRight className="w-5 h-5 text-slate-500" />
               </div>
             </div>
           </div>
@@ -5044,8 +5240,20 @@ const startPracticeMode = async () => {
                 setSpokenAnswer(''); setUserAnswer(''); setTranscript(''); setFeedback(null);
                 accumulatedTranscript.current = '';
               }} className="text-gray-300 hover:text-white">← Exit</button>
-            <h1 className="text-2xl font-bold">AI Mock Interview</h1>
+            <h1 className="text-2xl font-bold">
+              {selectedCuratedInterview?.title || (selectedFormat ? selectedFormat.shortName : 'AI Mock Interview')}
+            </h1>
             <div className="flex items-center gap-2">
+              {interviewSequence.length > 0 && (
+                <button
+                  onClick={handleSwapQuestion}
+                  onTouchEnd={(e) => { e.preventDefault(); handleSwapQuestion(); }}
+                  className="bg-white/10 hover:bg-white/20 px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-1.5"
+                  title="Try a different question of the same type"
+                >
+                  <RotateCcw className="w-4 h-4" /> Swap
+                </button>
+              )}
               <button onClick={goToPreviousQuestion} className="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg font-semibold flex items-center gap-1">
                 ← Prev
               </button>
@@ -5054,6 +5262,35 @@ const startPracticeMode = async () => {
               </button>
             </div>
           </div>
+
+          {/* Structured Interview Progress Bar */}
+          {interviewSequence.length > 0 && (
+            <div className="max-w-4xl mx-auto mb-6">
+              <div className="flex items-center justify-between text-sm text-white/70 mb-2">
+                <span className="font-medium">
+                  Question {sequenceIndex + 1} of {interviewSequence.length}
+                  {interviewSequence[sequenceIndex]?.label && (
+                    <span className="ml-2 text-white/50">• {interviewSequence[sequenceIndex].label}</span>
+                  )}
+                </span>
+                {sessionSeed && (
+                  <span className="font-mono text-xs text-white/40">Session #{sessionSeed}</span>
+                )}
+              </div>
+              <div className="flex gap-1">
+                {interviewSequence.map((slot, idx) => (
+                  <div
+                    key={idx}
+                    className={`h-1.5 flex-1 rounded-full transition-colors ${
+                      idx < sequenceIndex ? 'bg-teal-400' :
+                      idx === sequenceIndex ? 'bg-teal-300' :
+                      'bg-white/15'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
           
           <div className="max-w-4xl mx-auto mb-8 min-h-[55vh] flex items-center justify-center">
             {/* CLOUD AVATAR CONTAINER */}
@@ -6711,7 +6948,10 @@ const startPracticeMode = async () => {
 
   // Phase 5: Learn Section
   if (currentView === 'interview-coach') {
-    return <AIInterviewCoach user={currentUser} userData={{ user: currentUser, tier: userTier }} questions={questions} onClose={() => setCurrentView('home')} />;
+    // Redirect to home and open the popup panel instead
+    setCurrentView('home');
+    setShowCoachPanel(true);
+    return null;
   }
 
   if (currentView === 'learn') {
@@ -8042,6 +8282,7 @@ const startPracticeMode = async () => {
         supabase={supabase}
         onBack={() => setCurrentView('home')}
         onNavigate={(view) => setCurrentView(view)}
+        onOpenPricing={() => setShowPricingPage(true)}
       />
     );
   }
@@ -8826,16 +9067,64 @@ const startPracticeMode = async () => {
           ========================================== */}
       {/* REMOVED: PASSWORD RESET MODAL - Now handled in ProtectedRoute.jsx */}
 
-      {/* Floating AI Interview Coach Button — hidden during active sessions and on coach view */}
-      {currentView !== 'interview-coach' && currentView !== 'ai-interviewer' && !interviewSessionActive && currentUser && (
-        <button
-          onClick={() => setCurrentView('interview-coach')}
-          onTouchEnd={(e) => { e.preventDefault(); setCurrentView('interview-coach'); }}
-          className="fixed bottom-6 right-6 z-40 w-14 h-14 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-full shadow-lg shadow-teal-500/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-200"
-          aria-label="Open Interview Coach"
-        >
-          <MessageCircle className="w-6 h-6 text-white" />
-        </button>
+      {/* Interview Format Selection Modal */}
+      <InterviewFormatModal
+        isOpen={showFormatModal}
+        onClose={() => setShowFormatModal(false)}
+        onStart={(format, seed) => handleFormatSelected(format, seed)}
+      />
+
+      {/* Curated Interviews Screen (shown after format pick) */}
+      <CuratedInterviewsScreen
+        isOpen={showCuratedInterviews}
+        format={selectedFormat}
+        onBack={() => {
+          setShowCuratedInterviews(false);
+          setShowFormatModal(true); // go back to format picker
+        }}
+        onStart={(curated, seed) => handleCuratedInterviewSelected(curated, seed)}
+        sessionSeed={sessionSeed}
+      />
+
+      {/* Floating AI Coach Button + Popup Chat Panel */}
+      {currentView !== 'ai-interviewer' && !interviewSessionActive && currentUser && (
+        <>
+          {/* FAB toggle */}
+          {!showCoachPanel && (
+            <button
+              onClick={() => setShowCoachPanel(true)}
+              onTouchEnd={(e) => { e.preventDefault(); setShowCoachPanel(true); }}
+              className="fixed bottom-6 right-6 z-40 w-12 h-12 bg-slate-800 hover:bg-slate-900 rounded-full shadow-md flex items-center justify-center active:scale-95 transition-all duration-200"
+              aria-label="Open Interview Coach"
+            >
+              <MessageCircle className="w-5 h-5 text-white" />
+            </button>
+          )}
+
+          {/* Slide-up chat panel */}
+          {showCoachPanel && (
+            <div className="fixed inset-0 z-50 flex flex-col justify-end">
+              {/* Backdrop */}
+              <div
+                className="absolute inset-0 bg-black/30"
+                onClick={() => setShowCoachPanel(false)}
+                onTouchEnd={(e) => { e.preventDefault(); setShowCoachPanel(false); }}
+              />
+              {/* Panel */}
+              <div className="relative bg-white rounded-t-2xl shadow-2xl flex flex-col" style={{ height: 'min(85vh, 680px)', maxHeight: '85vh' }}>
+                <AIInterviewCoach
+                  user={currentUser}
+                  userData={{ user: currentUser, tier: userTier, usage: usageStats }}
+                  questions={questions}
+                  practiceHistory={practiceHistory}
+                  userContextData={getUserContext()}
+                  onClose={() => setShowCoachPanel(false)}
+                  isPanel={true}
+                />
+              </div>
+            </div>
+          )}
+        </>
       )}
     </>
   ); {/* Close fragment that contains dialogs + views */}

@@ -457,8 +457,8 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
           <div className="bg-white/5 border border-white/10 rounded-2xl p-8">
             {/* Header */}
             <div className="text-center mb-6">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-sky-600 to-cyan-500 flex items-center justify-center mx-auto mb-4">
-                <MessageSquare className="w-8 h-8 text-white" />
+              <div className="w-16 h-16 rounded-2xl bg-teal-50 flex items-center justify-center mx-auto mb-4">
+                <MessageSquare className="w-8 h-8 text-teal-600" />
               </div>
               <h2 className="text-2xl font-bold text-white mb-1">Coaching Session Complete</h2>
               <p className="text-slate-400 text-sm">Great work investing in your interview prep!</p>
@@ -593,8 +593,8 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
           >
             {/* Welcome */}
             <div className="text-center mb-8">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-sky-600 to-cyan-500 flex items-center justify-center mx-auto mb-4">
-                <MessageSquare className="w-8 h-8 text-white" />
+              <div className="w-16 h-16 rounded-2xl bg-teal-50 flex items-center justify-center mx-auto mb-4">
+                <MessageSquare className="w-8 h-8 text-teal-600" />
               </div>
               <h2 className="text-2xl font-bold text-white mb-2">
                 Interview Strategy Coach
