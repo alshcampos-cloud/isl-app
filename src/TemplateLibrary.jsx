@@ -231,6 +231,39 @@ export default function TemplateLibrary({ onImport, onClose, onOpenAICoach, chec
                                   </div>
                                 )}
 
+                                {/* Why They Ask This */}
+                                {dq.whyTheyAsk && (
+                                  <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-100">
+                                    <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wide mb-1">Why They Ask This</p>
+                                    <p className="text-sm text-indigo-900">{dq.whyTheyAsk}</p>
+                                  </div>
+                                )}
+
+                                {/* Coaching Tip */}
+                                {dq.coachingTip && (
+                                  <div className="bg-amber-50 rounded-lg p-3 border border-amber-100">
+                                    <p className="text-xs font-semibold text-amber-600 uppercase tracking-wide mb-1">Coaching Tip</p>
+                                    <p className="text-sm text-amber-900">{dq.coachingTip}</p>
+                                  </div>
+                                )}
+
+                                {/* Recommended Structure */}
+                                {dq.recommendedStructure && (
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Best Structure:</span>
+                                    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-200">
+                                      {dq.recommendedStructure === 'star' ? '⭐ STAR Method' :
+                                       dq.recommendedStructure === 'prep' ? '📋 PREP' :
+                                       dq.recommendedStructure === 'psb' ? '🎯 Problem-Solution-Benefit' :
+                                       dq.recommendedStructure === 'add' ? '➕ Answer-Detail-Describe' :
+                                       dq.recommendedStructure === 'what-so-now' ? '🔄 What-So What-Now What' :
+                                       dq.recommendedStructure === 'past-present-future' ? '⏳ Past-Present-Future' :
+                                       dq.recommendedStructure === 'comparison' ? '⚖️ Compare-Contrast' :
+                                       dq.recommendedStructure}
+                                    </span>
+                                  </div>
+                                )}
+
                                 {/* Follow-ups */}
                                 {dq.followUps && dq.followUps.length > 0 && (
                                   <div>

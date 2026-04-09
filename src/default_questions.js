@@ -3,17 +3,17 @@
 // Auto-loaded for new users to enable instant Live Prompter functionality
 
 export const QUESTION_GROUPS = [
-  { id: 'first-impressions', label: 'First Impressions', icon: '\u{1F3A4}', description: 'Opening questions that set the tone', defaultOn: true },
-  { id: 'behavioral', label: 'Behavioral', icon: '\u2B50', description: 'Core STAR stories and past situations', defaultOn: true },
-  { id: 'situational', label: 'Situational', icon: '\u{1F9E9}', description: 'What would you do if...', defaultOn: true },
-  { id: 'self-awareness', label: 'Self-Awareness', icon: '\u{1F50D}', description: 'Vulnerability, growth, honest reflection', defaultOn: true },
-  { id: 'communication', label: 'Communication', icon: '\u{1F4AC}', description: 'Style, difficult conversations, listening', defaultOn: true },
-  { id: 'leadership', label: 'Leadership', icon: '\u{1F451}', description: 'Influence, initiative, tough calls', defaultOn: true },
-  { id: 'adaptability', label: 'Adaptability', icon: '\u{1F30A}', description: 'Change, resilience, uncertainty', defaultOn: true },
-  { id: 'curveball', label: 'Curveball', icon: '\u26A1', description: 'Creative, unexpected, personality-revealing', defaultOn: true },
-  { id: 'values', label: 'Values & Culture', icon: '\u{1F48E}', description: 'Motivation, work style, alignment', defaultOn: false },
-  { id: 'drills', label: 'Response Drills', icon: '\u{1F3AF}', description: 'Structured improvisation exercises', defaultOn: false },
-  { id: 'closing', label: 'Closing', icon: '\u{1F4CB}', description: 'Salary, questions for them, next steps', defaultOn: true },
+  { id: 'first-impressions', label: 'First Impressions', icon: '\u{1F3A4}', description: 'Opening questions that set the tone', defaultOn: true, whyItExists: "Hiring managers use opening questions to evaluate three things simultaneously: whether you can do the job, whether you will fit the team culture, and whether you communicate with clarity under pressure. Research from structured interview rubrics shows these first 2-3 minutes disproportionately shape the interviewer's overall impression, making this the highest-leverage category to practice." },
+  { id: 'behavioral', label: 'Behavioral', icon: '\u2B50', description: 'Core STAR stories and past situations', defaultOn: true, whyItExists: "Behavioral interviewing is built on the premise that past behavior is the best predictor of future performance. Companies like Amazon, Google, and McKinsey use structured behavioral rubrics scored on a 1-5 scale assessing specific competencies. Harvard Business Review research confirms that behavioral questions, when scored against predefined criteria, produce more reliable hiring decisions than unstructured conversation." },
+  { id: 'situational', label: 'Situational', icon: '\u{1F9E9}', description: 'What would you do if...', defaultOn: true, whyItExists: "Situational questions test judgment and decision-making in realistic scenarios. Unlike behavioral questions that look backward, these reveal how candidates think through problems in real time. Research shows strong situational answers address the core issue, demonstrate analytical thinking, and propose practical solutions while considering consequences. Interviewers write ideal answers in advance and score candidates against them." },
+  { id: 'self-awareness', label: 'Self-Awareness', icon: '\u{1F50D}', description: 'Vulnerability, growth, honest reflection', defaultOn: true, whyItExists: "Self-awareness questions assess emotional intelligence, which research consistently links to workplace effectiveness and leadership potential. Hiring managers look for depth, nuance, and appropriate vulnerability. Psychologists note that candidates who pair honest limitations with proactive improvement strategies trigger what is called benevolent trust: the belief that someone is both competent and has good intentions." },
+  { id: 'communication', label: 'Communication', icon: '\u{1F4AC}', description: 'Style, difficult conversations, listening', defaultOn: true, whyItExists: "Communication is consistently rated as the top soft skill employers evaluate. These questions assess whether candidates can adapt their message for different audiences, navigate conflict constructively, and listen as effectively as they speak. Collaboration research shows that communication skill touches emotional intelligence, problem-solving, and leadership simultaneously, making it a high-signal evaluation category." },
+  { id: 'leadership', label: 'Leadership', icon: '\u{1F451}', description: 'Influence, initiative, tough calls', defaultOn: true, whyItExists: "Leadership questions go beyond management experience to evaluate influence, initiative, and decision-making under uncertainty. Hiring managers report that the best answers demonstrate process over results, showing how candidates think and reason rather than just what they achieved. Authenticity matters more than polish here: interviewers can spot rehearsed answers, and they want to see how you actually lead, not how you describe leadership in theory." },
+  { id: 'adaptability', label: 'Adaptability', icon: '\u{1F30A}', description: 'Change, resilience, uncertainty', defaultOn: true, whyItExists: "In a rapidly changing work environment, adaptability has become one of the most sought-after competencies. These questions assess whether candidates can maintain productivity and composure during disruption, learn new skills quickly, and recover from setbacks. Interviewers evaluate not just what happened but how candidates managed their emotional response to change, which predicts long-term resilience." },
+  { id: 'curveball', label: 'Curveball', icon: '\u26A1', description: 'Creative, unexpected, personality-revealing', defaultOn: true, whyItExists: "Curveball questions are designed to move candidates off their rehearsed talking points and reveal authentic personality, creativity, and thinking process. Research confirms that interviewers care less about the specific answer and more about how you reach your conclusion. These questions assess real-time problem-solving, composure under the unexpected, and cultural fit in ways that standard behavioral questions cannot." },
+  { id: 'values', label: 'Values & Culture', icon: '\u{1F48E}', description: 'Motivation, work style, alignment', defaultOn: false, whyItExists: "Values and culture fit questions have grown in importance as companies recognize that skills can be taught but alignment with organizational values cannot. These questions help interviewers assess intrinsic motivation, work style preferences, and whether a candidate will thrive in or clash with the existing team dynamics. Answers reveal what candidates truly prioritize, which predicts engagement and retention far better than technical assessments." },
+  { id: 'drills', label: 'Response Drills', icon: '\u{1F3AF}', description: 'Structured improvisation exercises', defaultOn: false, whyItExists: "Stanford communication professor Matt Abrahams' research shows that having a communication structure dramatically improves spontaneous speaking performance. These drills train specific frameworks (What-So What-Now What, Problem-Solution-Benefit, PREP, ADD) so they become automatic under pressure. The goal is not memorized answers but internalized structures that prevent rambling, freezing, and filler words during real interviews." },
+  { id: 'closing', label: 'Closing', icon: '\u{1F4CB}', description: 'Salary, questions for them, next steps', defaultOn: true, whyItExists: "Closing questions evaluate professionalism, negotiation skill, and genuine interest in the role. Research from The Muse and Indeed shows that how candidates handle salary discussions signals market awareness and self-worth. The questions you ask the interviewer are equally evaluative: asking zero questions signals disinterest, while thoughtful questions demonstrate research, curiosity, and strategic thinking about the role." },
 ];
 
 export const DEFAULT_QUESTIONS = [
@@ -50,7 +50,10 @@ export const DEFAULT_QUESTIONS = [
       "What made you choose this career path?",
       "What has been your biggest career achievement so far?",
       "How would your current manager describe your work?"
-    ]
+    ],
+    whyTheyAsk: "Hiring managers evaluate three things simultaneously: can you do the job, will you fit the team, and can you communicate concisely under pressure. This is also an assessment of whether you can distill a complex narrative into a focused 60-90 second pitch. Interviewers report that rambling past two minutes is the most common failure mode.",
+    coachingTip: "Use the Past-Present-Future structure: one sentence on your background, one on your current role, and one on why this opportunity excites you. Keep it under 90 seconds. The biggest mistake candidates make is reciting their resume chronologically instead of curating a narrative arc that points toward this specific role.",
+    recommendedStructure: "past-present-future"
   },
 
   {
@@ -81,7 +84,10 @@ export const DEFAULT_QUESTIONS = [
       "What do you know about our company?",
       "What would you want to accomplish in your first 90 days?",
       "How does this role fit into your long-term plans?"
-    ]
+    ],
+    whyTheyAsk: "Interviewers are screening for genuine interest versus mass-applying to any open role. They want evidence that you have researched the company and can articulate a specific connection between your goals and their needs. Generic answers like 'I want to grow' immediately signal low effort.",
+    coachingTip: "Mention one specific detail about the company that you could not say about any other employer: a recent product launch, a leadership decision, or a team blog post. This proves research. Then connect it to a personal value or career goal. The formula is: what I know about you + what I care about = why this is the right fit.",
+    recommendedStructure: "what-so-now"
   },
 
   {
@@ -109,7 +115,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "What excites you most about where we are headed?",
       "How do you see yourself contributing to that direction?"
-    ]
+    ],
+    whyTheyAsk: "This is a preparation test disguised as a question. Interviewers use it to gauge how seriously you are pursuing this specific role versus treating it as one of many applications. Candidates who can reference specific, recent information about the company signal initiative and genuine interest.",
+    coachingTip: "Spend 15 minutes before each interview reading the company's recent press releases, blog posts, and LinkedIn updates. Name one fact the interviewer might not expect you to know. Avoid reciting the 'About Us' page; instead, connect a specific company initiative to your own experience or values.",
+    recommendedStructure: "what-so-now"
   },
 
   {
@@ -138,7 +147,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "What was the biggest leap between roles?",
       "Which role taught you the most and why?"
-    ]
+    ],
+    whyTheyAsk: "Unlike 'tell me about yourself,' this question asks for a chronological walkthrough. Interviewers evaluate whether you can show intentional career progression rather than random job-hopping. They are listening for the connective tissue between roles: how each experience built toward the next.",
+    coachingTip: "Spend 10-15 seconds per role maximum. The structure is: what you did, one achievement, and how it led to the next move. End by connecting your arc to the role you are interviewing for. The most common mistake is giving equal time to every role instead of weighting recent and relevant experience.",
+    recommendedStructure: "past-present-future"
   },
 
   {
@@ -168,7 +180,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "What would make you stay at your current company?",
       "Is there anything about your current role you will miss?"
-    ]
+    ],
+    whyTheyAsk: "Interviewers are screening for two red flags: whether you badmouth previous employers (signals low professionalism) and whether you are running away from problems rather than toward opportunities (signals potential flight risk). They also assess whether your reason for leaving suggests you will stay long-term in this new role.",
+    coachingTip: "Never mention negative reasons first even if they are real. Lead with what you are moving toward, not what you are escaping. The formula is: gratitude for what you learned + the specific gap + how this role fills that gap. If you were laid off, say so honestly and pivot to why this opportunity excites you.",
+    recommendedStructure: "past-present-future"
   },
 
   {
@@ -196,7 +211,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "How do you evaluate whether a company is the right fit?",
       "What is the most important factor for you?"
-    ]
+    ],
+    whyTheyAsk: "This question tests alignment between your desires and what the role actually offers. If your ideal next role describes a different job entirely, the interviewer knows you will be dissatisfied quickly. They are also assessing self-awareness: do you know what you actually need to thrive, or are you just saying what sounds good?",
+    coachingTip: "Research the role description before answering and mirror its language. If the job emphasizes cross-functional collaboration, mention that you thrive when working across teams. Be genuine, but align your honest preferences with the role's actual characteristics. End by explicitly connecting your criteria to this specific opportunity.",
+    recommendedStructure: "what-so-now"
   },
 
   {
@@ -223,7 +241,10 @@ export const DEFAULT_QUESTIONS = [
     narrative: "I found this role through [SOURCE]. What caught my attention was [SPECIFIC DETAIL ABOUT THE POSTING OR CONVERSATION]. I had already been following [COMPANY] because of [REASON], so when I saw this opening, it felt like a natural fit for the direction I want to take my career.",
     followUps: [
       "What specifically in the job description stood out to you?"
-    ]
+    ],
+    whyTheyAsk: "This seems like a throwaway question but serves two purposes: tracking recruitment channel effectiveness and gauging how deliberately you chose to apply. Referral candidates tend to be viewed more favorably because someone internal vouched for them. Interviewers also notice whether you treat this as a quick answer or use it to demonstrate genuine interest.",
+    coachingTip: "If someone referred you, name them and mention what they specifically said about the team or role. If you found it on a job board, add what made you stop scrolling: a specific phrase in the description, the company's reputation, or a product you admire. Turn a mundane question into a mini-pitch for your genuine interest.",
+    recommendedStructure: null
   },
 
   {
@@ -253,7 +274,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "What is the biggest challenge you think you would face in the first month?",
       "How do you balance learning with delivering results?"
-    ]
+    ],
+    whyTheyAsk: "Interviewers use this to assess strategic thinking, humility, and realistic expectations. Candidates who claim they will transform the department in 30 days signal arrogance. Those who say they will just listen for 90 days signal passivity. The best answers show a progression from learning to contributing, demonstrating both respect for existing context and a bias toward action.",
+    coachingTip: "Structure your answer in three phases: learn (month 1), contribute (month 2), propose (month 3). Mention specific people you would meet or processes you would study to show you understand the role's ecosystem. Name one realistic quick win from month two to demonstrate you can deliver while still ramping up.",
+    recommendedStructure: "what-so-now"
   },
 
   // =====================================================================
@@ -288,7 +312,10 @@ export const DEFAULT_QUESTIONS = [
       "What would you do differently if it happened again?",
       "How has that experience changed how you handle disagreements?",
       "What if the other person was not willing to have that conversation?"
-    ]
+    ],
+    whyTheyAsk: "Conflict resolution is one of the most evaluated behavioral competencies. Interviewers score candidates on emotional maturity, willingness to take ownership, and whether they address problems directly or avoid them. Amazon's behavioral rubric specifically assesses whether candidates seek to understand the other person's perspective before defending their own position.",
+    coachingTip: "Always acknowledge your role in the conflict, even if it was minor. Answers where the other person is entirely wrong and you are entirely right score poorly on self-awareness. Show that you initiated the resolution rather than waiting for someone else to fix it. The result should include both the project outcome and the relationship outcome.",
+    recommendedStructure: "star"
   },
 
   {
@@ -318,7 +345,10 @@ export const DEFAULT_QUESTIONS = [
       "What was the hardest part about leading that team?",
       "How did you handle the team member who was struggling the most?",
       "What would you do differently as a leader next time?"
-    ]
+    ],
+    whyTheyAsk: "Interviewers evaluate leadership maturity by looking at process over results. They want to see how you set direction, made decisions under pressure, and handled team dynamics, not just what the outcome was. Strong answers show structured thinking and authentic leadership, while weak answers describe results without explaining the reasoning behind key decisions.",
+    coachingTip: "Focus on one or two pivotal decisions and explain your reasoning in detail. Interviewers care more about why you chose a particular approach than the outcome itself. Mention how you supported the team member who struggled most, not just the high performers. End with what you learned, not just what you achieved.",
+    recommendedStructure: "star"
   },
 
   {
@@ -349,7 +379,10 @@ export const DEFAULT_QUESTIONS = [
       "How did your manager react?",
       "Would you take the same risk again knowing the outcome?",
       "How do you distinguish between a failure you could have prevented and one you could not?"
-    ]
+    ],
+    whyTheyAsk: "This question evaluates accountability and growth mindset. Interviewers specifically watch for whether you choose a real failure (not a humble brag) and whether you take genuine ownership. The learning component is critical: hiring managers score candidates higher when the behavioral change is specific and lasting, not just a vague 'I learned to communicate better.'",
+    coachingTip: "Choose a failure with real stakes, not a disguised success. The answer should make you slightly uncomfortable to tell. Then show the complete arc: what went wrong, what you owned, what you changed, and evidence that the change stuck. Avoid blaming circumstances or other people even partially in your first description of the failure.",
+    recommendedStructure: "star"
   },
 
   {
@@ -378,7 +411,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "What did you learn about yourself from that experience?",
       "How do you typically adapt to different working styles?"
-    ]
+    ],
+    whyTheyAsk: "This evaluates emotional intelligence and adaptability. Interviewers want evidence that you can work productively with people who do not think or operate like you. The key signal they look for is whether you adapted your own style or simply tolerated the other person. Adaptation indicates collaboration maturity; mere tolerance indicates limited growth.",
+    coachingTip: "Describe the personality difference neutrally, not as the other person being difficult. Show that you adjusted your own behavior first before expecting them to change. The strongest answers include what you learned about your own working style from the experience, not just how you managed theirs.",
+    recommendedStructure: "star"
   },
 
   {
@@ -408,7 +444,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "What did you deprioritize and how did you communicate that?",
       "How do you handle it when your manager says everything is top priority?"
-    ]
+    ],
+    whyTheyAsk: "Interviewers assess your prioritization framework and stakeholder communication under pressure. They want to see a systematic approach to deciding what matters most, not just working harder. Candidates who describe doing everything simultaneously score lower than those who made explicit trade-offs and communicated them proactively.",
+    coachingTip: "Name the specific criteria you used to prioritize (impact, urgency, reversibility, dependencies). Show that you communicated trade-offs to stakeholders before they became problems, not after. The strongest answers include what you chose not to do and how you managed expectations around it.",
+    recommendedStructure: "star"
   },
 
   {
@@ -437,7 +476,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "How do you decide when something is worth the extra effort?",
       "How do you balance going above and beyond with sustainable work habits?"
-    ]
+    ],
+    whyTheyAsk: "This question evaluates intrinsic motivation, initiative, and judgment. Interviewers want to see that you notice opportunities others miss and act on them without being told. Equally important is your judgment about when extra effort is warranted: candidates who describe unsustainable overwork may raise concerns about burnout or boundary issues.",
+    coachingTip: "Make the contrast clear between what was expected and what you actually delivered. Quantify the impact with a number if possible. Show that your motivation was genuine (you cared about the outcome) rather than performative (you wanted to be noticed). The best answers demonstrate initiative driven by ownership, not obligation.",
+    recommendedStructure: "star"
   },
 
   {
@@ -467,7 +509,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "What do you do when persuasion does not work?",
       "How do you distinguish between persuading and manipulating?"
-    ]
+    ],
+    whyTheyAsk: "This evaluates influence skills, particularly the ability to move people without positional authority. Interviewers score candidates on whether they first sought to understand the other perspective before advocating their own. Pushing harder without listening scores poorly; finding shared goals and using evidence scores highly on behavioral rubrics.",
+    coachingTip: "Show that you understood their position before trying to change it. The sequence matters: listen first, then advocate. Name your specific persuasion method (data, pilot project, connecting to their goals, finding common ground). If you ultimately did not convince them, that can still be a strong answer if you show how you handled the outcome gracefully.",
+    recommendedStructure: "star"
   },
 
   {
@@ -496,7 +541,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "What is the hardest piece of feedback you have ever received?",
       "How do you distinguish between feedback you should act on and feedback you should disregard?"
-    ]
+    ],
+    whyTheyAsk: "This is a coachability test. Interviewers want evidence that you can receive criticism without becoming defensive, extract the valid signal, and translate it into behavioral change. Companies increasingly rank coachability as a top hiring criterion because it predicts long-term growth and team fit.",
+    coachingTip: "Be honest about your initial emotional reaction. Saying 'it stung' or 'I was defensive at first' shows authenticity and self-awareness. Then show the complete arc: emotion, reflection, action, result. The most compelling answers end with you now actively seeking the same kind of feedback, which signals a growth mindset rather than grudging compliance.",
+    recommendedStructure: "star"
   },
 
   // =====================================================================
@@ -529,7 +577,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "What if your manager's decision could harm the team or the customer?",
       "Tell me about a time you actually did this."
-    ]
+    ],
+    whyTheyAsk: "Interviewers evaluate two skills simultaneously: the courage to voice dissent and the maturity to commit once a decision is final. This maps directly to Amazon's 'disagree and commit' leadership principle. Candidates who always agree score low on candor; candidates who never commit after being overruled score low on team orientation.",
+    coachingTip: "Show a clear three-step process: understand first, advocate with evidence, then commit fully. The most critical part is the commit step. Make it clear you would execute wholeheartedly even if you disagreed, while still maintaining a professional channel for post-decision feedback. Never say you would go over your manager's head unless safety is at stake.",
+    recommendedStructure: "psb"
   },
 
   {
@@ -557,7 +608,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "What if the person gets defensive when you bring it up?",
       "At what point would you escalate to management?"
-    ]
+    ],
+    whyTheyAsk: "This evaluates empathy, direct communication, and judgment about escalation. Interviewers watch for whether you jump to escalation (too aggressive), avoid the conversation entirely (too passive), or find the middle ground of empathetic directness. The assumption of good intent is critical: candidates who immediately assume laziness score poorly on emotional intelligence.",
+    coachingTip: "Start with curiosity, not judgment. Ask 'what is going on?' before 'why are you missing deadlines?' Show a clear escalation ladder: private conversation first, offer support second, involve management only after direct efforts have not worked. Frame escalation as a team need, not a personal complaint about the individual.",
+    recommendedStructure: "psb"
   },
 
   {
@@ -586,7 +640,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "Tell me about a time you actually had to do this.",
       "How do you balance learning with delivering on a deadline?"
-    ]
+    ],
+    whyTheyAsk: "This tests learning agility and intellectual humility, two of the strongest predictors of long-term performance. Interviewers want to see a structured approach to the unknown: how you identify what you need to learn, find resources efficiently, and build in checkpoints. Candidates who claim they can figure anything out without a plan score lower than those with a clear learning strategy.",
+    coachingTip: "Show a specific learning methodology, not just enthusiasm. Name the steps: scope what you need to know, identify the 20% that covers 80% of cases, find one or two internal experts, set weekly check-ins. Mention that you would be upfront about your learning curve with stakeholders rather than pretending expertise you do not have.",
+    recommendedStructure: "psb"
   },
 
   {
@@ -615,7 +672,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "Have you ever been in this situation? What happened?",
       "How do you balance speed of disclosure with having a solution ready?"
-    ]
+    ],
+    whyTheyAsk: "This is an integrity and accountability test. Interviewers specifically listen for whether you disclose proactively (before being caught) or reactively. The speed and transparency of your communication matters more than the fix itself. Candidates who describe silent fixing score significantly lower than those who describe immediate, transparent communication.",
+    coachingTip: "Lead with 'I would tell my manager immediately' as your first action. This is the most important signal. Then show a remediation plan and a prevention plan. The blameless postmortem step elevates your answer from damage control to systems thinking. Never describe trying to fix the mistake quietly before anyone notices.",
+    recommendedStructure: "psb"
   },
 
   {
@@ -644,7 +704,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "What if your manager says both are equally important?",
       "Give me an example of when you had to make a tough prioritization call."
-    ]
+    ],
+    whyTheyAsk: "Interviewers evaluate structured decision-making and communication under resource constraints. They want to see that you have a framework for evaluating trade-offs (not just gut feel) and that you communicate proactively rather than letting a priority quietly slip. This also tests whether you escalate appropriately or try to be a hero by doing everything poorly.",
+    coachingTip: "Show your prioritization criteria explicitly: business impact, customer urgency, reversibility, dependencies. Then show that you would bring the conflict and your recommendation to your manager rather than deciding unilaterally. This demonstrates both judgment and organizational awareness. If asked what to do when both are equal, describe how you would propose splitting the work or adjusting timelines.",
+    recommendedStructure: "psb"
   },
 
   {
@@ -672,7 +735,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "What if the client escalates to your manager?",
       "Tell me about a time you turned a difficult client interaction into a positive outcome."
-    ]
+    ],
+    whyTheyAsk: "This tests your ability to balance customer empathy with firm boundaries. Interviewers assess whether you default to people-pleasing (saying yes to everything), confrontation (saying no without alternatives), or the ideal middle ground of creative problem-solving within constraints. The ability to say 'no, but here is what I can do' is a high-value professional skill.",
+    coachingTip: "Dig beneath the surface request to find the real need. Often what seems unreasonable becomes reasonable when you understand the underlying problem. Structure your response as: validate their concern, explain the constraint honestly, then offer an alternative. Never just say no without proposing what you can do instead.",
+    recommendedStructure: "psb"
   },
 
   {
@@ -701,7 +767,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "What if the unethical behavior was coming from your manager?",
       "Have you ever faced an ethical dilemma at work?"
-    ]
+    ],
+    whyTheyAsk: "This is a character assessment. Interviewers want to see that you have clear ethical boundaries and the courage to act on them, while also showing judgment about proportional response. Candidates who would report a minor misjudgment to HR without a private conversation first seem rigid; candidates who would ignore serious violations to preserve relationships seem unprincipled.",
+    coachingTip: "Show a graduated response based on severity: fact-gathering first, then direct conversation for minor issues, and formal reporting for serious violations. The key differentiator in strong answers is that you would act even when it is socially costly, such as reporting a friend or a manager. End with a clear statement of principle that does not waver based on relationships.",
+    recommendedStructure: "psb"
   },
 
   // =====================================================================
@@ -734,7 +803,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "How did your team react?",
       "What would you do differently knowing what you know now?"
-    ]
+    ],
+    whyTheyAsk: "This question specifically probes for accountability by asking 'what was your role in it,' making it harder to deflect blame. Interviewers assess whether you take genuine ownership or subtly redirect responsibility. People who describe their contribution to the problem with specificity score significantly higher than those who describe external circumstances.",
+    coachingTip: "Name your specific contribution to the problem before anything else. Saying 'I underestimated the timeline by three weeks' is much stronger than 'the timeline was too aggressive.' The more precisely you can identify what you personally did or failed to do, the more credible your self-awareness appears. Follow ownership with corrective action and lasting change.",
+    recommendedStructure: "star"
   },
 
   {
@@ -763,7 +835,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "How do you seek out feedback now?",
       "Is there feedback you chose not to act on? Why?"
-    ]
+    ],
+    whyTheyAsk: "Interviewers look for the full emotional arc: honest initial discomfort followed by reflective processing and lasting behavioral change. Candidates who claim feedback never bothers them seem emotionally unaware. Candidates who describe being devastated without showing growth seem fragile. The strongest candidates show both vulnerability and resilience in the same answer.",
+    coachingTip: "Share the feedback verbatim if you can remember it. 'My manager told me I was micromanaging my team' is much more credible than 'I got some feedback about my management style.' Admit the emotional sting honestly, then show the work you did to change. The transformation should be specific enough that someone could verify it.",
+    recommendedStructure: "star"
   },
 
   {
@@ -792,7 +867,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "What prompted you to start working on that?",
       "How do you measure your progress?"
-    ]
+    ],
+    whyTheyAsk: "This is the modern version of 'what is your greatest weakness' and tests the same three qualities: self-awareness, honesty, and growth mindset. Hiring managers report that cliched responses like 'I am a perfectionist' immediately lower a candidate's score. They want a genuine area with genuine effort, demonstrating that you are the kind of person who actively manages their own development.",
+    coachingTip: "Choose a real developmental area that is not a core requirement of the role. Pair it with concrete actions you are taking right now, not just awareness. The magic formula: genuine weakness + specific trigger that made you notice it + concrete steps you are taking + evidence of early progress. This shows vulnerability without self-sabotage.",
+    recommendedStructure: "prep"
   },
 
   {
@@ -820,7 +898,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "How do you create space for being wrong in your decision-making process?",
       "What was the hardest part about admitting you were wrong?"
-    ]
+    ],
+    whyTheyAsk: "This tests intellectual humility and the ability to update your thinking when presented with new evidence. Interviewers value candidates who can hold strong opinions while remaining open to being wrong. The willingness to publicly acknowledge a mistake to your team or manager, rather than quietly changing course, is a strong signal of integrity and maturity.",
+    coachingTip: "Show that you acknowledged the mistake publicly, not just privately. Saying 'I told my team I was wrong and here is why' is much more powerful than quietly changing direction. Focus on what specifically changed your mind (new data, a different perspective, user feedback) and how you process disconfirming evidence in general.",
+    recommendedStructure: "star"
   },
 
   {
@@ -848,7 +929,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "How would your biggest advocate describe you?",
       "Has that criticism ever cost you something professionally?"
-    ]
+    ],
+    whyTheyAsk: "This is one of the highest-difficulty self-awareness questions because it requires you to adopt someone else's negative perspective on you. Interviewers use it to assess emotional intelligence, self-knowledge, and honesty. Answers that are actually compliments in disguise (my critic would say I care too much) are immediately transparent and score poorly.",
+    coachingTip: "Choose something someone has actually told you, not something you invented for the interview. The more specific and uncomfortable the criticism, the more credible your self-awareness. Show that you understand why this behavior bothers others (impact awareness), not just that it exists. Then show concrete steps you are taking to manage it.",
+    recommendedStructure: "prep"
   },
 
   {
@@ -877,7 +961,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "How do you check your ego now in professional settings?",
       "What is the difference between confidence and ego?"
-    ]
+    ],
+    whyTheyAsk: "This is arguably the most vulnerable question in the self-awareness category. Interviewers use it to identify candidates with genuine humility versus those who perform humility. Being able to name a specific moment where your ego caused damage shows deep self-knowledge and the kind of maturity that predicts strong teamwork and leadership.",
+    coachingTip: "This question requires genuine vulnerability. Choose a real moment where pride, status-seeking, or the need to be right cost you something tangible. The wake-up moment is the most important part: what specifically made you see that ego was driving your behavior? Show that you now have active practices to manage ego, not just awareness that it exists.",
+    recommendedStructure: "star"
   },
 
   {
@@ -905,7 +992,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "How do you prevent similar situations now?",
       "What standards do you hold yourself to that others might not?"
-    ]
+    ],
+    whyTheyAsk: "This evaluates whether you have internal standards that go beyond what your employer requires. Interviewers are looking for evidence that you hold yourself accountable to a personal code of professional conduct, not just organizational rules. Candidates who can name specific experiences they regret and show how they grew from them demonstrate a level of self-awareness that predicts long-term excellence.",
+    coachingTip: "Choose something that falls short of your own standards, not just a task failure. The distinction matters: 'I am least proud of how I handled a team member's departure' shows personal values at play, while 'a project was late' is just a work setback. Show that your discomfort comes from violating your own principles, not just from a bad outcome.",
+    recommendedStructure: "star"
   },
 
   {
@@ -934,7 +1024,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "What would they say is your greatest strength?",
       "How do you maintain that growth trajectory without regular feedback?"
-    ]
+    ],
+    whyTheyAsk: "The reference to actually calling your manager makes this question feel high-stakes because your answer could be verified. Interviewers use it to test whether your self-assessment matches how others perceive you. A large gap between your claimed growth areas and what a reference would say signals low self-awareness or dishonesty.",
+    coachingTip: "Pick something your manager actually said in a real review or conversation, because this could be verified during reference checks. Show alignment by agreeing with their assessment rather than defending against it. The strongest answers demonstrate that you took their feedback seriously enough to create a specific action plan, not just acknowledge it politely.",
+    recommendedStructure: "prep"
   },
 
   // =====================================================================
@@ -967,7 +1060,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "How do you adjust when you can tell someone is not following?",
       "What is the most challenging topic you have had to simplify?"
-    ]
+    ],
+    whyTheyAsk: "This evaluates whether you can translate expertise into accessibility, which is critical for cross-functional work. Interviewers listen for whether you assessed the audience's baseline first (audience awareness) and whether you verified understanding afterward (communication loop). Simply dumbing things down without checking comprehension scores lower than adapting and confirming.",
+    coachingTip: "Show your process, not just the explanation. Start by describing how you assessed what they already knew. Then name the specific technique you used (analogy, visual, three-step buildup). Finally, show how you confirmed it worked: did they ask good follow-up questions, take the right action, or explain it back to you? The verification step is what separates adequate communicators from excellent ones.",
+    recommendedStructure: "star"
   },
 
   {
@@ -996,7 +1092,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "What is your approach to ensuring clear communication on your team?",
       "How do you handle it when someone says 'I thought you said...'?"
-    ]
+    ],
+    whyTheyAsk: "Interviewers use this to assess whether you treat communication failures as system problems or blame problems. Candidates who identify structural root causes (unclear processes, implicit assumptions, single-channel reliance) demonstrate more sophistication than those who attribute miscommunication to one person's mistake. The prevention step shows whether you think in terms of systems improvement.",
+    coachingTip: "Identify the structural root cause, not just the surface miscommunication. 'We assumed everyone read the email' reveals a process gap you can fix. 'John did not listen' is blame. Show both an immediate fix and a longer-term process change. The process change should be concrete and reusable, like written meeting summaries or explicit confirmation protocols.",
+    recommendedStructure: "star"
   },
 
   {
@@ -1024,7 +1123,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "How do you prepare for those conversations?",
       "What do you do when the person reacts emotionally?"
-    ]
+    ],
+    whyTheyAsk: "This tests courage and emotional intelligence simultaneously. Interviewers evaluate whether you lead with the bad news directly or bury it in qualifications. They also watch for empathy: did you prepare for the person's emotional reaction and have next steps ready? Candidates who avoid the conversation or delegate it upward score poorly on leadership potential.",
+    coachingTip: "Lead with the key point in the first sentence. Do not build up with context and qualifiers. Say 'The project will be three weeks late' before explaining why. This shows respect for the stakeholder's time and intelligence. Then immediately follow with your plan to address it. Empathy means acknowledging their frustration, not softening the message until it disappears.",
+    recommendedStructure: "star"
   },
 
   {
@@ -1052,7 +1154,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "What do you do when a relationship just is not working despite your efforts?",
       "How long are you willing to invest before deciding a relationship will not improve?"
-    ]
+    ],
+    whyTheyAsk: "This evaluates relationship-building skill and patience. Interviewers look for whether you invested in understanding the root cause of resistance before trying to overcome it. Candidates who force relationships through charm score lower than those who earn trust through consistent, patient action. The turning point in the story reveals your relational intelligence.",
+    coachingTip: "Show that you diagnosed why the person was resistant before trying to fix the relationship. Then describe patient, consistent actions over time, not a single grand gesture. The turning point should be a specific moment where trust shifted, not a vague 'over time things got better.' End with what the strong relationship enabled you to accomplish together.",
+    recommendedStructure: "star"
   },
 
   {
@@ -1080,7 +1185,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "What if the senior person dismissed your feedback entirely?",
       "How do you decide when it is worth speaking up versus letting it go?"
-    ]
+    ],
+    whyTheyAsk: "This tests courage and political intelligence simultaneously. Interviewers want to see that you can speak truth to power without being disrespectful or career-suicidal. They evaluate your framing skills: did you make it about the work rather than the person? Did you choose an appropriate time and setting? Did you offer the feedback as a perspective rather than an accusation?",
+    coachingTip: "Three elements make upward feedback land well: timing (private, not in front of others), framing (observation, not judgment), and connecting it to shared goals (not personal preferences). If you can share the specific language you used, do so. Something like 'I noticed X and I am wondering if Y might help us achieve Z' shows the kind of diplomatic precision interviewers value.",
+    recommendedStructure: "star"
   },
 
   {
@@ -1108,7 +1216,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "How do you practice active listening?",
       "What signals tell you someone is not being heard?"
-    ]
+    ],
+    whyTheyAsk: "Active listening is one of the hardest communication skills to demonstrate in an interview because candidates are naturally focused on talking. This question tests whether you can identify the subtext beneath what people say and use that deeper understanding to change your approach. Interviewers look for the contrast between what would have happened without listening and what actually happened because of it.",
+    coachingTip: "The key differentiator is showing what you heard beneath the surface, not just that you listened. Describe the insight you caught that others might have missed: an unspoken concern, a constraint no one had named, or an emotional undercurrent beneath a rational discussion. Then show how that insight changed your approach and the outcome. Without that contrast, the story is just about being polite.",
+    recommendedStructure: "star"
   },
 
   {
@@ -1136,7 +1247,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "What is the most challenging audience you have had to communicate with?",
       "How do you know when your communication style is not landing?"
-    ]
+    ],
+    whyTheyAsk: "This evaluates communication range and audience awareness, which are core competencies for cross-functional roles. Interviewers want to see that you can diagnose an audience's needs and adjust in real time, not just operate in one communication mode. The ability to flex between executive-level summaries and technical deep-dives signals professional maturity.",
+    coachingTip: "Give three concrete examples of adaptation: one for executives (bottom-line first, three minutes or less), one for technical audiences (detail-oriented, data-driven), and one for non-technical stakeholders (analogies, goal-oriented framing). Include the signals that tell you to adjust: glazed eyes mean simplify, detailed follow-ups mean go deeper, time pressure means prioritize.",
+    recommendedStructure: "prep"
   },
 
   // =====================================================================
@@ -1169,7 +1283,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "How do you handle it when a peer resists your informal leadership?",
       "What is the difference between leading and managing?"
-    ]
+    ],
+    whyTheyAsk: "Influence without authority is one of the most valued leadership competencies, especially in organizations with flat hierarchies and cross-functional teams. Interviewers evaluate whether you can motivate and align people who have no obligation to follow you. The methods you use to earn buy-in (competence, relationship, shared vision) reveal your natural leadership style.",
+    coachingTip: "Focus on how you earned the team's willingness to follow your lead, not on the project mechanics. Did you build individual relationships first? Did you demonstrate competence early to establish credibility? Did you find shared goals that made your leadership feel like a service to the team? The methods matter more than the outcome here.",
+    recommendedStructure: "star"
   },
 
   {
@@ -1197,7 +1314,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "How do you know when to stand firm versus change course based on feedback?",
       "What would you do if the decision turned out to be wrong?"
-    ]
+    ],
+    whyTheyAsk: "This tests conviction and communication under opposition. Interviewers want to see that you can make difficult decisions based on principles or data rather than popularity, while still treating dissenting voices with respect. Leaders who avoid unpopular decisions to maintain approval score poorly, as do those who bulldoze through opposition without communication.",
+    coachingTip: "Show the reasoning behind your decision clearly so the interviewer can see it was principled, not stubborn. Then describe how you communicated the decision to those who disagreed: did you meet individually, share your reasoning transparently, acknowledge the downsides? The strongest answers show that you maintained the relationships even while maintaining the decision.",
+    recommendedStructure: "star"
   },
 
   {
@@ -1225,7 +1345,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "How do you tailor your coaching to different learning styles?",
       "What is the hardest part about developing others?"
-    ]
+    ],
+    whyTheyAsk: "This evaluates whether you invest in others' growth or focus solely on your own performance. Hiring managers view people development as a multiplier skill: candidates who develop others create exponential value. They look for specific mentoring techniques and evidence that your investment produced measurable growth in the other person.",
+    coachingTip: "Focus on one specific person and their arc of growth, not on general mentoring philosophy. Show your technique: did you assign stretch projects, provide real-time feedback, share your own failures as learning tools? Name a specific turning point where your mentoring visibly changed their performance. End with where that person is now to show lasting impact.",
+    recommendedStructure: "star"
   },
 
   {
@@ -1254,7 +1377,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "How do you know when you have enough information to act?",
       "Would you make the same decision again?"
-    ]
+    ],
+    whyTheyAsk: "This tests decision-making maturity. Interviewers want to see a framework for operating under uncertainty, not just confidence or risk tolerance. They evaluate whether you distinguished between reversible and irreversible decisions, whether you gathered available information efficiently, and whether you had a principled approach to the unknown rather than just guessing.",
+    coachingTip: "Name the specific framework you used to decide: Was the decision reversible? What was the cost of delay versus the cost of being wrong? What was the worst-case scenario and could you recover from it? Showing a structured approach to uncertainty is far more impressive than saying 'I trusted my gut.' End with what you would do the same or differently.",
+    recommendedStructure: "star"
   },
 
   {
@@ -1283,7 +1409,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "What do you do when stakeholders are truly irreconcilable?",
       "How do you maintain relationships when you cannot give everyone what they want?"
-    ]
+    ],
+    whyTheyAsk: "Stakeholder alignment is one of the most valued leadership skills because it predicts whether a candidate can execute complex, cross-functional initiatives. Interviewers evaluate your diagnostic skill (understanding each party's real interests), your creativity (finding common ground where none seemed to exist), and your diplomacy (maintaining relationships even when delivering imperfect compromises).",
+    coachingTip: "Show that you met with stakeholders individually to understand their non-negotiables before proposing a solution. The individual meetings are the key insight: you cannot find common ground from a conference room where everyone is posturing. Then show the creative element of your solution: how did you address competing interests in a way that moved everyone forward, even imperfectly?",
+    recommendedStructure: "star"
   },
 
   {
@@ -1312,7 +1441,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "How do you prioritize which problems to fix when you see many?",
       "What do you do when you see a problem but it is not in your domain?"
-    ]
+    ],
+    whyTheyAsk: "This evaluates proactive problem-solving and organizational awareness. Interviewers want evidence that you scan your environment for issues rather than waiting for them to be assigned. They also evaluate your judgment: did you validate the problem before acting? Did you take appropriate initiative without overstepping? The counterfactual (what would have happened) shows the value of your proactivity.",
+    coachingTip: "Show the full arc: discovery, validation, action, impact. The validation step is critical because it shows judgment, not just reactivity. Then describe the counterfactual: what would have happened if no one had caught the problem? This creates a clear contrast that demonstrates the value of your initiative. End with how you balanced taking initiative with respecting existing structures.",
+    recommendedStructure: "star"
   },
 
   {
@@ -1341,7 +1473,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "How do you commit to a decision you disagree with?",
       "When is dissent valuable versus disruptive?"
-    ]
+    ],
+    whyTheyAsk: "This tests whether you can be a constructive dissenter while remaining a committed team member. Interviewers evaluate both sides: Do you have the courage to voice unpopular opinions? And can you commit fully when the team decides differently? Candidates who always go along to get along lack backbone; those who cannot commit after dissenting lack teamwork.",
+    coachingTip: "Show both sides of the coin. First, how you voiced your dissent constructively: with data, with questions, or with an alternative proposal. Then, how you handled the outcome: if the team went your way, show humility; if they did not, show genuine commitment to their decision. The phrase 'disagree and commit' comes from Amazon's leadership principles and is exactly what interviewers look for here.",
+    recommendedStructure: "star"
   },
 
   // =====================================================================
@@ -1374,7 +1509,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "How do you help others adapt when they are struggling with change?",
       "What kind of change is hardest for you?"
-    ]
+    ],
+    whyTheyAsk: "Interviewers evaluate how you manage both the practical and emotional dimensions of change. They listen for your initial honest reaction (which shows self-awareness) and your adaptation strategy (which shows agency). Candidates who claim change never bothers them seem emotionally unaware; candidates who describe constructive adaptation after honest initial discomfort seem resilient and genuine.",
+    coachingTip: "Be honest about your initial reaction. Saying 'it was unsettling at first' is more credible than 'I immediately embraced it.' Then show the pivot: what specific actions did you take to move from reaction to adaptation? Focus on what you could control rather than what you could not. If possible, end with an unexpected benefit that came from the change.",
+    recommendedStructure: "star"
   },
 
   {
@@ -1403,7 +1541,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "How do you stay motivated when the learning curve is steep?",
       "What is the most recent thing you learned from scratch?"
-    ]
+    ],
+    whyTheyAsk: "Learning agility is one of the strongest predictors of long-term career success. Interviewers want to see a structured approach to rapid learning, not just enthusiasm or raw intelligence. They evaluate whether you can identify the critical 20% of knowledge that enables 80% effectiveness, find the right resources quickly, and demonstrate competence under time pressure.",
+    coachingTip: "Show a specific learning methodology rather than just hard work. Name the strategy: Did you identify the most critical knowledge first? Did you find an expert mentor? Did you set up practice-and-feedback loops? Quantify how quickly you became effective and what that looked like. The most impressive element is often the ability to be effective while still learning.",
+    recommendedStructure: "star"
   },
 
   {
@@ -1432,7 +1573,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "How do you handle the emotional side of having your work deprioritized?",
       "How do you evaluate whether to push back on a deprioritization decision?"
-    ]
+    ],
+    whyTheyAsk: "This evaluates emotional resilience and the ability to separate your identity from your work output. Interviewers look for whether you handle deprioritization maturely (redirecting energy productively) or destructively (sulking, disengaging, or undermining the decision). The ability to salvage value from cancelled work is a bonus indicator of resourcefulness.",
+    coachingTip: "Acknowledge the frustration honestly; pretending you did not care about the cancelled work is not credible. Then show the pivot: how quickly you redirected your energy, what you salvaged from the cancelled work (skills, relationships, reusable components), and how you supported the new priority. The takeaway should reflect maturity about what you can and cannot control.",
+    recommendedStructure: "star"
   },
 
   {
@@ -1461,7 +1605,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "What do you do when you cannot get clarity from leadership?",
       "How do you make decisions when the ground keeps shifting?"
-    ]
+    ],
+    whyTheyAsk: "Ambiguity tolerance is increasingly important as organizations face rapid change. Interviewers evaluate whether you shut down in uncertainty or stay productive. They look for coping strategies (focusing on what you can control, maintaining routines) and whether you provide stability for others during uncertain times. Leaders who function well in ambiguity are rare and highly valued.",
+    coachingTip: "Describe both your internal management (how you kept yourself focused and productive) and your external impact (how you helped others navigate the uncertainty). Name specific anchoring strategies: focusing on controllable actions, maintaining team routines, or communicating transparently about what you did and did not know. Interviewers value candidates who are honest about not having answers while still moving forward.",
+    recommendedStructure: "star"
   },
 
   {
@@ -1490,7 +1637,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "What kept you going during the recovery?",
       "How has that setback shaped the kind of professional you are today?"
-    ]
+    ],
+    whyTheyAsk: "This is the ultimate resilience question. Interviewers evaluate the depth of the setback (was it genuinely difficult?), the honesty of your low point (did you struggle or did you claim it never fazed you?), and the quality of your recovery (was it deliberate or accidental?). The best answers show a complete arc from genuine difficulty through intentional rebuilding to lasting growth.",
+    coachingTip: "Choose a real setback with genuine consequences, not a minor inconvenience dressed up as adversity. Be honest about the low point; saying 'I questioned whether I was in the right career' is more powerful than 'I was disappointed but moved on quickly.' The recovery actions should be specific and intentional, not just waiting for things to get better. End with what specifically changed in you.",
+    recommendedStructure: "star"
   },
 
   {
@@ -1518,7 +1668,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "How do you decide which opportunities are worth the discomfort?",
       "What is an area you are still uncomfortable in professionally?"
-    ]
+    ],
+    whyTheyAsk: "This assesses growth orientation and risk tolerance. Interviewers want to see that you deliberately seek experiences that stretch you rather than staying within safe, familiar territory. They evaluate whether the discomfort was genuine (not a humble brag) and whether the growth was real (not just surviving but actually thriving and discovering something new about yourself).",
+    coachingTip: "Name the specific source of discomfort, not just the situation. 'I was uncomfortable because I had never presented to an audience that senior and I was terrified of looking incompetent' is much more powerful than 'I took on a stretch assignment.' Show the strategy you used to push through and the genuine surprise at what you discovered about yourself on the other side.",
+    recommendedStructure: "star"
   },
 
   // =====================================================================
@@ -1550,7 +1703,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "What would you hope to learn from that dinner?",
       "Who is someone you have actually learned a lot from in real life?"
-    ]
+    ],
+    whyTheyAsk: "Curveball questions reveal personality and values that rehearsed answers cannot. Interviewers report that they care less about who you choose and more about why, which reveals what you genuinely value, what makes you curious, and how you think when there is no right answer. Your reasoning process is the real answer.",
+    coachingTip: "Avoid choosing three famous people without explaining why. Pick at least one person who reveals something unexpected about you: a lesser-known thinker, a family member, or someone from a completely different field. Explain what specific question you would ask each person. Connect at least one choice to a professional value or lesson that matters to you.",
+    recommendedStructure: null
   },
 
   {
@@ -1578,7 +1734,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "How does that shape how you approach your work?",
       "What else do you do outside of work that keeps you energized?"
-    ]
+    ],
+    whyTheyAsk: "Interviewers use this to see the whole person beyond the professional facade. They are assessing personality fit, uniqueness, and whether you can connect diverse experiences to professional contexts. Research on hiring shows that memorable candidates who share something authentically personal are more likely to be recalled favorably during post-interview discussions.",
+    coachingTip: "Choose something with a genuine story behind it, not just a fact. 'I speak three languages' is less interesting than explaining how growing up translating for your parents taught you to read rooms and adapt communication for different audiences. Connect the personal fact to a professional quality to make it memorable and relevant.",
+    recommendedStructure: "add"
   },
 
   {
@@ -1606,7 +1765,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "How did you first get into that?",
       "What is the biggest misconception people have about it?"
-    ]
+    ],
+    whyTheyAsk: "This is a disguised communication assessment. Interviewers evaluate whether you can make a complex topic accessible and engaging for a novice audience. It also reveals your ability to read your listener and adjust. The passion itself matters less than the communication skill: can you teach, simplify, and hold attention?",
+    coachingTip: "Start with why it matters before explaining what it is. Lead with the hook: what problem does it solve, what question does it answer, or why should anyone care? Use one clear analogy to make the concept tangible. Let your genuine enthusiasm show rather than performing excitement. The interviewer is evaluating your teaching ability, not the topic itself.",
+    recommendedStructure: "what-so-now"
   },
 
   {
@@ -1634,7 +1796,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "What does that tell you about what you really value?",
       "Would you still be in this field if money were no object?"
-    ]
+    ],
+    whyTheyAsk: "This reveals intrinsic motivation by removing the financial incentive. Interviewers are assessing whether your drive comes from within or is purely transactional. Candidates who would stop working entirely raise retention concerns. Those who would continue contributing, even in a different form, signal genuine engagement with their professional identity.",
+    coachingTip: "Be honest about practical things (pay off debt, help family) but spend most of your answer on what you would choose to do with your time. If you would continue working in some form, explain what specifically draws you to the work beyond compensation. This is your chance to articulate intrinsic motivation in the most authentic way possible.",
+    recommendedStructure: null
   },
 
   {
@@ -1662,7 +1827,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "How do you distinguish between being open-minded and being indecisive?",
       "What belief do you hold most strongly?"
-    ]
+    ],
+    whyTheyAsk: "This tests intellectual humility and the ability to update beliefs based on new evidence. Interviewers value candidates who hold strong opinions loosely because it predicts better decision-making and teamwork. Candidates who cannot name something they changed their mind about may be seen as rigid or unreflective.",
+    coachingTip: "Choose something substantive, not trivial. Changing your mind about a restaurant is not interesting; changing your mind about a management philosophy or a professional approach is. Explain what your old belief was and why it was reasonable at the time, then describe the specific trigger that caused you to reconsider. This shows intellectual honesty rather than weakness.",
+    recommendedStructure: "comparison"
   },
 
   {
@@ -1690,7 +1858,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "What would the first lesson cover?",
       "Who is the best teacher you have ever had and what made them great?"
-    ]
+    ],
+    whyTheyAsk: "This reveals what you consider yourself an expert in and what you find worth sharing. Interviewers evaluate the depth of your expertise, your ability to structure knowledge for others, and whether your topic choice reveals something relevant about your professional identity. It also tests communication skill: can you describe a curriculum compellingly in 60 seconds?",
+    coachingTip: "Choose something you actually know deeply from experience, not something you find interesting in theory. Describe what students would be able to do after your class, not just what they would know. If possible, connect the teaching topic to a professional strength. The best answers show genuine expertise earned through experience rather than academic interest.",
+    recommendedStructure: "psb"
   },
 
   {
@@ -1718,7 +1889,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "Has that belief ever gotten you in trouble?",
       "What would it take to change your mind on that?"
-    ]
+    ],
+    whyTheyAsk: "This reveals professional values and conviction. Interviewers want to see that you have strong, experience-backed opinions while also being able to acknowledge counterarguments. Candidates who choose safe platitudes (teamwork is important) reveal nothing. Those who name a genuine conviction and defend it with evidence show intellectual depth and professional identity.",
+    coachingTip: "Choose something you genuinely believe that not everyone agrees with. 'Honest feedback should never wait for a scheduled review' is a hill; 'working hard is important' is a platitude. Back it with specific experience that shaped the belief. Acknowledge the strongest counterargument to show intellectual honesty. Then describe how this conviction shows up in your daily behavior.",
+    recommendedStructure: "prep"
   },
 
   {
@@ -1746,7 +1920,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "What animal would your coworkers say you are?",
       "What traits of that animal do you not share?"
-    ]
+    ],
+    whyTheyAsk: "This is a thinking-on-your-feet test disguised as a fun question. Interviewers are evaluating your composure when caught off guard, your ability to think creatively under pressure, and whether you can draw meaningful connections between unrelated concepts. The specific animal matters far less than the quality of your reasoning.",
+    coachingTip: "Do not overthink the animal choice. Pick one quickly and invest your energy in the reasoning. Connect two or three animal traits to genuine professional behaviors with a brief example. Keep the tone light; this is one of the few interview questions where a bit of humor helps. If you add a lighthearted comment about the animal, it shows you are comfortable being yourself.",
+    recommendedStructure: "add"
   },
 
   // =====================================================================
@@ -1779,7 +1956,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "What kind of work environment brings out the worst in you?",
       "How do you create the conditions you need when they are not built into the culture?"
-    ]
+    ],
+    whyTheyAsk: "This is a mutual fit assessment. Interviewers are checking whether you will thrive in their actual environment or clash with it. The specificity of your answer matters: candidates who say 'collaborative' without detail reveal nothing, while those who describe specific conditions (autonomy with clear goals, direct feedback, bias toward action) allow the interviewer to match against their team culture.",
+    coachingTip: "Be specific about conditions, not just adjectives. Instead of 'collaborative,' say 'I do my best work when the team shares information openly and we can debate ideas without it being personal.' Research the company's culture before the interview and connect your preferences to signals you have seen. Show flexibility by acknowledging you can succeed in other environments but are most effective in your ideal one.",
+    recommendedStructure: "prep"
   },
 
   {
@@ -1808,7 +1988,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "What demotivates you?",
       "How do you stay motivated during routine or unglamorous work?"
-    ]
+    ],
+    whyTheyAsk: "Intrinsic motivation predicts engagement and retention far better than compensation. Interviewers want to identify what genuinely drives you so they can assess whether this role will keep you energized long-term. Generic answers like 'I love learning' do not help; specific motivators tied to real experiences (solving complex problems that affect real users) allow the interviewer to evaluate fit.",
+    coachingTip: "Ground your answer in evidence: when were you most energized at work and what was happening? The pattern in those moments reveals your true motivators. Name one or two specific intrinsic drivers and connect them to this particular role. Interviewers can detect rehearsed motivation answers, so genuineness matters more than polish here.",
+    recommendedStructure: "prep"
   },
 
   {
@@ -1836,7 +2019,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "How has your definition changed over the years?",
       "Where do you see yourself in five years?"
-    ]
+    ],
+    whyTheyAsk: "This reveals what you optimize for, which predicts whether you will be satisfied in the role long-term. Interviewers who hear 'rapid promotion' for a role with limited vertical growth know there is a mismatch. Those who hear 'mastery and impact' for a deep individual contributor role see alignment. The evolution of your definition also signals maturity and self-awareness.",
+    coachingTip: "Show evolution in your definition to demonstrate growth. Starting with 'early in my career I chased titles, but now I measure success by impact and mastery' is more compelling than a static definition. Be specific about what success looks like right now and connect it directly to this role. Avoid purely altruistic answers that seem performative; honesty about wanting both impact and recognition is refreshing.",
+    recommendedStructure: "past-present-future"
   },
 
   {
@@ -1864,7 +2050,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "What values are non-negotiable for you in a workplace?",
       "How do you evaluate a company's culture before joining?"
-    ]
+    ],
+    whyTheyAsk: "This two-part question is designed to reveal both alignment and honesty. The value you believed in shows what you care about. The value you struggled with shows whether you can be honest about cultural friction and navigate it maturely. Candidates who claim to have loved everything about their last company seem either dishonest or unreflective.",
+    coachingTip: "Name real values from a real company, not generic concepts. For the value you struggled with, choose something genuinely difficult, not a value that secretly makes you look good. Show how you navigated the tension rather than simply complaining about it or pretending it did not exist. The maturity is in the navigation, not in the complaint.",
+    recommendedStructure: "comparison"
   },
 
   {
@@ -1892,7 +2081,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "Where do you draw the line?",
       "Have you ever left a job because of a values conflict?"
-    ]
+    ],
+    whyTheyAsk: "This evaluates moral courage and organizational maturity simultaneously. Interviewers want to see that you distinguish between personal preferences (which require flexibility) and ethical principles (which require courage). Candidates who never push back seem compliant; candidates who quit over every disagreement seem rigid. The sweet spot is principled flexibility with clear ethical boundaries.",
+    coachingTip: "Show a clear framework with two categories: differences of opinion (voice concern, then commit) and ethical violations (escalate through proper channels). Give an example from each category if possible. The key insight is that you can be a committed team member while maintaining personal integrity. End with a clear statement about where you draw the line and why.",
+    recommendedStructure: "comparison"
   },
 
   {
@@ -1919,7 +2111,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "What would they actually say versus what you want them to say?",
       "Which of those qualities is the hardest for you to maintain?"
-    ]
+    ],
+    whyTheyAsk: "This reveals your professional identity and self-awareness simultaneously. Interviewers evaluate whether your desired reputation aligns with the team's needs and culture. They also watch for the gap between aspiration and reality: candidates who acknowledge this gap demonstrate genuine self-awareness, while those who present a flawless image seem unreflective or overconfident.",
+    coachingTip: "Choose three qualities that include both task performance and relationship dimensions. Support each with a brief piece of evidence. Then add the honest acknowledgment that you are not perfect at all three all the time. This small vulnerability makes the entire answer more credible. If you know the team culture, align at least one quality with what they value most.",
+    recommendedStructure: "prep"
   },
 
   {
@@ -1947,7 +2142,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "How do you manage yourself when your manager does not have that quality?",
       "What do you do to make your manager's job easier?"
-    ]
+    ],
+    whyTheyAsk: "Interviewers use this to assess manager-candidate fit. If you value autonomy and the hiring manager is a micromanager, both parties benefit from knowing that upfront. It also reveals self-awareness: do you know what kind of management brings out your best work? The comparison between a good and less good manager experience shows depth of reflection.",
+    coachingTip: "Pick one quality and go deep rather than listing many. Use the comparison structure: describe a manager who had this quality and the impact on your performance, then contrast with one who lacked it. This makes your preference vivid and evidence-based rather than theoretical. Signal flexibility at the end so you do not seem rigid or high-maintenance.",
+    recommendedStructure: "comparison"
   },
 
   // =====================================================================
@@ -1979,7 +2177,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "Now try the same structure with: 'We lost our biggest client last month.'",
       "How would your response change if you were already on the team?"
-    ]
+    ],
+    whyTheyAsk: "This drill trains you to process unexpected information with structure rather than freezing or rambling. Stanford professor Matt Abrahams identifies What-So What-Now What as one of the most versatile spontaneous speaking frameworks because it works for any new information: good news, bad news, surprises, or curveballs.",
+    coachingTip: "This structure works for any unexpected information in an interview. What: restate what you heard to show you processed it. So What: interpret its meaning or significance. Now What: propose a forward-looking action or ask a thoughtful question. Practice until it becomes automatic; the structure itself prevents you from freezing when caught off guard.",
+    recommendedStructure: "what-so-now"
   },
 
   {
@@ -2007,7 +2208,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "What resistance did you face implementing that change?",
       "Now pitch it in 30 seconds instead of 60."
-    ]
+    ],
+    whyTheyAsk: "Problem-Solution-Benefit is one of Matt Abrahams' core communication structures. It keeps people engaged because humans are naturally wired to solve problems. This drill trains you to present achievements as solutions to problems rather than isolated accomplishments, which makes them more memorable and persuasive to interviewers.",
+    coachingTip: "Lead with the problem to create engagement before presenting your solution. Quantify both the problem (how much time or money it cost) and the benefit (what improved and by how much). The PSB structure makes achievements feel like stories rather than resume bullet points. Practice compressing this to 30 seconds for when you need a quick example.",
+    recommendedStructure: "psb"
   },
 
   {
@@ -2035,7 +2239,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "Now give me a different differentiator using the same structure.",
       "What if the interviewer pushes back: 'Everyone says that'?"
-    ]
+    ],
+    whyTheyAsk: "PREP (Point-Reason-Example-Point) is a structure used in impromptu speaking training that ensures your answer has a clear thesis, supporting logic, concrete evidence, and a memorable conclusion. Repeating the point at the end anchors your differentiator in the interviewer's memory, making it more likely to be recalled during the hiring decision.",
+    coachingTip: "The power of PREP is in the repetition: stating your point at the beginning and end creates a bookend effect that makes your differentiator stick. Choose one specific quality rather than listing many. Make sure the example is concrete and relevant to this particular role. If your differentiator is generic (hard work, attention to detail), dig deeper for something that is genuinely unique to your background.",
+    recommendedStructure: "prep"
   },
 
   {
@@ -2063,7 +2270,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "Now try ADD with: 'How do you know when you are wrong?'",
       "What happens when asking questions is not an option?"
-    ]
+    ],
+    whyTheyAsk: "ADD (Answer-Detail-Describe) is a framework Matt Abrahams recommends for handling unexpected questions. It prevents the most common failure mode in interviews: rambling without a clear point. By giving a direct answer first, then supporting it with detail, and connecting it to the role, you demonstrate both composure and relevance under pressure.",
+    coachingTip: "The Answer step is the most important: lead with a one-sentence direct answer before providing any context. This prevents the common mistake of building to your point through a long story. The Detail step is where your example goes. The Describe step is what makes it relevant to the interviewer. Practice using ADD on random questions to build the reflex.",
+    recommendedStructure: "add"
   },
 
   {
@@ -2092,7 +2302,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "Now do it again with a two-second pause before you start speaking.",
       "What phrases help you buy time naturally without sounding unprepared?"
-    ]
+    ],
+    whyTheyAsk: "This is not a question interviewers ask but a scenario every candidate faces. Matt Abrahams' research on anxiety management shows that a structured pause activates the parasympathetic nervous system, reducing the fight-or-flight response that causes blanking. Having a practiced recovery technique turns a potentially disqualifying moment into evidence of composure under pressure.",
+    coachingTip: "Practice the pause until it feels comfortable. Two seconds of silence feels eternal to you but barely registers with the interviewer. Use a bridge phrase like 'Let me think about that for a moment' or 'That is a great question; let me organize my thoughts.' Then pick any framework (STAR, PSB, What-So What-Now What) as scaffolding. Having a structure to grab prevents the spiral of blanking harder.",
+    recommendedStructure: null
   },
 
   {
@@ -2122,7 +2335,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "That was over 60 seconds. Trim 15 seconds. What can you cut?",
       "Now tell the same story but emphasize your individual contribution more."
-    ]
+    ],
+    whyTheyAsk: "Amazon's behavioral interview guidance recommends keeping STAR stories to two to three minutes. This drill trains the opposite extreme: extreme conciseness. The ability to tell a complete, compelling story in 60 seconds is a superpower in interviews, because interviewers often run over time and appreciate candidates who can make their point efficiently.",
+    coachingTip: "Time yourself out loud. Most candidates think their answer is 60 seconds when it is actually closer to three minutes. The Situation should be two sentences maximum; one is better. The Task is one sentence. The Action gets the most space: two to three sentences. The Result is one sentence with a metric. If you cannot hit 60 seconds, cut context from the Situation first since interviewers need less background than you think.",
+    recommendedStructure: "star"
   },
 
   {
@@ -2151,7 +2367,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "What if they press: 'But this is a core requirement'?",
       "How do you balance honesty about gaps with confidence in your ability to learn?"
-    ]
+    ],
+    whyTheyAsk: "Skill gap questions test honesty and learning agility simultaneously. Interviewers report that candidates who admit gaps honestly and bridge to transferable skills score higher than those who claim to know everything. The bridge to a related strength is critical because it shows you understand the underlying competency even if you lack the specific tool or experience.",
+    coachingTip: "Never fake expertise you do not have; interviewers will probe and you will lose credibility. Instead, use the acknowledge-bridge-evidence-forward structure. Acknowledge the gap in one sentence. Bridge to a related strength with a specific example. Then show evidence of your ability to learn new skills quickly with a track record example. Forward-looking confidence is the strongest close: 'Based on my track record, I am confident I could close this gap in X timeframe.'",
+    recommendedStructure: "add"
   },
 
   {
@@ -2179,7 +2398,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "What if you misunderstood what they said?",
       "How do you avoid making the conversation about yourself when connecting your experience?"
-    ]
+    ],
+    whyTheyAsk: "This drill trains the most underrated interview skill: making the conversation about the interviewer's needs, not your resume. Paraphrasing demonstrates active listening, which builds rapport and trust. Connecting your experience to their challenge shows relevance. The follow-up question shows curiosity and engagement. Together, these create the impression that you are already thinking like a teammate.",
+    coachingTip: "The paraphrase is the most important step because it builds trust and ensures you understood correctly. Use phrases like 'So if I am hearing you correctly' or 'It sounds like the core challenge is.' Keep the connection to your experience brief; this is about their challenge, not your resume. The follow-up question should demonstrate genuine curiosity about their situation, not just showcase more of your experience.",
+    recommendedStructure: "what-so-now"
   },
 
   // =====================================================================
@@ -2213,7 +2435,10 @@ export const DEFAULT_QUESTIONS = [
       "What is the budget for this role?",
       "Are you flexible on that range?",
       "What does the full compensation package look like?"
-    ]
+    ],
+    whyTheyAsk: "Hiring managers assess three things: whether your expectations align with their budget, whether you understand your market value, and how you handle a potentially uncomfortable negotiation. Research from Salary.com shows that 84% of employers expect candidates to negotiate, so confidently stating a researched range actually signals professionalism rather than arrogance.",
+    coachingTip: "Always ground your range in market research rather than personal need. Saying 'based on my research of comparable roles' is more persuasive than 'I need X to cover my expenses.' Set your range so the bottom of your range is your actual target. Express flexibility about the full compensation package (benefits, equity, flexibility, growth opportunities) to show you are evaluating the whole offer, not just the number.",
+    recommendedStructure: "prep"
   },
 
   {
@@ -2241,7 +2466,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "What timeline are you working with?",
       "What would make you choose us over the other options?"
-    ]
+    ],
+    whyTheyAsk: "This question serves two purposes: creating urgency (if you have other offers, they may need to move faster) and gauging your genuine interest (are you actively choosing them or settling for whoever offers first?). Interviewers also evaluate your honesty and negotiation sophistication. Fabricating offers you do not have is risky because interviewers may ask for specifics.",
+    coachingTip: "If you have other offers, mention them honestly but without ultimatums. Frame it as validation of your value, then redirect to why this role is your top choice. If you do not have other offers, never lie. Instead, emphasize your selective approach: 'I am being deliberate about my search because I want the right long-term fit.' Always end by explaining specifically why this role is compelling to you.",
+    recommendedStructure: null
   },
 
   {
@@ -2269,7 +2497,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "What do you think you would struggle with most in this role?",
       "Where would you add the most value in the first six months?"
-    ]
+    ],
+    whyTheyAsk: "This is your closing argument. Interviewers use it to see whether you can synthesize everything discussed in the interview into a compelling case for yourself. They evaluate whether you listened well enough during the conversation to match your strengths to their actual needs, not just deliver a generic pitch. The best answers reference something specific learned during the interview itself.",
+    coachingTip: "Use what you learned during the interview to customize your answer. If the interviewer mentioned a specific team challenge, connect your top strength directly to it. Use the PREP structure: Point (your differentiator), Reason (why it matters to them), Example (proof from your experience), Point (restate). End with genuine enthusiasm about a specific aspect of this role, not generic excitement about the company.",
+    recommendedStructure: "prep"
   },
 
   {
@@ -2296,7 +2527,10 @@ export const DEFAULT_QUESTIONS = [
       "Never say 'No, I think you covered everything.' Always ask at least two questions."
     ],
     narrative: "Yes, I have a few questions. First, what does success look like for this role in the first 90 days? Second, what is the biggest challenge the team is facing right now? And third, I would love to hear what you personally enjoy most about working here. I find that the way people talk about their own experience says a lot about the culture.",
-    followUps: []
+    followUps: [],
+    whyTheyAsk: "Research from Harvard Business Review confirms that the questions you ask reveal more about your judgment, curiosity, and strategic thinking than your answers do. Saying 'No questions' is one of the most common interview disqualifiers because it signals either lack of preparation or lack of genuine interest. Thoughtful questions also demonstrate that you are evaluating the company, not just seeking any offer.",
+    coachingTip: "Prepare five questions and plan to ask two or three, since some may be answered during the conversation. Include one about success metrics (shows you are results-oriented), one about team challenges (shows you are thinking like a problem-solver), and one personal question for the interviewer (builds rapport). Avoid questions about benefits, vacation, or perks in the first interview; those signal that you are focused on what you get rather than what you contribute.",
+    recommendedStructure: null
   },
 
   {
@@ -2324,7 +2558,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "What is your most important non-negotiable?",
       "Is there anything about this role that concerns you?"
-    ]
+    ],
+    whyTheyAsk: "This is a candor test and a retention predictor. Interviewers want to know your deal-breakers before extending an offer so they can address concerns proactively. They also assess whether you are the kind of person who will commit fully when you do accept. Candidates who cannot name any deal-breakers seem desperate; those with thoughtful non-negotiables seem self-aware and likely to stay.",
+    coachingTip: "Frame your deal-breakers as values rather than demands. Instead of 'I would turn down the offer if the salary was too low,' say 'I would turn down the offer if I felt the role did not genuinely allow me to grow and make impact.' Then pivot to expressing alignment with what you have learned about this role. End by connecting your clarity about non-negotiables to commitment: 'When I say yes, it means something because I have thought carefully about it.'",
+    recommendedStructure: "prep"
   },
 
   {
@@ -2352,7 +2589,10 @@ export const DEFAULT_QUESTIONS = [
     followUps: [
       "Would you be able to start sooner if needed?",
       "Is there anything you need to wrap up at your current role?"
-    ]
+    ],
+    whyTheyAsk: "This question is often a buying signal indicating genuine interest in hiring you. Interviewers evaluate professionalism (honoring your notice period), enthusiasm (genuine excitement to start), and flexibility (willingness to accommodate their timeline). Candidates who can start immediately but show no concern about leaving their current employer responsibly may raise loyalty concerns.",
+    coachingTip: "State your realistic notice period first to show professionalism, then express genuine excitement. Offering to begin onboarding before your start date signals initiative without compromising your current employer. If you are available immediately, briefly explain why (contract ended, company downsized) so it does not seem like you quit without notice.",
+    recommendedStructure: null
   },
 
   {
@@ -2377,7 +2617,10 @@ export const DEFAULT_QUESTIONS = [
       "Keep it to 30 seconds: end strong, not with a ramble"
     ],
     narrative: "I just want to reiterate how excited I am about this opportunity. The combination of [SPECIFIC ASPECT OF ROLE] and [SOMETHING ABOUT THE TEAM OR COMPANY] is exactly what I have been looking for. I am confident that my experience in [YOUR STRENGTH] would translate directly into impact here. Thank you for your time today. I really enjoyed our conversation.",
-    followUps: []
+    followUps: [],
+    whyTheyAsk: "This is your closing statement and many candidates waste it by saying 'No, I think we covered everything.' Interviewers use this as a final impression test. The last thing you say is disproportionately memorable (recency bias), so using this moment to reinforce your strongest selling point and express specific enthusiasm creates a lasting positive impression.",
+    coachingTip: "Never say 'No, I think we covered everything.' Always use this as your closing argument. Reinforce one key point (your strongest differentiator), express specific enthusiasm (not 'I am excited about the role' but 'The opportunity to lead the data migration project is exactly the challenge I have been looking for'), and thank them genuinely. Keep it to 30 seconds. End on energy, not on a fade-out.",
+    recommendedStructure: null
   },
 
 ];
@@ -2395,62 +2638,20 @@ const LEGACY_GROUP_MAP = {
  */
 export const mapLegacyGroup = (groupId) => LEGACY_GROUP_MAP[groupId] || groupId;
 
-// Utility function to add default questions to a new user's question bank
-export const initializeDefaultQuestions = async (userId, supabase) => {
-  try {
-    const questionsToInsert = DEFAULT_QUESTIONS.map(q => ({
-      user_id: userId,
-      question: q.question,
-      category: q.category,
-      priority: q.priority,
-      keywords: q.keywords,
-      bullets: q.bullets,
-      narrative: q.narrative,
-      follow_ups: q.followUps,
-      is_default: true,
-      created_at: new Date().toISOString()
-    }));
+export function getDefaultActiveGroups() {
+  return new Set(QUESTION_GROUPS.filter(g => g.defaultOn !== false).map(g => g.id));
+}
 
-    const { data, error } = await supabase
-      .from('questions')
-      .insert(questionsToInsert);
-
-    if (error) {
-      console.error('Error inserting default questions:', error);
-      return { success: false, error };
-    }
-
-    console.log(`Initialized ${DEFAULT_QUESTIONS.length} default questions for user ${userId}`);
-    return { success: true, data };
-  } catch (err) {
-    console.error('Exception initializing default questions:', err);
-    return { success: false, error: err };
-  }
-};
-
-/**
- * Returns the default active group IDs based on the QUESTION_GROUPS defaultOn flag.
- */
-export const getDefaultActiveGroups = () => {
-  return new Set(QUESTION_GROUPS.filter(g => g.defaultOn).map(g => g.id));
-};
-
-/**
- * Filters DEFAULT_QUESTIONS by a Set of active group IDs.
- */
-export const filterQuestionsByGroups = (questions, activeGroups) => {
+export function filterQuestionsByGroups(questions, activeGroups) {
   if (!activeGroups || activeGroups.size === 0) return questions;
   return questions.filter(q => activeGroups.has(q.question_group || q.group));
-};
+}
 
-/**
- * Returns a count of questions per group.
- */
-export const getQuestionCountsByGroup = (questions) => {
+export function getQuestionCountsByGroup(questions) {
   const counts = {};
-  for (const q of questions) {
+  (questions || []).forEach(q => {
     const groupKey = q.question_group || q.group;
-    counts[groupKey] = (counts[groupKey] || 0) + 1;
-  }
+    if (groupKey) counts[groupKey] = (counts[groupKey] || 0) + 1;
+  });
   return counts;
-};
+}

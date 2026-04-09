@@ -273,7 +273,7 @@ When giving feedback, cite their specific projects and skills as evidence they c
     // ── GENERAL FEATURE ENFORCEMENT (tier-aware) ──────────────────
     // Replaces legacy 25-session-per-month flat check with proper tier limits.
     // Nursing features have their own enforcement block further below.
-    if (!isBetaTester && !isAnonymous && mode !== 'nursing-coach') {
+    if (!isBetaTester && !isAnonymous && mode !== 'nursing-coach' && mode !== 'interview-coach') {
       // Resolve effective tier from profile (pass expiry, legacy pro, trial)
       const { data: profile } = await supabaseClient
         .from('user_profiles')
@@ -595,6 +595,203 @@ ${transcript}
       // Nursing Confidence Builder — uses systemPrompt + userMessage from client
       maxTokens = 1500;
       promptContent = `${systemPrompt}\n\nUSER REQUEST: ${userMessage}`;
+
+    } else if (mode === 'interview-coach') {
+      // ============================================================
+      // Interview Coach — general-purpose coaching chat
+      // Multi-turn conversation using I.N.T.E.R.V.I.E.W. protocol
+      // Model: Haiku 4.5 (fast, cheap, good for conversational coaching)
+      // ============================================================
+      maxTokens = 1500;
+
+      // ── Usage enforcement for interview-coach ──
+      if (!isBetaTester && !isAnonymous) {
+        const { data: profile } = await supabaseClient
+          .from('user_profiles')
+          .select('tier, subscription_status, nursing_pass_expires, general_pass_expires')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        const now = new Date();
+        const generalActive = profile?.general_pass_expires &&
+          new Date(profile.general_pass_expires) > now;
+        const isLegacyPro = profile?.tier === 'pro' && profile?.subscription_status === 'active';
+        const hasUnlimitedGeneral = isLegacyPro || generalActive;
+
+        if (!hasUnlimitedGeneral) {
+          const currentPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+          const { data: usageRow } = await supabaseClient
+            .from('usage_tracking')
+            .select('interview_coach')
+            .eq('user_id', user.id)
+            .eq('period', currentPeriod)
+            .maybeSingle();
+
+          const currentUsage = usageRow?.['interview_coach'] || 0;
+          const INTERVIEW_COACH_FREE_LIMIT = 5;
+
+          if (currentUsage >= INTERVIEW_COACH_FREE_LIMIT) {
+            return new Response(
+              JSON.stringify({ error: 'Monthly coaching limit reached. Get a 30-day pass for unlimited access!' }),
+              { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+        }
+      }
+
+      // Build user context block from practice data
+      let userContextBlock = '';
+      if (userContext) {
+        const parts: string[] = [];
+        if (userContext.practiceStats) {
+          parts.push(`PRACTICE STATS:\n${JSON.stringify(userContext.practiceStats, null, 2)}`);
+        }
+        if (userContext.weakAreas && userContext.weakAreas.length > 0) {
+          parts.push(`WEAK AREAS: ${userContext.weakAreas.join(', ')}`);
+        }
+        if (userContext.strongAreas && userContext.strongAreas.length > 0) {
+          parts.push(`STRONG AREAS: ${userContext.strongAreas.join(', ')}`);
+        }
+        if (userContext.streakDays !== undefined) {
+          parts.push(`CURRENT STREAK: ${userContext.streakDays} day(s)`);
+        }
+        if (userContext.questionsCompleted !== undefined) {
+          parts.push(`QUESTIONS COMPLETED: ${userContext.questionsCompleted}`);
+        }
+        if (userContext.totalQuestions !== undefined) {
+          parts.push(`TOTAL QUESTIONS AVAILABLE: ${userContext.totalQuestions}`);
+        }
+        if (userContext.targetRole) {
+          parts.push(`TARGET ROLE: ${userContext.targetRole}`);
+        }
+        if (userContext.targetCompany) {
+          parts.push(`TARGET COMPANY: ${userContext.targetCompany}`);
+        }
+        if (userContext.questionGroups && userContext.questionGroups.length > 0) {
+          parts.push(`ACTIVE QUESTION GROUPS: ${userContext.questionGroups.join(', ')}`);
+        }
+        if (userContext.daysUntilInterview !== undefined) {
+          parts.push(`DAYS UNTIL INTERVIEW: ${userContext.daysUntilInterview}`);
+        }
+        if (parts.length > 0) {
+          userContextBlock = `\n\n=== USER CONTEXT ===\n${parts.join('\n')}\n=== END USER CONTEXT ===\n\nUse this context to personalize your coaching. Reference actual data — NEVER fabricate practice stats.`;
+        }
+      }
+
+      // I.N.T.E.R.V.I.E.W. Protocol system prompt
+      const interviewCoachSystemPrompt = `You are an Interview Coach for InterviewAnswers.ai. You help users prepare for job interviews by coaching their communication skills, answer structure, and confidence.
+
+## I.N.T.E.R.V.I.E.W. Protocol
+
+**I — Insight from history:** When the user's practice data is provided, reference their actual scores, patterns, and progress. Never fabricate practice data.
+
+**N — Never fabricate answers:** Do not generate model interview answers from your training data. Instead, guide users to build their OWN answers using frameworks like STAR, PREP, Problem-Solution-Benefit. Reference the app's Question Bank and Learn Center as resources.
+
+**T — Tailor to context:** Adapt your coaching based on:
+- The user's practice history (scores, weak areas, streaks)
+- Their question group focus
+- Whether they're a beginner or experienced interviewer
+- How much time they have before their interview
+
+**E — Encourage practice:** Suggest specific actions: "Try practicing 3 behavioral questions today" or "Your STAR stories are strong — work on closing questions next." Be encouraging without being fake.
+
+**R — Redirect out-of-scope:** You coach COMMUNICATION skills for interviews. You do not:
+- Provide industry-specific technical advice
+- Evaluate clinical accuracy (nursing track)
+- Write resumes or cover letters
+- Negotiate salary on behalf of the user
+If asked, warmly redirect: "I specialize in interview communication coaching. For [topic], I'd recommend [alternative resource]."
+
+**V — Validate effort:** Acknowledge progress and effort. Streaks, score improvements, and consistency deserve recognition. Never be patronizing — treat users as capable adults preparing for important conversations.
+
+**I — Integrate sources:** When relevant, cite:
+- Learn Center lessons by name (e.g., "Lesson 3 covers the STAR Deep Dive")
+- Question categories (e.g., "The Curveball group has questions that test composure")
+- Communication frameworks (STAR, SBAR, PREP, Problem-Solution-Benefit)
+Format citations as [Source: Learn Center] or [Source: Question Bank]
+
+**E — Evidence-based coaching:** Ground all advice in established interview coaching principles:
+- STAR method (Situation, Task, Action, Result)
+- Behavioral interviewing science (past behavior predicts future behavior)
+- Communication structures (PREP, PSB, What-So What-Now What)
+- Anxiety management (breathing, reframing, preparation)
+
+**W — Walled garden:** Stay within interview preparation. Do not become a general chatbot. If a message is completely off-topic, gently redirect: "I'm your interview coach — let's focus on getting you ready for your interview!"
+
+## Anti-Hallucination Rules
+1. ONLY reference practice data that is provided in the USER CONTEXT block above. Never invent scores, streaks, or stats.
+2. When suggesting resources, only cite Learn Center lessons and Question Bank categories that exist in the app.
+3. If you don't have context about the user's history, say so: "I don't have your practice data loaded yet — try a few practice sessions and I'll be able to give more personalized coaching."
+4. Never generate model interview answers. Guide the user to build their own.
+
+## Response Style
+- Concise: 2-4 paragraphs max unless the user asks for detail
+- Actionable: Every response should include something the user can DO
+- Warm but professional: Like a supportive coach, not a robotic system
+- Use bullet points for lists, bold for emphasis
+- Never start with "Great question!" or similar filler — get to the substance${userContextBlock}`;
+
+      // Build multi-turn messages array
+      const messages: Array<{role: string, content: string}> = [];
+      if (conversationHistory && Array.isArray(conversationHistory) && conversationHistory.length > 0) {
+        for (const msg of conversationHistory) {
+          messages.push({
+            role: msg.role === 'assistant' ? 'assistant' : 'user',
+            content: msg.content || '',
+          });
+        }
+      }
+      // Append the current user message
+      messages.push({ role: 'user', content: userMessage || '' });
+
+      const coachModel = haiku45;
+
+      // Call Anthropic with system prompt as system parameter (multi-turn)
+      const coachResponse = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': Deno.env.get('ANTHROPIC_API_KEY') ?? '',
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: coachModel,
+          max_tokens: maxTokens,
+          temperature: 0.7,
+          system: interviewCoachSystemPrompt,
+          messages,
+        })
+      });
+
+      const coachData = await coachResponse.json();
+
+      // Log metrics
+      logMetrics({
+        functionName: 'ai-feedback',
+        mode: 'interview-coach',
+        userId: user.id,
+        model: coachModel,
+        latencyMs: Date.now() - requestStart,
+        inputTokens: coachData?.usage?.input_tokens,
+        outputTokens: coachData?.usage?.output_tokens,
+      });
+
+      if (!coachResponse.ok || coachData?.error) {
+        logError({
+          functionName: 'ai-feedback',
+          errorType: 'anthropic_api_error',
+          errorMessage: coachData?.error?.message || `Anthropic returned ${coachResponse.status}`,
+          userId: user.id,
+          mode: 'interview-coach',
+          httpStatus: coachResponse.status,
+          latencyMs: Date.now() - requestStart,
+        });
+      }
+
+      return new Response(
+        JSON.stringify(coachData),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
 
     } else if (mode === 'nursing-coach') {
       // Nursing Track — AI Coach, Mock Interview, Practice, SBAR Drill, Offer Coach
