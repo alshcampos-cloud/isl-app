@@ -4521,23 +4521,6 @@ const startPracticeMode = async () => {
             </div>
           </div>
 
-          {/* AI Interview Coach — Quick Access */}
-          <div className="mb-4">
-            <button
-              onClick={() => setCurrentView('interview-coach')}
-              className="w-full bg-gradient-to-r from-violet-50 to-purple-50 hover:from-violet-100 hover:to-purple-100 border border-violet-200/60 rounded-2xl p-4 sm:p-5 flex items-center gap-4 transition-all duration-200 hover:shadow-lg hover:shadow-violet-500/10 active:scale-[0.99] group"
-            >
-              <div className="w-12 h-12 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform shadow-md">
-                <MessageCircle className="w-6 h-6 text-white" />
-              </div>
-              <div className="flex-1 text-left">
-                <h3 className="text-base font-bold text-slate-800">Interview Coach</h3>
-                <p className="text-xs sm:text-sm text-slate-500 font-medium">Ask questions, get personalized coaching, review your progress</p>
-              </div>
-              <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-violet-500 transition-colors" />
-            </button>
-          </div>
-
           {/* Learn & Listen — Featured Section */}
           <div className="mb-6">
             <h2 className="text-lg sm:text-xl font-bold text-slate-800 mb-1 tracking-tight">Learn & Listen</h2>
@@ -8847,6 +8830,18 @@ const startPracticeMode = async () => {
           PASSWORD RESET MODAL
           ========================================== */}
       {/* REMOVED: PASSWORD RESET MODAL - Now handled in ProtectedRoute.jsx */}
+
+      {/* Floating AI Interview Coach Button — always visible */}
+      {currentView !== 'interview-coach' && currentUser && (
+        <button
+          onClick={() => setCurrentView('interview-coach')}
+          onTouchEnd={(e) => { e.preventDefault(); setCurrentView('interview-coach'); }}
+          className="fixed bottom-6 right-6 z-40 w-14 h-14 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full shadow-lg shadow-violet-500/30 flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-200"
+          aria-label="Open Interview Coach"
+        >
+          <MessageCircle className="w-6 h-6 text-white" />
+        </button>
+      )}
     </>
   ); {/* Close fragment that contains dialogs + views */}
 }; // Close ISL component
