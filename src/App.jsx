@@ -4614,14 +4614,7 @@ const startPracticeMode = async () => {
             </div>
           </div>
 
-          {/* Quick Add Question FAB — floating action button */}
-          <QuickAddQuestion
-            onQuestionsAdded={loadQuestions}
-            onOpenGenerator={() => {
-              setCurrentView('command-center');
-              setCommandCenterTab('bank');
-            }}
-          />
+          {/* Quick Add Question FAB removed — use Question Catalog in Command Center instead */}
 
         </div>
       </div>
