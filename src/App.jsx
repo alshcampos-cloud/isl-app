@@ -5,7 +5,7 @@ import {
   Brain, Database, Play, Plus, Edit2, Trash2, TrendingUp, Download, Upload,
   Mic, MicOff, Volume2, Eye, EyeOff, Settings, Sparkles, ChevronRight, ChevronDown, X,
   Zap, CheckCircle, Target, Bot, BookOpen, SkipForward, Pause, Award, Filter,
-  Crown, Lightbulb, Square, Calendar, AlertCircle, Mail, MessageSquare
+  Crown, Lightbulb, Square, Calendar, AlertCircle, Mail, MessageSquare, MessageCircle
 } from 'lucide-react';
 
 import SupabaseTest from './SupabaseTest';
@@ -19,6 +19,7 @@ import TemplateLibrary from './TemplateLibrary';
 import Tutorial from './Components/Tutorial';
 import { DEFAULT_QUESTIONS, QUESTION_GROUPS, getDefaultActiveGroups, filterQuestionsByGroups, getQuestionCountsByGroup } from './default_questions';
 import QuestionGroupFilter from './Components/QuestionGroupFilter';
+import AIInterviewCoach from './Components/AIInterviewCoach';
 import { loadPersistedGroups } from './Components/QuestionGroupFilter';
 import { canUseFeature, incrementUsage, getUsageStats, TIER_LIMITS, isBetaUser, resolveEffectiveTier } from './utils/creditSystem';
 import { fetchWithRetry } from './utils/fetchWithRetry';
@@ -4520,6 +4521,23 @@ const startPracticeMode = async () => {
             </div>
           </div>
 
+          {/* AI Interview Coach — Quick Access */}
+          <div className="mb-4">
+            <button
+              onClick={() => setCurrentView('interview-coach')}
+              className="w-full bg-gradient-to-r from-violet-50 to-purple-50 hover:from-violet-100 hover:to-purple-100 border border-violet-200/60 rounded-2xl p-4 sm:p-5 flex items-center gap-4 transition-all duration-200 hover:shadow-lg hover:shadow-violet-500/10 active:scale-[0.99] group"
+            >
+              <div className="w-12 h-12 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform shadow-md">
+                <MessageCircle className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1 text-left">
+                <h3 className="text-base font-bold text-slate-800">Interview Coach</h3>
+                <p className="text-xs sm:text-sm text-slate-500 font-medium">Ask questions, get personalized coaching, review your progress</p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-violet-500 transition-colors" />
+            </button>
+          </div>
+
           {/* Learn & Listen — Featured Section */}
           <div className="mb-6">
             <h2 className="text-lg sm:text-xl font-bold text-slate-800 mb-1 tracking-tight">Learn & Listen</h2>
@@ -6714,6 +6732,10 @@ const startPracticeMode = async () => {
   }
 
   // Phase 5: Learn Section
+  if (currentView === 'interview-coach') {
+    return <AIInterviewCoach user={currentUser} userData={{ user: currentUser, tier: userTier }} questions={questions} onClose={() => setCurrentView('home')} />;
+  }
+
   if (currentView === 'learn') {
     return <LearnSection onBack={() => setCurrentView('home')} userTier={userTier} onUpgrade={() => setShowPricingPage(true)} supabase={supabase} userId={currentUser?.id} />;
   }
