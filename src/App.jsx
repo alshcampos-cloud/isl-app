@@ -8836,7 +8836,7 @@ const startPracticeMode = async () => {
         <button
           onClick={() => setCurrentView('interview-coach')}
           onTouchEnd={(e) => { e.preventDefault(); setCurrentView('interview-coach'); }}
-          className="fixed bottom-6 right-6 z-40 w-14 h-14 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full shadow-lg shadow-violet-500/30 flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-200"
+          className="fixed bottom-6 right-6 z-40 w-14 h-14 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-full shadow-lg shadow-teal-500/30 flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-200"
           aria-label="Open Interview Coach"
         >
           <MessageCircle className="w-6 h-6 text-white" />
