@@ -8831,8 +8831,8 @@ const startPracticeMode = async () => {
           ========================================== */}
       {/* REMOVED: PASSWORD RESET MODAL - Now handled in ProtectedRoute.jsx */}
 
-      {/* Floating AI Interview Coach Button — always visible */}
-      {currentView !== 'interview-coach' && currentUser && (
+      {/* Floating AI Interview Coach Button — hidden during active sessions and on coach view */}
+      {currentView !== 'interview-coach' && currentView !== 'ai-interviewer' && !interviewSessionActive && currentUser && (
         <button
           onClick={() => setCurrentView('interview-coach')}
           onTouchEnd={(e) => { e.preventDefault(); setCurrentView('interview-coach'); }}
