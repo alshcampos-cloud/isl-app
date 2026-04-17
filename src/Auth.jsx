@@ -2,11 +2,15 @@ import { useState, useCallback } from 'react'
 import { supabase } from './lib/supabase'
 import { Mail, Lock, User, AlertCircle, CheckCircle } from 'lucide-react'
 import { trackSignUp } from './utils/googleAdsTracking'
+import { getDeviceFingerprint, hashEmail } from './utils/deviceFingerprint'
 import GoogleSignInButton from './Components/GoogleSignInButton'
 import { startGoogleOAuth } from './utils/googleOAuth'
 import { isNativeApp } from './utils/platform'
+import { showNursingFeatures } from './utils/appTarget'
 
-function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing = false }) {
+function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing: fromNursingProp = false }) {
+  // Belt-and-suspenders: ignore fromNursing on general builds (Apple 4.3(a) compliance)
+  const fromNursing = showNursingFeatures() && fromNursingProp
   const [loading, setLoading] = useState(false)
   const [isSignUp, setIsSignUp] = useState(defaultMode === 'signup')
   const [email, setEmail] = useState('')
@@ -64,6 +68,37 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
         if (error) throw error
 
         trackSignUp() // Google Ads conversion
+
+        // Abuse tracking — non-blocking, must never break signup flow
+        try {
+          const fingerprint = await getDeviceFingerprint();
+          const emailH = await hashEmail(email);
+          const domain = email.split('@')[1]?.toLowerCase() || '';
+
+          // Check for abuse
+          const { data: abuseCheck } = await supabase.rpc('check_signup_abuse', {
+            p_fingerprint: fingerprint, p_email_hash: emailH
+          });
+
+          // Record signal
+          if (data?.user?.id) {
+            await supabase.rpc('record_signup_signal', {
+              p_fingerprint: fingerprint, p_email_hash: emailH,
+              p_email_domain: domain, p_user_id: data.user.id
+            });
+          }
+
+          // Flag abuse if detected
+          if (abuseCheck?.reduced_tier && data?.user?.id) {
+            await supabase.from('user_profiles')
+              .update({ abuse_reduced_tier: true })
+              .eq('user_id', data.user.id);
+          }
+        } catch (err) {
+          console.warn('[Abuse] Signal recording failed:', err.message);
+          // Non-blocking — don't break signup flow
+        }
+
         setMessage('Check your email for the verification link!')
       } else {
         // Login

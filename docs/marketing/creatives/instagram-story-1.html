@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1080">
+<title>Instagram Story — Interview Anxiety</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    width: 1080px; height: 1920px; overflow: hidden;
+    background: linear-gradient(180deg, #0f0f23 0%, #1a1a2e 50%, #0f172a 100%);
+    color: #fff;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: space-between;
+    padding: 80px 60px;
+    position: relative;
+  }
+  body::before {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 50% 30%, rgba(13,148,136,0.1) 0%, transparent 50%),
+      radial-gradient(circle at 50% 70%, rgba(13,148,136,0.06) 0%, transparent 40%);
+    pointer-events: none;
+  }
+  .top {
+    text-align: center; z-index: 1; padding-top: 40px;
+  }
+  .pov {
+    font-size: 18px; font-weight: 600; color: rgba(255,255,255,0.5);
+    text-transform: uppercase; letter-spacing: 3px; margin-bottom: 30px;
+  }
+  .headline {
+    font-size: 48px; font-weight: 900; line-height: 1.15;
+    letter-spacing: -1px;
+    max-width: 800px; margin: 0 auto;
+  }
+  .headline .accent { color: #0D9488; }
+  .middle {
+    z-index: 1; display: flex; flex-direction: column; align-items: center;
+    gap: 40px;
+  }
+  .email-mockup {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px; padding: 36px 44px;
+    width: 700px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+  .email-from {
+    font-size: 14px; color: rgba(255,255,255,0.4); margin-bottom: 8px;
+  }
+  .email-subject {
+    font-size: 26px; font-weight: 800; margin-bottom: 16px;
+    color: #fff;
+  }
+  .email-body {
+    font-size: 17px; color: rgba(255,255,255,0.55); line-height: 1.6;
+  }
+  .email-body strong { color: rgba(255,255,255,0.8); }
+  .emoji-section {
+    display: flex; align-items: center; gap: 30px;
+    font-size: 120px;
+  }
+  .anxiety-text {
+    font-size: 28px; color: rgba(255,255,255,0.4); font-weight: 600;
+    font-style: italic;
+  }
+  .bottom {
+    text-align: center; z-index: 1; padding-bottom: 40px;
+  }
+  .hook {
+    font-size: 40px; font-weight: 800; line-height: 1.2;
+    margin-bottom: 40px; letter-spacing: -0.5px;
+  }
+  .hook .teal { color: #0D9488; }
+  .swipe-cta {
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+  }
+  .swipe-arrow {
+    width: 50px; height: 50px; border-radius: 50%;
+    background: linear-gradient(135deg, #0D9488, #0f766e);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    box-shadow: 0 4px 20px rgba(13,148,136,0.5);
+    animation: bob 2s ease-in-out infinite;
+  }
+  @keyframes bob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+  .swipe-url {
+    font-size: 20px; font-weight: 700; color: #0D9488;
+    letter-spacing: -0.3px;
+  }
+  .swipe-sub {
+    font-size: 15px; color: rgba(255,255,255,0.4);
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="pov">POV</div>
+    <h1 class="headline">You just got <span class="accent">the interview email</span></h1>
+  </div>
+
+  <div class="middle">
+    <div class="email-mockup">
+      <div class="email-from">From: recruiting@dreamcompany.com</div>
+      <div class="email-subject">Interview Confirmation - Next Tuesday</div>
+      <div class="email-body">
+        Hi there,<br><br>
+        We'd love to invite you for an interview on <strong>Tuesday at 2:00 PM</strong>.
+        Please be prepared to discuss your experience and answer behavioral questions...
+      </div>
+    </div>
+    <div class="emoji-section">
+      <span>&#x1F630;</span>
+      <span style="font-size:60px;color:rgba(255,255,255,0.2)">&#x2192;</span>
+      <span>&#x1F4AD;</span>
+    </div>
+    <div class="anxiety-text">"What if I freeze up?"</div>
+  </div>
+
+  <div class="bottom">
+    <div class="hook">What if you could<br><span class="teal">practice with AI</span> first?</div>
+    <div class="swipe-cta">
+      <div class="swipe-arrow">&uarr;</div>
+      <div class="swipe-url">interviewanswers.ai</div>
+      <div class="swipe-sub">Free AI mock interviews</div>
+    </div>
+  </div>
+</body>
+</html>

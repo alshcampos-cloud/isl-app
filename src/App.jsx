@@ -37,7 +37,6 @@ import { loadPersistedGroups } from './Components/QuestionGroupFilter';
 import { canUseFeature, incrementUsage, getUsageStats, TIER_LIMITS, isBetaUser, resolveEffectiveTier } from './utils/creditSystem';
 import { fetchWithRetry } from './utils/fetchWithRetry';
 import UsageLimitModal from './Components/UsageLimitModal';
-import PricingPage from './Components/PricingPage';
 import GeneralPricing from './Components/GeneralPricing';
 import ResetPassword from './Components/ResetPassword';
 import ConsentDialog from './Components/ConsentDialog';
@@ -593,10 +592,14 @@ const ISL = () => {
     document.head.appendChild(styleSheet);
   }, []);
 
+  // PR 3 — dual-schema score accessor. New shape: feedback.score. Legacy: feedback.overall.
+  // Keep as a stable reference inside the component so both render blocks can use it.
+  const getFeedbackScore = (fb) => (fb?.score ?? fb?.overall ?? 0);
+
   // Animate score when feedback appears + Progressive Reveal
   useEffect(() => {
-    if (feedback?.overall || feedback?.match_percentage) {
-      const targetScore = feedback.overall || feedback.match_percentage / 10 || 0;
+    if (feedback?.score || feedback?.overall || feedback?.match_percentage) {
+      const targetScore = getFeedbackScore(feedback) || (feedback.match_percentage / 10) || 0;
 
       setAnimatedScore(0);
       setRevealStage(0);
@@ -692,8 +695,9 @@ const ISL = () => {
         const questionsWithStats = data.map(q => {
           const questionSessions = sessions?.filter(s => s.question_id === q.id) || [];
           const practiceCount = questionSessions.length;
+          // PR 3 — support both v1 (overall) and v2 (score) shapes
           const scores = questionSessions
-            .map(s => s.ai_feedback?.overall)
+            .map(s => s.ai_feedback?.score ?? s.ai_feedback?.overall)
             .filter(score => score != null);
           const averageScore = scores.length > 0 
             ? scores.reduce((sum, score) => sum + score, 0) / scores.length 
@@ -1264,7 +1268,7 @@ loadPracticeHistory();
           window.history.replaceState({}, document.title, window.location.pathname);
 
           // Google Ads purchase conversion tracking (dynamic by pass type)
-          const passAmounts = { general_30day: 14.99, nursing_30day: 19.99, annual_all_access: 149.99 };
+          const passAmounts = { general_30day: 14.99, nursing_30day: 19.99, annual_all_access: 99.99 };
           trackPurchase(passAmounts[passType] || 14.99, sessionId || 'pass_purchase');
 
           // Show success message
@@ -1551,6 +1555,10 @@ recognition.onerror = (event) => {
           return count + (userAnswer.match(regex) || []).length;
         }, 0);
 
+        // PR 3 — mark row with schema version. v2 when the new 5-field shape is
+        // present (feedback.fix). Legacy 8-field rows persist as v1.
+        const _feedbackVersion = (aiFeedback && aiFeedback.fix) ? 2 : 1;
+
         return supabase
           .from('practice_sessions')
           .insert({
@@ -1563,6 +1571,7 @@ recognition.onerror = (event) => {
             word_count: wordCount,
             filler_word_count: fillerCount,
             ai_feedback: aiFeedback,
+            feedback_version: _feedbackVersion,
           })
           .select()
           .single();
@@ -3326,7 +3335,7 @@ const startPracticeMode = async () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   
-  const startFlashcardMode = () => { if (questions.length === 0) { alert('Add questions first!'); return; } let available = questions.filter(q => !q.question_group || activeGroups.has(q.question_group)); if (available.length === 0) available = questions; if (filterCategory !== 'All') available = available.filter(q => q.category === filterCategory); if (available.length === 0) { alert('No matching questions!'); return; } const sorted = [...available].sort((a, b) => { if (a.practiceCount === 0) return -1; if (b.practiceCount === 0) return 1; return a.averageScore - b.averageScore; }); setCurrentQuestion(sorted[0]); setCurrentMode('flashcard'); setCurrentView('flashcard'); setFlashcardSide('question'); setShowBullets(false); setShowNarrative(false); };
+  const startFlashcardMode = () => { if (questions.length === 0) { alert('Add questions first!'); return; } let available = questions.filter(q => !q.question_group || activeGroups.has(q.question_group)); if (available.length === 0) available = questions; if (filterCategory !== 'All') available = available.filter(q => q.category === filterCategory); if (available.length === 0) { alert('No matching questions!'); return; } const sorted = [...available].sort((a, b) => { if (a.practiceCount === 0) return -1; if (b.practiceCount === 0) return 1; return a.averageScore - b.averageScore; }); setCurrentQuestion(sorted[0]); setCurrentMode('flashcard'); setCurrentView('flashcard'); setFlashcardSide('question'); };
 
   // ============================================================================
   // CALLBACK FIX: Stable handlers to prevent stale closure issues
@@ -3404,6 +3413,13 @@ const startPracticeMode = async () => {
 
         if (!response.ok) {
           console.error('Error from Supabase function:', data.error);
+          // Apr 11 2026: Handle typed errors from the Anthropic retry wrapper.
+          // Server returns { error: 'rate_limited'|'upstream_unavailable'|..., message: friendly, retryable: bool }
+          // with HTTP 429 or 503 after the wrapper has already retried upstream 3 times.
+          // We surface the friendly message directly — no client-side retry (already handled).
+          if (data?.retryable && data?.message) {
+            throw new Error(data.message);
+          }
           throw new Error(data.error?.message || data.error || 'Failed to get feedback');
         }
 
@@ -3417,12 +3433,12 @@ const startPracticeMode = async () => {
         if (data.content && data.content[0]) {
           let feedbackText = data.content[0].text;
           console.log('Raw AI text:', feedbackText);
-          
+
           const jsonMatch = feedbackText.match(/\{[\s\S]*\}/);
           if (jsonMatch) {
             feedbackText = jsonMatch[0];
           }
-          
+
           feedbackJson = JSON.parse(feedbackText);
         } else {
           feedbackJson = data;
@@ -3588,6 +3604,11 @@ const startPracticeMode = async () => {
 
         if (!response.ok) {
           console.error('Error from Supabase function:', data.error);
+          // Apr 11 2026: Handle typed errors from the Anthropic retry wrapper.
+          // Same pattern as handlePracticeSubmit above. See that function for rationale.
+          if (data?.retryable && data?.message) {
+            throw new Error(data.message);
+          }
           throw new Error(
             data.error?.message || data.error || 'Failed to get feedback'
           );
@@ -5506,7 +5527,28 @@ const startPracticeMode = async () => {
             </div>
           )}
 
- {feedback && (
+ {feedback && (() => {
+  // Read-time chip — sums words across all renderable feedback fields, divides by 200wpm
+  const _wordCount = (v) => {
+    if (!v) return 0;
+    if (Array.isArray(v)) return v.reduce((n, x) => n + _wordCount(x), 0);
+    if (typeof v === 'object') return Object.values(v).reduce((n, x) => n + _wordCount(x), 0);
+    return String(v).trim().split(/\s+/).filter(Boolean).length;
+  };
+  // PR 3 — count words across BOTH v1 (legacy) and v2 (new 5-field) fields
+  const _totalWords =
+    _wordCount(feedback.strengths) +
+    _wordCount(feedback.gaps) +
+    _wordCount(feedback.specific_improvements) +
+    _wordCount(feedback.ideal_answer) +
+    _wordCount(feedback.framework_analysis) +
+    _wordCount(feedback.points_covered) +
+    _wordCount(feedback.points_missed) +
+    _wordCount(feedback.verdict) +
+    _wordCount(feedback.fix) +
+    _wordCount(feedback.strength);
+  const _readMinutes = Math.max(1, Math.ceil(_totalWords / 200));
+  return (
   <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-8">
     {/* AI DISCLAIMER */}
     <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded p-3 mb-4">
@@ -5514,7 +5556,14 @@ const startPracticeMode = async () => {
         <span className="font-semibold"><Bot className="w-4 h-4 inline" /> AI-Generated:</span> For practice only. Not professional advice.
       </p>
     </div>
-    
+
+    {/* Read-time chip */}
+    <div className="mb-3">
+      <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-700 text-xs font-semibold px-3 py-1 rounded-full">
+        📖 ~{_readMinutes} min read
+      </span>
+    </div>
+
     <div className="flex items-center justify-between mb-6">
       <h3 className="text-3xl font-bold">Your Performance</h3>
       
@@ -5546,8 +5595,8 @@ const startPracticeMode = async () => {
         ></div>
       </div>
       {/* Phase 4M: Confidence Calibration gap */}
-      {confidenceRating > 0 && feedback?.overall && (() => {
-        const actual = feedback.overall;
+      {confidenceRating > 0 && getFeedbackScore(feedback) > 0 && (() => {
+        const actual = getFeedbackScore(feedback);
         const predicted = confidenceRating * 2;
         const gap = Math.abs(actual - predicted);
         const msg = gap <= 1 ? 'Great self-awareness! Your confidence matched your score.'
@@ -5557,10 +5606,65 @@ const startPracticeMode = async () => {
       })()}
     </div>
 
-    {/* ==================== IDEAL ANSWER - Stage 1 ==================== */}
-    {feedback.ideal_answer && isSectionVisible(1) && (
+    {/* ==================== PR 3 — NEW 5-FIELD COACHING CARD (v2 schema) ==================== */}
+    {feedback.fix && (
+      <div className="mb-6 feedback-section visible fade-in-up">
+        {/* Verdict */}
+        {feedback.verdict && (
+          <div className="bg-gradient-to-r from-teal-50 to-sky-50 border-2 border-teal-300 rounded-xl p-5 mb-4">
+            <p className="text-sm font-bold text-teal-700 mb-1 uppercase tracking-wide">Verdict</p>
+            <p className="text-gray-900 text-lg leading-relaxed">{feedback.verdict}</p>
+          </div>
+        )}
+
+        {/* The Fix — quote / issue / rewrite */}
+        <div className="bg-amber-50 border-2 border-amber-300 rounded-xl p-5 mb-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Target className="w-6 h-6 text-amber-600" />
+            <h4 className="font-bold text-amber-900 text-xl">The One Thing to Fix</h4>
+          </div>
+          {feedback.fix.quote && feedback.fix.quote !== 'NO_QUOTE_AVAILABLE' && (
+            <div className="bg-white rounded-lg p-3 mb-3 border-l-4 border-amber-500">
+              <p className="text-xs font-bold text-amber-700 mb-1 uppercase">You said</p>
+              <p className="text-gray-800 italic">"{feedback.fix.quote}"</p>
+            </div>
+          )}
+          {feedback.fix.issue && (
+            <div className="mb-3">
+              <p className="text-xs font-bold text-amber-700 mb-1 uppercase">Why it's weak</p>
+              <p className="text-gray-800 leading-relaxed">{feedback.fix.issue}</p>
+            </div>
+          )}
+          {feedback.fix.rewrite && (
+            <div className="bg-teal-50 rounded-lg p-3 border-l-4 border-teal-500">
+              <p className="text-xs font-bold text-teal-700 mb-1 uppercase">Try saying</p>
+              <p className="text-teal-900 leading-relaxed font-medium">{feedback.fix.rewrite}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Strength — last, anti-sandwich */}
+        {feedback.strength && (
+          <div className="bg-green-50 border-l-4 border-green-500 rounded-xl p-5 mb-4">
+            <div className="flex items-start gap-3">
+              <span className="text-3xl">✓</span>
+              <div>
+                <p className="text-xs font-bold text-green-700 mb-1 uppercase tracking-wide">What worked</p>
+                <p className="text-green-900 leading-relaxed">{feedback.strength}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delivery insights still useful on v2 rows */}
+        <DeliveryInsights answer={spokenAnswer || userAnswer} />
+      </div>
+    )}
+
+    {/* ==================== IDEAL ANSWER - Stage 1 (legacy v1 only) ==================== */}
+    {!feedback.fix && feedback.ideal_answer && isSectionVisible(1) && (
       <div className={`mb-6 feedback-section ${isSectionVisible(1) ? 'visible' : ''}`}>
-        <button 
+        <button
           onClick={() => setShowIdealAnswer(!showIdealAnswer)}
           className="w-full bg-gradient-to-r from-teal-50 to-sky-50 hover:from-teal-100 hover:to-sky-100 border-2 border-teal-300 rounded-xl p-5 flex items-center justify-between transition-all"
         >
@@ -5569,13 +5673,13 @@ const startPracticeMode = async () => {
               <Lightbulb className="w-6 h-6 text-white" />
             </div>
             <div className="text-left">
-              <span className="font-bold text-teal-900 text-lg block">Example of Strong Answer</span>
+              <span className="font-bold text-teal-900 text-lg block">Your Answer, Coached</span>
               <span className="text-sm text-teal-700">Click to compare with your response</span>
             </div>
           </div>
           <span className="text-teal-600 text-2xl font-bold">{showIdealAnswer ? '▼' : '▶'}</span>
         </button>
-        
+
         {showIdealAnswer && (
           <div className="mt-4 grid md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-xl border-2 border-teal-200 fade-in-up">
             <div className="bg-white rounded-lg p-5 border-2 border-gray-300">
@@ -5587,7 +5691,7 @@ const startPracticeMode = async () => {
               </div>
               <p className="text-gray-800 leading-relaxed text-sm">{spokenAnswer || userAnswer}</p>
             </div>
-            
+
             <div className="bg-teal-50 rounded-lg p-5 border-2 border-teal-400">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center">
@@ -5602,11 +5706,11 @@ const startPracticeMode = async () => {
       </div>
     )}
 
-    {/* ==================== DELIVERY INSIGHTS - Phase 4B ==================== */}
-    <DeliveryInsights answer={spokenAnswer || userAnswer} />
+    {/* ==================== DELIVERY INSIGHTS - Phase 4B (v1 only; v2 renders it inside the coaching card) ==================== */}
+    {!feedback.fix && <DeliveryInsights answer={spokenAnswer || userAnswer} />}
 
-    {/* ==================== STRENGTHS - Stage 2 ==================== */}
-    {feedback.strengths && feedback.strengths.length > 0 && isSectionVisible(2) && (
+    {/* ==================== STRENGTHS - Stage 2 (legacy v1 only) ==================== */}
+    {!feedback.fix && feedback.strengths && feedback.strengths.length > 0 && isSectionVisible(2) && (
       <div className={`mb-6 feedback-section ${isSectionVisible(2) ? 'visible' : ''}`}>
         <button
           onClick={() => setShowStrengths(!showStrengths)}
@@ -5636,8 +5740,8 @@ const startPracticeMode = async () => {
       </div>
     )}
 
-    {/* ==================== GAPS - Stage 3 ==================== */}
-    {feedback.gaps && feedback.gaps.length > 0 && isSectionVisible(3) && (
+    {/* ==================== GAPS - Stage 3 (legacy v1 only) ==================== */}
+    {!feedback.fix && feedback.gaps && feedback.gaps.length > 0 && isSectionVisible(3) && (
       <div className={`mb-6 feedback-section ${isSectionVisible(3) ? 'visible' : ''}`}>
         <button
           onClick={() => setShowGaps(!showGaps)}
@@ -5667,8 +5771,8 @@ const startPracticeMode = async () => {
       </div>
     )}
 
-    {/* ==================== ACTION STEPS - Stage 4 ==================== */}
-    {feedback.specific_improvements && feedback.specific_improvements.length > 0 && isSectionVisible(4) && (
+    {/* ==================== ACTION STEPS - Stage 4 (legacy v1 only) ==================== */}
+    {!feedback.fix && feedback.specific_improvements && feedback.specific_improvements.length > 0 && isSectionVisible(4) && (
       <div className={`mb-6 feedback-section ${isSectionVisible(4) ? 'visible' : ''}`}>
         <div className="bg-teal-50 border-2 border-teal-300 rounded-xl p-4 mb-3">
           <h4 className="font-bold text-teal-900 text-xl flex items-center gap-2">
@@ -5693,8 +5797,17 @@ const startPracticeMode = async () => {
       </div>
     )}
 
-    {/* ==================== STAR FRAMEWORK - Stage 5 ==================== */}
-    {feedback.framework_analysis && isSectionVisible(5) && (
+    {/* ==================== STAR FRAMEWORK - Stage 5 (legacy v1 only) ==================== */}
+    {!feedback.fix && feedback.framework_analysis && isSectionVisible(5) && (() => {
+      const _starMissingRe = /missing|not provided|n\/?a|absent|—/i;
+      const _fa = feedback.framework_analysis;
+      const _allStarMissing =
+        (!_fa.situation || _starMissingRe.test(_fa.situation)) &&
+        (!_fa.task || _starMissingRe.test(_fa.task)) &&
+        (!_fa.action || _starMissingRe.test(_fa.action)) &&
+        (!_fa.result || _starMissingRe.test(_fa.result));
+      if (_allStarMissing) return null;
+      return (
       <div className={`mb-6 feedback-section ${isSectionVisible(5) ? 'visible' : ''}`}>
         <div className="bg-gradient-to-r from-teal-50 to-sky-50 border-2 border-teal-300 rounded-xl p-4 mb-4">
           <h4 className="font-bold text-teal-900 text-xl flex items-center gap-2">
@@ -5810,10 +5923,11 @@ const startPracticeMode = async () => {
           </div>
         </div>
       </div>
-    )}
+      );
+    })()}
 
-    {/* ==================== KEY POINTS COVERAGE - Stage 6 ==================== */}
-    {(feedback.points_covered || feedback.points_missed) && isSectionVisible(6) && (
+    {/* ==================== KEY POINTS COVERAGE - Stage 6 (legacy v1 only) ==================== */}
+    {!feedback.fix && (feedback.points_covered || feedback.points_missed) && isSectionVisible(6) && (
       <div className={`bg-gray-50 rounded-xl p-6 mb-6 border-2 border-gray-300 feedback-section ${isSectionVisible(6) ? 'visible' : ''}`}>
         <h4 className="font-bold text-gray-900 text-xl mb-4 flex items-center gap-2">
           <BarChart2 className="w-5 h-5 text-teal-600" />
@@ -5887,7 +6001,8 @@ const startPracticeMode = async () => {
       </div>
     )}
   </div>
-)}
+  );
+})()}
         </div>
         
         {/* Answer Assistant Modal */}
@@ -6153,7 +6268,28 @@ const startPracticeMode = async () => {
               </>
             )}
 
- {feedback && (
+ {feedback && (() => {
+  // Read-time chip — sums words across all renderable feedback fields, divides by 200wpm
+  const _wordCount = (v) => {
+    if (!v) return 0;
+    if (Array.isArray(v)) return v.reduce((n, x) => n + _wordCount(x), 0);
+    if (typeof v === 'object') return Object.values(v).reduce((n, x) => n + _wordCount(x), 0);
+    return String(v).trim().split(/\s+/).filter(Boolean).length;
+  };
+  // PR 3 — count words across BOTH v1 (legacy) and v2 (new 5-field) fields
+  const _totalWords =
+    _wordCount(feedback.strengths) +
+    _wordCount(feedback.gaps) +
+    _wordCount(feedback.specific_improvements) +
+    _wordCount(feedback.ideal_answer) +
+    _wordCount(feedback.framework_analysis) +
+    _wordCount(feedback.points_covered) +
+    _wordCount(feedback.points_missed) +
+    _wordCount(feedback.verdict) +
+    _wordCount(feedback.fix) +
+    _wordCount(feedback.strength);
+  const _readMinutes = Math.max(1, Math.ceil(_totalWords / 200));
+  return (
   <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-8">
     {/* AI DISCLAIMER */}
     <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded p-3 mb-4">
@@ -6161,7 +6297,14 @@ const startPracticeMode = async () => {
         <span className="font-semibold"><Bot className="w-4 h-4 inline" /> AI-Generated:</span> For practice only. Not professional advice.
       </p>
     </div>
-    
+
+    {/* Read-time chip */}
+    <div className="mb-3">
+      <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-700 text-xs font-semibold px-3 py-1 rounded-full">
+        📖 ~{_readMinutes} min read
+      </span>
+    </div>
+
     <div className="flex items-center justify-between mb-6">
       <h3 className="text-3xl font-bold">Your Performance</h3>
       
@@ -6193,8 +6336,8 @@ const startPracticeMode = async () => {
         ></div>
       </div>
       {/* Phase 4M: Confidence Calibration gap */}
-      {confidenceRating > 0 && feedback?.overall && (() => {
-        const actual = feedback.overall;
+      {confidenceRating > 0 && getFeedbackScore(feedback) > 0 && (() => {
+        const actual = getFeedbackScore(feedback);
         const predicted = confidenceRating * 2;
         const gap = Math.abs(actual - predicted);
         const msg = gap <= 1 ? 'Great self-awareness! Your confidence matched your score.'
@@ -6204,10 +6347,65 @@ const startPracticeMode = async () => {
       })()}
     </div>
 
-    {/* ==================== IDEAL ANSWER - Stage 1 ==================== */}
-    {feedback.ideal_answer && isSectionVisible(1) && (
+    {/* ==================== PR 3 — NEW 5-FIELD COACHING CARD (v2 schema) ==================== */}
+    {feedback.fix && (
+      <div className="mb-6 feedback-section visible fade-in-up">
+        {/* Verdict */}
+        {feedback.verdict && (
+          <div className="bg-gradient-to-r from-teal-50 to-sky-50 border-2 border-teal-300 rounded-xl p-5 mb-4">
+            <p className="text-sm font-bold text-teal-700 mb-1 uppercase tracking-wide">Verdict</p>
+            <p className="text-gray-900 text-lg leading-relaxed">{feedback.verdict}</p>
+          </div>
+        )}
+
+        {/* The Fix — quote / issue / rewrite */}
+        <div className="bg-amber-50 border-2 border-amber-300 rounded-xl p-5 mb-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Target className="w-6 h-6 text-amber-600" />
+            <h4 className="font-bold text-amber-900 text-xl">The One Thing to Fix</h4>
+          </div>
+          {feedback.fix.quote && feedback.fix.quote !== 'NO_QUOTE_AVAILABLE' && (
+            <div className="bg-white rounded-lg p-3 mb-3 border-l-4 border-amber-500">
+              <p className="text-xs font-bold text-amber-700 mb-1 uppercase">You said</p>
+              <p className="text-gray-800 italic">"{feedback.fix.quote}"</p>
+            </div>
+          )}
+          {feedback.fix.issue && (
+            <div className="mb-3">
+              <p className="text-xs font-bold text-amber-700 mb-1 uppercase">Why it's weak</p>
+              <p className="text-gray-800 leading-relaxed">{feedback.fix.issue}</p>
+            </div>
+          )}
+          {feedback.fix.rewrite && (
+            <div className="bg-teal-50 rounded-lg p-3 border-l-4 border-teal-500">
+              <p className="text-xs font-bold text-teal-700 mb-1 uppercase">Try saying</p>
+              <p className="text-teal-900 leading-relaxed font-medium">{feedback.fix.rewrite}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Strength — last, anti-sandwich */}
+        {feedback.strength && (
+          <div className="bg-green-50 border-l-4 border-green-500 rounded-xl p-5 mb-4">
+            <div className="flex items-start gap-3">
+              <span className="text-3xl">✓</span>
+              <div>
+                <p className="text-xs font-bold text-green-700 mb-1 uppercase tracking-wide">What worked</p>
+                <p className="text-green-900 leading-relaxed">{feedback.strength}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delivery insights still useful on v2 rows */}
+        <DeliveryInsights answer={spokenAnswer || userAnswer} />
+      </div>
+    )}
+
+    {/* ==================== IDEAL ANSWER - Stage 1 (legacy v1 only) ==================== */}
+    {!feedback.fix && feedback.ideal_answer && isSectionVisible(1) && (
       <div className={`mb-6 feedback-section ${isSectionVisible(1) ? 'visible' : ''}`}>
-        <button 
+        <button
           onClick={() => setShowIdealAnswer(!showIdealAnswer)}
           className="w-full bg-gradient-to-r from-teal-50 to-sky-50 hover:from-teal-100 hover:to-sky-100 border-2 border-teal-300 rounded-xl p-5 flex items-center justify-between transition-all"
         >
@@ -6216,13 +6414,13 @@ const startPracticeMode = async () => {
               <Lightbulb className="w-6 h-6 text-white" />
             </div>
             <div className="text-left">
-              <span className="font-bold text-teal-900 text-lg block">Example of Strong Answer</span>
+              <span className="font-bold text-teal-900 text-lg block">Your Answer, Coached</span>
               <span className="text-sm text-teal-700">Click to compare with your response</span>
             </div>
           </div>
           <span className="text-teal-600 text-2xl font-bold">{showIdealAnswer ? '▼' : '▶'}</span>
         </button>
-        
+
         {showIdealAnswer && (
           <div className="mt-4 grid md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-xl border-2 border-teal-200 fade-in-up">
             <div className="bg-white rounded-lg p-5 border-2 border-gray-300">
@@ -6234,7 +6432,7 @@ const startPracticeMode = async () => {
               </div>
               <p className="text-gray-800 leading-relaxed text-sm">{spokenAnswer || userAnswer}</p>
             </div>
-            
+
             <div className="bg-teal-50 rounded-lg p-5 border-2 border-teal-400">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center">
@@ -6249,11 +6447,11 @@ const startPracticeMode = async () => {
       </div>
     )}
 
-    {/* ==================== DELIVERY INSIGHTS - Phase 4B ==================== */}
-    <DeliveryInsights answer={spokenAnswer || userAnswer} />
+    {/* ==================== DELIVERY INSIGHTS - Phase 4B (v1 only; v2 renders it inside the coaching card) ==================== */}
+    {!feedback.fix && <DeliveryInsights answer={spokenAnswer || userAnswer} />}
 
-    {/* ==================== STRENGTHS - Stage 2 ==================== */}
-    {feedback.strengths && feedback.strengths.length > 0 && isSectionVisible(2) && (
+    {/* ==================== STRENGTHS - Stage 2 (legacy v1 only) ==================== */}
+    {!feedback.fix && feedback.strengths && feedback.strengths.length > 0 && isSectionVisible(2) && (
       <div className={`mb-6 feedback-section ${isSectionVisible(2) ? 'visible' : ''}`}>
         <button
           onClick={() => setShowStrengths(!showStrengths)}
@@ -6283,8 +6481,8 @@ const startPracticeMode = async () => {
       </div>
     )}
 
-    {/* ==================== GAPS - Stage 3 ==================== */}
-    {feedback.gaps && feedback.gaps.length > 0 && isSectionVisible(3) && (
+    {/* ==================== GAPS - Stage 3 (legacy v1 only) ==================== */}
+    {!feedback.fix && feedback.gaps && feedback.gaps.length > 0 && isSectionVisible(3) && (
       <div className={`mb-6 feedback-section ${isSectionVisible(3) ? 'visible' : ''}`}>
         <button
           onClick={() => setShowGaps(!showGaps)}
@@ -6314,8 +6512,8 @@ const startPracticeMode = async () => {
       </div>
     )}
 
-    {/* ==================== ACTION STEPS - Stage 4 ==================== */}
-    {feedback.specific_improvements && feedback.specific_improvements.length > 0 && isSectionVisible(4) && (
+    {/* ==================== ACTION STEPS - Stage 4 (legacy v1 only) ==================== */}
+    {!feedback.fix && feedback.specific_improvements && feedback.specific_improvements.length > 0 && isSectionVisible(4) && (
       <div className={`mb-6 feedback-section ${isSectionVisible(4) ? 'visible' : ''}`}>
         <div className="bg-teal-50 border-2 border-teal-300 rounded-xl p-4 mb-3">
           <h4 className="font-bold text-teal-900 text-xl flex items-center gap-2">
@@ -6340,8 +6538,17 @@ const startPracticeMode = async () => {
       </div>
     )}
 
-    {/* ==================== STAR FRAMEWORK - Stage 5 ==================== */}
-    {feedback.framework_analysis && isSectionVisible(5) && (
+    {/* ==================== STAR FRAMEWORK - Stage 5 (legacy v1 only) ==================== */}
+    {!feedback.fix && feedback.framework_analysis && isSectionVisible(5) && (() => {
+      const _starMissingRe = /missing|not provided|n\/?a|absent|—/i;
+      const _fa = feedback.framework_analysis;
+      const _allStarMissing =
+        (!_fa.situation || _starMissingRe.test(_fa.situation)) &&
+        (!_fa.task || _starMissingRe.test(_fa.task)) &&
+        (!_fa.action || _starMissingRe.test(_fa.action)) &&
+        (!_fa.result || _starMissingRe.test(_fa.result));
+      if (_allStarMissing) return null;
+      return (
       <div className={`mb-6 feedback-section ${isSectionVisible(5) ? 'visible' : ''}`}>
         <div className="bg-gradient-to-r from-teal-50 to-sky-50 border-2 border-teal-300 rounded-xl p-4 mb-4">
           <h4 className="font-bold text-teal-900 text-xl flex items-center gap-2">
@@ -6457,10 +6664,11 @@ const startPracticeMode = async () => {
           </div>
         </div>
       </div>
-    )}
+      );
+    })()}
 
-    {/* ==================== KEY POINTS COVERAGE - Stage 6 ==================== */}
-    {(feedback.points_covered || feedback.points_missed) && isSectionVisible(6) && (
+    {/* ==================== KEY POINTS COVERAGE - Stage 6 (legacy v1 only) ==================== */}
+    {!feedback.fix && (feedback.points_covered || feedback.points_missed) && isSectionVisible(6) && (
       <div className={`bg-gray-50 rounded-xl p-6 mb-6 border-2 border-gray-300 feedback-section ${isSectionVisible(6) ? 'visible' : ''}`}>
         <h4 className="font-bold text-gray-900 text-xl mb-4 flex items-center gap-2">
           <BarChart2 className="w-5 h-5 text-teal-600" />
@@ -6534,7 +6742,8 @@ const startPracticeMode = async () => {
       </div>
     )}
   </div>
-)}
+  );
+})()}
 
           </div>
         </div>
@@ -6612,8 +6821,6 @@ const startPracticeMode = async () => {
       setFlashcardIndex(nextIndex);
       setCurrentQuestion(flashcardDeck[nextIndex]);
       setFlashcardSide('question');
-      setShowBullets(false);
-      setShowNarrative(false);
       setShowStudyTips(false);
     };
 
@@ -6622,8 +6829,6 @@ const startPracticeMode = async () => {
       setFlashcardIndex(prevIndex);
       setCurrentQuestion(flashcardDeck[prevIndex]);
       setFlashcardSide('question');
-      setShowBullets(false);
-      setShowNarrative(false);
       setShowStudyTips(false);
     };
 
@@ -6732,6 +6937,12 @@ const startPracticeMode = async () => {
                         </li>
                       ))}
                     </ul>
+                    {currentQuestion.narrative && (
+                      <div className="mt-4 pt-4 border-t border-gray-200">
+                        <h4 className="text-lg font-bold text-gray-900 mb-2">Full Narrative:</h4>
+                        <p className="text-base text-gray-800 leading-relaxed whitespace-pre-line">{currentQuestion.narrative}</p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -6828,53 +7039,6 @@ const startPracticeMode = async () => {
               </div>
             )}
 
-            {/* Show Bullets/Narrative Buttons */}
-            <div className="mt-6 flex gap-3">
-              <button
-                onClick={() => {
-                  if (flashcardSide === 'question') {
-                    flipCard();
-                  }
-                  setShowBullets(!showBullets);
-                }}
-                className="flex-1 bg-white/20 hover:bg-white/30 backdrop-blur text-white font-bold py-3 rounded-xl transition text-sm"
-              >
-                {showBullets ? '👁️ Hide' : '👁️ Show'} Bullets
-              </button>
-              {currentQuestion.narrative && (
-                <button
-                  onClick={() => setShowNarrative(!showNarrative)}
-                  className="flex-1 bg-white/20 hover:bg-white/30 backdrop-blur text-white font-bold py-3 rounded-xl transition text-sm"
-                >
-                  {showNarrative ? <><BookOpen className="w-4 h-4 inline" /> Hide</> : <><BookOpen className="w-4 h-4 inline" /> Show</>} Narrative
-                </button>
-              )}
-            </div>
-
-            {/* Bullets Overlay */}
-            {showBullets && (
-              <div className="mt-4 bg-white rounded-xl p-6 shadow-xl">
-                <h4 className="text-xl font-bold mb-3 text-gray-900">Key Points:</h4>
-                <ul className="space-y-2">
-                  {currentQuestion.bullets.filter(b => b).map((bullet, idx) => (
-                    <li key={idx} className="flex items-start gap-3">
-                      <span className="flex-shrink-0 w-6 h-6 bg-teal-500 text-white rounded-full flex items-center justify-center font-bold text-xs">
-                        {idx + 1}
-                      </span>
-                      <span className="text-base text-gray-800">{bullet}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Narrative */}
-            {showNarrative && currentQuestion.narrative && (
-              <div className="mt-4 bg-white rounded-xl p-6 shadow-xl">
-                <h4 className="text-xl font-bold mb-3 text-gray-900">Full Narrative:</h4>
-                <p className="text-base text-gray-800 leading-relaxed whitespace-pre-line">{currentQuestion.narrative}</p>
-              </div>
-            )}
 
             {/* Progress */}
             <div className="mt-6 bg-white/10 backdrop-blur rounded-xl p-5 text-white">
@@ -9143,6 +9307,11 @@ const NursingLandingPage = showNursingFeatures() ? lazy(() => import('./Componen
 const ArchetypeOnboarding = lazy(() => import('./Components/Onboarding/ArchetypeOnboarding'));
 const STARMethodGuidePage = lazy(() => import('./Components/Landing/STARMethodGuidePage'));
 const BehavioralInterviewQuestionsPage = lazy(() => import('./Components/Landing/BehavioralInterviewQuestionsPage'));
+const MockInterviewPracticePage = lazy(() => import('./Components/Landing/MockInterviewPracticePage'));
+const TellMeAboutYourselfPage = lazy(() => import('./Components/Landing/TellMeAboutYourselfPage'));
+const InterviewQuestionsPage = lazy(() => import('./Components/Landing/InterviewQuestionsPage'));
+const InterviewCoachingLessonsPage = lazy(() => import('./Components/Landing/InterviewCoachingLessonsPage'));
+const InterviewPrepPodcastPage = lazy(() => import('./Components/Landing/InterviewPrepPodcastPage'));
 const NursingInterviewQuestionsPage = showNursingFeatures() ? lazy(() => import('./Components/Landing/NursingInterviewQuestionsPage')) : () => null;
 const AuthConfirm = lazy(() => import('./Components/AuthConfirm'));
 const OAuthCallback = lazy(() => import('./Components/OAuthCallback'));
@@ -9180,24 +9349,23 @@ function App() {
           <Route path="/app" element={<Navigate to="/nursing" replace />} />
         )}
 
-        {/* Nursing app: available in 'all' and 'nursing' builds */}
-        {showNursingFeatures() ? (
+        {/* Specialty routes: only registered when the specialty track is enabled. */}
+        {showNursingFeatures() && (
           <>
             <Route path="/nursing" element={<ProtectedRoute><NursingTrackApp /></ProtectedRoute>} />
             <Route path="/nurse" element={getAppTarget() === 'nursing' ? <Navigate to="/nursing" replace /> : <NursingLandingPage />} />
             <Route path="/nursing-interview-questions" element={<NursingInterviewQuestionsPage />} />
-          </>
-        ) : (
-          <>
-            <Route path="/nursing" element={<Navigate to="/app" replace />} />
-            <Route path="/nurse" element={<Navigate to="/" replace />} />
-            <Route path="/nursing-interview-questions" element={<Navigate to="/" replace />} />
           </>
         )}
 
         {/* SEO content pages: available in all builds */}
         <Route path="/star-method-guide" element={<STARMethodGuidePage />} />
         <Route path="/behavioral-interview-questions" element={<BehavioralInterviewQuestionsPage />} />
+        <Route path="/mock-interview-practice" element={<MockInterviewPracticePage />} />
+        <Route path="/tell-me-about-yourself" element={<TellMeAboutYourselfPage />} />
+        <Route path="/interview-questions-and-answers" element={<InterviewQuestionsPage />} />
+        <Route path="/interview-coaching-lessons" element={<InterviewCoachingLessonsPage />} />
+        <Route path="/interview-prep-podcast" element={<InterviewPrepPodcastPage />} />
         <Route path="/onboarding" element={<ArchetypeOnboarding />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

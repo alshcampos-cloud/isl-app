@@ -1,18 +1,26 @@
 // Credit System for ISL - PRODUCTION VERSION
-// Supports: Free tier, 30-day passes (nursing/general), annual, legacy pro, beta
+// Supports: Free tier, 30-day passes, annual, legacy pro, beta
 //
 // PRICING MODEL (P2):
-//   Nursing Interview Pro:   $19.99 / 30-day pass
+//   Specialty Pass:          $19.99 / 30-day pass
 //   General Interview Prep:  $14.99 / 30-day pass
-//   All-Access Annual:       $149.99 / year
+//   All-Access Annual:       $99.99 / year
 //
-// Pass expiry stored in user_profiles.nursing_pass_expires / general_pass_expires
+// Pass expiry stored in user_profiles columns.
 // Use resolveEffectiveTier() to determine active tier from profile data.
 
 export const TIER_LIMITS = {
   free: {
     name: 'Free',
     price: 0,
+    // Nursing features — limited on free tier
+    nursing_practice: 3,
+    nursing_mock: 2,
+    nursing_sbar: 3,
+    nursing_coach: 2,
+    nursing_confidence: 3,
+    nursing_offer_coach: 2,
+    nursing_answer_assistant: 3,
     // General features (unchanged)
     ai_interviewer: 3,           // 3 full AI practice sessions (high value)
     practice_mode: 10,            // 10 quick practices (daily use for 2 weeks)
@@ -20,17 +28,34 @@ export const TIER_LIMITS = {
     question_gen: 5,              // 5 AI question generations
     live_prompter_questions: 10,  // 10 real-time prompt questions
     live_prompter_unlimited: false,
-    // Nursing Track — reduced free tier (6 AI sessions total: 3+1+2)
-    nursing_practice: 3,          // 3 nursing quick practice sessions/month
-    nursing_mock: 2,              // 2 free full mock interview sessions/month
-    nursing_sbar: 2,              // 2 nursing SBAR drill sessions/month
-    nursing_coach: 0,             // AI Coach is pass-only
     hd_audio: false,               // HD audio is premium only
   },
 
-  // ── 30-Day Pass: Nursing ($19.99) ──────────────────────────
+  // ── Free Reduced (abuse-detected accounts) ───────────────────
+  free_reduced: {
+    name: 'Free (Reduced)',
+    price: 0,
+    // Half the free tier limits
+    ai_interviewer: 1,
+    practice_mode: 3,
+    answer_assistant: 2,
+    question_gen: 2,
+    live_prompter_questions: 3,
+    live_prompter_unlimited: false,
+    hd_audio: false,
+    // Nursing features — minimal
+    nursing_practice: 1,
+    nursing_mock: 1,
+    nursing_sbar: 1,
+    nursing_coach: 1,
+    nursing_confidence: 1,
+    nursing_offer_coach: 1,
+    nursing_answer_assistant: 1,
+  },
+
+  // ── 30-Day Pass: Specialty ($19.99) ──────────────────────────
   nursing_pass: {
-    name: 'Nursing Pass',
+    name: 'Specialty Pass',
     price: 19.99,
     // General features stay at FREE-tier level (they didn't buy general)
     ai_interviewer: 3,
@@ -39,12 +64,15 @@ export const TIER_LIMITS = {
     question_gen: 5,
     live_prompter_questions: 10,
     live_prompter_unlimited: false,
-    // Nursing Track — ALL UNLIMITED
+    hd_audio: true,                // HD audio via server TTS
+    // Nursing-specific features — UNLIMITED for paid nursing users
     nursing_practice: 999999,
     nursing_mock: 999999,
     nursing_sbar: 999999,
-    nursing_coach: 999999,        // Unlimited AI Coach (~$0.011/msg, cost negligible)
-    hd_audio: true,                // HD audio via server TTS
+    nursing_coach: 999999,
+    nursing_confidence: 999999,
+    nursing_offer_coach: 999999,
+    nursing_answer_assistant: 999999,
   },
 
   // ── 30-Day Pass: General ($14.99) ──────────────────────────
@@ -58,18 +86,21 @@ export const TIER_LIMITS = {
     question_gen: 999999,
     live_prompter_questions: 999999,
     live_prompter_unlimited: true,
-    // Nursing Track stays at FREE-tier level (they didn't buy nursing)
+    hd_audio: true,                // HD audio via server TTS
+    // Nursing features — FREE-tier level (they didn't buy nursing)
     nursing_practice: 3,
     nursing_mock: 2,
-    nursing_sbar: 2,
-    nursing_coach: 0,
-    hd_audio: true,                // HD audio via server TTS
+    nursing_sbar: 3,
+    nursing_coach: 2,
+    nursing_confidence: 3,
+    nursing_offer_coach: 2,
+    nursing_answer_assistant: 3,
   },
 
-  // ── Annual All-Access ($149.99/year) ───────────────────────
+  // ── Annual All-Access ($99.99/year) ────────────────────────
   annual: {
     name: 'Annual All-Access',
-    price: 149.99,
+    price: 99.99,
     // General — UNLIMITED
     ai_interviewer: 999999,
     practice_mode: 999999,
@@ -77,12 +108,15 @@ export const TIER_LIMITS = {
     question_gen: 999999,
     live_prompter_questions: 999999,
     live_prompter_unlimited: true,
-    // Nursing — ALL UNLIMITED
+    hd_audio: true,                // HD audio via server TTS
+    // Nursing — UNLIMITED
     nursing_practice: 999999,
     nursing_mock: 999999,
     nursing_sbar: 999999,
     nursing_coach: 999999,
-    hd_audio: true,                // HD audio via server TTS
+    nursing_confidence: 999999,
+    nursing_offer_coach: 999999,
+    nursing_answer_assistant: 999999,
   },
 
   // ── Legacy Pro ($29.99/month subscription) — backward compat ─
@@ -95,12 +129,15 @@ export const TIER_LIMITS = {
     question_gen: 999999,
     live_prompter_questions: 999999,
     live_prompter_unlimited: true,
-    // Nursing Track
+    hd_audio: true,                // HD audio via server TTS
+    // Nursing — UNLIMITED (Pro is legacy, full access)
     nursing_practice: 999999,
     nursing_mock: 999999,
     nursing_sbar: 999999,
-    nursing_coach: 999999,        // Legacy pro gets unlimited coach
-    hd_audio: true,                // HD audio via server TTS
+    nursing_coach: 999999,
+    nursing_confidence: 999999,
+    nursing_offer_coach: 999999,
+    nursing_answer_assistant: 999999,
   },
 
   // Trial tier removed — free tier is the new onramp
@@ -115,11 +152,6 @@ export const TIER_LIMITS = {
     question_gen: 999999,
     live_prompter_questions: 999999,
     live_prompter_unlimited: true,
-    // Nursing Track
-    nursing_practice: 999999,
-    nursing_mock: 999999,
-    nursing_sbar: 999999,
-    nursing_coach: 999999,        // Beta gets unlimited coach
     hd_audio: true,               // HD audio via server TTS
   }
 };
@@ -152,6 +184,7 @@ export function resolveEffectiveTier(profile, isBeta = false) {
   // Legacy pro subscription (backward compat)
   if (profile?.tier === 'pro' && profile?.subscription_status === 'active') return 'pro';
 
+  if (profile?.abuse_reduced_tier) return 'free_reduced';
   return 'free';
 }
 
@@ -179,7 +212,8 @@ export function getTrialInfo(profile) {
   };
 }
 
-// Helper: Does this user have an active nursing pass (or better)?
+// Helper: Does this user have an active specialty pass (or better)?
+// Exported with the legacy name to preserve existing callers.
 export function hasActiveNursingPass(profile, isBeta = false) {
   const tier = resolveEffectiveTier(profile, isBeta);
   return tier === 'nursing_pass' || tier === 'annual' || tier === 'pro' || tier === 'beta';
@@ -300,7 +334,7 @@ function featureNameToDb(camelCaseName) {
     'answerAssistant': 'answer_assistant',
     'questionGen': 'question_gen',
     'livePrompterQuestions': 'live_prompter_questions',
-    // Nursing Track — separate credit pools
+
     'nursingPractice': 'nursing_practice',
     'nursingMock': 'nursing_mock',
     'nursingSbar': 'nursing_sbar',
@@ -420,7 +454,7 @@ export async function getUsageStats(supabase, userId, tier) {
         remaining: Math.max(0, limits.live_prompter_questions - (usage.live_prompter_questions || 0)),
         unlimited: limits.live_prompter_questions >= 999999 // FIXED: Consistent unlimited check with other features
       },
-      // Nursing Track — separate pools
+
       nursingPractice: {
         used: usage.nursing_practice || 0,
         limit: limits.nursing_practice || 0,
@@ -503,26 +537,26 @@ export function getFeatureDisplayInfo(feature) {
       icon: '🎤',
       value: 'Live bullet points during actual interviews'
     },
-    // Nursing Track
-    nursingPractice: {
-      name: 'Quick Practice',
-      description: 'Nursing interview practice with AI feedback',
+
+    specialtyPractice: {
+      name: 'Specialty Practice',
+      description: 'Specialty interview practice with AI feedback',
       icon: '🎯',
-      value: 'Practice nursing questions with instant scoring'
+      value: 'Specialty practice with instant scoring'
     },
-    nursingMock: {
-      name: 'Mock Interview',
-      description: 'Full nursing mock interview sessions',
+    specialtyMock: {
+      name: 'Specialty Mock',
+      description: 'Full specialty mock interview sessions',
       icon: '🤖',
-      value: 'Realistic nursing interview simulation'
+      value: 'Realistic specialty interview simulation'
     },
-    nursingSbar: {
-      name: 'SBAR Drill',
-      description: 'Clinical communication practice',
+    specialtyDrill: {
+      name: 'Specialty Drill',
+      description: 'Specialty communication practice',
       icon: '📋',
-      value: 'SBAR communication drill with per-component scoring'
+      value: 'Specialty drill with per-component scoring'
     },
-    nursingCoach: {
+    specialtyCoach: {
       name: 'AI Coach',
       description: 'Free-form interview coaching',
       icon: '🤖',

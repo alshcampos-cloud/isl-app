@@ -3,9 +3,11 @@ import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { trackOnboardingEvent } from '../../utils/onboardingTracker'
 import { trackSignUp } from '../../utils/googleAdsTracking'
+import { getDeviceFingerprint, hashEmail } from '../../utils/deviceFingerprint'
 import GoogleSignInButton from '../GoogleSignInButton'
 import { startGoogleOAuth } from '../../utils/googleOAuth'
 import { isNativeApp } from '../../utils/platform'
+import { showNursingFeatures } from '../../utils/appTarget'
 
 /**
  * SignUpPrompt — Screen 6: Create Account to Save Progress
@@ -23,7 +25,9 @@ import { isNativeApp } from '../../utils/platform'
  * But proper email verification is non-negotiable for platform security.
  */
 
-export default function SignUpPrompt({ archetype, archetypeConfig, practiceScore, fromNursing = false, onComplete }) {
+export default function SignUpPrompt({ archetype, archetypeConfig, practiceScore, fromNursing: fromNursingProp = false, onComplete }) {
+  // Belt-and-suspenders — general builds ignore fromNursing entirely
+  const fromNursing = showNursingFeatures() && fromNursingProp
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -114,6 +118,37 @@ export default function SignUpPrompt({ archetype, archetypeConfig, practiceScore
       }
       trackOnboardingEvent(6, 'signup_completed', { archetype })
       trackSignUp() // Google Ads conversion
+
+      // Abuse tracking — non-blocking, must never break signup flow
+      try {
+        const fingerprint = await getDeviceFingerprint();
+        const emailH = await hashEmail(email);
+        const domain = email.split('@')[1]?.toLowerCase() || '';
+
+        // Check for abuse
+        const { data: abuseCheck } = await supabase.rpc('check_signup_abuse', {
+          p_fingerprint: fingerprint, p_email_hash: emailH
+        });
+
+        // Record signal
+        if (data?.user?.id) {
+          await supabase.rpc('record_signup_signal', {
+            p_fingerprint: fingerprint, p_email_hash: emailH,
+            p_email_domain: domain, p_user_id: data.user.id
+          });
+        }
+
+        // Flag abuse if detected
+        if (abuseCheck?.reduced_tier && data?.user?.id) {
+          await supabase.from('user_profiles')
+            .update({ abuse_reduced_tier: true })
+            .eq('user_id', data.user.id);
+        }
+      } catch (err) {
+        console.warn('[Abuse] Signal recording failed:', err.message);
+        // Non-blocking — don't break signup flow
+      }
+
       setSignUpSuccess(true)
     } catch (err) {
       console.error('Sign up error:', err)
@@ -207,11 +242,11 @@ export default function SignUpPrompt({ archetype, archetypeConfig, practiceScore
           </li>
           <li className="flex items-start gap-2">
             <span className="mt-0.5">📊</span>
-            <span>{fromNursing ? 'SBAR drill with per-component scoring (3/month)' : 'STAR method coaching with detailed scoring'}</span>
+            <span>STAR method coaching with detailed scoring</span>
           </li>
           <li className="flex items-start gap-2">
             <span className="mt-0.5">📚</span>
-            <span>{fromNursing ? '70 nursing flashcards (unlimited)' : '50+ interview flashcards (unlimited)'}</span>
+            <span>50+ interview flashcards (unlimited)</span>
           </li>
           <li className="flex items-start gap-2">
             <span className="mt-0.5">📈</span>

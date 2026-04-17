@@ -49,6 +49,36 @@ const ROUTES = {
     canonical: 'https://www.interviewanswers.ai/nursing-interview-questions',
     keywords: 'nursing interview questions, nurse interview questions and answers, new grad nurse interview questions, SBAR interview, RN interview questions',
   },
+  '/mock-interview-practice': {
+    title: 'Free AI Mock Interview Practice Online | InterviewAnswers.ai',
+    description: 'Practice mock interviews with an AI interviewer that adapts to your answers. Get real-time feedback on STAR structure, delivery, and confidence. Free — no credit card required.',
+    canonical: 'https://www.interviewanswers.ai/mock-interview-practice',
+    keywords: 'mock interview practice, AI mock interview, online mock interview, practice interview online, free mock interview, interview simulator',
+  },
+  '/tell-me-about-yourself': {
+    title: 'Tell Me About Yourself: How to Answer + Practice with AI (2026)',
+    description: 'Learn how to answer "Tell me about yourself" with the Present-Past-Future framework. 3 example answers for different career stages. Practice with AI feedback.',
+    canonical: 'https://www.interviewanswers.ai/tell-me-about-yourself',
+    keywords: 'tell me about yourself interview, how to answer tell me about yourself, tell me about yourself example, introduce yourself in interview',
+  },
+  '/interview-questions-and-answers': {
+    title: 'Top 50 Interview Questions & Answers (2026) | Practice Free',
+    description: '50 common interview questions organized by category with answer tips for each. Behavioral, situational, strengths, career goals, and company fit. Practice each question free with AI.',
+    canonical: 'https://www.interviewanswers.ai/interview-questions-and-answers',
+    keywords: 'interview questions and answers, common interview questions, job interview questions, top interview questions, interview questions 2026',
+  },
+  '/interview-coaching-lessons': {
+    title: 'Free Interview Coaching Lessons: 25 Audio Lessons + Quiz | InterviewAnswers.ai',
+    description: 'Learn interview skills with 25 structured audio lessons across 5 modules. Active recall quizzes, STAR method deep dives, and advanced techniques. Free interview preparation course.',
+    canonical: 'https://www.interviewanswers.ai/interview-coaching-lessons',
+    keywords: 'interview coaching, interview preparation course, interview coaching lessons, free interview course, interview skills training, behavioral interview course, STAR method course',
+  },
+  '/interview-prep-podcast': {
+    title: 'AI Interview Prep Podcast: Personalized Daily Coaching | InterviewAnswers.ai',
+    description: 'Prep Radio: an AI-powered interview coaching podcast personalized to your target role, interview date, and practice history. Daily briefings, question walkthroughs, and mental rehearsal. Free.',
+    canonical: 'https://www.interviewanswers.ai/interview-prep-podcast',
+    keywords: 'interview prep podcast, interview preparation audio, interview coaching podcast, AI interview podcast, personalized interview prep, daily interview coaching',
+  },
   '/onboarding': {
     title: 'Get Started Free — InterviewAnswers.ai',
     description: 'Create your free account and start practicing interviews with AI coaching, STAR method feedback, and mock interviews. No credit card required.',
@@ -182,6 +212,10 @@ if (APP_TARGET === 'general') {
   // Clean org description if it mentions nursing
   template = template.replace(/nursing interview specialty track/g, 'comprehensive interview preparation');
   console.log('  🧹 Stripped nursing references from JSON-LD (general build)');
+  // Overwrite root dist/index.html with the stripped template so the root URL
+  // and SPA fallback serve a nursing-free page.
+  writeFileSync(templatePath, template, 'utf-8');
+  console.log('  📝 Wrote stripped root dist/index.html');
 }
 
 let created = 0;

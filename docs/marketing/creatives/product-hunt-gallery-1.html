@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1270">
+<title>Product Hunt Gallery — Hero</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    width: 1270px; height: 760px; overflow: hidden;
+    background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  body::before {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 50% 40%, rgba(13,148,136,0.08) 0%, transparent 50%),
+      radial-gradient(circle at 20% 80%, rgba(13,148,136,0.04) 0%, transparent 40%);
+    pointer-events: none;
+  }
+  .container {
+    z-index: 1; display: flex; align-items: center; gap: 50px;
+    padding: 0 60px;
+  }
+  .text-side {
+    flex: 0 0 380px;
+  }
+  .logo-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(13,148,136,0.12);
+    border: 1px solid rgba(13,148,136,0.2);
+    padding: 8px 16px; border-radius: 10px;
+    font-size: 13px; font-weight: 700; color: #0D9488;
+    margin-bottom: 24px;
+  }
+  .logo-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: #0D9488; }
+  h1 {
+    font-size: 44px; font-weight: 900; line-height: 1.1;
+    letter-spacing: -1.5px; margin-bottom: 16px;
+    background: linear-gradient(135deg, #fff 0%, #ccc 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .tagline {
+    font-size: 18px; color: rgba(255,255,255,0.55); line-height: 1.5;
+    margin-bottom: 28px;
+  }
+  .features-list {
+    list-style: none; display: flex; flex-direction: column; gap: 12px;
+  }
+  .features-list li {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 15px; color: rgba(255,255,255,0.7);
+  }
+  .check {
+    width: 22px; height: 22px; border-radius: 6px;
+    background: rgba(13,148,136,0.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; color: #0D9488; font-weight: 900;
+    flex-shrink: 0;
+  }
+  /* App mockup */
+  .app-side {
+    flex: 1; position: relative;
+  }
+  .phone-frame {
+    width: 700px; height: 480px;
+    background: #111827;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 30px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05);
+    overflow: hidden;
+    position: relative;
+  }
+  .app-topbar {
+    height: 48px; background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex; align-items: center; padding: 0 20px;
+    gap: 10px;
+  }
+  .topbar-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .topbar-dot.r { background: #ef4444; }
+  .topbar-dot.y { background: #eab308; }
+  .topbar-dot.g { background: #22c55e; }
+  .topbar-title {
+    margin-left: 12px; font-size: 13px; font-weight: 600;
+    color: rgba(255,255,255,0.5);
+  }
+  .app-content {
+    padding: 24px; display: flex; gap: 20px; height: calc(100% - 48px);
+  }
+  /* Sidebar */
+  .sidebar {
+    width: 180px; display: flex; flex-direction: column; gap: 8px;
+  }
+  .sidebar-item {
+    padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 500;
+    color: rgba(255,255,255,0.4);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .sidebar-item.active {
+    background: rgba(13,148,136,0.12);
+    color: #0D9488; font-weight: 600;
+  }
+  .sidebar-icon { font-size: 16px; }
+  /* Main dashboard */
+  .dashboard {
+    flex: 1; display: flex; flex-direction: column; gap: 16px;
+  }
+  .dash-header {
+    font-size: 20px; font-weight: 800; color: #fff;
+    margin-bottom: 4px;
+  }
+  .dash-subtitle { font-size: 12px; color: rgba(255,255,255,0.35); margin-bottom: 8px; }
+  .cards-row { display: flex; gap: 12px; }
+  .card {
+    flex: 1; background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px; padding: 16px;
+  }
+  .card-label { font-size: 11px; color: rgba(255,255,255,0.35); font-weight: 500; margin-bottom: 6px; }
+  .card-value { font-size: 28px; font-weight: 900; letter-spacing: -1px; }
+  .card-value.teal { color: #0D9488; }
+  .card-value.white { color: #fff; }
+  .card-sub { font-size: 11px; color: rgba(255,255,255,0.3); margin-top: 4px; }
+  .tiles-row { display: flex; gap: 12px; }
+  .tile {
+    flex: 1; background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px; padding: 14px; text-align: center;
+  }
+  .tile-emoji { font-size: 24px; margin-bottom: 6px; }
+  .tile-name { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.6); }
+  /* Callout arrows */
+  .callout {
+    position: absolute; z-index: 2; pointer-events: none;
+  }
+  .callout-label {
+    background: #0D9488; color: #fff;
+    padding: 8px 14px; border-radius: 8px;
+    font-size: 12px; font-weight: 700;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(13,148,136,0.4);
+  }
+  .callout-line {
+    width: 2px; height: 30px; background: #0D9488; margin: 0 auto;
+    opacity: 0.6;
+  }
+  .c1 { top: 300px; right: -10px; }
+  .c2 { top: 130px; right: 100px; }
+  .c3 { bottom: 30px; left: 260px; }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="text-side">
+      <div class="logo-badge"><div class="dot"></div> InterviewAnswers.ai</div>
+      <h1>Your AI<br>Interview<br>Coach</h1>
+      <p class="tagline">Master every answer with real-time AI coaching, mock interviews, and structured feedback.</p>
+      <ul class="features-list">
+        <li><span class="check">&#x2713;</span> AI Mock Interviews</li>
+        <li><span class="check">&#x2713;</span> Live Prompter</li>
+        <li><span class="check">&#x2713;</span> STAR Method Coaching</li>
+        <li><span class="check">&#x2713;</span> Nursing Specialty Track</li>
+        <li><span class="check">&#x2713;</span> Free to Start</li>
+      </ul>
+    </div>
+
+    <div class="app-side">
+      <div class="phone-frame">
+        <div class="app-topbar">
+          <div class="topbar-dot r"></div>
+          <div class="topbar-dot y"></div>
+          <div class="topbar-dot g"></div>
+          <div class="topbar-title">interviewanswers.ai</div>
+        </div>
+        <div class="app-content">
+          <div class="sidebar">
+            <div class="sidebar-item active"><span class="sidebar-icon">&#x1F3E0;</span> Home</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#x1F399;</span> Mock Interview</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#x1F4DD;</span> Prompter</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#x2B50;</span> Practice</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#x1F3AF;</span> Nursing</div>
+            <div class="sidebar-item"><span class="sidebar-icon">&#x2699;</span> Settings</div>
+          </div>
+          <div class="dashboard">
+            <div>
+              <div class="dash-header">Welcome back</div>
+              <div class="dash-subtitle">Your interview readiness score</div>
+            </div>
+            <div class="cards-row">
+              <div class="card">
+                <div class="card-label">IRS Score</div>
+                <div class="card-value teal">7.4</div>
+                <div class="card-sub">+0.8 this week</div>
+              </div>
+              <div class="card">
+                <div class="card-label">Sessions</div>
+                <div class="card-value white">12</div>
+                <div class="card-sub">3 this week</div>
+              </div>
+              <div class="card">
+                <div class="card-label">Streak</div>
+                <div class="card-value" style="color:#fbbf24">5</div>
+                <div class="card-sub">days in a row</div>
+              </div>
+            </div>
+            <div class="tiles-row">
+              <div class="tile"><div class="tile-emoji">&#x1F916;</div><div class="tile-name">Mock Interview</div></div>
+              <div class="tile"><div class="tile-emoji">&#x1F4DD;</div><div class="tile-name">Live Prompter</div></div>
+              <div class="tile"><div class="tile-emoji">&#x2B50;</div><div class="tile-name">STAR Coach</div></div>
+              <div class="tile"><div class="tile-emoji">&#x1F4A1;</div><div class="tile-name">Practice</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Callout labels -->
+      <div class="callout c1">
+        <div class="callout-label">Mock Interviews</div>
+        <div class="callout-line"></div>
+      </div>
+      <div class="callout c2">
+        <div class="callout-label">Live Prompter</div>
+      </div>
+      <div class="callout c3">
+        <div class="callout-line"></div>
+        <div class="callout-label">STAR Coaching</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
