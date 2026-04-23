@@ -1,7 +1,7 @@
 import { Check, Crown, X, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import StripeCheckout from './StripeCheckout';
-import NativeCheckout from './NativeCheckout';
+// NativeCheckout removed — using external Stripe checkout per Epic v. Apple (May 2025)
 import { isNativeApp } from '../utils/platform';
 
 export default function PricingPage({ onSelectTier, currentTier = 'free', user, userEmail }) {
@@ -176,44 +176,12 @@ export default function PricingPage({ onSelectTier, currentTier = 'free', user, 
                   <p className="text-sm text-gray-600">{tier.description}</p>
                 </div>
 
-                {/* CTA Button — Native IAP on iOS, Stripe on Web */}
+                {/* CTA Button — Stripe Checkout for all platforms */}
+                {/* IAP removed: Using external Stripe checkout per Epic v. Apple (May 2025) */}
                 {tier.id === 'pro' && !tier.ctaDisabled ? (
                   <div className="mb-8">
-                    {isNativeApp() ? (
-                      // Apple In-App Purchase for iOS native app
-                      <NativeCheckout
-                        user={user}
-                        onSuccess={() => {
-                          console.log('🎉 Native purchase successful');
-                          setIsProcessing(false);
-                          // Reload to reflect Pro status
-                          window.location.reload();
-                        }}
-                        onError={(error) => {
-                          console.error('❌ Native checkout error:', error);
-                          setCheckoutError(error);
-                          setIsProcessing(false);
-                        }}
-                        disabled={isProcessing || !user}
-                        className={`w-full py-4 rounded-lg font-bold text-white transition text-lg ${
-                          isProcessing || !user
-                            ? 'bg-gray-300 cursor-not-allowed'
-                            : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg'
-                        }`}
-                      >
-                        {isProcessing ? (
-                          <span className="flex items-center justify-center gap-2">
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                            Processing...
-                          </span>
-                        ) : !user ? (
-                          'Sign in to Upgrade'
-                        ) : (
-                          'Subscribe to Pro'
-                        )}
-                      </NativeCheckout>
-                    ) : (
-                      // Stripe Checkout for web browser
+                    {(
+                      // Stripe Checkout for all platforms (web + native)
                       <StripeCheckout
                         user={user}
                         userEmail={userEmail}

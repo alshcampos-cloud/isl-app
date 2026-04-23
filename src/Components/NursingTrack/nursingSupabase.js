@@ -39,6 +39,9 @@ export async function insertPracticeSession(userId, specialtyId, sessionRecord) 
       topics_discussed: sessionRecord.topicsDiscussed || null,
       // Phase 9: Offer Coach negotiation scores + scenario metadata
       extra_scores: sessionRecord.extraScores || null,
+      // Answer + feedback text for session review (nullable, backward compatible)
+      user_answer: sessionRecord.userAnswer || null,
+      ai_feedback: sessionRecord.aiFeedback || null,
     };
 
     const { error } = await supabase
@@ -89,6 +92,8 @@ export async function fetchSessionHistory(userId) {
       messageCount: row.message_count,
       topicsDiscussed: row.topics_discussed,
       extraScores: row.extra_scores,
+      userAnswer: row.user_answer || null,
+      aiFeedback: row.ai_feedback || null,
       timestamp: row.created_at,
     }));
 

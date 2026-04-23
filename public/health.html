@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InterviewAnswers.ai — System Health</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --border: #2a2d3a;
+    --text: #e4e4e7;
+    --muted: #71717a;
+    --green: #22c55e;
+    --red: #ef4444;
+    --yellow: #eab308;
+    --teal: #14b8a6;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2rem;
+  }
+  .container { max-width: 720px; margin: 0 auto; }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+  }
+  .header h1 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--teal);
+  }
+  .header .subtitle {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 0.15rem;
+  }
+
+  /* Status badge */
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .status-badge.healthy { background: rgba(34,197,94,0.15); color: var(--green); }
+  .status-badge.degraded { background: rgba(234,179,8,0.15); color: var(--yellow); }
+  .status-badge.unhealthy { background: rgba(239,68,68,0.15); color: var(--red); }
+  .status-badge.loading { background: rgba(113,113,122,0.15); color: var(--muted); }
+  .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    display: inline-block;
+  }
+  .dot.ok { background: var(--green); }
+  .dot.error { background: var(--red); }
+  .dot.loading { background: var(--muted); }
+
+  /* Auth form */
+  .auth-form {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+  }
+  .auth-form label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+  }
+  .auth-form input {
+    width: 100%;
+    max-width: 320px;
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+  }
+  .auth-form input:focus { outline: none; border-color: var(--teal); }
+
+  /* Buttons */
+  .btn {
+    padding: 0.5rem 1.25rem;
+    border-radius: 8px;
+    border: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn-primary { background: var(--teal); color: #fff; }
+  .btn-ghost {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    font-size: 0.75rem;
+  }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+  .card-title {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+  }
+
+  /* Checks grid */
+  .checks-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+  @media (max-width: 500px) {
+    .checks-grid { grid-template-columns: 1fr; }
+  }
+  .check-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.75rem;
+    background: var(--bg);
+    border-radius: 8px;
+  }
+  .check-name {
+    font-size: 0.85rem;
+    font-weight: 500;
+    flex: 1;
+  }
+  .check-detail {
+    font-size: 0.7rem;
+    color: var(--muted);
+  }
+
+  /* Metrics grid */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+  }
+  @media (max-width: 500px) {
+    .metrics-grid { grid-template-columns: 1fr 1fr; }
+  }
+  .metric-item {
+    text-align: center;
+    padding: 0.75rem;
+    background: var(--bg);
+    border-radius: 8px;
+  }
+  .metric-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .metric-label {
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-top: 0.2rem;
+  }
+
+  /* Footer bar */
+  .footer-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 1.5rem;
+    font-size: 0.7rem;
+    color: var(--muted);
+  }
+  .error-banner {
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+    color: var(--red);
+  }
+  .pulse { animation: pulse 2s infinite; }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div>
+      <h1>InterviewAnswers.ai</h1>
+      <div class="subtitle">System Health Monitor</div>
+    </div>
+    <div id="overallBadge" class="status-badge loading">
+      <span class="dot loading"></span> Loading
+    </div>
+  </div>
+
+  <!-- Auth gate -->
+  <div id="authGate" class="auth-form">
+    <label for="keyInput">Enter health check key to continue</label>
+    <input type="password" id="keyInput" placeholder="Health check key" autocomplete="off">
+    <br>
+    <button class="btn btn-primary" onclick="authenticate()">Connect</button>
+  </div>
+
+  <!-- Dashboard (hidden until authenticated) -->
+  <div id="dashboard" style="display:none;">
+    <div id="errorBanner" class="error-banner" style="display:none;"></div>
+
+    <div class="card">
+      <div class="card-title">Service Checks</div>
+      <div class="checks-grid" id="checksGrid">
+        <!-- Filled by JS -->
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Metrics (Today)</div>
+      <div class="metrics-grid" id="metricsGrid">
+        <!-- Filled by JS -->
+      </div>
+    </div>
+
+    <div class="footer-bar">
+      <span id="lastUpdated">Last updated: never</span>
+      <div style="display:flex;gap:0.5rem;align-items:center;">
+        <span id="autoLabel">Auto-refresh: 60s</span>
+        <button class="btn btn-ghost" onclick="fetchHealth()">Refresh Now</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Configuration ────────────────────────────────────────────────────
+// IMPORTANT: Update this URL after deploying the Edge Function.
+// Format: https://<project-ref>.supabase.co/functions/v1/health-check
+const FUNCTION_URL = 'https://tzrlpwtkrtvjpdhcaayu.supabase.co/functions/v1/health-check';
+const REFRESH_INTERVAL = 60_000; // 60 seconds
+
+let healthKey = '';
+let intervalId = null;
+
+// ── Auth ─────────────────────────────────────────────────────────────
+function authenticate() {
+  const input = document.getElementById('keyInput');
+  healthKey = input.value.trim();
+  if (!healthKey) return;
+
+  // Persist in sessionStorage so page refresh doesn't lose it
+  sessionStorage.setItem('health_key', healthKey);
+  showDashboard();
+  fetchHealth();
+}
+
+function showDashboard() {
+  document.getElementById('authGate').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  if (intervalId) clearInterval(intervalId);
+  intervalId = setInterval(fetchHealth, REFRESH_INTERVAL);
+}
+
+// Check for stored key on load
+(function init() {
+  const stored = sessionStorage.getItem('health_key');
+  if (stored) {
+    healthKey = stored;
+    showDashboard();
+    fetchHealth();
+  }
+  // Allow Enter key in input
+  document.getElementById('keyInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') authenticate();
+  });
+})();
+
+// ── Fetch ────────────────────────────────────────────────────────────
+async function fetchHealth() {
+  const banner = document.getElementById('errorBanner');
+  banner.style.display = 'none';
+
+  try {
+    const res = await fetch(FUNCTION_URL, {
+      method: 'GET',
+      headers: { 'x-health-key': healthKey },
+    });
+
+    if (res.status === 401) {
+      banner.textContent = 'Authentication failed. Check your health key.';
+      banner.style.display = 'block';
+      sessionStorage.removeItem('health_key');
+      return;
+    }
+
+    if (!res.ok) {
+      throw new Error('HTTP ' + res.status);
+    }
+
+    const data = await res.json();
+    render(data);
+  } catch (err) {
+    banner.textContent = 'Failed to reach health endpoint: ' + err.message;
+    banner.style.display = 'block';
+    renderOffline();
+  }
+}
+
+// ── Render ───────────────────────────────────────────────────────────
+const CHECK_LABELS = {
+  database: 'Database',
+  anthropic: 'Anthropic API',
+  tts: 'Text-to-Speech',
+  stripe: 'Stripe',
+};
+
+const METRIC_LABELS = {
+  total_users: 'Total Users',
+  active_24h: 'Active (24h)',
+  sessions_today: 'Sessions Today',
+  api_errors_24h: 'Errors (24h)',
+};
+
+function render(data) {
+  // Overall badge
+  const badge = document.getElementById('overallBadge');
+  const statusClass = data.status || 'loading';
+  badge.className = 'status-badge ' + statusClass;
+  badge.innerHTML = '<span class="dot ' + (data.status === 'healthy' ? 'ok' : data.status === 'degraded' ? 'ok' : 'error') + '"></span> ' + capitalize(data.status);
+
+  // Checks
+  const grid = document.getElementById('checksGrid');
+  grid.innerHTML = '';
+  for (const [key, check] of Object.entries(data.checks || {})) {
+    const label = CHECK_LABELS[key] || key;
+    const dotClass = check.status === 'ok' ? 'ok' : 'error';
+    let detail = '';
+    if (check.latency_ms != null) detail = check.latency_ms + ' ms';
+    else if (check.configured != null) detail = check.configured ? 'Configured' : 'Not configured';
+    if (check.error) detail = truncate(check.error, 50);
+
+    grid.innerHTML += `
+      <div class="check-item">
+        <span class="dot ${dotClass}"></span>
+        <span class="check-name">${label}</span>
+        <span class="check-detail">${detail}</span>
+      </div>`;
+  }
+
+  // Metrics
+  const mGrid = document.getElementById('metricsGrid');
+  mGrid.innerHTML = '';
+  for (const [key, label] of Object.entries(METRIC_LABELS)) {
+    const val = data.metrics?.[key];
+    const display = val != null ? val.toLocaleString() : '--';
+    mGrid.innerHTML += `
+      <div class="metric-item">
+        <div class="metric-value">${display}</div>
+        <div class="metric-label">${label}</div>
+      </div>`;
+  }
+
+  // Timestamp
+  const ts = data.timestamp ? new Date(data.timestamp).toLocaleTimeString() : 'unknown';
+  document.getElementById('lastUpdated').textContent = 'Last updated: ' + ts;
+}
+
+function renderOffline() {
+  const badge = document.getElementById('overallBadge');
+  badge.className = 'status-badge unhealthy';
+  badge.innerHTML = '<span class="dot error"></span> Unreachable';
+  document.getElementById('lastUpdated').textContent = 'Last attempt: ' + new Date().toLocaleTimeString();
+}
+
+function capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
+function truncate(s, n) { return s.length > n ? s.slice(0, n) + '...' : s; }
+</script>
+</body>
+</html>

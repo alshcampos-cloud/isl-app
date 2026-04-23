@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Brain, Menu, X, Stethoscope } from 'lucide-react';
+import { showNursingFeatures } from '../../utils/appTarget';
 
 export default function LandingNavbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -67,6 +68,7 @@ export default function LandingNavbar() {
             >
               Pricing
             </button>
+            {showNursingFeatures() && (
             <Link
               to="/nurse"
               className={`text-sm font-medium transition-colors flex items-center gap-1.5 ${
@@ -76,6 +78,7 @@ export default function LandingNavbar() {
               <Stethoscope className="w-3.5 h-3.5" />
               Nursing
             </Link>
+            )}
           </div>
 
           {/* Desktop auth buttons */}
@@ -115,10 +118,12 @@ export default function LandingNavbar() {
             <button onClick={() => scrollTo('features')} className="block w-full text-left text-gray-700 font-medium py-2">Features</button>
             <button onClick={() => scrollTo('how-it-works')} className="block w-full text-left text-gray-700 font-medium py-2">How It Works</button>
             <button onClick={() => scrollTo('pricing')} className="block w-full text-left text-gray-700 font-medium py-2">Pricing</button>
+            {showNursingFeatures() && (
             <Link to="/nurse" className="flex items-center gap-2 text-sky-600 font-medium py-2" onClick={() => setMobileOpen(false)}>
               <Stethoscope className="w-4 h-4" />
               Nursing Interviews
             </Link>
+            )}
             <hr className="border-gray-200" />
             <Link to="/login" className="block text-gray-700 font-medium py-2" onClick={() => setMobileOpen(false)}>Log In</Link>
             <Link

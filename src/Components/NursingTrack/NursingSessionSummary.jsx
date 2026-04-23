@@ -7,13 +7,143 @@
 //
 // ⚠️ D.R.A.F.T. Protocol: NEW file. No existing code modified.
 
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft, RotateCcw, BarChart3, CheckCircle, AlertCircle,
-  BookOpen, Stethoscope, Target, TrendingUp
+  BookOpen, Stethoscope, Target, TrendingUp, Save, Loader2, Award
 } from 'lucide-react';
+import { upsertSavedAnswer } from './nursingSupabase';
+import { supabase } from '../../lib/supabase';
+import { fetchWithRetry } from '../../utils/fetchWithRetry';
 
-export default function NursingSessionSummary({ specialty, sessionResults, onRetry, onBack }) {
+export default function NursingSessionSummary({ specialty, sessionResults, onRetry, onBack, userData }) {
+  // Track which questions have been saved as "Best Answer" in this session
+  const [savedQuestions, setSavedQuestions] = useState({}); // { [questionId]: true }
+  const [savingQuestion, setSavingQuestion] = useState(null); // questionId being saved
+
+  // AI-generated holistic interview debrief
+  const [debrief, setDebrief] = useState(null);
+  const [debriefLoading, setDebriefLoading] = useState(false);
+  const [debriefError, setDebriefError] = useState(null);
+
+  const userId = userData?.user?.id;
+
+  // ── Generate AI debrief on mount ──
+  useEffect(() => {
+    if (!sessionResults || sessionResults.length === 0) return;
+
+    const generateDebrief = async () => {
+      setDebriefLoading(true);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error('Not authenticated');
+
+        // Pre-check: if session is too trivial, show static message (don't waste an API call)
+        const avgScore = sessionResults.reduce((sum, r) => sum + (r.score || 0), 0) / sessionResults.length;
+        const substantiveAnswers = sessionResults.filter(r => r.score && r.score >= 2).length;
+
+        if (substantiveAnswers === 0 || avgScore <= 1.5) {
+          setDebrief(
+            `**Not enough content for a detailed debrief.**\n\n` +
+            `You answered ${sessionResults.length} question(s), but the responses were too brief to evaluate meaningfully.\n\n` +
+            `To get the most from your mock interview, try answering each question with a specific experience — aim for 3-4 sentences describing what happened, what you did, and the outcome.`
+          );
+          setDebriefLoading(false);
+          return;
+        }
+
+        // Build a concise summary of Q&A pairs for the AI (include user answers so AI doesn't hallucinate)
+        const qaList = sessionResults.map((r, i) => {
+          const answer = r.userAnswer?.trim() || '(no answer)';
+          // Truncate very long answers to keep prompt size reasonable
+          const truncated = answer.length > 300 ? answer.slice(0, 300) + '...' : answer;
+          return `Q${i + 1} [${r.responseFramework?.toUpperCase() || 'STAR'}, ${r.category}]: "${r.question}"\nCandidate's answer: "${truncated}"\nScore: ${r.score !== null ? `${r.score}/5` : 'Unscored'}`;
+        }).join('\n\n');
+
+        const debriefPrompt = `You are reviewing a completed nursing mock interview for a ${specialty.name} position. The candidate answered ${sessionResults.length} questions. Here are the results:
+
+${qaList}
+
+Provide a SHORT (150-200 words max) holistic interview debrief with these sections:
+1. **Overall Impression** — One sentence summarizing how they'd come across to a hiring manager.
+2. **Communication Strengths** — 2 specific things they did well across the session (not clinical — communication/delivery).
+3. **Priority Improvement** — The ONE most impactful thing they should work on before a real interview.
+4. **Interview Readiness** — A one-line honest but encouraging assessment: "Ready for interviews", "Nearly there — one more practice session would help", or "Keep practicing — you're building a strong foundation".
+
+RULES:
+- DO NOT evaluate clinical accuracy. Only assess communication quality.
+- Be specific and constructive, never patronizing.
+- Reference actual content from the candidate's answers — NEVER invent details they didn't say.
+- If a question scored 1/5 (trivial/non-answer), acknowledge it honestly. Do NOT fabricate strengths for unanswered questions.
+- Only identify "Communication Strengths" from answers where the candidate actually provided substantive content.
+- If most answers were too brief, be direct: the candidate needs to practice giving fuller responses.
+- Keep it SHORT. This is a summary, not a full coaching session.`;
+
+        const response = await fetchWithRetry(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-feedback`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({
+              mode: 'nursing-coach',
+              // No nursingFeature — debrief is part of the session they already paid for.
+              // Omitting nursingFeature skips server-side credit validation entirely.
+              systemPrompt: debriefPrompt,
+              conversationHistory: [],
+              userMessage: 'Please provide the interview debrief.',
+            }),
+          }
+        );
+
+        if (!response.ok) throw new Error(`Debrief failed: ${response.status}`);
+
+        const data = await response.json();
+
+        // Handle Anthropic errors
+        if (data.type === 'error' && data.error) {
+          throw new Error(data.error.message || 'AI service error');
+        }
+
+        const content = data.content?.[0]?.text || data.response || data.feedback || '';
+        if (content) {
+          // Strip any score tags that might sneak in
+          setDebrief(content.replace(/\[SCORE:\s*\d+\/5\]/gi, '').trim());
+        }
+      } catch (err) {
+        console.warn('⚠️ Debrief generation failed (non-blocking):', err);
+        setDebriefError(true);
+      } finally {
+        setDebriefLoading(false);
+      }
+    };
+
+    generateDebrief();
+  }, []); // Run once on mount
+
+  const handleSaveBestAnswer = async (questionId, answerText) => {
+    if (!userId || !answerText?.trim() || savingQuestion) return;
+    setSavingQuestion(questionId);
+    try {
+      const result = await upsertSavedAnswer(userId, questionId, answerText.trim());
+      if (result.success) {
+        setSavedQuestions(prev => ({ ...prev, [questionId]: true }));
+        // localStorage fallback
+        try {
+          const local = JSON.parse(localStorage.getItem(`nursing_saved_answers_${userId}`) || '{}');
+          local[questionId] = answerText.trim();
+          localStorage.setItem(`nursing_saved_answers_${userId}`, JSON.stringify(local));
+        } catch { /* ignore */ }
+      }
+    } catch (err) {
+      console.warn('⚠️ Save best answer from summary failed:', err);
+    } finally {
+      setSavingQuestion(null);
+    }
+  };
   // ============================================================
   // COMPUTE SUMMARY STATS
   // ============================================================
@@ -102,11 +232,34 @@ export default function NursingSessionSummary({ specialty, sessionResults, onRet
           </p>
         </motion.div>
 
-        {/* Overall Score Card */}
+        {/* AI Debrief — holistic interview assessment */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
+          className="bg-gradient-to-br from-sky-500/10 to-purple-500/10 border border-sky-400/20 rounded-2xl p-5 mb-6"
+        >
+          <h3 className="text-white font-semibold text-sm mb-3 flex items-center gap-2">
+            <Award className="w-4 h-4 text-sky-400" />
+            Interview Debrief
+          </h3>
+          {debriefLoading ? (
+            <div className="flex items-center gap-2 text-slate-400">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span className="text-sm">Generating your interview assessment...</span>
+            </div>
+          ) : debrief ? (
+            <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{debrief}</p>
+          ) : debriefError ? (
+            <p className="text-slate-500 text-xs italic">Assessment unavailable — review your per-question scores below.</p>
+          ) : null}
+        </motion.div>
+
+        {/* Overall Score Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
           className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-6 text-center"
         >
           {avgScore !== null ? (
@@ -130,32 +283,38 @@ export default function NursingSessionSummary({ specialty, sessionResults, onRet
           )}
         </motion.div>
 
-        {/* Framework Breakdown */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="grid grid-cols-2 gap-3 mb-6"
-        >
-          <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
-            <div className="text-green-400 text-xs font-semibold mb-1">SBAR</div>
-            <div className="text-white text-xl font-bold">
-              {sbarAvg !== null ? sbarAvg : '--'}
-            </div>
-            <div className="text-slate-500 text-xs mt-1">
-              {sbarResults.length} clinical question{sbarResults.length !== 1 ? 's' : ''}
-            </div>
-          </div>
-          <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
-            <div className="text-purple-400 text-xs font-semibold mb-1">STAR</div>
-            <div className="text-white text-xl font-bold">
-              {starAvg !== null ? starAvg : '--'}
-            </div>
-            <div className="text-slate-500 text-xs mt-1">
-              {starResults.length} behavioral question{starResults.length !== 1 ? 's' : ''}
-            </div>
-          </div>
-        </motion.div>
+        {/* Framework Breakdown — only show if BOTH frameworks have questions, or just show the one that does */}
+        {(sbarResults.length > 0 || starResults.length > 0) && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className={`grid gap-3 mb-6 ${sbarResults.length > 0 && starResults.length > 0 ? 'grid-cols-2' : 'grid-cols-1'}`}
+          >
+            {sbarResults.length > 0 && (
+              <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
+                <div className="text-green-400 text-xs font-semibold mb-1">SBAR</div>
+                <div className="text-white text-xl font-bold">
+                  {sbarAvg !== null ? sbarAvg : '--'}
+                </div>
+                <div className="text-slate-500 text-xs mt-1">
+                  {sbarResults.length} clinical question{sbarResults.length !== 1 ? 's' : ''}
+                </div>
+              </div>
+            )}
+            {starResults.length > 0 && (
+              <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
+                <div className="text-purple-400 text-xs font-semibold mb-1">STAR</div>
+                <div className="text-white text-xl font-bold">
+                  {starAvg !== null ? starAvg : '--'}
+                </div>
+                <div className="text-slate-500 text-xs mt-1">
+                  {starResults.length} behavioral question{starResults.length !== 1 ? 's' : ''}
+                </div>
+              </div>
+            )}
+          </motion.div>
+        )}
 
         {/* Strengths */}
         {strengths.length > 0 && (
@@ -238,23 +397,48 @@ export default function NursingSessionSummary({ specialty, sessionResults, onRet
           </h3>
           <div className="space-y-2">
             {sessionResults.map((result, i) => (
-              <div key={i} className={`border rounded-xl p-3 flex items-center gap-3 ${scoreBg(result.score)}`}>
-                <div className="text-slate-500 text-xs font-mono w-5 flex-shrink-0">
-                  {i + 1}.
+              <div key={i} className={`border rounded-xl p-3 ${scoreBg(result.score)}`}>
+                <div className="flex items-center gap-3">
+                  <div className="text-slate-500 text-xs font-mono w-5 flex-shrink-0">
+                    {i + 1}.
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white text-xs truncate">{result.question}</p>
+                  </div>
+                  <span className={`text-xs px-1.5 py-0.5 rounded-full flex-shrink-0 ${
+                    result.responseFramework === 'sbar'
+                      ? 'bg-green-500/20 text-green-300'
+                      : 'bg-purple-500/20 text-purple-300'
+                  }`}>
+                    {result.responseFramework === 'sbar' ? 'SBAR' : 'STAR'}
+                  </span>
+                  <div className={`text-sm font-bold flex-shrink-0 ${scoreColor(result.score)}`}>
+                    {result.score !== null ? `${result.score}/5` : 'Unscored'}
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-white text-xs truncate">{result.question}</p>
-                </div>
-                <span className={`text-xs px-1.5 py-0.5 rounded-full flex-shrink-0 ${
-                  result.responseFramework === 'sbar'
-                    ? 'bg-green-500/20 text-green-300'
-                    : 'bg-purple-500/20 text-purple-300'
-                }`}>
-                  {result.responseFramework === 'sbar' ? 'SBAR' : 'STAR'}
-                </span>
-                <div className={`text-sm font-bold flex-shrink-0 ${scoreColor(result.score)}`}>
-                  {result.score !== null ? `${result.score}/5` : 'Unscored'}
-                </div>
+                {/* Save as Best Answer — shown when user has an answer and is authenticated */}
+                {userId && result.userAnswer && result.questionId && (
+                  <div className="mt-2 pl-8">
+                    <button
+                      onClick={() => handleSaveBestAnswer(result.questionId, result.userAnswer)}
+                      onTouchEnd={(e) => { e.preventDefault(); handleSaveBestAnswer(result.questionId, result.userAnswer); }}
+                      disabled={!!savedQuestions[result.questionId] || savingQuestion === result.questionId}
+                      className={`flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-lg transition-all ${
+                        savedQuestions[result.questionId]
+                          ? 'bg-green-500/10 border border-green-500/20 text-green-300 cursor-default'
+                          : 'bg-amber-500/10 border border-amber-500/20 text-amber-300 hover:bg-amber-500/20'
+                      }`}
+                    >
+                      {savingQuestion === result.questionId ? (
+                        <><Loader2 className="w-2.5 h-2.5 animate-spin" /> Saving...</>
+                      ) : savedQuestions[result.questionId] ? (
+                        <><CheckCircle className="w-2.5 h-2.5" /> Saved</>
+                      ) : (
+                        <><Save className="w-2.5 h-2.5" /> Save as Best Answer</>
+                      )}
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>

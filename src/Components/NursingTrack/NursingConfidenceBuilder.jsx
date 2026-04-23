@@ -15,7 +15,7 @@
 //   #9  — Beta users bypass limits
 //   #19 — AI NEVER generates clinical content
 //
-// Credit feature: 'practiceMode' (shares with Practice + SBAR + AI Coach)
+// Credit feature: 'nursingCoach' (shares with AI Coach + Answer Assistant + Offer Coach)
 // localStorage keys: nursingConfidenceProfile, nursingConfidenceBrief
 //
 // D.R.A.F.T. Protocol: NEW file. No existing code modified.
@@ -240,7 +240,7 @@ Warm, professional, empowering. Like a trusted mentor reviewing your prep the ni
 // ============================================================
 // MAIN COMPONENT
 // ============================================================
-export default function NursingConfidenceBuilder({ specialty, onBack, userData, refreshUsage }) {
+export default function NursingConfidenceBuilder({ specialty, onBack, userData, refreshUsage, onShowPricing }) {
   const [activeSection, setActiveSection] = useState('profile');
   const [profile, setProfile] = useState(EMPTY_PROFILE);
   const [profileSaved, setProfileSaved] = useState(false);
@@ -282,9 +282,9 @@ export default function NursingConfidenceBuilder({ specialty, onBack, userData, 
   useEffect(() => {
     if (userData && !userData.loading && userData.usage) {
       const check = canUseFeature(
-        { practice_mode: userData.usage.practiceMode?.used || 0 },
+        { nursing_coach: userData.usage.nursingCoach?.used || 0 },
         userData.tier,
-        'practiceMode'
+        'nursingCoach'
       );
       if (!check.allowed) setCreditBlocked(true);
     }
@@ -339,6 +339,17 @@ export default function NursingConfidenceBuilder({ specialty, onBack, userData, 
       }
 
       const data = await response.json();
+
+      // Detect Anthropic API errors passed through Edge Function (overloaded, rate limit, etc.)
+      if (data.type === 'error' && data.error) {
+        const errType = data.error.type || 'unknown';
+        const errMsg = data.error.message || 'AI service error';
+        console.error('❌ Anthropic API error:', errType, errMsg);
+        throw new Error(errType === 'overloaded_error'
+          ? 'AI service is temporarily busy. Please try again in a moment.'
+          : `AI error: ${errMsg}`);
+      }
+
       // Anthropic API returns { content: [{ type: 'text', text: '...' }] }
       const briefContent = data.content?.[0]?.text || data.response || data.feedback || 'Unable to generate brief. Please try again.';
 
@@ -354,7 +365,7 @@ export default function NursingConfidenceBuilder({ specialty, onBack, userData, 
       // CHARGE AFTER SUCCESS (Battle Scar #8)
       if (userData?.user?.id) {
         try {
-          await incrementUsage(supabase, userData.user.id, 'practiceMode');
+          await incrementUsage(supabase, userData.user.id, 'nursingCoach');
           if (refreshUsage) refreshUsage();
         } catch (chargeErr) {
           console.warn('Usage increment failed (non-blocking):', chargeErr);
@@ -390,8 +401,8 @@ export default function NursingConfidenceBuilder({ specialty, onBack, userData, 
 
   // Check if profile has meaningful data
   const profileHasData = profile.yearsExperience || profile.currentRole || profile.clinicalStrengths;
-  const isUnlimited = userData?.isBeta || userData?.tier === 'pro';
-  const creditInfo = userData?.usage?.practiceMode;
+  const isUnlimited = userData?.isBeta || userData?.tier === 'nursing_pass' || userData?.tier === 'annual' || userData?.tier === 'pro' || userData?.tier === 'beta';
+  const creditInfo = userData?.usage?.nursingCoach;
 
   // ============================================================
   // RENDER
@@ -809,12 +820,12 @@ function EvidenceSection({ evidenceFile, profileHasData, copied, onCopy, onEditP
         )}
 
         {creditBlocked ? (
-          <a
-            href="/app?upgrade=true&returnTo=/nursing"
+          <button
+            onClick={onShowPricing}
             className="block w-full text-center font-semibold py-3 rounded-xl text-sm transition-all bg-gradient-to-r from-purple-600 to-sky-500 text-white shadow-lg shadow-purple-500/30 hover:-translate-y-0.5"
           >
-            Upgrade to Pro — Unlimited AI Briefs
-          </a>
+            Get Nursing Pass — Unlimited AI Briefs
+          </button>
         ) : (
           <button
             onClick={onGenerateBrief}

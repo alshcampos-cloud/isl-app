@@ -10,7 +10,7 @@
 //   #9  — Beta users bypass limits
 //   #19 — AI NEVER generates clinical content (THE #1 risk)
 //
-// Credit feature: 'practiceMode' (shares with Practice + SBAR Drill)
+// Credit feature: 'nursingCoach' (pass-only, unlimited for pass holders)
 // ============================================================
 
 import { useState, useRef, useEffect, useCallback } from 'react';
@@ -27,6 +27,7 @@ import { updateStreakAfterSession } from '../../utils/streakSupabase';
 import { CLINICAL_FRAMEWORKS, getQuestionsForSpecialty } from './nursingQuestions';
 import useSpeechRecognition from './useSpeechRecognition';
 import SpeechUnavailableWarning from '../SpeechUnavailableWarning';
+import { loadCoachMessages, saveCoachMessages, clearCoachMessages } from '../../utils/coachPersistence';
 
 // ============================================================
 // THE WALLED GARDEN SYSTEM PROMPT — AIRTIGHT
@@ -103,6 +104,8 @@ EXAMPLES OF REDIRECTS:
 - "Should I give Narcan for this patient?" → Redirect + pivot to "How would you describe your clinical decision-making process in an interview?"
 - "What are the signs of compartment syndrome?" → Redirect + pivot to "How would you articulate your assessment skills when answering interview questions?"
 
+PERSISTENT CLINICAL QUESTIONS: If the user continues asking clinical knowledge questions after you've already redirected, be explicit and firm (but kind): "I appreciate your curiosity! However, I'm specifically designed to help with interview communication skills, not clinical knowledge. For clinical reference, please consult your facility protocols, UpToDate, or your nursing education resources. Let's focus on what I do best — helping you communicate confidently in interviews. What interview topic would you like to work on?"
+
 === WHAT YOU MUST NEVER DO — ABSOLUTE RULES ===
 
 1. NEVER generate clinical scenarios, patient cases, or medical situations from your training data
@@ -129,6 +132,17 @@ EXAMPLES OF REDIRECTS:
 - Reference frameworks naturally, not as lectures
 - When workshopping answers, quote their words back and suggest specific improvements
 - End responses with a question or actionable next step when appropriate
+
+=== HANDLING BRIEF OR VAGUE MESSAGES ===
+If the user sends a very brief message (1-5 words) or something vague:
+- Do NOT generate coaching advice based on content that doesn't exist
+- Do NOT affirm or praise what they haven't actually said
+- Instead, ask a specific follow-up to understand what they need:
+  - "I'd love to help — can you tell me more about what you're working on?"
+  - "Sure! What specific question or topic are you preparing for?"
+  - "Absolutely — are you looking to practice a particular type of question, or work on your overall approach?"
+- If they say "test" or something clearly not a real request, respond: "Looks like you're just testing things out — totally fine! When you're ready, tell me what you'd like to work on and I'll help you prepare."
+- ONE exception: emotional statements like "I'm so nervous" or "I'm scared" ARE valid. Respond to the emotion warmly, then guide toward actionable coaching.
 
 === FRAMEWORK CITATIONS ===
 When you reference a framework, cite it naturally:
@@ -196,20 +210,26 @@ const CONVERSATION_STARTERS = [
 // ============================================================
 // COMPONENT
 // ============================================================
-export default function NursingAICoach({ specialty, onBack, userData, refreshUsage, addSession, triggerStreakRefresh }) {
+export default function NursingAICoach({ specialty, onBack, userData, refreshUsage, addSession, triggerStreakRefresh, onShowPricing }) {
   // Load curated questions for this specialty (walled garden — C.O.A.C.H. protocol "O")
   const specialtyQuestions = getQuestionsForSpecialty(specialty.id);
   const questionListForPrompt = specialtyQuestions.map(q =>
     `- [${q.category}] [${q.difficulty}] "${q.question}" (Framework: ${q.responseFramework?.toUpperCase() || 'STAR'})${q.bullets?.length ? '\n  Evaluation rubric: ' + q.bullets.join(' | ') : ''}${q.followUps?.length ? '\n  Follow-ups: ' + q.followUps.join(' / ') : ''}`
   ).join('\n');
 
-  // Chat state
-  const [messages, setMessages] = useState([]);
+  // Chat state — restore from localStorage (coach persistence fix)
+  const [messages, setMessages] = useState(() => {
+    const saved = loadCoachMessages('nursing');
+    return saved.messages;
+  });
   const [currentInput, setCurrentInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [creditBlocked, setCreditBlocked] = useState(false);
-  const [messageCount, setMessageCount] = useState(0);
+  const [messageCount, setMessageCount] = useState(() => {
+    const saved = loadCoachMessages('nursing');
+    return saved.messageCount;
+  });
   const [sessionEnded, setSessionEnded] = useState(false);
 
   // Refs
@@ -234,13 +254,13 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
     }
   }, [speechTranscript, micActive]);
 
-  // Credit check on mount (shares 'practiceMode' credits)
+  // Credit check on mount — uses nursingCoach credits (pass-only, unlimited for pass holders)
   useEffect(() => {
     if (userData && !userData.loading && userData.usage) {
       const check = canUseFeature(
-        { practice_mode: userData.usage.practiceMode?.used || 0 },
+        { nursing_coach: userData.usage.nursingCoach?.used || 0 },
         userData.tier,
-        'practiceMode'
+        'nursingCoach'
       );
       if (!check.allowed) {
         setCreditBlocked(true);
@@ -252,6 +272,13 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Persist messages to localStorage (coach chat persistence fix)
+  useEffect(() => {
+    if (messages.length > 0) {
+      saveCoachMessages(messages, messageCount, 'nursing');
+    }
+  }, [messages, messageCount]);
 
   // Focus input after AI responds
   useEffect(() => {
@@ -325,6 +352,17 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
       }
 
       const data = await response.json();
+
+      // Detect Anthropic API errors passed through Edge Function (overloaded, rate limit, etc.)
+      if (data.type === 'error' && data.error) {
+        const errType = data.error.type || 'unknown';
+        const errMsg = data.error.message || 'AI service error';
+        console.error('❌ Anthropic API error:', errType, errMsg);
+        throw new Error(errType === 'overloaded_error'
+          ? 'AI service is temporarily busy. Please try again in a moment.'
+          : `AI error: ${errMsg}`);
+      }
+
       const aiContent = data.content?.[0]?.text || data.response || data.feedback || "I'm here to help you prepare for your nursing interview. What would you like to work on?";
 
       // Add AI response to chat
@@ -337,10 +375,10 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
       setMessageCount(prev => prev + 1);
 
       // CHARGE AFTER SUCCESS (Battle Scar #8)
-      // Each AI response = 1 credit on 'practiceMode'
+      // Each AI response = 1 credit on 'nursingCoach'
       if (userData?.user?.id) {
         try {
-          await incrementUsage(supabase, userData.user.id, 'practiceMode');
+          await incrementUsage(supabase, userData.user.id, 'nursingCoach');
           updateStreakAfterSession(supabase, userData.user.id).then(() => triggerStreakRefresh?.()).catch(() => {}); // Phase 3 streak
           if (refreshUsage) refreshUsage();
         } catch (chargeErr) {
@@ -351,9 +389,9 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
 
       // Re-check credits after charging
       if (userData?.usage && !userData?.isBeta && userData?.tier !== 'pro') {
-        const currentUsed = (userData.usage.practiceMode?.used || 0) + messageCount + 1;
-        const limit = userData.usage.practiceMode?.limit || 10;
-        if (currentUsed >= limit) {
+        const currentUsed = (userData.usage.nursingCoach?.used || 0) + messageCount + 1;
+        const limit = userData.usage.nursingCoach?.limit || 0;
+        if (limit < 999999 && currentUsed >= limit) {
           setCreditBlocked(true);
         }
       }
@@ -419,8 +457,8 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
           <div className="bg-white/5 border border-white/10 rounded-2xl p-8">
             {/* Header */}
             <div className="text-center mb-6">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-sky-600 to-cyan-500 flex items-center justify-center mx-auto mb-4">
-                <MessageSquare className="w-8 h-8 text-white" />
+              <div className="w-16 h-16 rounded-2xl bg-teal-50 flex items-center justify-center mx-auto mb-4">
+                <MessageSquare className="w-8 h-8 text-teal-600" />
               </div>
               <h2 className="text-2xl font-bold text-white mb-1">Coaching Session Complete</h2>
               <p className="text-slate-400 text-sm">Great work investing in your interview prep!</p>
@@ -482,6 +520,7 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
                   setMessageCount(0);
                   setSessionEnded(false);
                   setError(null);
+                  clearCoachMessages('nursing');
                 }}
                 className="w-full bg-gradient-to-r from-sky-600 to-cyan-500 text-white font-semibold py-3 rounded-xl shadow-lg shadow-sky-500/30 hover:-translate-y-0.5 transition-all"
               >
@@ -504,8 +543,8 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
   // EMPTY STATE — No messages yet (show starters)
   // ============================================================
   if (messages.length === 0) {
-    const creditInfo = userData?.usage?.practiceMode;
-    const isUnlimited = userData?.isBeta || userData?.tier === 'pro';
+    const creditInfo = userData?.usage?.nursingCoach;
+    const isUnlimited = userData?.isBeta || userData?.tier === 'nursing_pass' || userData?.tier === 'annual' || userData?.tier === 'pro' || userData?.tier === 'beta';
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-sky-950 to-slate-900 flex flex-col">
@@ -523,7 +562,25 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
               <span className="text-lg">{specialty.icon}</span>
               <span className="text-white font-medium text-sm">AI Coach</span>
             </div>
-            <div className="w-16" /> {/* Spacer for centering */}
+            {/* New Chat button — clears persisted conversation */}
+            <div className="w-16 flex justify-end">
+              {messages.length > 0 && (
+                <button
+                  onClick={() => {
+                    setMessages([]);
+                    setMessageCount(0);
+                    setCurrentInput('');
+                    setError(null);
+                    setSessionEnded(false);
+                    clearCoachMessages('nursing');
+                  }}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+                  title="New conversation"
+                >
+                  <Sparkles className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -536,8 +593,8 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
           >
             {/* Welcome */}
             <div className="text-center mb-8">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-sky-600 to-cyan-500 flex items-center justify-center mx-auto mb-4">
-                <MessageSquare className="w-8 h-8 text-white" />
+              <div className="w-16 h-16 rounded-2xl bg-teal-50 flex items-center justify-center mx-auto mb-4">
+                <MessageSquare className="w-8 h-8 text-teal-600" />
               </div>
               <h2 className="text-2xl font-bold text-white mb-2">
                 Interview Strategy Coach
@@ -558,9 +615,9 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
                 {creditBlocked ? (
                   <>
                     <p className="mb-2">{`You've used all ${creditInfo.limit} free coaching messages this month.`}</p>
-                    <a href="/app?upgrade=true&returnTo=/nursing" className="inline-block text-xs font-medium text-white bg-gradient-to-r from-purple-600 to-sky-500 px-3 py-1.5 rounded-lg hover:-translate-y-0.5 transition-all">
-                      Upgrade to Pro
-                    </a>
+                    <button onClick={onShowPricing} className="inline-block text-xs font-medium text-white bg-gradient-to-r from-purple-600 to-sky-500 px-3 py-1.5 rounded-lg hover:-translate-y-0.5 transition-all">
+                      Get Nursing Pass
+                    </button>
                   </>
                 ) : (
                   `${creditInfo.remaining} of ${creditInfo.limit} free messages remaining this month`
@@ -765,12 +822,12 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
               <p className="text-amber-300 text-sm mb-2">
                 You've reached your free message limit for this month.
               </p>
-              <a
-                href="/app?upgrade=true&returnTo=/nursing"
+              <button
+                onClick={onShowPricing}
                 className="inline-block text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-sky-500 px-4 py-2 rounded-lg hover:-translate-y-0.5 transition-all"
               >
-                Upgrade to Pro — Unlimited Coaching
-              </a>
+                Get Nursing Pass — Unlimited Coaching
+              </button>
             </div>
           )}
 

@@ -1,9 +1,16 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { supabase } from './lib/supabase'
 import { Mail, Lock, User, AlertCircle, CheckCircle } from 'lucide-react'
 import { trackSignUp } from './utils/googleAdsTracking'
+import { getDeviceFingerprint, hashEmail } from './utils/deviceFingerprint'
+import GoogleSignInButton from './Components/GoogleSignInButton'
+import { startGoogleOAuth } from './utils/googleOAuth'
+import { isNativeApp } from './utils/platform'
+import { showNursingFeatures } from './utils/appTarget'
 
-function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing = false }) {
+function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing: fromNursingProp = false }) {
+  // Belt-and-suspenders: ignore fromNursing on general builds (Apple 4.3(a) compliance)
+  const fromNursing = showNursingFeatures() && fromNursingProp
   const [loading, setLoading] = useState(false)
   const [isSignUp, setIsSignUp] = useState(defaultMode === 'signup')
   const [email, setEmail] = useState('')
@@ -15,6 +22,23 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
 
   const [showPasswordReset, setShowPasswordReset] = useState(false)
   const [agreedToTerms, setAgreedToTerms] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
+
+  const handleGoogleSignIn = useCallback(async () => {
+    setGoogleLoading(true)
+    setError(null)
+
+    const { error: oauthError } = await startGoogleOAuth({
+      fromNursing,
+    })
+
+    if (oauthError) {
+      setError(oauthError)
+      setGoogleLoading(false)
+    }
+    // If no error, browser is redirecting to Google — don't reset loading
+  }, [fromNursing])
+
   const handleAuth = async (e) => {
     e.preventDefault()
     setLoading(true)
@@ -34,6 +58,7 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
           email,
           password,
           options: {
+            emailRedirectTo: `${window.location.origin}/auth/confirm`,
             data: {
               full_name: fullName
             }
@@ -43,6 +68,37 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
         if (error) throw error
 
         trackSignUp() // Google Ads conversion
+
+        // Abuse tracking — non-blocking, must never break signup flow
+        try {
+          const fingerprint = await getDeviceFingerprint();
+          const emailH = await hashEmail(email);
+          const domain = email.split('@')[1]?.toLowerCase() || '';
+
+          // Check for abuse
+          const { data: abuseCheck } = await supabase.rpc('check_signup_abuse', {
+            p_fingerprint: fingerprint, p_email_hash: emailH
+          });
+
+          // Record signal
+          if (data?.user?.id) {
+            await supabase.rpc('record_signup_signal', {
+              p_fingerprint: fingerprint, p_email_hash: emailH,
+              p_email_domain: domain, p_user_id: data.user.id
+            });
+          }
+
+          // Flag abuse if detected
+          if (abuseCheck?.reduced_tier && data?.user?.id) {
+            await supabase.from('user_profiles')
+              .update({ abuse_reduced_tier: true })
+              .eq('user_id', data.user.id);
+          }
+        } catch (err) {
+          console.warn('[Abuse] Signal recording failed:', err.message);
+          // Non-blocking — don't break signup flow
+        }
+
         setMessage('Check your email for the verification link!')
       } else {
         // Login
@@ -84,25 +140,25 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-sky-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(to bottom right, #fafaf8, #f5f5f0, #f0f4f8)' }}>
+      <div className="bg-white rounded-2xl p-8 max-w-md w-full border border-warm-200/60" style={{ boxShadow: '0 16px 48px -8px rgba(0,0,0,0.08), 0 0 0 1px rgba(232,232,224,0.3)' }}>
         {/* Back link */}
         {onBack && (
           <button
             onClick={onBack}
-            className="text-sm text-gray-500 hover:text-indigo-600 mb-4 flex items-center gap-1 transition-colors"
+            className="text-sm text-warm-500 hover:text-teal-600 mb-4 flex items-center gap-1 transition-colors"
           >
             ← Back
           </button>
         )}
 
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            {isSignUp ? 'Create Account' : 'Welcome Back'}
+          <h1 className="text-4xl font-bold text-warm-800 mb-2">
+            {isSignUp ? 'Create Account' : 'Welcome'}
           </h1>
-          <p className="text-gray-600">
+          <p className="text-warm-500 font-medium">
             {isSignUp
-              ? (fromNursing ? 'Sign up for NurseInterviewPro' : 'Sign up for InterviewAnswers.ai')
+              ? (fromNursing ? 'Sign up for NurseAnswerPro' : 'Sign up for InterviewAnswers.ai')
               : 'Log in to continue'}
           </p>
         </div>
@@ -121,20 +177,40 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
           </div>
         )}
 
+        {/* Google Sign-In — web only, not in native Capacitor app */}
+        {!isNativeApp() && (
+          <>
+            <div className="mb-6">
+              <GoogleSignInButton
+                onClick={handleGoogleSignIn}
+                loading={googleLoading}
+                label={isSignUp ? 'Sign up with Google' : 'Sign in with Google'}
+              />
+            </div>
+
+            {/* Divider */}
+            <div className="flex items-center gap-3 mb-6">
+              <div className="flex-1 h-px bg-warm-200" />
+              <span className="text-xs text-warm-400 font-medium uppercase tracking-wider">or</span>
+              <div className="flex-1 h-px bg-warm-200" />
+            </div>
+          </>
+        )}
+
         <form onSubmit={handleAuth} className="space-y-4">
           {isSignUp && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-warm-700 mb-2">
                 Full Name
               </label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-warm-400" />
                 <input
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   required={isSignUp}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-3 border border-warm-200 rounded-xl focus:ring-2 focus:ring-teal-300/50 focus:border-teal-300 transition-all duration-200"
                   placeholder="John Doe"
                 />
               </div>
@@ -142,56 +218,56 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-warm-700 mb-2">
               Email
             </label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-warm-400" />
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-3 border border-warm-200 rounded-xl focus:ring-2 focus:ring-teal-300/50 focus:border-teal-300 transition-all duration-200"
                 placeholder="you@example.com"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-warm-700 mb-2">
               Password
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-warm-400" />
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={8}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-3 border border-warm-200 rounded-xl focus:ring-2 focus:ring-teal-300/50 focus:border-teal-300 transition-all duration-200"
                 placeholder="••••••••"
               />
             </div>
             {isSignUp && password.length > 0 && (
               <div className="mt-2 space-y-1">
-                <p className={`text-xs ${password.length >= 8 ? 'text-green-600' : 'text-gray-400'}`}>
+                <p className={`text-xs ${password.length >= 8 ? 'text-green-600' : 'text-warm-400'}`}>
                   {password.length >= 8 ? '✓' : '○'} At least 8 characters
                 </p>
-                <p className={`text-xs ${/[A-Z]/.test(password) ? 'text-green-600' : 'text-gray-400'}`}>
+                <p className={`text-xs ${/[A-Z]/.test(password) ? 'text-green-600' : 'text-warm-400'}`}>
                   {/[A-Z]/.test(password) ? '✓' : '○'} One uppercase letter
                 </p>
-                <p className={`text-xs ${/[0-9]/.test(password) ? 'text-green-600' : 'text-gray-400'}`}>
+                <p className={`text-xs ${/[0-9]/.test(password) ? 'text-green-600' : 'text-warm-400'}`}>
                   {/[0-9]/.test(password) ? '✓' : '○'} One number
                 </p>
-                <p className={`text-xs ${/[^A-Za-z0-9]/.test(password) ? 'text-green-600' : 'text-gray-400'}`}>
+                <p className={`text-xs ${/[^A-Za-z0-9]/.test(password) ? 'text-green-600' : 'text-warm-400'}`}>
                   {/[^A-Za-z0-9]/.test(password) ? '✓' : '○'} One special character (recommended)
                 </p>
               </div>
             )}
             {isSignUp && !password && (
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-warm-400 mt-1">
                 At least 8 characters
               </p>
             )}
@@ -199,17 +275,17 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
 
           {isSignUp && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-warm-700 mb-2">
                 Confirm Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-warm-400" />
                 <input
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-3 border border-warm-200 rounded-xl focus:ring-2 focus:ring-teal-300/50 focus:border-teal-300 transition-all duration-200"
                   placeholder="••••••••"
                 />
               </div>
@@ -229,23 +305,19 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
                   type="checkbox"
                   checked={agreedToTerms}
                   onChange={(e) => setAgreedToTerms(e.target.checked)}
-                  className="mt-1 w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
+                  className="mt-1 w-4 h-4 text-teal-600 border-warm-300 rounded focus:ring-teal-500"
                 />
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-warm-600">
                   I agree to the{' '}
                   <a
-                    href="https://interviewanswers.ai/terms"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href="/terms"
                     className="text-teal-600 hover:text-teal-700 underline"
                   >
                     Terms of Service
                   </a>{' '}
                   and{' '}
                   <a
-                    href="https://interviewanswers.ai/privacy"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href="/privacy"
                     className="text-teal-600 hover:text-teal-700 underline"
                   >
                     Privacy Policy
@@ -259,7 +331,8 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
 <button
             type="submit"
             disabled={loading || (isSignUp && !agreedToTerms)}
-            className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-bold py-3 rounded-lg disabled:opacity-50 transition shadow-md"
+            className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-bold py-3.5 rounded-2xl disabled:opacity-50 transition-all duration-200 active:scale-[0.97]"
+            style={{ boxShadow: '0 4px 12px -2px rgba(13, 148, 136, 0.3)' }}
           >
             {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Log In'}
           </button>
@@ -293,25 +366,25 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
         </div>
 
         {showPasswordReset && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-2xl p-8 max-w-md w-full">
-              <h2 className="text-2xl font-bold mb-4">Reset Password</h2>
-              <p className="text-gray-600 mb-6">
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-2xl p-8 max-w-md w-full border border-warm-200/60" style={{ boxShadow: '0 16px 48px -8px rgba(0,0,0,0.12)' }}>
+              <h2 className="text-2xl font-bold text-warm-800 mb-4">Reset Password</h2>
+              <p className="text-warm-500 mb-6">
                 Enter your email and we'll send you a reset link.
               </p>
               <form onSubmit={handlePasswordReset} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-warm-700 mb-2">
                     Email
                   </label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-warm-400" />
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      className="w-full pl-10 pr-4 py-3 border border-warm-200 rounded-xl focus:ring-2 focus:ring-teal-300/50 focus:border-teal-300 transition-all duration-200"
                       placeholder="you@example.com"
                     />
                   </div>
@@ -320,14 +393,14 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
                   <button
                     type="button"
                     onClick={() => setShowPasswordReset(false)}
-                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 rounded-lg"
+                    className="flex-1 bg-warm-100 hover:bg-warm-200 text-warm-700 font-semibold py-3 rounded-xl transition-all duration-200"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={loading}
-                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg disabled:opacity-50"
+                    className="flex-1 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-semibold py-3 rounded-xl disabled:opacity-50 transition-all duration-200 active:scale-[0.97]"
                   >
                     {loading ? 'Sending...' : 'Send Reset Link'}
                   </button>

@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<title>Don't Be a Fraud — InterviewAnswers.ai</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    width: 1200px; height: 628px; overflow: hidden;
+    background: linear-gradient(135deg, #0a0e1a 0%, #12172a 45%, #0f172a 100%);
+    color: #fff;
+    position: relative;
+    display: flex;
+  }
+  /* Ambient glow */
+  body::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(circle at 15% 30%, rgba(20,184,166,0.12) 0%, transparent 45%),
+      radial-gradient(circle at 85% 70%, rgba(16,185,129,0.08) 0%, transparent 45%);
+    pointer-events: none;
+  }
+  /* Crossed-out "fraud" banner overlay */
+  .strike-band {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, transparent 0%, rgba(239,68,68,0.45) 50%, transparent 100%);
+  }
+
+  .left {
+    flex: 1.1; padding: 70px 50px 60px 60px;
+    display: flex; flex-direction: column; justify-content: center;
+    z-index: 2;
+  }
+  .brand {
+    font-size: 15px; font-weight: 700; letter-spacing: 0.5px;
+    color: #14b8a6; margin-bottom: 28px;
+    text-transform: uppercase;
+  }
+  .brand span { color: rgba(255,255,255,0.4); font-weight: 500; }
+
+  h1 {
+    font-size: 84px; font-weight: 900; line-height: 0.98;
+    letter-spacing: -2.5px;
+    margin-bottom: 14px;
+    color: #ffffff;
+  }
+  h1 .fraud-wrap {
+    position: relative; display: inline-block;
+  }
+  h1 .fraud {
+    background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  /* Big red strikethrough */
+  h1 .fraud-wrap::after {
+    content: '';
+    position: absolute;
+    left: -4px; right: -4px;
+    top: 52%;
+    height: 8px;
+    background: #ef4444;
+    transform: rotate(-3deg);
+    border-radius: 4px;
+    box-shadow: 0 0 24px rgba(239,68,68,0.5);
+  }
+
+  .tagline {
+    font-size: 26px; font-weight: 700; color: #14b8a6;
+    margin-top: 8px; margin-bottom: 22px;
+    letter-spacing: -0.5px;
+  }
+  .body {
+    font-size: 19px; color: rgba(255,255,255,0.78);
+    line-height: 1.55; max-width: 460px;
+    margin-bottom: 32px;
+  }
+  .body strong { color: #fff; font-weight: 700; }
+
+  .cta {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+    color: #fff; font-size: 18px; font-weight: 700;
+    padding: 17px 34px; border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(20,184,166,0.35), 0 0 0 1px rgba(20,184,166,0.25);
+    width: fit-content;
+    letter-spacing: -0.2px;
+  }
+  .cta::after { content: '→'; font-size: 22px; }
+
+  .micro {
+    margin-top: 22px;
+    font-size: 13px; color: rgba(255,255,255,0.5);
+    letter-spacing: 0.3px;
+  }
+  .micro strong { color: rgba(255,255,255,0.75); }
+
+  /* Right side — the "practice stack" visualization */
+  .right {
+    flex: 0.9;
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+    padding: 40px 50px 40px 20px;
+    z-index: 2;
+  }
+
+  .stack {
+    position: relative;
+    width: 340px; height: 440px;
+  }
+
+  .card {
+    position: absolute;
+    width: 320px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 18px;
+    padding: 20px 22px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+  }
+
+  .card .label {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: #14b8a6;
+    margin-bottom: 8px;
+  }
+  .card .q {
+    font-size: 15px; color: rgba(255,255,255,0.9);
+    font-weight: 600; line-height: 1.35;
+  }
+  .card .score {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-top: 12px;
+    font-size: 12px; color: #10b981;
+    font-weight: 700;
+  }
+  .card .score-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 8px #10b981;
+  }
+
+  .card-1 {
+    top: 0; left: 10px;
+    transform: rotate(-6deg);
+    opacity: 0.55;
+  }
+  .card-2 {
+    top: 40px; left: 20px;
+    transform: rotate(-2deg);
+    opacity: 0.75;
+  }
+  .card-3 {
+    top: 90px; left: 10px;
+    transform: rotate(2deg);
+    background: rgba(20,184,166,0.08);
+    border-color: rgba(20,184,166,0.25);
+  }
+  .card-3 .score { color: #14b8a6; }
+  .card-3 .score-dot { background: #14b8a6; box-shadow: 0 0 8px #14b8a6; }
+
+  .card-4 {
+    top: 160px; left: 0;
+    transform: rotate(-1deg);
+    background: rgba(16,185,129,0.12);
+    border-color: rgba(16,185,129,0.3);
+    box-shadow: 0 16px 48px rgba(16,185,129,0.2);
+  }
+  .card-4 .label { color: #10b981; }
+  .card-4 .mega-score {
+    font-size: 38px; font-weight: 900;
+    background: linear-gradient(135deg, #10b981 0%, #14b8a6 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-top: 6px;
+    letter-spacing: -1px;
+  }
+  .card-4 .mega-score-label {
+    font-size: 11px; color: rgba(255,255,255,0.6);
+    font-weight: 600; margin-top: 2px;
+  }
+  .progress-bar {
+    margin-top: 10px;
+    height: 6px; background: rgba(255,255,255,0.08);
+    border-radius: 3px; overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    width: 92%;
+    background: linear-gradient(90deg, #14b8a6 0%, #10b981 100%);
+    border-radius: 3px;
+  }
+
+  .stamp {
+    position: absolute;
+    bottom: 20px; right: 10px;
+    background: rgba(16,185,129,0.12);
+    border: 1.5px solid rgba(16,185,129,0.4);
+    color: #10b981;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 12px; font-weight: 800;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    transform: rotate(-8deg);
+  }
+</style>
+</head>
+<body>
+  <div class="strike-band"></div>
+
+  <div class="left">
+    <div class="brand">InterviewAnswers<span>.ai</span></div>
+    <h1>
+      Don't be a<br>
+      <span class="fraud-wrap"><span class="fraud">fraud.</span></span>
+    </h1>
+    <div class="tagline">Practice. Learn. Earn it.</div>
+    <p class="body">
+      Interviewing is a <strong>life-necessary skill</strong>. The kind that decides
+      whether your family eats out tonight &mdash; or next year. Master it for
+      real. Don&rsquo;t borrow an AI&rsquo;s voice in the room.
+    </p>
+    <div class="cta">Start practicing &mdash; free</div>
+    <div class="micro">
+      <strong>Practice, not cheat.</strong> The interview AI that doesn&rsquo;t go in the interview.
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="stack">
+      <div class="card card-1">
+        <div class="label">Session 1</div>
+        <div class="q">&ldquo;Tell me about a time you failed...&rdquo;</div>
+        <div class="score"><span class="score-dot"></span>Score 68</div>
+      </div>
+      <div class="card card-2">
+        <div class="label">Session 4</div>
+        <div class="q">&ldquo;Walk me through a conflict with a coworker.&rdquo;</div>
+        <div class="score"><span class="score-dot"></span>Score 79</div>
+      </div>
+      <div class="card card-3">
+        <div class="label">Session 8</div>
+        <div class="q">&ldquo;Describe a leadership challenge.&rdquo;</div>
+        <div class="score"><span class="score-dot"></span>Score 87</div>
+      </div>
+      <div class="card card-4">
+        <div class="label">Session 12 — Today</div>
+        <div class="mega-score">92</div>
+        <div class="mega-score-label">READY FOR INTERVIEW</div>
+        <div class="progress-bar"><div class="progress-bar-fill"></div></div>
+      </div>
+      <div class="stamp">Earned</div>
+    </div>
+  </div>
+</body>
+</html>

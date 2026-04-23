@@ -1,5 +1,6 @@
 import React from 'react';
 import { X } from 'lucide-react';
+import { isTargetedBuild } from '../utils/appTarget';
 
 const ConsentDialog = ({ 
   show, 
@@ -11,18 +12,19 @@ const ConsentDialog = ({
   
   if (!show) return null;
 
-  // Determine if we should show Live Prompter warning
+  // Determine if we should show Practice Prompter warning
   const showLivePrompterWarning = pendingMode === 'prompter';
-  
+  const isNative = isTargetedBuild();
+
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 overflow-y-auto">
-      <div 
+      <div
         className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-auto shadow-2xl my-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-6">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xl font-bold text-gray-900">Recording Consent Required</h2>
+            <h2 className="text-xl font-bold text-gray-900">{isNative ? 'Microphone & AI Consent' : 'Recording Consent Required'}</h2>
             <button
               onClick={onCancel}
               className="text-gray-400 hover:text-gray-600 transition"
@@ -31,23 +33,29 @@ const ConsentDialog = ({
               <X className="w-5 h-5" />
             </button>
           </div>
-          
+
           <p className="text-gray-700 mb-3 text-sm">
-            InterviewAnswers.ai uses your microphone to record practice responses for AI feedback.
+            {isNative
+              ? <>This app uses your microphone to listen to your practice responses. Your speech is transcribed on-device, and the text is sent to <strong>Anthropic's Claude AI</strong> for personalized coaching feedback.</>
+              : <>InterviewAnswers.ai uses your microphone to record practice responses. Your spoken responses are transcribed on your device, and the text is analyzed by <strong>Anthropic's Claude AI</strong> to provide coaching feedback.</>
+            }
           </p>
 
           <div className="bg-blue-50 border-l-4 border-blue-400 rounded p-3 mb-3 text-xs">
-            <p className="text-blue-900 mb-1">✓ Recordings for feedback only</p>
-            <p className="text-blue-900 mb-1">✓ Delete anytime in Settings</p>
-            <p className="text-blue-900">✓ Data stored securely</p>
+            <p className="text-blue-900 mb-1">✓ {isNative ? 'Speech transcribed on your device' : 'Audio processed on your device only'}</p>
+            <p className="text-blue-900 mb-1">✓ Text analyzed by Anthropic's Claude AI for feedback</p>
+            <p className="text-blue-900 mb-1">✓ No personal identifiers shared with Anthropic</p>
+            <p className="text-blue-900 mb-1">✓ Delete your data anytime in Settings</p>
+            <p className="text-blue-900">✓ All data stored securely and encrypted</p>
           </div>
 
-          {/* ONLY show Live Prompter warning if using Live Prompter */}
+          {/* ONLY show Practice Prompter warning if using Practice Prompter */}
           {showLivePrompterWarning && (
             <div className="bg-orange-50 border-l-4 border-orange-400 rounded p-3 mb-3">
-              <p className="font-bold text-orange-900 text-sm mb-1">⚠️ Live Prompter Use</p>
+              <p className="font-bold text-orange-900 text-sm mb-1">⚠️ Practice Prompter — Rehearsal Only</p>
               <p className="text-orange-800 text-xs">
-                If using during actual interviews, <strong>YOU must obtain consent from all parties</strong>. 
+                Practice Prompter is designed for rehearsal before your interview. If you choose to use it in a live
+                conversation with another party, <strong>YOU must obtain consent from all parties</strong>.
                 Recording without consent may be illegal.
               </p>
             </div>

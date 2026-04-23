@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1080">
+<title>TikTok Thumbnail</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    width: 1080px; height: 1920px; overflow: hidden;
+    background: #0a0a0a;
+    color: #fff;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: space-between;
+    position: relative;
+  }
+  /* Vibrant accent glow */
+  body::before {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 50% 30%, rgba(13,148,136,0.2) 0%, transparent 40%),
+      radial-gradient(circle at 30% 70%, rgba(236,72,153,0.08) 0%, transparent 30%),
+      radial-gradient(circle at 70% 60%, rgba(59,130,246,0.06) 0%, transparent 30%);
+    pointer-events: none;
+  }
+  .top-section {
+    z-index: 1; padding: 100px 70px 0;
+    text-align: center; width: 100%;
+  }
+  .hook-1 {
+    font-size: 64px; font-weight: 900; line-height: 1.1;
+    letter-spacing: -2px;
+    text-shadow: 0 4px 30px rgba(0,0,0,0.5);
+  }
+  .hook-1 .highlight {
+    color: #0D9488;
+    text-shadow: 0 0 40px rgba(13,148,136,0.4);
+  }
+  .hook-1 .time {
+    display: inline-block;
+    background: linear-gradient(135deg, #0D9488, #0f766e);
+    padding: 4px 20px; border-radius: 12px;
+    font-size: 56px;
+  }
+  .middle-section {
+    z-index: 1; display: flex; flex-direction: column;
+    align-items: center; gap: 20px;
+    padding: 0 70px;
+  }
+  .transformation {
+    display: flex; align-items: center; gap: 40px;
+  }
+  .face-card {
+    display: flex; flex-direction: column; align-items: center; gap: 16px;
+  }
+  .face {
+    width: 220px; height: 220px;
+    border-radius: 40px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 120px;
+    position: relative;
+  }
+  .face.before {
+    background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(239,68,68,0.05));
+    border: 2px solid rgba(239,68,68,0.2);
+    box-shadow: 0 10px 40px rgba(239,68,68,0.15);
+  }
+  .face.after {
+    background: linear-gradient(135deg, rgba(13,148,136,0.2), rgba(13,148,136,0.05));
+    border: 2px solid rgba(13,148,136,0.3);
+    box-shadow: 0 10px 40px rgba(13,148,136,0.2);
+  }
+  .face-label {
+    font-size: 18px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+  .face.before + .face-label, .before ~ .face-label { color: rgba(239,68,68,0.7); }
+  .arrow-connector {
+    font-size: 60px; color: rgba(255,255,255,0.3);
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+  }
+  .arrow-connector .text {
+    font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.3);
+    text-transform: uppercase; letter-spacing: 2px;
+  }
+  .before-label { color: rgba(239,68,68,0.7); }
+  .after-label { color: #0D9488; }
+  /* Session mockup */
+  .session-strip {
+    width: 800px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 20px 28px;
+    display: flex; align-items: center; gap: 16px;
+    margin-top: 20px;
+  }
+  .session-dot { width: 10px; height: 10px; border-radius: 50%; background: #0D9488; }
+  .session-text { font-size: 16px; color: rgba(255,255,255,0.5); }
+  .session-time { margin-left: auto; font-size: 16px; color: #0D9488; font-weight: 700; }
+  .bottom-section {
+    z-index: 1; padding: 0 70px 100px;
+    text-align: center; width: 100%;
+  }
+  .hook-2 {
+    font-size: 56px; font-weight: 900; line-height: 1.1;
+    letter-spacing: -1.5px;
+    margin-bottom: 36px;
+  }
+  .hook-2 .glow {
+    color: #0D9488;
+    text-shadow: 0 0 30px rgba(13,148,136,0.5);
+  }
+  .cta-bar {
+    display: inline-flex; align-items: center; gap: 12px;
+    background: linear-gradient(135deg, #0D9488, #0f766e);
+    padding: 20px 40px; border-radius: 16px;
+    font-size: 22px; font-weight: 800;
+    box-shadow: 0 8px 30px rgba(13,148,136,0.4);
+  }
+  /* TikTok-style side icons */
+  .tiktok-ui {
+    position: absolute; right: 30px; bottom: 300px;
+    display: flex; flex-direction: column; gap: 24px;
+    align-items: center; z-index: 2;
+  }
+  .tt-icon {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+  .tt-count { font-size: 12px; color: rgba(255,255,255,0.5); text-align: center; }
+</style>
+</head>
+<body>
+  <div class="top-section">
+    <div class="hook-1">
+      I practiced with<br><span class="highlight">AI</span> for <span class="time">2 hours</span>...
+    </div>
+  </div>
+
+  <div class="middle-section">
+    <div class="transformation">
+      <div class="face-card">
+        <div class="face before">&#x1F630;</div>
+        <div class="face-label before-label">Before</div>
+      </div>
+      <div class="arrow-connector">
+        &rarr;
+        <div class="text">2 hrs</div>
+      </div>
+      <div class="face-card">
+        <div class="face after">&#x1F60E;</div>
+        <div class="face-label after-label">After</div>
+      </div>
+    </div>
+    <div class="session-strip">
+      <div class="session-dot"></div>
+      <div class="session-text">AI Mock Interview &mdash; Completed</div>
+      <div class="session-time">12 questions done</div>
+    </div>
+  </div>
+
+  <div class="bottom-section">
+    <div class="hook-2">...and got <span class="glow">the offer</span><br>the next day</div>
+    <div class="cta-bar">interviewanswers.ai &rarr;</div>
+  </div>
+
+  <div class="tiktok-ui">
+    <div><div class="tt-icon">&#x2665;</div><div class="tt-count">4.2K</div></div>
+    <div><div class="tt-icon">&#x1F4AC;</div><div class="tt-count">312</div></div>
+    <div><div class="tt-icon">&#x21A9;</div><div class="tt-count">1.8K</div></div>
+    <div><div class="tt-icon">&#x2B50;</div><div class="tt-count">Save</div></div>
+  </div>
+</body>
+</html>

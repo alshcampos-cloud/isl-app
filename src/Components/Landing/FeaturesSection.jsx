@@ -4,10 +4,10 @@ import { Mic, Bot, Target, Sparkles, Lightbulb, ArrowRight } from 'lucide-react'
 const features = [
   {
     icon: Mic,
-    name: 'Live Prompter',
+    name: 'Practice Prompter',
     gradient: 'from-teal-500 to-emerald-500',
-    description: 'Get real-time bullet points during your actual interview. Just hold SPACEBAR and get real-time guidance as you speak.',
-    highlights: ['Works with Zoom, Teams & more', 'Matches questions to your answers', 'Your answers are never recorded'],
+    description: 'Fuzzy logic identifies the question being asked and pulls your personalized bullet points in real-time during practice. Train your brain to hit every point before the real thing.',
+    highlights: ['Identifies questions automatically', 'Matches questions to your answers', 'Your answers are never recorded'],
   },
   {
     icon: Bot,
@@ -65,7 +65,7 @@ export default function FeaturesSection() {
             From Preparation to Performance
           </h2>
           <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-            Build answers from your real experiences, practice until they're second nature, then get real-time help during the actual interview.
+            Build answers from your real experiences, practice until they're second nature, and walk in ready.
           </p>
         </motion.div>
 
@@ -85,8 +85,8 @@ export default function FeaturesSection() {
                 className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-gray-100"
                 variants={itemVariants}
               >
-                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-5`}>
-                  <Icon className="w-7 h-7 text-white" />
+                <div className="w-14 h-14 rounded-2xl bg-teal-50 flex items-center justify-center mb-5">
+                  <Icon className="w-7 h-7 text-teal-600" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-3">{feature.name}</h3>
                 <p className="text-gray-600 leading-relaxed mb-4">{feature.description}</p>
@@ -119,8 +119,8 @@ export default function FeaturesSection() {
                 className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-gray-100"
                 variants={itemVariants}
               >
-                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-5`}>
-                  <Icon className="w-7 h-7 text-white" />
+                <div className="w-14 h-14 rounded-2xl bg-teal-50 flex items-center justify-center mb-5">
+                  <Icon className="w-7 h-7 text-teal-600" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-3">{feature.name}</h3>
                 <p className="text-gray-600 leading-relaxed mb-4">{feature.description}</p>

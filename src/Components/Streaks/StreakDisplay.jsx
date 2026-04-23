@@ -4,12 +4,13 @@
 // Pattern: follows ArchetypeCTA.jsx — fetches its own data, renders nothing on error.
 // Designed to drop into the existing stats grid as a 5th card.
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Flame, Snowflake, Trophy, X } from 'lucide-react';
+import { StreakStatIcon } from '../icons/FeatureIcons';
 import { AnimatePresence, motion } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { fetchStreak, activateFreeze } from '../../utils/streakSupabase';
-import { checkFreeze } from '../../utils/streakCalculator';
+import { checkFreeze, getLocalDateString } from '../../utils/streakCalculator';
 
 const MILESTONES_CONFIG = [
   { days: 3, label: '3 days', icon: '🌱' },
@@ -22,6 +23,10 @@ export default function StreakDisplay({ refreshTrigger, variant = 'dark' }) {
   const [streak, setStreak] = useState(null);
   const [showPopover, setShowPopover] = useState(false);
   const [freezeLoading, setFreezeLoading] = useState(false);
+
+  // Track touch start position to distinguish taps from scrolls
+  // Bug fix: onTouchEnd fires on scroll, causing popover to open while scrolling
+  const touchStartY = useRef(null);
 
   const loadStreak = useCallback(async () => {
     try {
@@ -42,12 +47,32 @@ export default function StreakDisplay({ refreshTrigger, variant = 'dark' }) {
   // Don't render anything if we have no data
   if (!streak) return null;
 
-  const currentStreak = streak.current_streak || 0;
+  // Recalculate streak on display — the DB stores the last known value,
+  // but if the user missed days since then, the displayed streak should be 0.
+  // The DB only updates on session completion, so we need this client-side check.
+  let currentStreak = streak.current_streak || 0;
   const longestStreak = streak.longest_streak || 0;
   const freezeInfo = checkFreeze(
     streak.freezes_used_this_week || 0,
     streak.freeze_week_start
   );
+
+  if (currentStreak > 0 && streak.last_practice_date) {
+    const today = getLocalDateString();
+    const lastDate = streak.last_practice_date; // already YYYY-MM-DD
+    const a = new Date(lastDate + 'T00:00:00');
+    const b = new Date(today + 'T00:00:00');
+    const daysSince = Math.round((b - a) / (1000 * 60 * 60 * 24));
+    // If more than 1 day gap and no freeze available, streak is broken
+    if (daysSince > 1) {
+      // Check if a freeze could cover exactly 1 missed day (gap of 2)
+      if (daysSince === 2 && freezeInfo.canFreeze) {
+        // Freeze covers 1 missed day — streak survives but don't increment
+      } else {
+        currentStreak = 0; // streak is broken, show 0
+      }
+    }
+  }
 
   // Flame color: teal at 0-6, orange at 7+
   const isHotStreak = currentStreak >= 7;
@@ -72,21 +97,30 @@ export default function StreakDisplay({ refreshTrigger, variant = 'dark' }) {
       <div
         className={`rounded-xl sm:rounded-2xl p-3 sm:p-4 hover:scale-[1.02] transition-all duration-200 cursor-pointer relative ${
           variant === 'light'
-            ? 'bg-white text-slate-800 border border-slate-200 shadow-lg shadow-slate-200/50 hover:shadow-xl'
+            ? 'bg-white text-slate-800 border border-slate-200 shadow-sm hover:shadow-md active:scale-[0.98]'
             : 'bg-white/10 backdrop-blur-lg text-white border border-white/20 hover:bg-white/15'
         }`}
         onClick={() => setShowPopover(true)}
-        onTouchEnd={(e) => { e.preventDefault(); setShowPopover(true); }}
+        onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }}
+        onTouchEnd={(e) => {
+          // Only open on actual taps, not scrolls (delta < 10px)
+          const endY = e.changedTouches[0].clientY;
+          if (touchStartY.current !== null && Math.abs(endY - touchStartY.current) < 10) {
+            e.preventDefault();
+            setShowPopover(true);
+          }
+          touchStartY.current = null;
+        }}
       >
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className={`w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br ${gradientFrom} ${gradientTo} rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 shadow-md`}>
-            <Flame className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+          <div className={`w-10 h-10 sm:w-12 sm:h-12 ${variant === 'light' ? 'bg-amber-50' : 'bg-amber-500/20'} rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0`}>
+            <StreakStatIcon size={26} />
           </div>
           <div className="min-w-0">
-            <p className="text-xl sm:text-2xl font-black leading-tight">
+            <p className="text-2xl font-bold leading-tight">
               {currentStreak}
             </p>
-            <p className={`text-[10px] sm:text-xs leading-tight font-semibold whitespace-nowrap ${variant === 'light' ? 'text-slate-500' : 'text-white/80'}`}>
+            <p className={`text-xs leading-tight font-medium whitespace-nowrap ${variant === 'light' ? 'text-slate-500' : 'text-white/80'}`}>
               {currentStreak === 1 ? 'Day' : 'Day Streak'}
             </p>
           </div>
@@ -120,8 +154,8 @@ export default function StreakDisplay({ refreshTrigger, variant = 'dark' }) {
 
               {/* Header */}
               <div className="text-center mb-6">
-                <div className={`w-16 h-16 mx-auto mb-3 bg-gradient-to-br ${gradientFrom} ${gradientTo} rounded-2xl flex items-center justify-center shadow-lg`}>
-                  <Flame className="w-8 h-8 text-white" />
+                <div className="w-16 h-16 mx-auto mb-3 bg-amber-500/20 rounded-2xl flex items-center justify-center">
+                  <StreakStatIcon size={38} />
                 </div>
                 <h3 className="text-2xl font-black text-white">{currentStreak} Day{currentStreak !== 1 ? 's' : ''}</h3>
                 <p className="text-sm text-slate-400 mt-1">

@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NurseInterviewPro — USF Career Services Partnership Proposal</title>
+<style>
+  :root {
+    --teal: #0d9488;
+    --teal-dark: #0f766e;
+    --teal-light: #ccfbf1;
+    --teal-50: #f0fdfa;
+    --navy: #0f172a;
+    --navy-light: #1e293b;
+    --green: #16a34a;
+    --green-light: #dcfce7;
+    --amber: #d97706;
+    --amber-light: #fef3c7;
+    --blue: #2563eb;
+    --gray-50: #f8fafc;
+    --gray-100: #f1f5f9;
+    --gray-200: #e2e8f0;
+    --gray-300: #cbd5e1;
+    --gray-400: #94a3b8;
+    --gray-500: #64748b;
+    --gray-700: #334155;
+    --gray-800: #1e293b;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    color: var(--gray-800);
+    background: #fff;
+    line-height: 1.6;
+    font-size: 14px;
+  }
+
+  .header {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--teal-dark) 100%);
+    color: white;
+    padding: 52px 60px 44px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -40%;
+    right: -15%;
+    width: 400px;
+    height: 400px;
+    border-radius: 50%;
+    background: rgba(13, 148, 136, 0.12);
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: -50%;
+    left: -10%;
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    background: rgba(13, 148, 136, 0.06);
+  }
+  .header .logo {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--teal-light);
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .header h1 {
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    position: relative;
+    margin-bottom: 8px;
+  }
+  .header .subtitle {
+    font-size: 16px;
+    opacity: 0.8;
+    position: relative;
+    max-width: 650px;
+    line-height: 1.5;
+  }
+  .header .prepared {
+    margin-top: 20px;
+    font-size: 12px;
+    opacity: 0.5;
+    position: relative;
+  }
+
+  .content {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 44px 50px 60px;
+  }
+
+  .section-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 700;
+    color: var(--teal);
+    margin-bottom: 6px;
+  }
+
+  h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 8px;
+  }
+  h3 {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--navy);
+    margin: 32px 0 12px;
+  }
+  h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--navy);
+    margin: 20px 0 8px;
+  }
+
+  p { margin: 8px 0; color: var(--gray-700); }
+  p.muted { color: var(--gray-500); font-size: 13px; }
+
+  .divider {
+    height: 1px;
+    background: var(--gray-200);
+    margin: 44px 0;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    margin: 16px 0;
+  }
+  thead tr {
+    background: var(--navy);
+    color: white;
+  }
+  th {
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--gray-200);
+  }
+  tbody tr:nth-child(even) { background: var(--gray-50); }
+
+  .callout {
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin: 20px 0;
+    font-size: 13px;
+  }
+  .callout-teal { background: var(--teal-50); border-left: 4px solid var(--teal); }
+  .callout-green { background: var(--green-light); border-left: 4px solid var(--green); }
+  .callout-navy {
+    background: var(--navy);
+    color: white;
+    border-left: 4px solid var(--teal);
+    border-radius: 12px;
+    padding: 24px 28px;
+  }
+  .callout-navy p { color: rgba(255,255,255,0.85); }
+  .callout strong { display: block; margin-bottom: 4px; }
+
+  .option-card {
+    background: white;
+    border: 2px solid var(--gray-200);
+    border-radius: 14px;
+    padding: 24px 28px;
+    margin: 16px 0;
+    position: relative;
+  }
+  .option-card.recommended {
+    border-color: var(--teal);
+    box-shadow: 0 4px 14px rgba(13, 148, 136, 0.12);
+  }
+  .option-card .option-badge {
+    position: absolute;
+    top: -12px;
+    left: 24px;
+    background: var(--teal);
+    color: white;
+    padding: 3px 14px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .option-card h3 { margin-top: 6px; }
+  .option-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin: 14px 0;
+  }
+  .option-stat {
+    background: var(--gray-50);
+    border-radius: 8px;
+    padding: 14px 16px;
+    text-align: center;
+  }
+  .option-stat .stat-value {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--navy);
+  }
+  .option-stat .stat-label {
+    font-size: 11px;
+    color: var(--gray-500);
+    margin-top: 2px;
+  }
+
+  .feature-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin: 20px 0;
+  }
+  .feature-card {
+    background: var(--gray-50);
+    border-radius: 10px;
+    padding: 16px 20px;
+    border-left: 3px solid var(--teal);
+  }
+  .feature-card strong {
+    color: var(--navy);
+    font-size: 13px;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .feature-card p {
+    font-size: 12px;
+    color: var(--gray-500);
+    margin: 0;
+  }
+
+  .how-it-works-step {
+    display: flex;
+    gap: 16px;
+    margin: 16px 0;
+    align-items: flex-start;
+  }
+  .step-num {
+    background: var(--teal);
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .step-content { flex: 1; }
+  .step-content strong {
+    display: block;
+    color: var(--navy);
+    margin-bottom: 2px;
+  }
+  .step-content p {
+    font-size: 13px;
+    color: var(--gray-500);
+    margin: 2px 0 0;
+  }
+
+  .footer {
+    text-align: center;
+    padding: 32px 40px;
+    border-top: 1px solid var(--gray-200);
+    margin-top: 40px;
+  }
+  .footer p { font-size: 12px; color: var(--gray-400); }
+  .footer .brand { font-weight: 700; color: var(--teal-dark); font-size: 14px; margin-bottom: 4px; }
+  .footer a { color: var(--teal); text-decoration: none; font-weight: 600; }
+
+  @media print {
+    body { font-size: 11px; }
+    .header { padding: 30px 40px 24px; }
+    .header h1 { font-size: 22px; }
+    .content { padding: 20px 30px 30px; }
+    .option-card { page-break-inside: avoid; }
+    table { page-break-inside: avoid; }
+  }
+
+  @media (max-width: 700px) {
+    .option-grid { grid-template-columns: 1fr; }
+    .feature-grid { grid-template-columns: 1fr; }
+    .header { padding: 30px 24px; }
+    .content { padding: 24px 20px 40px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<div class="header">
+  <div class="logo">NurseInterviewPro &times; InterviewAnswers.AI</div>
+  <h1>Institutional Partnership Proposal</h1>
+  <div class="subtitle">AI-powered nursing interview preparation &mdash; built for career services teams who want to give their nursing students a competitive edge.</div>
+  <div class="prepared">Prepared for USF Career Services &bull; March 2026</div>
+</div>
+
+<div class="content">
+
+<!-- ================================================================= -->
+<!-- THE PROBLEM WE SOLVE                                                -->
+<!-- ================================================================= -->
+<div class="section-label">The Gap</div>
+<h2>Your Nursing Students Are Interviewing Without Nursing-Specific Prep</h2>
+<p>General interview tools like Big Interview teach great fundamentals &mdash; STAR method, body language, confidence. But nursing interviews are different. Hiring managers ask about clinical judgment, SBAR communication, patient safety priorities, and care coordination. No general tool prepares students for that.</p>
+
+<div class="callout callout-teal">
+  <strong>NurseInterviewPro fills the nursing-specific gap.</strong>
+  <p style="margin:0;">We don't replace Big Interview. We complement it. Your students keep their general prep AND get a dedicated nursing interview coach that speaks their language &mdash; SBAR, clinical judgment, prioritization, handoff communication.</p>
+</div>
+
+<!-- ================================================================= -->
+<!-- WHAT WE OFFER                                                       -->
+<!-- ================================================================= -->
+<div class="divider"></div>
+
+<div class="section-label">Two Products</div>
+<h2>What Your Students Get</h2>
+
+<h3>NurseInterviewPro &mdash; For Nursing Students</h3>
+<p>The only AI-powered interview coach built specifically for nursing. Every question reviewed by licensed nurses. Every framework grounded in clinical standards.</p>
+
+<div class="feature-grid">
+  <div class="feature-card">
+    <strong>70 Clinically Validated Questions</strong>
+    <p>Written and reviewed by licensed nurses and nurse educators. Covers behavioral, clinical judgment, situational, and specialty-specific scenarios.</p>
+  </div>
+  <div class="feature-card">
+    <strong>Live AI Mock Interviewer</strong>
+    <p>Conversational practice that adapts in real-time. Not pre-recorded video &mdash; an actual AI interviewer that listens, follows up, and challenges.</p>
+  </div>
+  <div class="feature-card">
+    <strong>SBAR Communication Coaching</strong>
+    <p>Structured drill on Situation-Background-Assessment-Recommendation &mdash; the communication framework every nurse needs in interviews and on the floor.</p>
+  </div>
+  <div class="feature-card">
+    <strong>Clinical Framework Alignment</strong>
+    <p>Questions and feedback grounded in NCSBN Clinical Judgment Model, Nursing Process, Maslow's Hierarchy, and ABC prioritization.</p>
+  </div>
+  <div class="feature-card">
+    <strong>Real-Time Feedback</strong>
+    <p>Immediate coaching on communication quality &mdash; STAR structure, specificity, confidence, and clinical reasoning articulation.</p>
+  </div>
+  <div class="feature-card">
+    <strong>Advisory Board Oversight</strong>
+    <p>All clinical content reviewed by a board of licensed nurses. No AI-generated clinical scenarios &mdash; every question is human-validated.</p>
+  </div>
+</div>
+
+<h3>InterviewAnswers.AI &mdash; For All Students</h3>
+<p>AI-powered interview preparation for any major &mdash; business, education, arts & sciences, and more. Live AI mock interviews, STAR method coaching, and real-time feedback for every field.</p>
+
+<!-- ================================================================= -->
+<!-- HOW WE COMPARE                                                      -->
+<!-- ================================================================= -->
+<div class="divider"></div>
+
+<div class="section-label">Why Us</div>
+<h2>What Sets This Apart</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Capability</th>
+      <th style="text-align:center;">NurseInterviewPro</th>
+      <th style="text-align:center;">Big Interview</th>
+      <th style="text-align:center;">Other AI Tools</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Nursing-specific clinically validated questions</td>
+      <td style="text-align:center; color: var(--green); font-weight:700;">70 questions &check;</td>
+      <td style="text-align:center; color: var(--gray-400);">&times;</td>
+      <td style="text-align:center; color: var(--gray-400);">Limited</td>
+    </tr>
+    <tr>
+      <td>Clinical framework alignment (NCSBN, SBAR, Nursing Process)</td>
+      <td style="text-align:center; color: var(--green); font-weight:700;">&check;</td>
+      <td style="text-align:center; color: var(--gray-400);">&times;</td>
+      <td style="text-align:center; color: var(--gray-400);">&times;</td>
+    </tr>
+    <tr>
+      <td>Live conversational AI mock interviewer</td>
+      <td style="text-align:center; color: var(--green); font-weight:700;">&check;</td>
+      <td style="text-align:center; color: var(--gray-400);">Video-based only</td>
+      <td style="text-align:center; color: var(--green);">&check;</td>
+    </tr>
+    <tr>
+      <td>Real-time communication feedback</td>
+      <td style="text-align:center; color: var(--green); font-weight:700;">&check;</td>
+      <td style="text-align:center; color: var(--gray-400);">&times;</td>
+      <td style="text-align:center; color: var(--amber);">Basic</td>
+    </tr>
+    <tr>
+      <td>Licensed nurse advisory board</td>
+      <td style="text-align:center; color: var(--green); font-weight:700;">&check;</td>
+      <td style="text-align:center; color: var(--gray-400);">&times;</td>
+      <td style="text-align:center; color: var(--gray-400);">&times;</td>
+    </tr>
+    <tr>
+      <td>SBAR drill coaching</td>
+      <td style="text-align:center; color: var(--green); font-weight:700;">&check;</td>
+      <td style="text-align:center; color: var(--gray-400);">&times;</td>
+      <td style="text-align:center; color: var(--gray-400);">&times;</td>
+    </tr>
+    <tr>
+      <td>Institution page + access codes + reporting</td>
+      <td style="text-align:center; color: var(--green); font-weight:700;">&check;</td>
+      <td style="text-align:center; color: var(--green);">&check;</td>
+      <td style="text-align:center; color: var(--gray-400);">Varies</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout callout-teal">
+  <strong>Complementary, not competitive.</strong>
+  <p style="margin:0;">Big Interview covers general interview skills. NurseInterviewPro covers nursing-specific preparation. Together, your students have both &mdash; and you aren't replacing a tool you already trust.</p>
+</div>
+
+<!-- ================================================================= -->
+<!-- HOW IT WORKS                                                        -->
+<!-- ================================================================= -->
+<div class="divider"></div>
+
+<div class="section-label">How It Works</div>
+<h2>Simple Setup for Career Services</h2>
+<p class="muted">We build a branded partnership page for USF. You distribute access codes. Students sign up in 30 seconds.</p>
+
+<div class="how-it-works-step">
+  <div class="step-num">1</div>
+  <div class="step-content">
+    <strong>We create your USF-branded page</strong>
+    <p>Students visit <code>interviewanswers.ai/usf</code> &mdash; a co-branded landing page that looks and feels like a USF Career Services partnership.</p>
+  </div>
+</div>
+
+<div class="how-it-works-step">
+  <div class="step-num">2</div>
+  <div class="step-content">
+    <strong>You distribute access codes</strong>
+    <p>Career Services controls who gets codes, how many, and when. Share through existing student channels &mdash; email, Canvas, advising sessions, career fairs.</p>
+  </div>
+</div>
+
+<div class="how-it-works-step">
+  <div class="step-num">3</div>
+  <div class="step-content">
+    <strong>Students activate and start practicing</strong>
+    <p>Enter the code, create an account, and they're in. No credit card. No billing confusion. Just interview prep, immediately.</p>
+  </div>
+</div>
+
+<div class="how-it-works-step">
+  <div class="step-num">4</div>
+  <div class="step-content">
+    <strong>You get usage reporting</strong>
+    <p>We provide engagement data: signups, active users, sessions completed, features used. Data you can bring to your VP to show ROI.</p>
+  </div>
+</div>
+
+<div class="how-it-works-step">
+  <div class="step-num">5</div>
+  <div class="step-content">
+    <strong>Scale anytime</strong>
+    <p>Need more seats mid-semester? We generate more codes. Want to expand to other programs? We spin up the general product alongside nursing. No contract renegotiation needed.</p>
+  </div>
+</div>
+
+<!-- ================================================================= -->
+<!-- USF NURSING PROGRAMS                                                 -->
+<!-- ================================================================= -->
+<div class="divider"></div>
+
+<div class="section-label">Your Programs</div>
+<h2>USF Nursing &mdash; Programs &amp; Graduating Classes</h2>
+<p class="muted">Our pricing options are built around the nursing student populations most likely to benefit from interview preparation.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Program</th>
+      <th>Level</th>
+      <th style="text-align:center;">Graduating / Year</th>
+      <th>Interview Context</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="font-weight:700;">BSN (Traditional)</td>
+      <td>Undergraduate</td>
+      <td style="text-align:center; font-weight:700;">250&ndash;268</td>
+      <td>First nursing job post-graduation</td>
+    </tr>
+    <tr>
+      <td style="font-weight:700;">ME-MSN (Master&rsquo;s Entry)</td>
+      <td>Graduate</td>
+      <td style="text-align:center; font-weight:700;">101&ndash;131</td>
+      <td>First nursing job post-licensure</td>
+    </tr>
+    <tr>
+      <td style="font-weight:700;">DNP</td>
+      <td>Doctoral</td>
+      <td style="text-align:center;">~46</td>
+      <td>Advanced practice roles (NP, CRNA, CNS)</td>
+    </tr>
+    <tr style="background: var(--teal-50);">
+      <td colspan="2"><strong>Total Pre-Licensure Graduates</strong></td>
+      <td style="text-align:center; font-weight:800;">~400</td>
+      <td>BSN + ME-MSN entering the workforce</td>
+    </tr>
+    <tr style="background: var(--gray-50);">
+      <td colspan="2"><strong>Total Nursing Enrollment</strong></td>
+      <td style="text-align:center; font-weight:800;">~840</td>
+      <td>All nursing programs (incl. juniors, RN-to-MSN)</td>
+    </tr>
+  </tbody>
+</table>
+<p class="muted" style="margin-top: 6px;">Sources: California Board of Registered Nursing (BRN) 5-year data, USF Quick Facts Fall 2024, College Factual.</p>
+
+<!-- ================================================================= -->
+<!-- PRICING                                                              -->
+<!-- ================================================================= -->
+<div class="divider"></div>
+
+<div class="section-label">Pricing</div>
+<h2>NurseInterviewPro &mdash; Nursing Students</h2>
+<p class="muted">Institutional pricing off our individual retail rate of $19.99/month. All options include branded institution page, access codes, and usage reporting.</p>
+
+<!-- PILOT -->
+<div class="option-card recommended">
+  <div class="option-badge">Start Here</div>
+  <h3 style="margin-top: 10px;">Free Pilot Program</h3>
+  <div class="option-grid">
+    <div class="option-stat">
+      <div class="stat-value">50&ndash;100</div>
+      <div class="stat-label">Students</div>
+    </div>
+    <div class="option-stat">
+      <div class="stat-value">$0</div>
+      <div class="stat-label">Cost</div>
+    </div>
+    <div class="option-stat">
+      <div class="stat-value">30 days</div>
+      <div class="stat-label">Duration</div>
+    </div>
+  </div>
+  <p style="font-size: 12px; color: var(--gray-500); margin-top: 6px;">Full access to all nursing features. Usage report provided at the end of the pilot.</p>
+</div>
+
+<h3>30-Day Access</h3>
+
+<div class="option-card">
+  <h3 style="margin-top: 0;">Option A: BSN Seniors</h3>
+  <div class="option-grid">
+    <div class="option-stat">
+      <div class="stat-value">~250</div>
+      <div class="stat-label">BSN Seniors</div>
+    </div>
+    <div class="option-stat">
+      <div class="stat-value">$13.99</div>
+      <div class="stat-label">Per student</div>
+    </div>
+    <div class="option-stat">
+      <div class="stat-value" style="color: var(--teal);">$3,498</div>
+      <div class="stat-label">Total</div>
+    </div>
+  </div>
+  <p style="font-size: 12px; color: var(--gray-500); margin-top: 6px;"><strong>30% off retail</strong> ($13.99 vs. $19.99 individual).</p>
+</div>
+
+<h3>Semester Access</h3>
+
+<div class="option-card recommended">
+  <div class="option-badge">Recommended</div>
+  <h3 style="margin-top: 10px;">Option B: Pre-Licensure Graduating Classes</h3>
+  <div class="option-grid">
+    <div class="option-stat">
+      <div class="stat-value">~400</div>
+      <div class="stat-label">BSN Seniors + ME-MSN</div>
+    </div>
+    <div class="option-stat">
+      <div class="stat-value">$7.50</div>
+      <div class="stat-label">Per student / month</div>
+    </div>
+    <div class="option-stat">
+      <div class="stat-value" style="color: var(--teal);">$11,992</div>
+      <div class="stat-label">Total / semester</div>
+    </div>
+  </div>
+  <p style="font-size: 12px; color: var(--gray-500); margin-top: 6px;"><strong>63% off retail semester pricing</strong> ($7.50/mo vs. $19.99/mo).</p>
+</div>
+
+<div class="option-card">
+  <h3 style="margin-top: 0;">Option C: Full Nursing Program</h3>
+  <div class="option-grid">
+    <div class="option-stat">
+      <div class="stat-value">~840</div>
+      <div class="stat-label">All nursing students</div>
+    </div>
+    <div class="option-stat">
+      <div class="stat-value">$5.25</div>
+      <div class="stat-label">Per student / month</div>
+    </div>
+    <div class="option-stat">
+      <div class="stat-value" style="color: var(--teal);">$17,640</div>
+      <div class="stat-label">Total / semester</div>
+    </div>
+  </div>
+  <p style="font-size: 12px; color: var(--gray-500); margin-top: 6px;"><strong>74% off retail semester pricing</strong> ($5.25/mo vs. $19.99/mo). Includes BSN Juniors &amp; Seniors, ME-MSN, DNP, and RN-to-MSN.</p>
+</div>
+
+<!-- NURSING SUMMARY TABLE -->
+<h3>NurseInterviewPro at a Glance</h3>
+<table>
+  <thead>
+    <tr>
+      <th></th>
+      <th style="text-align:center;">Option A</th>
+      <th style="text-align:center; background: var(--teal-dark);">Option B &star;</th>
+      <th style="text-align:center;">Option C</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="font-weight:600;">Students</td>
+      <td style="text-align:center;">~250</td>
+      <td style="text-align:center; font-weight:700;">~400</td>
+      <td style="text-align:center;">~840</td>
+    </tr>
+    <tr>
+      <td style="font-weight:600;">Access</td>
+      <td style="text-align:center;">30 days</td>
+      <td style="text-align:center;">Semester</td>
+      <td style="text-align:center;">Semester</td>
+    </tr>
+    <tr>
+      <td style="font-weight:600;">Per student / month</td>
+      <td style="text-align:center;">$13.99</td>
+      <td style="text-align:center; font-weight:700;">$7.50</td>
+      <td style="text-align:center;">$5.25</td>
+    </tr>
+    <tr>
+      <td style="font-weight:600;">Total</td>
+      <td style="text-align:center;">$3,498</td>
+      <td style="text-align:center; font-weight:700;">$11,992</td>
+      <td style="text-align:center;">$17,640</td>
+    </tr>
+    <tr>
+      <td style="font-weight:600;">Savings vs. retail</td>
+      <td style="text-align:center;">30%</td>
+      <td style="text-align:center; font-weight:700;">63%</td>
+      <td style="text-align:center;">74%</td>
+    </tr>
+  </tbody>
+</table>
+<p class="muted" style="margin-top: 6px;">Individual retail: $19.99/month. Retail semester (4 &times; $19.99): $79.96.</p>
+
+<!-- ================================================================= -->
+<!-- GENERAL PRICING                                                     -->
+<!-- ================================================================= -->
+<div class="divider"></div>
+
+<div class="section-label">Pricing</div>
+<h2>InterviewAnswers.AI &mdash; All Students</h2>
+<p class="muted">AI interview prep for every major. Institutional pricing off our individual retail rate of $14.99/month.</p>
+
+<h3>30-Day Access</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Tier</th>
+      <th style="text-align:center;">Students</th>
+      <th style="text-align:right;">Per Student</th>
+      <th style="text-align:right;">Total</th>
+      <th style="text-align:center;">Savings vs. Retail</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="font-weight:600;">Small</td>
+      <td style="text-align:center;">250</td>
+      <td style="text-align:right;">$10.99</td>
+      <td style="text-align:right; font-weight:700;">$2,748</td>
+      <td style="text-align:center;">27% off</td>
+    </tr>
+    <tr>
+      <td style="font-weight:600;">Medium</td>
+      <td style="text-align:center;">500</td>
+      <td style="text-align:right;">$9.49</td>
+      <td style="text-align:right; font-weight:700;">$4,745</td>
+      <td style="text-align:center;">37% off</td>
+    </tr>
+  </tbody>
+</table>
+<p class="muted" style="margin-top: 6px;">Individual retail: $14.99/month.</p>
+
+<h3>Semester Access</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Tier</th>
+      <th style="text-align:center;">Students</th>
+      <th style="text-align:right;">Per Student / Month</th>
+      <th style="text-align:right;">Total / Semester</th>
+      <th style="text-align:center;">Savings vs. Retail</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="font-weight:600;">Large</td>
+      <td style="text-align:center;">1,000</td>
+      <td style="text-align:right;">$4.37</td>
+      <td style="text-align:right; font-weight:700;">$17,480</td>
+      <td style="text-align:center;">71% off</td>
+    </tr>
+  </tbody>
+</table>
+<p class="muted" style="margin-top: 6px;">Individual retail: $14.99/month. Retail semester (4 &times; $14.99): $59.96.</p>
+
+<!-- ================================================================= -->
+<!-- WHY SEMESTER                                                        -->
+<!-- ================================================================= -->
+<div class="divider"></div>
+
+<div class="section-label">Access Duration</div>
+<h2>Why Semester Access?</h2>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0;">
+  <div style="background: var(--gray-50); border-radius: 12px; padding: 20px 24px;">
+    <h4 style="margin: 0 0 10px; color: var(--gray-500); font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">30-Day Pass</h4>
+    <ul style="margin: 0 0 0 16px; color: var(--gray-700); font-size: 13px; line-height: 1.8;">
+      <li>Focused window before interview season</li>
+      <li>Best for students with interviews already scheduled</li>
+      <li>Lower total cost</li>
+      <li>Can be timed around career fairs or hiring events</li>
+    </ul>
+  </div>
+  <div style="background: var(--teal-50); border: 2px solid var(--teal); border-radius: 12px; padding: 20px 24px;">
+    <h4 style="margin: 0 0 10px; color: var(--teal-dark); font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Semester Pass &check;</h4>
+    <ul style="margin: 0 0 0 16px; color: var(--gray-700); font-size: 13px; line-height: 1.8;">
+      <li>Students prep around clinicals, exams, and applications on their own schedule</li>
+      <li>Covers the full interview cycle &mdash; from early prep to post-rejection pivots</li>
+      <li>Students who don't land their first choice can keep practicing for the next opportunity</li>
+      <li>Better per-student value (deeper institutional discount)</li>
+      <li>Career Services can promote it once at semester start &mdash; no timing pressure</li>
+    </ul>
+  </div>
+</div>
+
+<div class="callout callout-teal">
+  <strong>Nursing students don't interview on a fixed timeline.</strong>
+  <p style="margin:0;">A BSN senior might interview for ICU in October, get passed over, then try ED or med-surg in December. An MSN student might explore multiple specialties across the semester. Semester access gives them room to practice, learn from each experience, and keep improving &mdash; without losing access between interview cycles.</p>
+</div>
+
+<!-- ================================================================= -->
+<!-- BUNDLE                                                              -->
+<!-- ================================================================= -->
+<div class="divider"></div>
+
+<div class="section-label">Bundle</div>
+<h2>Nursing + General &mdash; One Partnership</h2>
+
+<div class="callout callout-navy">
+  <strong style="color: var(--teal-light);">Nursing Semester + General 30-Day = $13,499</strong>
+  <p><strong style="color: white;">NurseInterviewPro</strong> semester for ~400 graduating nurses ($11,992) + <strong style="color: white;">InterviewAnswers.AI</strong> 30-day for 250 general students ($2,748) = $14,740. <strong style="color: var(--teal-light);">Bundle price: $13,499.</strong></p>
+  <p style="margin-top: 8px;">Nursing students get semester-long access for clinical interviews. Business, education, and arts &amp; sciences students get 30-day access during peak interview season. Two products, one partnership, one invoice.</p>
+</div>
+
+<!-- ================================================================= -->
+<!-- POST-GRADUATION SUPPORT                                             -->
+<!-- ================================================================= -->
+<div class="divider"></div>
+
+<div class="section-label">After Graduation</div>
+<h2>Post-Graduation Support</h2>
+<p class="muted">Not every nursing graduate lands a job before their cap-and-gown is off. We don't leave them hanging.</p>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0;">
+  <div style="background: var(--teal-50); border: 2px solid var(--teal); border-radius: 12px; padding: 20px 24px;">
+    <h4 style="margin: 0 0 8px; color: var(--teal-dark); font-size: 13px;">During the Semester</h4>
+    <p style="font-size: 13px; color: var(--gray-700); margin: 0;">Full access through the institutional partnership. Covered by USF.</p>
+  </div>
+  <div style="background: var(--gray-50); border: 2px solid var(--gray-300); border-radius: 12px; padding: 20px 24px;">
+    <h4 style="margin: 0 0 8px; color: var(--navy); font-size: 13px;">After Graduation</h4>
+    <p style="font-size: 13px; color: var(--gray-700); margin: 0;">USF graduates who need to continue practicing can subscribe at an <strong>alumni rate of $13.99/month</strong> (30% off retail) for up to 3 months post-graduation. Student pays &mdash; no additional cost to USF.</p>
+  </div>
+</div>
+
+<div class="callout callout-teal">
+  <strong>Why this matters for Career Services</strong>
+  <p style="margin: 0;">NACE First Destination Surveys track outcomes 6 months post-graduation. Students who are still job-searching after graduation are the ones who need the most support &mdash; and they're the hardest for Career Services to reach. The alumni rate keeps them connected to a tool they already know, at a price they can afford, without requiring any budget from your office.</p>
+</div>
+
+<!-- ================================================================= -->
+<!-- PARTNERSHIP TERMS                                                   -->
+<!-- ================================================================= -->
+<div class="divider"></div>
+
+<div class="section-label">Terms</div>
+<h2>Partnership Details</h2>
+
+<table>
+  <tbody>
+    <tr>
+      <td style="font-weight:700; width: 35%;">Contract type</td>
+      <td>Semester-based. No long-term commitment required.</td>
+    </tr>
+    <tr>
+      <td style="font-weight:700;">Exclusivity</td>
+      <td>Non-exclusive. USF keeps Big Interview and any other tools. We're additive.</td>
+    </tr>
+    <tr>
+      <td style="font-weight:700;">Pilot available</td>
+      <td>Free 30-day pilot with one cohort. No purchase required to try.</td>
+    </tr>
+    <tr>
+      <td style="font-weight:700;">Scaling</td>
+      <td>Need more seats mid-semester? We generate additional codes &mdash; no contract renegotiation.</td>
+    </tr>
+    <tr>
+      <td style="font-weight:700;">Pricing guarantee</td>
+      <td>Semester pricing locked for the academic year. No mid-year increases.</td>
+    </tr>
+    <tr>
+      <td style="font-weight:700;">Reporting</td>
+      <td>Usage reports provided: signups, active users, sessions completed, features used. Exportable.</td>
+    </tr>
+    <tr>
+      <td style="font-weight:700;">Support</td>
+      <td>Dedicated partnership support. Direct contact for Career Services team.</td>
+    </tr>
+    <tr>
+      <td style="font-weight:700;">Renewal</td>
+      <td>Semester-by-semester. If the first semester works, we renew. No automatic charges.</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ================================================================= -->
+<!-- NEXT STEPS                                                          -->
+<!-- ================================================================= -->
+<div class="divider"></div>
+
+<div class="section-label">Next Steps</div>
+<h2>Getting Started</h2>
+
+<div style="display: flex; gap: 0; align-items: center; margin: 28px 0; flex-wrap: wrap; justify-content: center;">
+  <div style="background: var(--teal); color: white; border-radius: 12px; padding: 18px 22px; text-align: center; min-width: 160px; max-width: 180px;">
+    <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.7); font-weight: 700; margin-bottom: 4px;">Step 1</div>
+    <div style="font-size: 13px; font-weight: 600;">20-Min Demo Call</div>
+    <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 4px;">Walk through the product live</div>
+  </div>
+  <div style="font-size: 20px; color: var(--teal); padding: 0 10px; font-weight: 700;">&rarr;</div>
+  <div style="background: white; border: 2px solid var(--teal); border-radius: 12px; padding: 18px 22px; text-align: center; min-width: 160px; max-width: 180px;">
+    <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--teal); font-weight: 700; margin-bottom: 4px;">Step 2</div>
+    <div style="font-size: 13px; font-weight: 600;">Free 30-Day Pilot</div>
+    <div style="font-size: 11px; color: var(--gray-500); margin-top: 4px;">50-100 students, no cost</div>
+  </div>
+  <div style="font-size: 20px; color: var(--teal); padding: 0 10px; font-weight: 700;">&rarr;</div>
+  <div style="background: white; border: 2px solid var(--gray-300); border-radius: 12px; padding: 18px 22px; text-align: center; min-width: 160px; max-width: 180px;">
+    <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--gray-500); font-weight: 700; margin-bottom: 4px;">Step 3</div>
+    <div style="font-size: 13px; font-weight: 600;">Semester Partnership</div>
+    <div style="font-size: 11px; color: var(--gray-500); margin-top: 4px;">Fall 2026 full rollout</div>
+  </div>
+</div>
+
+<div class="callout callout-green">
+  <strong>Ready to see it in action?</strong>
+  <p style="margin: 0;">We'd love to set up a quick 20-minute demo to walk through the product and talk about what makes sense for your students. No pressure, no commitment &mdash; just a conversation about whether this is a fit.</p>
+</div>
+
+</div><!-- /content -->
+
+<div class="footer">
+  <p class="brand">NurseInterviewPro &times; InterviewAnswers.AI</p>
+  <p><a href="https://www.interviewanswers.ai">interviewanswers.ai</a> &bull; <a href="https://www.nurseinterviewpro.ai">nurseinterviewpro.ai</a></p>
+  <p style="margin-top: 8px;">Partnership Proposal &bull; March 2026</p>
+</div>
+
+</body>
+</html>

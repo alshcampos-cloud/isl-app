@@ -79,7 +79,7 @@ export default function SubscriptionManagement({
             </h2>
             <p className="text-white/80 text-sm">
               {isBeta ? 'Unlimited access as a beta tester' :
-               isPro ? '$29.99/month' : 'Limited features'}
+               isPro ? 'Active Pass' : 'Limited features'}
             </p>
           </div>
         </div>
@@ -134,7 +134,7 @@ export default function SubscriptionManagement({
                 <span className="text-green-500">✓</span> Unlimited Question Generator
               </li>
               <li className="flex items-center gap-2">
-                <span className="text-green-500">✓</span> Unlimited Live Prompter
+                <span className="text-green-500">✓</span> Unlimited Practice Prompter
               </li>
             </ul>
           </div>

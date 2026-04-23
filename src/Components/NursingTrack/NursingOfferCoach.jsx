@@ -5,7 +5,7 @@
 // value framing, completeness) — NEVER recommends specific dollar amounts.
 //
 // Pattern: Mirrors NursingPracticeMode.jsx closely.
-// Credit feature: 'practiceMode' (shared with Practice + SBAR + AI Coach + Confidence)
+// Credit feature: 'nursingCoach' (shared with AI Coach + Answer Assistant + Confidence)
 // Session history: localStorage (nursingNegotiationHistory)
 //
 // Battle Scars enforced:
@@ -175,6 +175,8 @@ WHAT YOU NEVER DO:
 
 INSTEAD, point to external resources: "For market rate research, check BLS.gov Occupational Outlook Handbook, Glassdoor, Salary.com, or your state nurses association salary surveys."
 
+TRIVIAL INPUT HANDLING: If the user submits a very brief response (1-5 words), something clearly not a negotiation attempt (e.g., "test", "ok", "hello"), or a vague non-answer, score all dimensions 1/5 and provide feedback that encourages them to try a real response: "I need a bit more to work with! Try responding as if you're actually in this conversation. What would you say to the hiring manager?"
+
 Return your response in EXACTLY this format:
 
 [SCORES]
@@ -261,7 +263,7 @@ function averageScore(scores) {
 // ============================================================
 // MAIN COMPONENT
 // ============================================================
-export default function NursingOfferCoach({ specialty, onBack, userData, refreshUsage, addSession }) {
+export default function NursingOfferCoach({ specialty, onBack, userData, refreshUsage, addSession, onShowPricing }) {
   // State
   const [selectedScenario, setSelectedScenario] = useState(null);
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -288,9 +290,9 @@ export default function NursingOfferCoach({ specialty, onBack, userData, refresh
   useEffect(() => {
     if (userData && !userData.loading && userData.usage) {
       const check = canUseFeature(
-        { practice_mode: userData.usage.practiceMode?.used || 0 },
+        { nursing_coach: userData.usage.nursingCoach?.used || 0 },
         userData.tier,
-        'practiceMode'
+        'nursingCoach'
       );
       if (!check.allowed) setCreditBlocked(true);
     }
@@ -339,6 +341,7 @@ export default function NursingOfferCoach({ specialty, onBack, userData, refresh
           },
           body: JSON.stringify({
             mode: 'nursing-coach',
+            nursingFeature: 'nursingOfferCoach',
             systemPrompt: NEGOTIATION_SYSTEM_PROMPT(selectedScenario),
             conversationHistory: [],
             userMessage: userAnswer.trim(),
@@ -353,6 +356,17 @@ export default function NursingOfferCoach({ specialty, onBack, userData, refresh
       }
 
       const data = await response.json();
+
+      // Detect Anthropic API errors passed through Edge Function (overloaded, rate limit, etc.)
+      if (data.type === 'error' && data.error) {
+        const errType = data.error.type || 'unknown';
+        const errMsg = data.error.message || 'AI service error';
+        console.error('❌ Anthropic API error:', errType, errMsg);
+        throw new Error(errType === 'overloaded_error'
+          ? 'AI service is temporarily busy. Please try again in a moment.'
+          : `AI error: ${errMsg}`);
+      }
+
       const rawContent = data.content?.[0]?.text || data.response || data.feedback || 'Unable to evaluate. Please try again.';
 
       const scores = parseNegotiationScores(rawContent);
@@ -392,7 +406,7 @@ export default function NursingOfferCoach({ specialty, onBack, userData, refresh
       // CHARGE AFTER SUCCESS (Battle Scar #8)
       if (userData?.user?.id) {
         try {
-          await incrementUsage(supabase, userData.user.id, 'practiceMode');
+          await incrementUsage(supabase, userData.user.id, 'nursingCoach');
           if (refreshUsage) refreshUsage();
         } catch (chargeErr) {
           console.warn('Usage increment failed (non-blocking):', chargeErr);
@@ -443,8 +457,8 @@ export default function NursingOfferCoach({ specialty, onBack, userData, refresh
     }
   };
 
-  const isUnlimited = userData?.isBeta || userData?.tier === 'pro';
-  const creditInfo = userData?.usage?.practiceMode;
+  const isUnlimited = userData?.isBeta || userData?.tier === 'nursing_pass' || userData?.tier === 'annual' || userData?.tier === 'pro' || userData?.tier === 'beta';
+  const creditInfo = userData?.usage?.nursingCoach;
   const scenariosPracticed = new Set(history.map(h => h.scenarioId)).size;
   const historyAvg = history.length > 0
     ? (history.filter(h => h.avgScore !== null).reduce((sum, h) => sum + h.avgScore, 0) /
@@ -522,12 +536,12 @@ export default function NursingOfferCoach({ specialty, onBack, userData, refresh
                 <p className="text-red-300 text-sm mb-2">
                   You've used all {creditInfo?.limit} free practice sessions this month.
                 </p>
-                <a
-                  href="/app?upgrade=true&returnTo=/nursing"
+                <button
+                  onClick={onShowPricing}
                   className="inline-block text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-sky-500 px-4 py-2 rounded-lg hover:-translate-y-0.5 transition-all"
                 >
-                  Upgrade to Pro — Unlimited Practice
-                </a>
+                  Get Nursing Pass — Unlimited Practice
+                </button>
               </div>
             )}
 
@@ -729,12 +743,12 @@ export default function NursingOfferCoach({ specialty, onBack, userData, refresh
                     <p className="text-red-300 text-sm mb-2">
                       Free practice limit reached.
                     </p>
-                    <a
-                      href="/app?upgrade=true&returnTo=/nursing"
+                    <button
+                      onClick={onShowPricing}
                       className="inline-block text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-sky-500 px-4 py-2 rounded-lg hover:-translate-y-0.5 transition-all"
                     >
-                      Upgrade to Pro — Unlimited Practice
-                    </a>
+                      Get Nursing Pass — Unlimited Practice
+                    </button>
                   </div>
                 )}
               </motion.div>

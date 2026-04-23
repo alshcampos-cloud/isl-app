@@ -21,12 +21,12 @@ export default function LandingPage() {
   // SEO: Dynamic meta tags for the general landing page
   useDocumentHead({
     title: 'InterviewAnswers.ai - AI Interview Practice & STAR Method Coaching',
-    description: 'Practice job interviews with AI mock interviews, real-time coaching, and STAR method feedback. Build answers from your real experiences. Free to start, no credit card required.',
-    keywords: 'interview preparation, AI interview practice, mock interview, STAR method, behavioral interview questions, job interview tips, interview coaching, AI interview coach, practice interview questions, interview answers, job interview preparation, career coaching',
+    description: 'Practice job interviews with AI mock interviews and STAR method coaching. Rehearse out loud, build answers from your real experiences. Practice, not cheat. Free to start, no credit card required.',
+    keywords: 'interview preparation, AI interview practice, mock interview, STAR method, behavioral interview questions, job interview tips, interview coaching, AI interview coach, practice interview questions, interview answers, job interview preparation, career coaching, ethical interview prep',
     canonical: 'https://www.interviewanswers.ai/',
     og: {
-      title: 'InterviewAnswers.ai - AI Interview Practice & Coaching',
-      description: 'Practice job interviews with AI. Mock interviews, STAR method coaching, real-time prompts. Build answers from your real experiences.',
+      title: 'InterviewAnswers.ai - Practice, Not Cheat',
+      description: 'The interview AI that doesn\'t go in the interview. Mock interviews, STAR method coaching, rehearsal tools. Built for preparation, not real-time assistance.',
       url: 'https://www.interviewanswers.ai/',
       type: 'website',
     },
@@ -37,11 +37,21 @@ export default function LandingPage() {
   });
 
   useEffect(() => {
-    // Handle auth tokens in URL hash — pass through to /app where ProtectedRoute handles them
+    // Handle auth tokens in URL hash — pass through to /app or /nursing where ProtectedRoute handles them
     // This covers: email verification (type=signup), password recovery (type=recovery), magic links
     if (window.location.hash.includes('access_token')) {
-      console.log('🔑 Auth token detected in URL hash, redirecting to /app');
-      navigate('/app' + window.location.hash, { replace: true });
+      console.log('🔑 Auth token detected in URL hash, checking user context...');
+      // Parse the hash to detect nursing users and route them correctly
+      // After email confirmation, check user metadata for onboarding_field
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        const field = session?.user?.user_metadata?.onboarding_field;
+        const dest = field === 'nursing' ? '/nursing' : '/app';
+        console.log(`🔑 Routing to ${dest} (onboarding_field: ${field || 'not set'})`);
+        navigate(dest + window.location.hash, { replace: true });
+      }).catch(() => {
+        // Fallback: if getSession fails, default to /app (safe default)
+        navigate('/app' + window.location.hash, { replace: true });
+      });
       return;
     }
 
@@ -51,12 +61,13 @@ export default function LandingPage() {
       setLoading(false);
     }, 3000);
 
-    // If already authenticated, redirect to app
+    // If already authenticated, redirect to app or nursing based on user metadata
     // BUT: anonymous users (from onboarding) should see the landing page, not get trapped
     supabase.auth.getSession().then(({ data: { session } }) => {
       clearTimeout(fallbackTimer);
       if (session && !session.user.is_anonymous) {
-        navigate('/app', { replace: true });
+        const field = session.user.user_metadata?.onboarding_field;
+        navigate(field === 'nursing' ? '/nursing' : '/app', { replace: true });
       } else {
         setLoading(false);
       }

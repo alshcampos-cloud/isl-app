@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1080">
+<title>Instagram Carousel — Cover</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    width: 1080px; height: 1080px; overflow: hidden;
+    background: linear-gradient(135deg, #0D9488 0%, #0f766e 40%, #065f46 100%);
+    color: #fff;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    position: relative;
+    text-align: center;
+  }
+  body::before {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 30% 20%, rgba(255,255,255,0.08) 0%, transparent 40%),
+      radial-gradient(circle at 70% 80%, rgba(0,0,0,0.15) 0%, transparent 40%);
+    pointer-events: none;
+  }
+  /* Decorative elements */
+  .decor-1, .decor-2, .decor-3 {
+    position: absolute; border-radius: 50%; pointer-events: none;
+  }
+  .decor-1 {
+    width: 400px; height: 400px; top: -100px; right: -80px;
+    border: 2px solid rgba(255,255,255,0.08);
+  }
+  .decor-2 {
+    width: 300px; height: 300px; bottom: -50px; left: -60px;
+    border: 2px solid rgba(255,255,255,0.06);
+  }
+  .decor-3 {
+    width: 200px; height: 200px; top: 50%; left: -80px;
+    background: rgba(255,255,255,0.03);
+  }
+  .content { z-index: 1; padding: 0 80px; }
+  .number-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 80px; height: 80px; border-radius: 20px;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(10px);
+    font-size: 40px; font-weight: 900;
+    margin-bottom: 40px;
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+  h1 {
+    font-size: 72px; font-weight: 900; line-height: 1.05;
+    letter-spacing: -3px; margin-bottom: 24px;
+    text-shadow: 0 2px 30px rgba(0,0,0,0.2);
+  }
+  .subtitle {
+    font-size: 28px; font-weight: 500; color: rgba(255,255,255,0.8);
+    margin-bottom: 50px;
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+  }
+  .subtitle .arrow {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    font-size: 18px;
+  }
+  .swipe-hint {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 14px 28px; border-radius: 40px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    font-size: 16px; font-weight: 600; color: rgba(255,255,255,0.8);
+    backdrop-filter: blur(4px);
+  }
+  .logo-footer {
+    position: absolute; bottom: 50px; left: 0; right: 0;
+    text-align: center; z-index: 1;
+  }
+  .logo-footer .name {
+    font-size: 18px; font-weight: 700; color: rgba(255,255,255,0.6);
+  }
+  .logo-footer .tag {
+    font-size: 13px; color: rgba(255,255,255,0.35); margin-top: 4px;
+  }
+  /* Chat bubble decorations */
+  .chat-bubbles {
+    position: absolute; z-index: 0; pointer-events: none;
+  }
+  .bubble {
+    position: absolute; padding: 12px 20px; border-radius: 16px;
+    font-size: 13px; color: rgba(255,255,255,0.5);
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    white-space: nowrap;
+  }
+  .b1 { top: 60px; left: 60px; transform: rotate(-5deg); }
+  .b2 { top: 120px; right: 50px; transform: rotate(3deg); }
+  .b3 { bottom: 150px; right: 70px; transform: rotate(-2deg); }
+  .b4 { bottom: 180px; left: 40px; transform: rotate(4deg); }
+</style>
+</head>
+<body>
+  <div class="chat-bubbles">
+    <div class="bubble b1">"Tell me about yourself..."</div>
+    <div class="bubble b2">"Why should we hire you?"</div>
+    <div class="bubble b3">"Where do you see yourself in 5 years?"</div>
+    <div class="bubble b4">"Describe a challenge you faced..."</div>
+  </div>
+
+  <div class="content">
+    <div class="number-badge">5</div>
+    <h1>Interview<br>Answers That<br>Actually Work</h1>
+    <div class="subtitle">Swipe <span class="arrow">&rarr;</span> to stop freezing up</div>
+    <div class="swipe-hint">&#x1F449; 7 slides &bull; Save for later</div>
+  </div>
+
+  <div class="logo-footer">
+    <div class="name">InterviewAnswers.ai</div>
+    <div class="tag">Master Your Interview Answers with AI</div>
+  </div>
+</body>
+</html>

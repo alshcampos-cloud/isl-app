@@ -105,8 +105,7 @@ const UltimateCompetitiveDashboard = ({ user, supabase, userTier, onUpgrade }) =
       if (userData?.interview_date) {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        const interviewDate = new Date(userData.interview_date);
-        interviewDate.setHours(0, 0, 0, 0);
+        const interviewDate = new Date(userData.interview_date + 'T00:00:00'); // local time, not UTC
         const diffTime = interviewDate.getTime() - today.getTime();
         daysUntil = Math.round(diffTime / (1000 * 60 * 60 * 24));
       }
@@ -431,7 +430,7 @@ const UltimateCompetitiveDashboard = ({ user, supabase, userTier, onUpgrade }) =
             />
             <UnlimitedFeatureCard
               icon={<Zap className="w-6 h-6" />}
-              title="Live Prompter"
+              title="Practice Prompter"
               description="Unlimited real-time interview support"
               color="green"
             />
@@ -579,7 +578,7 @@ const UltimateCompetitiveDashboard = ({ user, supabase, userTier, onUpgrade }) =
         />
         <UsageCard 
           icon={<Zap className="w-6 h-6" />}
-          title="Live Prompter"
+          title="Practice Prompter"
           used={stats.livePrompter.used}
           limit={stats.livePrompter.limit}
           color="green"
@@ -655,7 +654,7 @@ const UltimateCompetitiveDashboard = ({ user, supabase, userTier, onUpgrade }) =
           <div className="flex-1 text-center md:text-left">
             <h3 className="font-bold text-lg mb-1">Unlock Your Full Potential</h3>
             <p className="text-white/90 text-sm">
-              Unlimited practice, advanced analytics, and more for $29.99/month
+              Unlimited practice, advanced analytics, and more — just $14.99 for 30 days
             </p>
           </div>
           <button

@@ -3,9 +3,18 @@ import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { trackOnboardingEvent } from '../../utils/onboardingTracker'
 import { trackSignUp } from '../../utils/googleAdsTracking'
+import { getDeviceFingerprint, hashEmail } from '../../utils/deviceFingerprint'
+import GoogleSignInButton from '../GoogleSignInButton'
+import { startGoogleOAuth } from '../../utils/googleOAuth'
+import { isNativeApp } from '../../utils/platform'
+import { showNursingFeatures } from '../../utils/appTarget'
 
 /**
- * SignUpPrompt — Screen 5: Create Account to Save Progress
+ * SignUpPrompt — Screen 6: Create Account to Save Progress
+ *
+ * Loss-framed copy: "Your results are ready" + "Save My Results" CTA.
+ * Research: loss-framed CTAs 21% conversion lift (McKinsey),
+ * first-person CTAs 202% lift (HubSpot).
  *
  * SECURITY: Uses signUp() (not updateUser()) to create real accounts.
  * updateUser() on anonymous users has a known Supabase bug (#29350) that
@@ -16,7 +25,9 @@ import { trackSignUp } from '../../utils/googleAdsTracking'
  * But proper email verification is non-negotiable for platform security.
  */
 
-export default function SignUpPrompt({ archetype, archetypeConfig, onComplete }) {
+export default function SignUpPrompt({ archetype, archetypeConfig, practiceScore, fromNursing: fromNursingProp = false, onComplete }) {
+  // Belt-and-suspenders — general builds ignore fromNursing entirely
+  const fromNursing = showNursingFeatures() && fromNursingProp
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -27,6 +38,25 @@ export default function SignUpPrompt({ archetype, archetypeConfig, onComplete })
   const [showPassword, setShowPassword] = useState(false)
   const [signUpSuccess, setSignUpSuccess] = useState(false)
   const hasTrackedFormStart = useRef(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
+  const [googleError, setGoogleError] = useState(null)
+
+  const handleGoogleSignIn = useCallback(async () => {
+    setGoogleLoading(true)
+    setGoogleError(null)
+    trackOnboardingEvent(6, 'google_signin_clicked')
+
+    const { error } = await startGoogleOAuth({
+      fromNursing,
+      archetype,
+    })
+
+    if (error) {
+      setGoogleError(error)
+      setGoogleLoading(false)
+    }
+    // If no error, browser is redirecting to Google — don't reset loading
+  }, [fromNursing, archetype])
 
   const handleSignUp = useCallback(async (e) => {
     e.preventDefault()
@@ -57,9 +87,11 @@ export default function SignUpPrompt({ archetype, archetypeConfig, onComplete })
         email: email.trim(),
         password: password.trim(),
         options: {
+          emailRedirectTo: `${window.location.origin}/auth/confirm`,
           data: {
             full_name: fullName.trim() || undefined,
             archetype: archetype,
+            onboarding_field: fromNursing ? 'nursing' : 'general',
           },
         },
       })
@@ -67,7 +99,7 @@ export default function SignUpPrompt({ archetype, archetypeConfig, onComplete })
       if (signUpError) {
         if (signUpError.message.includes('already') || signUpError.message.includes('exists')) {
           setError('An account with this email already exists. Try signing in instead.')
-          trackOnboardingEvent(5, 'signup_error', { error: 'email_exists' })
+          trackOnboardingEvent(6, 'signup_error', { error: 'email_exists' })
           return
         }
         throw signUpError
@@ -86,15 +118,46 @@ export default function SignUpPrompt({ archetype, archetypeConfig, onComplete })
       }
       trackOnboardingEvent(6, 'signup_completed', { archetype })
       trackSignUp() // Google Ads conversion
+
+      // Abuse tracking — non-blocking, must never break signup flow
+      try {
+        const fingerprint = await getDeviceFingerprint();
+        const emailH = await hashEmail(email);
+        const domain = email.split('@')[1]?.toLowerCase() || '';
+
+        // Check for abuse
+        const { data: abuseCheck } = await supabase.rpc('check_signup_abuse', {
+          p_fingerprint: fingerprint, p_email_hash: emailH
+        });
+
+        // Record signal
+        if (data?.user?.id) {
+          await supabase.rpc('record_signup_signal', {
+            p_fingerprint: fingerprint, p_email_hash: emailH,
+            p_email_domain: domain, p_user_id: data.user.id
+          });
+        }
+
+        // Flag abuse if detected
+        if (abuseCheck?.reduced_tier && data?.user?.id) {
+          await supabase.from('user_profiles')
+            .update({ abuse_reduced_tier: true })
+            .eq('user_id', data.user.id);
+        }
+      } catch (err) {
+        console.warn('[Abuse] Signal recording failed:', err.message);
+        // Non-blocking — don't break signup flow
+      }
+
       setSignUpSuccess(true)
     } catch (err) {
       console.error('Sign up error:', err)
       setError(err.message || 'Something went wrong. Please try again.')
-      trackOnboardingEvent(5, 'signup_error', { error: err.message })
+      trackOnboardingEvent(6, 'signup_error', { error: err.message })
     } finally {
       setIsLoading(false)
     }
-  }, [email, password, confirmPassword, fullName, archetype, onComplete])
+  }, [email, password, confirmPassword, fullName, archetype, fromNursing, onComplete])
 
   // After successful signup, show confirmation screen
   if (signUpSuccess) {
@@ -128,8 +191,9 @@ export default function SignUpPrompt({ archetype, archetypeConfig, onComplete })
         <button
           onClick={async () => {
             // Sign out any session and redirect to login
+            // Preserve nursing context so AuthPage routes to /nursing after sign-in
             await supabase.auth.signOut()
-            navigate('/login', { replace: true })
+            navigate(fromNursing ? '/login?from=nursing' : '/login', { replace: true })
           }}
           className="w-full py-3 px-6 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl transition-colors shadow-lg shadow-teal-600/20"
         >
@@ -154,32 +218,72 @@ export default function SignUpPrompt({ archetype, archetypeConfig, onComplete })
         </div>
 
         <h2 className="text-2xl font-bold text-slate-800 mb-2">
-          You're ready to go further
+          Your results are ready
         </h2>
 
         <p className="text-slate-500 text-sm max-w-xs mx-auto">
-          You just got a taste of what practice looks like. Create a free account to keep going.
+          {practiceScore
+            ? `You scored ${practiceScore}/10 on your first practice — create a free account to keep your results and continue improving.`
+            : 'Create a free account to save your progress and keep practicing.'}
         </p>
       </div>
 
-      {/* What you unlock with an account */}
+      {/* What you get with a free account — actual free tier features */}
       <div className="bg-teal-50 border border-teal-200 rounded-xl p-4 mb-6">
-        <p className="text-sm text-teal-700 font-medium mb-2">With an account, you'll unlock:</p>
-        <ul className="text-sm text-teal-600 space-y-1">
+        <p className="text-sm text-teal-700 font-medium mb-2">Your free account includes:</p>
+        <ul className="text-sm text-teal-600 space-y-1.5">
           <li className="flex items-start gap-2">
-            <span className="mt-0.5">{'>'}</span>
-            <span>Unlimited practice questions with AI feedback</span>
+            <span className="mt-0.5">🎙️</span>
+            <span>3 voice mock interviews per month</span>
           </li>
           <li className="flex items-start gap-2">
-            <span className="mt-0.5">{'>'}</span>
-            <span>Track your Interview Readiness Score over time</span>
+            <span className="mt-0.5">📝</span>
+            <span>5 AI-coached practice sessions per month</span>
           </li>
           <li className="flex items-start gap-2">
-            <span className="mt-0.5">{'>'}</span>
-            <span>Personalized coaching based on your goals</span>
+            <span className="mt-0.5">📊</span>
+            <span>STAR method coaching with detailed scoring</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="mt-0.5">📚</span>
+            <span>50+ interview flashcards (unlimited)</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="mt-0.5">📈</span>
+            <span>Interview Readiness Score tracking</span>
           </li>
         </ul>
       </div>
+
+      {/* Google Sign-In — web only, not in native Capacitor app */}
+      {!isNativeApp() && (
+        <>
+          <GoogleSignInButton
+            onClick={handleGoogleSignIn}
+            loading={googleLoading}
+            label="Continue with Google"
+          />
+
+          {googleError && (
+            <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2 text-center">
+              {googleError}
+            </p>
+          )}
+
+          <p className="text-center text-xs text-slate-400 -mb-2">
+            By continuing, you agree to our{' '}
+            <Link to="/terms" className="underline hover:text-slate-500">Terms</Link> and{' '}
+            <Link to="/privacy" className="underline hover:text-slate-500">Privacy Policy</Link>.
+          </p>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3 my-2">
+            <div className="flex-1 h-px bg-slate-200" />
+            <span className="text-xs text-slate-400 font-medium">or sign up with email</span>
+            <div className="flex-1 h-px bg-slate-200" />
+          </div>
+        </>
+      )}
 
       {/* Sign up form */}
       <form onSubmit={handleSignUp} className="space-y-4">
@@ -202,7 +306,7 @@ export default function SignUpPrompt({ archetype, archetypeConfig, onComplete })
               setEmail(e.target.value)
               if (!hasTrackedFormStart.current && e.target.value.trim().length > 0) {
                 hasTrackedFormStart.current = true
-                trackOnboardingEvent(5, 'form_started')
+                trackOnboardingEvent(6, 'form_started')
               }
             }}
             placeholder="Email address"
@@ -299,7 +403,7 @@ export default function SignUpPrompt({ archetype, archetypeConfig, onComplete })
               Creating account...
             </span>
           ) : (
-            'Create free account'
+            'Save My Results'
           )}
         </button>
       </form>
@@ -314,7 +418,7 @@ export default function SignUpPrompt({ archetype, archetypeConfig, onComplete })
 
         <p className="text-sm text-slate-500">
           Already have an account?{' '}
-          <Link to="/login" className="text-teal-600 font-medium hover:text-teal-700" onClick={() => trackOnboardingEvent(5, 'signin_clicked')}>
+          <Link to={fromNursing ? '/login?from=nursing' : '/login'} className="text-teal-600 font-medium hover:text-teal-700" onClick={() => trackOnboardingEvent(6, 'signin_clicked')}>
             Sign in
           </Link>
         </p>

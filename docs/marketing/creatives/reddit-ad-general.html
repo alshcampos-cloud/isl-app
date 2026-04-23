@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<title>Reddit Ad — General</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    width: 1200px; height: 628px; overflow: hidden;
+    background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 40%, #16213e 100%);
+    color: #fff;
+    display: flex;
+    position: relative;
+  }
+  /* Subtle grid pattern */
+  body::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 50%, rgba(13,148,136,0.08) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(13,148,136,0.05) 0%, transparent 40%);
+    pointer-events: none;
+  }
+  .left {
+    flex: 1; padding: 60px 50px; display: flex; flex-direction: column; justify-content: center; z-index: 1;
+  }
+  .logo {
+    font-size: 16px; font-weight: 700; color: #0D9488; margin-bottom: 32px;
+    letter-spacing: -0.3px;
+  }
+  .logo span { color: rgba(255,255,255,0.5); font-weight: 400; }
+  h1 {
+    font-size: 52px; font-weight: 900; line-height: 1.08; margin-bottom: 18px;
+    letter-spacing: -1.5px;
+    background: linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .subtext {
+    font-size: 20px; color: rgba(255,255,255,0.7); line-height: 1.5; margin-bottom: 32px;
+    max-width: 440px;
+  }
+  .cta {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: linear-gradient(135deg, #0D9488 0%, #0f766e 100%);
+    color: #fff; font-size: 18px; font-weight: 700;
+    padding: 16px 32px; border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(13,148,136,0.4), 0 0 0 1px rgba(13,148,136,0.2);
+    letter-spacing: -0.3px;
+    margin-bottom: 28px;
+  }
+  .cta .arrow { font-size: 20px; }
+  .trust {
+    display: flex; gap: 24px; font-size: 13px; color: rgba(255,255,255,0.45);
+  }
+  .trust span { display: flex; align-items: center; gap: 5px; }
+  .trust .star { color: #fbbf24; }
+  .right {
+    width: 520px; display: flex; align-items: center; justify-content: center;
+    padding: 40px 50px 40px 0; z-index: 1;
+  }
+  .chat-window {
+    width: 100%; background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px; overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.05);
+  }
+  .chat-header {
+    padding: 14px 20px;
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.7);
+  }
+  .chat-header .dot { width: 8px; height: 8px; border-radius: 50%; background: #0D9488; }
+  .chat-body { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+  .msg {
+    padding: 14px 18px; border-radius: 14px; font-size: 14px; line-height: 1.5;
+    max-width: 90%;
+  }
+  .msg.ai {
+    background: rgba(13,148,136,0.12);
+    border: 1px solid rgba(13,148,136,0.2);
+    color: rgba(255,255,255,0.9);
+    align-self: flex-start;
+  }
+  .msg.ai .label { font-size: 11px; font-weight: 600; color: #0D9488; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .msg.user {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.7);
+    align-self: flex-end;
+  }
+  .msg.user .cursor {
+    display: inline-block; width: 2px; height: 16px; background: #0D9488;
+    vertical-align: text-bottom; margin-left: 2px;
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+  .chat-input {
+    margin: 0 20px 20px; padding: 12px 16px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 13px; color: rgba(255,255,255,0.3);
+  }
+  .send-btn {
+    width: 28px; height: 28px; border-radius: 8px;
+    background: #0D9488; display: flex; align-items: center; justify-content: center;
+  }
+  .send-btn svg { width: 14px; height: 14px; fill: #fff; }
+</style>
+</head>
+<body>
+  <div class="left">
+    <div class="logo">InterviewAnswers.ai</div>
+    <h1>Stop Guessing.<br>Start Practicing.</h1>
+    <p class="subtext">AI mock interviews that feel real. Get personalized feedback on every answer. Free to start.</p>
+    <div class="cta">Try Free <span class="arrow">&rarr;</span> interviewanswers.ai</div>
+    <div class="trust">
+      <span><span class="star">&#9733;</span> 4.8 rated</span>
+      <span>1,000+ practice sessions</span>
+      <span>Free tier available</span>
+    </div>
+  </div>
+  <div class="right">
+    <div class="chat-window">
+      <div class="chat-header">
+        <div class="dot"></div>
+        AI Mock Interview &mdash; Session in Progress
+      </div>
+      <div class="chat-body">
+        <div class="msg ai">
+          <div class="label">AI Interviewer</div>
+          Tell me about a time you led a team through a challenge. What was the situation, and how did you handle it?
+        </div>
+        <div class="msg user">
+          In my previous role as project lead, I noticed our sprint velocity had dropped 40% after two senior devs left. I organized a...<span class="cursor"></span>
+        </div>
+      </div>
+      <div class="chat-input">
+        <span>Type your answer...</span>
+        <div class="send-btn">
+          <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -20,11 +20,13 @@ import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DIST = join(__dirname, '..', 'dist');
+const APP_TARGET = process.env.VITE_APP_TARGET || 'all';
+const NURSING_ROUTES = ['/nurse', '/nursing-interview-questions', '/nursing'];
 
 // Route-specific SEO data
 const ROUTES = {
   '/nurse': {
-    title: 'NurseInterviewPro - AI Nursing Interview Practice | SBAR & STAR Coaching',
+    title: 'NurseAnswerPro - AI Nursing Interview Practice | SBAR & STAR Coaching',
     description: 'Practice nursing interview questions with AI coaching. SBAR communication drills, STAR method feedback, and specialty-specific questions for ED, ICU, OR, L&D, Pediatrics, and more. Built by nurses, for nurses.',
     canonical: 'https://www.interviewanswers.ai/nurse',
     keywords: 'nursing interview questions, nurse interview practice, nursing job interview, SBAR interview, STAR method nursing, RN interview questions, nursing interview preparation',
@@ -42,10 +44,40 @@ const ROUTES = {
     keywords: 'behavioral interview questions, common behavioral interview questions, STAR method questions, leadership interview questions, teamwork interview questions',
   },
   '/nursing-interview-questions': {
-    title: '35 Nursing Interview Questions by Category (2026) | NurseInterviewPro',
+    title: '35 Nursing Interview Questions by Category (2026) | NurseAnswerPro',
     description: '35 nursing interview questions for RNs, new grads, and specialty nurses. Covers patient care, SBAR communication, teamwork, ethics, and more. Practice with AI coaching.',
     canonical: 'https://www.interviewanswers.ai/nursing-interview-questions',
     keywords: 'nursing interview questions, nurse interview questions and answers, new grad nurse interview questions, SBAR interview, RN interview questions',
+  },
+  '/mock-interview-practice': {
+    title: 'Free AI Mock Interview Practice Online | InterviewAnswers.ai',
+    description: 'Practice mock interviews with an AI interviewer that adapts to your answers. Get real-time feedback on STAR structure, delivery, and confidence. Free — no credit card required.',
+    canonical: 'https://www.interviewanswers.ai/mock-interview-practice',
+    keywords: 'mock interview practice, AI mock interview, online mock interview, practice interview online, free mock interview, interview simulator',
+  },
+  '/tell-me-about-yourself': {
+    title: 'Tell Me About Yourself: How to Answer + Practice with AI (2026)',
+    description: 'Learn how to answer "Tell me about yourself" with the Present-Past-Future framework. 3 example answers for different career stages. Practice with AI feedback.',
+    canonical: 'https://www.interviewanswers.ai/tell-me-about-yourself',
+    keywords: 'tell me about yourself interview, how to answer tell me about yourself, tell me about yourself example, introduce yourself in interview',
+  },
+  '/interview-questions-and-answers': {
+    title: 'Top 50 Interview Questions & Answers (2026) | Practice Free',
+    description: '50 common interview questions organized by category with answer tips for each. Behavioral, situational, strengths, career goals, and company fit. Practice each question free with AI.',
+    canonical: 'https://www.interviewanswers.ai/interview-questions-and-answers',
+    keywords: 'interview questions and answers, common interview questions, job interview questions, top interview questions, interview questions 2026',
+  },
+  '/interview-coaching-lessons': {
+    title: 'Free Interview Coaching Lessons: 25 Audio Lessons + Quiz | InterviewAnswers.ai',
+    description: 'Learn interview skills with 25 structured audio lessons across 5 modules. Active recall quizzes, STAR method deep dives, and advanced techniques. Free interview preparation course.',
+    canonical: 'https://www.interviewanswers.ai/interview-coaching-lessons',
+    keywords: 'interview coaching, interview preparation course, interview coaching lessons, free interview course, interview skills training, behavioral interview course, STAR method course',
+  },
+  '/interview-prep-podcast': {
+    title: 'AI Interview Prep Podcast: Personalized Daily Coaching | InterviewAnswers.ai',
+    description: 'Prep Radio: an AI-powered interview coaching podcast personalized to your target role, interview date, and practice history. Daily briefings, question walkthroughs, and mental rehearsal. Free.',
+    canonical: 'https://www.interviewanswers.ai/interview-prep-podcast',
+    keywords: 'interview prep podcast, interview preparation audio, interview coaching podcast, AI interview podcast, personalized interview prep, daily interview coaching',
   },
   '/onboarding': {
     title: 'Get Started Free — InterviewAnswers.ai',
@@ -58,12 +90,14 @@ const ROUTES = {
     description: 'Privacy policy for InterviewAnswers.ai. Learn how we protect your data and interview practice history.',
     canonical: 'https://www.interviewanswers.ai/privacy',
     keywords: 'privacy policy, data protection',
+    robots: 'noindex, follow',
   },
   '/terms': {
     title: 'Terms of Service — InterviewAnswers.ai',
     description: 'Terms of service for InterviewAnswers.ai interview preparation platform.',
     canonical: 'https://www.interviewanswers.ai/terms',
     keywords: 'terms of service, terms and conditions',
+    robots: 'noindex, follow',
   },
   '/login': {
     title: 'Sign In — InterviewAnswers.ai',
@@ -73,7 +107,7 @@ const ROUTES = {
     robots: 'noindex, follow',
   },
   '/nursing': {
-    title: 'Nursing Interview Dashboard | NurseInterviewPro by InterviewAnswers.ai',
+    title: 'Nursing Interview Dashboard | NurseAnswerPro by InterviewAnswers.ai',
     description: 'Access your nursing interview practice dashboard. Track progress across 8 specialties with AI-powered mock interviews.',
     canonical: 'https://www.interviewanswers.ai/nursing',
     keywords: 'nursing interview dashboard, nursing interview practice',
@@ -161,10 +195,37 @@ if (!existsSync(templatePath)) {
   process.exit(1);
 }
 
-const template = readFileSync(templatePath, 'utf-8');
+let template = readFileSync(templatePath, 'utf-8');
+
+// For general builds, strip nursing references from JSON-LD structured data
+if (APP_TARGET === 'general') {
+  // Remove nursing offer from Product JSON-LD
+  template = template.replace(/,\s*\{\s*"@type":\s*"Offer",\s*"price":\s*"19\.99"[^}]*"30-Day Nursing Pass"[^}]*\}/s, '');
+  // Remove nursing feature from featureList
+  template = template.replace(/,\s*"Nursing interview specialty track with SBAR coaching"/, '');
+  // Remove nursing FAQ entry
+  template = template.replace(/,\s*\{\s*"@type":\s*"Question",\s*"name":\s*"Can I use InterviewAnswers\.ai for nursing interviews\?"[^}]*\{[^}]*\}[^}]*\}/s, '');
+  // Clean "general and nursing" from Annual description
+  template = template.replace(/general and nursing interview tracks/g, 'all interview features');
+  // Clean nursing reference from interview types FAQ
+  template = template.replace(/There is also a dedicated nursing interview track with SBAR communication drills and specialty-specific questions for ED, ICU, OR, L&D, Pediatrics, and more\./, '');
+  // Clean org description if it mentions nursing
+  template = template.replace(/nursing interview specialty track/g, 'comprehensive interview preparation');
+  console.log('  🧹 Stripped nursing references from JSON-LD (general build)');
+  // Overwrite root dist/index.html with the stripped template so the root URL
+  // and SPA fallback serve a nursing-free page.
+  writeFileSync(templatePath, template, 'utf-8');
+  console.log('  📝 Wrote stripped root dist/index.html');
+}
+
 let created = 0;
 
 for (const [route, seo] of Object.entries(ROUTES)) {
+  // Skip nursing routes in general-only builds
+  if (APP_TARGET === 'general' && NURSING_ROUTES.includes(route)) {
+    console.log(`  ⏭️  ${route} → skipped (general build)`);
+    continue;
+  }
   const routeDir = join(DIST, route.slice(1)); // Remove leading /
   const routeHtml = join(routeDir, 'index.html');
 

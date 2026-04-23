@@ -1,57 +1,100 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Homepage -->
   <url>
     <loc>https://www.interviewanswers.ai/</loc>
-    <lastmod>2026-02-20</lastmod>
+    <lastmod>2026-04-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
+
+  <!-- Nursing landing page (high-value SEO target) -->
   <url>
-    <loc>https://www.interviewanswers.ai/nurse</loc>
-    <lastmod>2026-02-20</lastmod>
+    <loc>https://www.interviewanswers.ai/nursing</loc>
+    <lastmod>2026-04-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
+
+  <!-- SEO content pages (long-tail keyword targets) -->
   <url>
     <loc>https://www.interviewanswers.ai/star-method-guide</loc>
-    <lastmod>2026-02-18</lastmod>
+    <lastmod>2026-04-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://www.interviewanswers.ai/behavioral-interview-questions</loc>
-    <lastmod>2026-02-18</lastmod>
+    <lastmod>2026-04-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://www.interviewanswers.ai/nursing-interview-questions</loc>
-    <lastmod>2026-02-18</lastmod>
+    <lastmod>2026-04-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://www.interviewanswers.ai/mock-interview-practice</loc>
+    <lastmod>2026-04-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://www.interviewanswers.ai/nursing</loc>
-    <lastmod>2026-02-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
+    <loc>https://www.interviewanswers.ai/tell-me-about-yourself</loc>
+    <lastmod>2026-04-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
   </url>
+  <url>
+    <loc>https://www.interviewanswers.ai/interview-questions-and-answers</loc>
+    <lastmod>2026-04-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://www.interviewanswers.ai/interview-coaching-lessons</loc>
+    <lastmod>2026-04-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.interviewanswers.ai/interview-prep-podcast</loc>
+    <lastmod>2026-04-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Onboarding (conversion funnel entry) -->
   <url>
     <loc>https://www.interviewanswers.ai/onboarding</loc>
-    <lastmod>2026-02-18</lastmod>
+    <lastmod>2026-04-15</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <priority>0.7</priority>
   </url>
+
+  <!-- Legal pages (needed for trust signals) -->
   <url>
     <loc>https://www.interviewanswers.ai/privacy</loc>
-    <lastmod>2026-02-16</lastmod>
-    <changefreq>monthly</changefreq>
+    <lastmod>2026-04-15</lastmod>
+    <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>https://www.interviewanswers.ai/terms</loc>
-    <lastmod>2026-02-16</lastmod>
-    <changefreq>monthly</changefreq>
+    <lastmod>2026-04-15</lastmod>
+    <changefreq>yearly</changefreq>
     <priority>0.3</priority>
+  </url>
+
+  <!-- Login page -->
+  <url>
+    <loc>https://www.interviewanswers.ai/login</loc>
+    <lastmod>2026-04-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
   </url>
 </urlset>

@@ -145,13 +145,41 @@ export default function IRSBaseline({ practiceScore, onContinue }) {
               />
             </div>
 
+            {/* Trajectory visualization — growth mindset framing */}
             <div className="mt-4 pt-3 border-t border-slate-100">
-              <div className="flex items-center gap-2 text-xs text-teal-600">
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
-                <span>Users who practice daily for a week typically reach 45+</span>
+              <p className="text-xs font-medium text-slate-500 mb-2">Your projected trajectory:</p>
+              <div className="space-y-2">
+                {/* Day 1 — current */}
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-slate-400 w-12 text-right">Day 1</span>
+                  <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-teal-500 rounded-full" style={{ width: `${realIRS}%` }} />
+                  </div>
+                  <span className="text-xs font-semibold text-teal-600 w-8">{realIRS}</span>
+                  <span className="text-xs text-teal-500 font-medium">← You</span>
+                </div>
+                {/* Day 7 — typical with daily practice */}
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-slate-400 w-12 text-right">Day 7</span>
+                  <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-teal-400 rounded-full" style={{ width: '45%' }} />
+                  </div>
+                  <span className="text-xs font-semibold text-slate-500 w-8">~45</span>
+                  <span className="text-xs text-slate-400 w-16"></span>
+                </div>
+                {/* Day 14 — habit formed */}
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-slate-400 w-12 text-right">Day 14</span>
+                  <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-teal-300 rounded-full" style={{ width: '65%' }} />
+                  </div>
+                  <span className="text-xs font-semibold text-slate-500 w-8">~65</span>
+                  <span className="text-xs text-slate-400 w-16"></span>
+                </div>
               </div>
+              <p className="text-xs text-slate-400 mt-2">
+                Based on users who practice daily. Scores grow fastest in the first 2 weeks.
+              </p>
             </div>
           </div>
         </div>

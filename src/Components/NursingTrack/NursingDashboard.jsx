@@ -8,10 +8,11 @@ import {
   ArrowLeft, Bot, Target, BookOpen, Award,
   ChevronRight, Stethoscope, MessageSquare, Clock,
   BarChart3, Star, Sparkles, Layers, Shield, DollarSign,
-  LogOut, Settings, ChevronDown, User
+  LogOut, Settings, ChevronDown, User, FileText, Lock
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { CLINICAL_FRAMEWORKS } from './nursingQuestions';
+import { showGeneralFeatures } from '../../utils/appTarget';
 import useNursingQuestions from './useNursingQuestions';
 import NursingLoadingSkeleton from './NursingLoadingSkeleton';
 import NursingIRSDisplay from './NursingIRSDisplay';
@@ -35,10 +36,14 @@ function AccountMenu({ userData }) {
     return () => { document.removeEventListener('mousedown', handler); document.removeEventListener('touchstart', handler); };
   }, [open]);
 
-  const tierLabel = userData?.isBeta ? 'Beta' : userData?.tier === 'pro' ? 'Pro' : 'Free';
+  const tierLabel = userData?.isBeta ? 'Beta'
+    : userData?.tier === 'annual' ? 'Annual'
+    : userData?.tier === 'nursing_pass' ? 'Nursing Pass'
+    : userData?.tier === 'pro' ? 'Pro'
+    : 'Free';
   const tierClasses = userData?.isBeta
     ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
-    : userData?.tier === 'pro'
+    : (userData?.tier === 'nursing_pass' || userData?.tier === 'annual' || userData?.tier === 'pro')
       ? 'bg-purple-500/20 text-purple-300 border-purple-500/30'
       : 'bg-white/10 text-slate-400 border-white/10';
 
@@ -65,18 +70,38 @@ function AccountMenu({ userData }) {
             <p className="text-slate-500 text-[10px] mt-0.5">{tierLabel} Plan</p>
           </div>
 
-          {/* Settings — goes to general app settings */}
+          {/* Account Settings — goes to general app settings (only in builds that include general) */}
+          {showGeneralFeatures() && (
           <a
             href="/app?view=settings"
             className="flex items-center gap-2 px-3 py-2 text-slate-300 hover:text-white hover:bg-white/10 text-xs transition-colors no-underline"
           >
             <Settings className="w-3.5 h-3.5" /> Account Settings
           </a>
+          )}
 
-          {/* Sign out */}
+          {/* Privacy Policy */}
+          <a
+            href="/privacy"
+            className="flex items-center gap-2 px-3 py-2 text-slate-300 hover:text-white hover:bg-white/10 text-xs transition-colors no-underline"
+          >
+            <Lock className="w-3.5 h-3.5" /> Privacy Policy
+          </a>
+
+          {/* Terms of Service */}
+          <a
+            href="/terms"
+            className="flex items-center gap-2 px-3 py-2 text-slate-300 hover:text-white hover:bg-white/10 text-xs transition-colors no-underline"
+          >
+            <FileText className="w-3.5 h-3.5" /> Terms of Service
+          </a>
+
+          <div className="border-t border-white/10 my-1" />
+
+          {/* Sign out — use /login to avoid redirect loop in nursing-only builds */}
           <button
-            onClick={async () => { await supabase.auth.signOut(); window.location.href = '/'; }}
-            onTouchEnd={async (e) => { e.preventDefault(); await supabase.auth.signOut(); window.location.href = '/'; }}
+            onClick={async () => { await supabase.auth.signOut(); window.location.href = '/login'; }}
+            onTouchEnd={async (e) => { e.preventDefault(); await supabase.auth.signOut(); window.location.href = '/login'; }}
             className="flex items-center gap-2 w-full px-3 py-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 text-xs transition-colors"
           >
             <LogOut className="w-3.5 h-3.5" /> Sign Out
@@ -87,7 +112,7 @@ function AccountMenu({ userData }) {
   );
 }
 
-export default function NursingDashboard({ specialty, onStartMode, onChangeSpecialty, onBack, userData, sessionHistory = [], streakRefreshTrigger }) {
+export default function NursingDashboard({ specialty, onStartMode, onChangeSpecialty, onBack, userData, sessionHistory = [], streakRefreshTrigger, onShowPricing }) {
   const { questions, categories, loading } = useNursingQuestions(specialty.id);
 
   if (loading) return <NursingLoadingSkeleton title={`${specialty.name} Track`} onBack={onBack} />;
@@ -104,7 +129,7 @@ export default function NursingDashboard({ specialty, onStartMode, onChangeSpeci
   const recentSessions = [...sessionHistory].sort((a, b) => b.timestamp.localeCompare(a.timestamp)).slice(0, 5);
 
   // Credits display — nursing track uses separate pools
-  const isUnlimited = userData?.isBeta || userData?.tier === 'pro' || userData?.tier === 'beta';
+  const isUnlimited = userData?.isBeta || userData?.tier === 'nursing_pass' || userData?.tier === 'annual' || userData?.tier === 'pro' || userData?.tier === 'beta';
 
   // Practice modes available in the nursing track
   const practiceModes = [
@@ -150,7 +175,7 @@ export default function NursingDashboard({ specialty, onStartMode, onChangeSpeci
       description: 'Free-form coaching — ask anything about interview prep',
       icon: Sparkles,
       color: 'from-violet-500 to-purple-500',
-      badge: isUnlimited ? null : 'Pro',
+      badge: isUnlimited ? null : 'Pass',
       detail: 'Answer workshopping, strategy, SBAR/STAR guidance, confidence coaching',
     },
     {
@@ -159,7 +184,7 @@ export default function NursingDashboard({ specialty, onStartMode, onChangeSpeci
       description: `Build your ${specialty.shortName} interview confidence with evidence from your real experience`,
       icon: Shield,
       color: 'from-amber-500 to-orange-500',
-      badge: isUnlimited ? null : 'Pro',
+      badge: null, // Profile + Evidence + Reset are free; AI Brief uses credits
       detail: 'Background profile → Evidence file → AI confidence brief → Pre-interview reset',
     },
     {
@@ -168,7 +193,7 @@ export default function NursingDashboard({ specialty, onStartMode, onChangeSpeci
       description: 'Practice negotiating salary, sign-on bonuses, and benefits with AI coaching',
       icon: DollarSign,
       color: 'from-emerald-500 to-green-500',
-      badge: isUnlimited ? null : 'Pro',
+      badge: isUnlimited ? null : 'Pass',
       detail: 'Scenario-based practice → AI evaluates communication, not dollar amounts',
     },
   ];
@@ -184,13 +209,10 @@ export default function NursingDashboard({ specialty, onStartMode, onChangeSpeci
       {/* Top Nav */}
       <div className="bg-slate-900/80 backdrop-blur-lg border-b border-white/10 sticky top-0 z-30">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-          {/* Track Switcher — mirrors the toggle on the main app home screen */}
-          <div className="flex items-center gap-1 bg-white/10 rounded-full p-0.5 border border-white/20">
-            <a href="/app" className="px-3 py-1.5 rounded-full text-xs font-semibold text-white/70 hover:text-white hover:bg-white/10 transition-all no-underline">
-              General
-            </a>
-            <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-white text-slate-900 shadow-md">
-              🩺 Nursing
+          {/* Track label — toggle hidden on web, only shown in targeted native builds */}
+          <div className="flex items-center gap-1">
+            <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-white/10 text-white border border-white/20">
+              🩺 NurseAnswerPro
             </span>
           </div>
 
@@ -321,13 +343,13 @@ export default function NursingDashboard({ specialty, onStartMode, onChangeSpeci
               })}
             </div>
             <div className="flex items-center justify-between mt-3">
-              <p className="text-slate-600 text-[10px]">AI Coach, Confidence Builder, Offer Negotiation require Pro</p>
-              <a
-                href="/app?upgrade=true&returnTo=/nursing"
+              <p className="text-slate-600 text-[10px]">AI Coach, Confidence Builder, Offer Negotiation require a pass</p>
+              <button
+                onClick={onShowPricing}
                 className="text-[10px] text-sky-400 hover:text-sky-300 font-medium transition-colors"
               >
-                Upgrade to Pro →
-              </a>
+                Get Nursing Pass →
+              </button>
             </div>
           </div>
         )}
@@ -338,9 +360,16 @@ export default function NursingDashboard({ specialty, onStartMode, onChangeSpeci
             <span className="text-2xl">{userData?.tier === 'beta' ? '🎖️' : '👑'}</span>
             <div>
               <p className="text-white font-semibold text-sm">
-                {userData?.tier === 'beta' ? 'Beta Tester' : 'Pro Member'} — Unlimited Access
+                {userData?.tier === 'beta' ? 'Beta Tester'
+                  : userData?.tier === 'annual' ? 'Annual All-Access'
+                  : userData?.tier === 'nursing_pass' ? 'Nursing Pass'
+                  : 'Pro Member'} — Unlimited Access
               </p>
-              <p className="text-amber-300/70 text-xs">All modes and features are unlocked.</p>
+              <p className="text-amber-300/70 text-xs">
+                {userData?.nursingPassExpires
+                  ? `Expires ${new Date(userData.nursingPassExpires).toLocaleDateString()}`
+                  : 'All modes and features are unlocked.'}
+              </p>
             </div>
           </div>
         )}
@@ -366,22 +395,24 @@ export default function NursingDashboard({ specialty, onStartMode, onChangeSpeci
                 {/* Badge */}
                 {mode.badge && (
                   <span className={`absolute top-3 right-3 text-xs font-semibold px-2 py-0.5 rounded-full ${
-                    mode.badge === 'Pro'
+                    mode.badge === 'Pass'
                       ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
                       : mode.badge === 'New'
                         ? 'bg-green-500/20 text-green-300 border border-green-500/30'
                         : mode.badge === 'Free'
                           ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
-                          : 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                          : mode.badge === 'Most Popular'
+                            ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                            : 'bg-slate-500/20 text-slate-300 border border-slate-500/30'
                   }`}>
-                    {mode.badge === 'Pro' ? '🔒 Pro' : mode.badge}
+                    {mode.badge === 'Pass' ? '🔒 Pass' : mode.badge}
                   </span>
                 )}
 
                 <div className="flex items-start gap-4">
                   {/* Icon */}
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${mode.color} flex items-center justify-center flex-shrink-0`}>
-                    <Icon className="w-6 h-6 text-white" />
+                  <div className="w-12 h-12 rounded-xl bg-teal-50 flex items-center justify-center flex-shrink-0">
+                    <Icon className="w-6 h-6 text-teal-600" />
                   </div>
 
                   <div className="flex-1 min-w-0">
@@ -511,6 +542,36 @@ export default function NursingDashboard({ specialty, onStartMode, onChangeSpeci
           </div>
         )}
 
+        {/* Command Center — moved up for visibility */}
+        <button
+          onClick={() => onStartMode('command-center')}
+          className="w-full bg-gradient-to-r from-sky-600/20 to-cyan-500/20 border border-sky-500/30 rounded-xl p-4 mb-4 flex items-center justify-between hover:from-sky-600/30 hover:to-cyan-500/30 transition-all group text-left"
+        >
+          <div className="flex items-center gap-3">
+            <BarChart3 className="w-5 h-5 text-sky-400" />
+            <div>
+              <p className="text-white font-medium text-sm">Command Center</p>
+              <p className="text-slate-400 text-xs">Track progress, browse questions, and assess your readiness</p>
+            </div>
+          </div>
+          <ChevronRight className="w-5 h-5 text-sky-400 group-hover:translate-x-1 transition-all flex-shrink-0" />
+        </button>
+
+        {/* Resources Link — moved up for visibility */}
+        <button
+          onClick={() => onStartMode('resources')}
+          className="w-full bg-white/5 border border-white/10 rounded-xl p-4 mb-8 flex items-center justify-between hover:bg-white/10 hover:border-white/20 transition-all group text-left"
+        >
+          <div className="flex items-center gap-3">
+            <BookOpen className="w-5 h-5 text-sky-400" />
+            <div>
+              <p className="text-white font-medium text-sm">Clinical Resources & References</p>
+              <p className="text-slate-400 text-xs">Free public sources for clinical knowledge — NCSBN, CDC, IHI, and more</p>
+            </div>
+          </div>
+          <ChevronRight className="w-5 h-5 text-slate-600 group-hover:text-slate-400 group-hover:translate-x-1 transition-all flex-shrink-0" />
+        </button>
+
         {/* Clinical Frameworks Reference */}
         <h2 className="text-white font-semibold text-lg mb-4 flex items-center gap-2">
           <BookOpen className="w-5 h-5 text-sky-400" />
@@ -540,36 +601,6 @@ export default function NursingDashboard({ specialty, onStartMode, onChangeSpeci
             </span>
           ))}
         </div>
-
-        {/* Command Center */}
-        <button
-          onClick={() => onStartMode('command-center')}
-          className="w-full bg-gradient-to-r from-sky-600/20 to-cyan-500/20 border border-sky-500/30 rounded-xl p-4 mb-4 flex items-center justify-between hover:from-sky-600/30 hover:to-cyan-500/30 transition-all group text-left"
-        >
-          <div className="flex items-center gap-3">
-            <BarChart3 className="w-5 h-5 text-sky-400" />
-            <div>
-              <p className="text-white font-medium text-sm">Command Center</p>
-              <p className="text-slate-400 text-xs">Track progress, browse questions, and assess your readiness</p>
-            </div>
-          </div>
-          <ChevronRight className="w-5 h-5 text-sky-400 group-hover:translate-x-1 transition-all flex-shrink-0" />
-        </button>
-
-        {/* Resources Link */}
-        <button
-          onClick={() => onStartMode('resources')}
-          className="w-full bg-white/5 border border-white/10 rounded-xl p-4 mb-8 flex items-center justify-between hover:bg-white/10 hover:border-white/20 transition-all group text-left"
-        >
-          <div className="flex items-center gap-3">
-            <BookOpen className="w-5 h-5 text-sky-400" />
-            <div>
-              <p className="text-white font-medium text-sm">Clinical Resources & References</p>
-              <p className="text-slate-400 text-xs">Free public sources for clinical knowledge — NCSBN, CDC, IHI, and more</p>
-            </div>
-          </div>
-          <ChevronRight className="w-5 h-5 text-slate-600 group-hover:text-slate-400 group-hover:translate-x-1 transition-all flex-shrink-0" />
-        </button>
 
         {/* Walled Garden Notice */}
         <div className="bg-sky-500/10 border border-sky-400/20 rounded-xl p-4 mb-8">

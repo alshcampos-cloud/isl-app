@@ -96,13 +96,184 @@ You MUST weave ALL FOUR of the following into your feedback response. Do not cre
 IMPORTANT: These four elements should feel natural and woven into your coaching voice — NOT like a checklist.`;
 }
 
+// ============================================================
+// Server-side prompt lookup (Change 8 — IP protection)
+// Onboarding system prompts moved here from client-side code.
+// Previously visible in browser bundle and DevTools Network tab.
+// ============================================================
+const ONBOARDING_PROMPTS: Record<string, string> = {
+  'onboarding-general': `You are a supportive interview coach helping someone practice for the first time.
+
+RULES:
+1. Be warm, encouraging, and specific. This is their FIRST practice ever.
+2. Start with something genuinely positive about their answer (even if small).
+3. Give ONE concrete suggestion for improvement (not three, not five — ONE).
+4. End with an encouraging statement about their potential.
+5. Keep your response under 120 words — brevity matters.
+6. Include a score from 1-10 in this exact format on its own line: [SCORE: X/10]
+7. Do NOT use clinical terminology. Keep it simple and accessible.
+8. Format your response as SHORT PARAGRAPHS, not bullet lists or JSON. Plain sentences only.
+
+TONE: Think "supportive older sibling who interviews well" — not "professor grading an essay."
+
+CRITICAL PRE-CHECK (do this FIRST before writing anything):
+Count the words in the user's answer. If the answer has 3 or fewer words, OR is gibberish/random text (e.g. "test", "asdf", "hello", "idk", "yes"), you MUST score it 1 or 2. No exceptions. Do not be charitable. Do not interpret intent. A 1-3 word answer is NEVER worth more than 2/10.
+
+SCORING GUIDE (BE STRICT — this must be accurate):
+- 1-2: 3 or fewer words, random text, gibberish, or completely off-topic (e.g. "test", "asdf", "hello", "I don't know")
+- 3-4: Very short or vague — shows minimal effort, no structure
+- 5-6: Shows effort but needs structure or more detail
+- 7-8: Good foundation with specific examples
+- 9: Strong answer with clear STAR structure
+- 10: Exceptional — rare for first attempt
+
+IMPORTANT: If the answer is 3 words or fewer, score it 1-2. Period. Do not inflate scores.`,
+
+  'onboarding-nursing': `You are a supportive nursing interview coach helping a nurse practice for the first time.
+
+RULES:
+1. Be warm, encouraging, and specific. This is their FIRST practice ever.
+2. Start with something genuinely positive about their answer (even if small).
+3. Give ONE concrete suggestion for improvement — frame it around the SBAR communication framework (Situation, Background, Assessment, Recommendation) if relevant to their answer.
+4. End with an encouraging statement about their potential.
+5. Keep your response under 120 words — brevity matters.
+6. Include a score from 1-10 in this exact format on its own line: [SCORE: X/10]
+7. Coach COMMUNICATION quality only — do NOT evaluate clinical accuracy.
+8. If they mention clinical details, acknowledge them but focus your feedback on how clearly they communicated, not whether the clinical content is correct.
+9. Format your response as SHORT PARAGRAPHS, not bullet lists or JSON. Plain sentences only.
+
+TONE: Think "supportive charge nurse mentoring a colleague" — warm, professional, specific.
+
+CRITICAL PRE-CHECK (do this FIRST before writing anything):
+Count the words in the user's answer. If the answer has 3 or fewer words, OR is gibberish/random text (e.g. "test", "asdf", "hello", "idk", "yes"), you MUST score it 1 or 2. No exceptions. Do not be charitable. Do not interpret intent. A 1-3 word answer is NEVER worth more than 2/10.
+
+SCORING GUIDE (BE STRICT — this must be accurate):
+- 1-2: 3 or fewer words, random text, gibberish, or completely off-topic (e.g. "test", "asdf", "hello", "I don't know")
+- 3-4: Very short or vague — shows minimal effort, no SBAR elements
+- 5-6: Shows effort but needs structure (suggest SBAR framing)
+- 7-8: Good foundation, SBAR elements partially present
+- 9: Strong answer with clear SBAR structure
+- 10: Exceptional — rare for first attempt
+
+IMPORTANT: If the answer is 3 words or fewer, score it 1-2. Period. Do not inflate scores.`,
+};
+
+// Admin client for logging — uses service role key to bypass RLS
+const supabaseAdmin = createClient(
+  Deno.env.get('SUPABASE_URL') ?? '',
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+)
+
+// Cost per token (approximate, USD) — update when pricing changes
+const TOKEN_COSTS: Record<string, { input: number; output: number }> = {
+  'claude-3-5-haiku-20241022': { input: 0.000001, output: 0.000005 },
+  'claude-haiku-4-5-20251001': { input: 0.000001, output: 0.000005 },
+  'claude-sonnet-4-20250514':  { input: 0.000003, output: 0.000015 },
+}
+
+/**
+ * Build format-specific interviewer persona for the Mock Interviewer feature.
+ * Returns a text block to PREPEND to the generic ai-interviewer system prompt.
+ * Returns empty string when format is missing (backward compatible).
+ */
+function buildInterviewerPersona(
+  format?: string | null,
+  stage?: string | null,
+  slotType?: string | null,
+  questionNumber?: number | null,
+  totalQuestions?: number | null,
+): string {
+  if (!format) return '';
+
+  let persona = '';
+
+  if (format === 'behavioral') {
+    persona = `INTERVIEWER PERSONA — BEHAVIORAL HIRING MANAGER:
+You are a warm but probing hiring manager conducting a structured behavioral interview. Your follow-ups dig into specifics — "What exactly did YOU do?" "What was the measurable result?" "How did the team respond?" You are looking for STAR structure, ownership, and concrete details. Be encouraging but never let vague answers slide.`;
+  } else if (format === 'phoneScreen') {
+    persona = `INTERVIEWER PERSONA — RECRUITER PHONE SCREEN:
+You are a friendly recruiter conducting a 15-minute phone screening call. Your job is to verify basic fit and move the candidate to the next round — NOT to deep-dive. Keep follow-ups light and efficient. After 1 brief follow-up at most, move on. You are assessing: communication clarity, basic qualifications, availability, and enthusiasm. No detailed STAR probing.`;
+  } else if (format === 'panel') {
+    // Rotate panelist role based on slotType
+    let panelRole = 'the hiring manager';
+    if (slotType === 'behavioral' || slotType === 'leadership') {
+      panelRole = 'the hiring manager';
+    } else if (slotType === 'communication' || slotType === 'situational') {
+      panelRole = 'a cross-functional peer';
+    } else if (slotType === 'curveball') {
+      panelRole = 'a senior engineer';
+    } else if (slotType === 'first-impressions' || slotType === 'closing') {
+      panelRole = 'the HR lead';
+    }
+    persona = `INTERVIEWER PERSONA — PANEL INTERVIEW:
+You are one of several interviewers on a panel. For this specific question, you are playing the role of ${panelRole}. Attribute your follow-ups naturally: "From my perspective as ${panelRole}, I'd want to know..." Each panelist has a different angle — be that angle. Stay in character for this question.`;
+  } else if (format === 'finalRound') {
+    persona = `INTERVIEWER PERSONA — FINAL-ROUND EXECUTIVE:
+You are a senior executive (VP+) conducting the final-round interview. You have already seen the candidate's resume and previous interview notes — you are evaluating LEADERSHIP PHILOSOPHY, STRATEGIC JUDGMENT, and CULTURAL ALIGNMENT. Your tone is measured and thoughtful. Follow-ups probe long-term thinking, values, and how the candidate would operate at the senior level. Not about tactics — about mindset and fit.`;
+  } else {
+    return '';
+  }
+
+  // Pacing guidance based on question position in sequence
+  let pacing = '';
+  if (typeof questionNumber === 'number' && typeof totalQuestions === 'number' && totalQuestions > 0) {
+    if (questionNumber < totalQuestions) {
+      pacing = `\n\nPACING: This is question ${questionNumber} of ${totalQuestions}. After at most 1-2 follow-ups, wrap up this question with continue_conversation: false so we can move to the next one. Do NOT give final comprehensive feedback yet — just a brief acknowledgment.`;
+    } else if (questionNumber === totalQuestions) {
+      pacing = `\n\nPACING: This is the FINAL question of the interview. Go deeper with follow-ups if helpful. After the candidate's answer is complete, return comprehensive feedback across the entire session with continue_conversation: false.`;
+    }
+  }
+
+  let stageLine = '';
+  if (stage) {
+    stageLine = `\n\nINTERVIEW STAGE: ${stage}`;
+  }
+
+  return persona + stageLine + pacing + '\n\n';
+}
+
+/** Fire-and-forget: log successful API call metrics */
+function logMetrics(params: { functionName: string; mode: string; userId: string; model: string; latencyMs: number; inputTokens?: number; outputTokens?: number }) {
+  const costs = TOKEN_COSTS[params.model] || { input: 0.000003, output: 0.000015 };
+  const estimatedCost = ((params.inputTokens || 0) * costs.input) + ((params.outputTokens || 0) * costs.output);
+  supabaseAdmin.from('api_metrics').insert({
+    function_name: params.functionName,
+    mode: params.mode,
+    user_id: params.userId,
+    success: true,
+    latency_ms: params.latencyMs,
+    input_tokens: params.inputTokens || null,
+    output_tokens: params.outputTokens || null,
+    estimated_cost: estimatedCost,
+  }).then(() => {}).catch(() => {});
+}
+
+/** Fire-and-forget: log error to api_error_log */
+function logError(params: { functionName: string; errorType?: string; errorMessage: string; userId?: string; mode?: string; httpStatus?: number; latencyMs?: number; metadata?: Record<string, unknown> }) {
+  supabaseAdmin.from('api_error_log').insert({
+    function_name: params.functionName,
+    error_type: params.errorType || 'unknown',
+    error_message: params.errorMessage,
+    user_id: params.userId || null,
+    request_mode: params.mode || null,
+    http_status: params.httpStatus || null,
+    latency_ms: params.latencyMs || null,
+    metadata: params.metadata || {},
+  }).then(() => {}).catch(() => {});
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
+  const requestStart = Date.now();
+  let requestMode = 'unknown';
+  let userId: string | undefined;
+
   try {
-    const { questionText, userAnswer, expectedBullets, mode, userContext, conversationHistory, exchangeCount, question, conversation, answer, systemPrompt, userMessage, nursingFeature, selfEfficacyData } = await req.json()
+    const { questionText, userAnswer, expectedBullets, mode, userContext, conversationHistory, exchangeCount, question, conversation, answer, systemPrompt, userMessage, nursingFeature, selfEfficacyData, rushMode, portfolioContext, currentBullets, currentKeywords, interviewFormat, interviewStage, slotType, questionNumber, totalQuestions } = await req.json()
+    requestMode = mode || 'unknown';
     
     // Build context section if user provided background info
     let contextSection = '';
@@ -120,6 +291,16 @@ When giving feedback, reference their specific background when relevant. Example
 - "Consider drawing from your work with [specific experience]..."
 `;
     }
+
+    // Inject portfolio work history if available
+    if (userContext?.portfolioSummary) {
+      contextSection += `
+CANDIDATE'S WORK PORTFOLIO (real projects they've done — reference these when relevant):
+${userContext.portfolioSummary}
+
+When giving feedback, cite their specific projects and skills as evidence they can draw on.
+`;
+    }
     
     const authHeader = req.headers.get('Authorization')!
     const supabaseClient = createClient(
@@ -130,45 +311,111 @@ When giving feedback, reference their specific background when relevant. Example
     
     const { data: { user } } = await supabaseClient.auth.getUser()
     if (!user) throw new Error('Not authenticated')
+    userId = user.id;
 
     // Anonymous users (Phase 2 onboarding) — allow 1 practice session, skip usage tracking
     const isAnonymous = user.is_anonymous === true
 
-    // Beta tester whitelist - add your user IDs here
-    const BETA_TESTERS = [
-      user.id, // You're automatically included for testing
+    // Beta tester check — uses beta_testers DB table (not a hardcoded list)
+    // Erin's ID kept as hardcoded fallback for safety
+    const HARDCODED_BETA = [
       '10a259e0-be83-4e28-95c0-76d881cdb764', // Erin
     ]
-    const isBetaTester = BETA_TESTERS.includes(user.id)
-
-    if (!isBetaTester && !isAnonymous) {
-      const now = new Date()
-      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-      
-      const { count } = await supabaseClient
-        .from('practice_sessions')
-        .select('*', { count: 'exact', head: true })
+    let isBetaTester = HARDCODED_BETA.includes(user.id)
+    if (!isBetaTester) {
+      const { data: betaRow } = await supabaseClient
+        .from('beta_testers')
+        .select('unlimited_access')
         .eq('user_id', user.id)
-        .gte('created_at', monthStart.toISOString())
-      
-      const sessionLimit = 25 // TODO: Get from user's subscription tier
-      
-      if (count && count >= sessionLimit) {
-        return new Response(
-          JSON.stringify({ error: 'Monthly session limit reached. Upgrade to Pro for more sessions!' }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
+        .maybeSingle()
+      if (betaRow?.unlimited_access) isBetaTester = true
+    }
+
+    // ── GENERAL FEATURE ENFORCEMENT (tier-aware) ──────────────────
+    // Replaces legacy 25-session-per-month flat check with proper tier limits.
+    // Nursing features have their own enforcement block further below.
+    if (!isBetaTester && !isAnonymous && mode !== 'nursing-coach' && mode !== 'interview-coach') {
+      // Resolve effective tier from profile (pass expiry, legacy pro, trial)
+      const { data: profile } = await supabaseClient
+        .from('user_profiles')
+        .select('tier, subscription_status, nursing_pass_expires, general_pass_expires, premium_trial_ends')
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      const now = new Date()
+      const nursingActive = profile?.nursing_pass_expires &&
+        new Date(profile.nursing_pass_expires) > now
+      const generalActive = profile?.general_pass_expires &&
+        new Date(profile.general_pass_expires) > now
+      const isLegacyPro = profile?.tier === 'pro' && profile?.subscription_status === 'active'
+
+      // Determine tier for general feature limits (trial removed — free tier is onramp)
+      let effectiveTier = 'free'
+      if (nursingActive && generalActive) effectiveTier = 'annual'
+      else if (generalActive) effectiveTier = 'general_pass'
+      else if (nursingActive) effectiveTier = 'nursing_pass'
+      else if (isLegacyPro) effectiveTier = 'pro'
+
+      // Free-tier and nursing-pass users get limited general features
+      const GENERAL_LIMITS: Record<string, Record<string, number>> = {
+        free: { practice: 10, 'ai-interviewer': 3, 'answer-assistant-start': 5, 'answer-assistant-continue': 5, 'confidence-brief': 5, 'portfolio-analysis': 10 },
+        nursing_pass: { practice: 10, 'ai-interviewer': 3, 'answer-assistant-start': 5, 'answer-assistant-continue': 5, 'confidence-brief': 5, 'portfolio-analysis': 10 },
+      }
+
+      const limits = GENERAL_LIMITS[effectiveTier]
+      if (limits && limits[mode] !== undefined) {
+        // Map mode to usage_tracking column
+        const modeToColumn: Record<string, string> = {
+          'practice': 'practice_mode',
+          'ai-interviewer': 'ai_interviewer',
+          'answer-assistant-start': 'answer_assistant',
+          'answer-assistant-continue': 'answer_assistant',
+          'confidence-brief': 'answer_assistant',
+          'portfolio-analysis': 'answer_assistant',
+        }
+        const dbCol = modeToColumn[mode]
+        if (dbCol) {
+          const currentPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+          const { data: usageRow } = await supabaseClient
+            .from('usage_tracking')
+            .select(dbCol)
+            .eq('user_id', user.id)
+            .eq('period', currentPeriod)
+            .maybeSingle()
+
+          const currentUsage = usageRow?.[dbCol] || 0
+          if (currentUsage >= limits[mode]) {
+            return new Response(
+              JSON.stringify({ error: 'Monthly limit reached. Get a 30-day pass for unlimited access!' }),
+              { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
+          }
+        }
       }
     }
 
-    // Use Haiku for Practice Mode (fast + cheap), Sonnet for AI Interviewer and Answer Assistant (detailed)
-    const model = mode === 'practice' || mode === 'generate-bullets' 
-      ? 'claude-3-5-haiku-20241022' 
-      : 'claude-sonnet-4-20250514'
+    // Model selection (P2 — all general features on Haiku 4.5):
+    //   Haiku 3.5 → generate-bullets only (legacy extraction, cheapest)
+    //   Haiku 4.5 → ALL general features: practice, ai-interviewer, answer-assistant, onboarding
+    //   Sonnet 4  → confidence-brief (nursing tone matters), nursing-coach handled separately below
+    const haikuLegacy = 'claude-3-5-haiku-20241022';
+    const haiku45 = 'claude-haiku-4-5-20251001';
+    const sonnet4 = 'claude-sonnet-4-20250514';
+
+    let model: string;
+    if (mode === 'generate-bullets') {
+      model = haikuLegacy;       // Simple extraction — cheapest model sufficient
+    } else if (mode === 'upgrade-answer') {
+      model = sonnet4;           // Answer Forge needs Sonnet for voice quality + anti-hallucination
+    } else if (mode === 'practice' || mode === 'ai-interviewer' || mode === 'answer-assistant-start' || mode === 'answer-assistant-continue' || mode === 'synthesize-star-answer' || mode === 'onboarding-general' || mode === 'onboarding-nursing') {
+      model = haiku45;           // All general + onboarding features — Haiku 4.5 (quality at 1/3 Sonnet cost)
+    } else {
+      model = sonnet4;           // confidence-brief, any future modes needing quality
+    }
 
     // Build the prompt based on mode
     let promptContent = '';
-    let maxTokens = 1024;
+    let maxTokens = 2000;
 
     if (mode === 'answer-assistant-start') {
       maxTokens = 500;
@@ -248,10 +495,364 @@ Return ONLY the bullets in this format:
 - Fourth bullet point
 - Fifth bullet point (if relevant)`;
 
+    } else if (mode === 'onboarding-general' || mode === 'onboarding-nursing') {
+      // Onboarding practice — server-side prompt lookup (Change 8, IP protection)
+      // Previously: systemPrompt was sent from client, visible in DevTools.
+      // Now: mode identifier maps to server-side prompt. No prompt in request body.
+      maxTokens = 1500;
+      const serverPrompt = ONBOARDING_PROMPTS[mode];
+      promptContent = `${serverPrompt}\n\nUSER REQUEST: ${userMessage}`;
+
+    } else if (mode === 'upgrade-answer') {
+      // Answer Forge — upgrade existing answers with portfolio proof
+      maxTokens = 3000;
+      const questionName = question?.question || questionText || 'the interview question';
+      const currentAnswer = answer || userAnswer || '';
+      const portfolio = portfolioContext || 'No portfolio data available.';
+      const bullets = (currentBullets || []).join('; ');
+      const role = userContext?.targetRole || '';
+      const company = userContext?.targetCompany || '';
+      const bg = userContext?.background || '';
+      const otherAnswers = userContext?.otherAnswerSummaries || '';
+
+      // Pick a random structural approach so regenerations are genuinely different
+      const approaches = [
+        'LEAD WITH YOUR STRONGEST SINGLE STORY. Open with one specific experience in vivid detail, then briefly connect the dots to the rest. Most time on one story.',
+        'LEAD WITH THE ACADEMIC FOUNDATION. Your capstone and coursework ARE the proof — open with what you built/analyzed in school, then show how you applied it professionally.',
+        'LEAD WITH WHAT YOU DO NOW. Start with Stanford ED today, then explain the path that got you here. Reverse chronological.',
+        'LEAD WITH A LESSON. Start with ONE thing you learned the hard way — then show the experiences that taught it.',
+        'LEAD WITH THE PORTFOLIO PROJECT MOST RELEVANT TO THIS QUESTION. Go deep on that one project, then briefly mention the rest.',
+      ];
+      const approach = approaches[Math.floor(Math.random() * approaches.length)];
+
+      promptContent = `You are ghostwriting a spoken interview answer. The candidate will say these words out loud. Your job: upgrade their answer by adding proof from their portfolio.
+
+STEP 0 — QUESTION ANALYSIS (do this BEFORE writing anything):
+Read the question carefully. What TYPE of experience is it asking for?
+- "How do you prioritize multiple projects?" → needs proof of JUGGLING CONCURRENT REAL WORKSTREAMS, not analyzing options within one assignment
+- "Describe a time you led a team" → needs proof of ACTUAL TEAM LEADERSHIP, not solo academic analysis
+- "Tell me about a crisis" → needs proof of a REAL HIGH-STAKES SITUATION, not a coursework scenario
+- "Walk me through your planning process" → CAN use academic work because the question asks about process/methodology
+- "Describe your experience with X" → needs PROFESSIONAL experience first. Academic work can supplement but should not be the lead or the majority.
+- "Ensuring compliance" / "managing regulations" → needs proof where REAL STAKES existed (audits, federal oversight, operational consequences), not academic analysis of compliance frameworks
+- If the question asks about DOING something in the real world, prioritize professional and personal project experience over coursework
+- If the question asks about HOW YOU THINK or your analytical approach, academic work is strong proof
+- If the candidate's portfolio has real-world experience that matches, USE IT. Don't default to the most detailed academic project just because it has more keywords.
+- CRITICAL: Look at the "Role" field of each project. If it says "MSEM Coursework", "Student", or "Candidate" — that is ACADEMIC work. If it says a job title or company name, that is PROFESSIONAL work. Prioritize accordingly.
+
+STRUCTURAL APPROACH FOR THIS VERSION:
+${approach}
+
+QUESTION: "${questionName}"
+
+${currentAnswer ? `THEIR CURRENT ANSWER (reference for facts only — do NOT copy this):\n${currentAnswer}\n\nIMPORTANT: Your upgraded answer must be SUBSTANTIALLY DIFFERENT from this. Use different structure, different lead, different emphasis. Pull in proof they DIDN'T use. If their current answer is all academic, add professional experience. If it's all professional, add academic depth. The whole point is to UPGRADE, not echo.` : 'NO CURRENT ANSWER — write one from portfolio data below. IMPORTANT: First identify which portfolio entries ACTUALLY answer this question based on the question analysis above. Do NOT just pick the most keyword-heavy project.'}
+
+PORTFOLIO (real projects — use as PROOF):
+${portfolio}
+
+${role ? `TARGET ROLE: ${role}` : ''}
+${company ? `TARGET COMPANY: ${company}` : ''}
+${bg ? `BACKGROUND: ${bg}` : ''}
+
+${otherAnswers ? `ANSWERS TO OTHER QUESTIONS (use DIFFERENT proof here):\n${otherAnswers}\n` : ''}
+
+=== HALLUCINATION RULES (ABSOLUTE) ===
+- ONLY use facts that appear VERBATIM in their answer or portfolio above
+- NEVER add context they didn't state ("while working full-time", "leading a team of X")
+- NEVER upgrade verbs ("contributed to" → "led" is FORBIDDEN unless they said "led")
+- NEVER adjust timelines. If they worked somewhere DURING an event, don't say it was BECAUSE of it
+- Use their EXACT acronyms. "HICS" stays "HICS". Don't change to "ICS"
+- When in doubt, UNDERSTATE. Weaker language is always safer than stronger
+
+=== CHRONOLOGY (ABSOLUTE) ===
+- Each project has a timeframe. A 2025 project CANNOT be proof for a 2021 story
+- Follow-ups: only reference projects from the same era or earlier. Later projects can ONLY appear as "here's how my thinking evolved since"
+
+=== PROJECT TYPES ===
+ACADEMIC (capstones, coursework, degree projects):
+- Frame honestly: "For my capstone..." / "In my Master's program..."
+- Academic work IS substantial proof. A capstone covering 15 cities and 1.9M residents IS impressive
+- DO NOT dismiss academics as "foundations" or "where I learned frameworks" — describe what you BUILT and ANALYZED
+- Academic projects deserve the same depth and respect as professional work
+
+PROFESSIONAL (jobs, roles):
+- Use their exact title, exact responsibilities, exact outcomes from the portfolio
+
+PERSONAL/SIDE PROJECTS (Anti-Silos, InterviewAnswers.ai, Baby Decoder):
+- ONLY use when the question asks about innovation, vision, or what sets you apart
+- NEVER shoehorn into past work stories
+
+=== VOICE (READ THIS 3 TIMES) ===
+You are writing SPEECH, not an essay. The candidate will read this out loud.
+
+BANNED (instant fail if used): "spans", "grounded in", "interconnected", "leveraged", "synthesized", "comprehensive", "actionable", "framework", "through-line", "core competencies", "multi-faceted", "holistic", "robust", "seasoned", "foundational"
+
+REQUIRED STYLE:
+- Contractions always: "I've", "that's", "wasn't", "didn't"
+- Sentence max: 20 words. If longer, split it.
+- Mix short and medium sentences. Never three long sentences in a row.
+- NO summary sentences at the end ("What ties it together is..." / "The combination of..." — DELETE these)
+- NO thesis statements at the start ("My experience spans..." — start with a SPECIFIC thing instead)
+- End with something concrete, not a wrap-up platitude
+- Read it out loud in your head. Does it sound like a person at a coffee shop? If it sounds like a cover letter, rewrite it.
+
+=== CRITICAL: LESS IS MORE ===
+- Pick the 1-2 STRONGEST projects that answer this question. NOT all 5. Your job is to answer the question well, not showcase the whole portfolio.
+- The other projects go in follow-ups. That's their PURPOSE — the interviewer asks more, the candidate has ammo ready.
+- A focused answer with 1-2 deep examples beats a scattered answer touching 5 things.
+
+=== OUTPUT ===
+- ANSWER: 150-200 words, 60-90 seconds spoken, 2 beats MAX (one main example, one supporting)
+- BULLETS: 4-5 short memory triggers (not full sentences — just enough to jog memory mid-interview)
+- KEYWORDS: 5-8 phrases an interviewer might say that should trigger this answer
+- FOLLOW-UPS: 3-4 questions they'll likely ask next. For each, name the SPECIFIC project + detail to reference. Write it as a note to the candidate: "Use your [project name] — specifically the part about [detail]". Nothing else. No coaching language, no "opens door to", no "demonstrates".
+
+RESPOND WITH ONLY VALID JSON — no text before or after:
+{
+  "upgradedAnswer": "spoken answer here",
+  "bullets": ["bullet 1", "bullet 2", "bullet 3", "bullet 4"],
+  "keywords": ["phrase 1", "phrase 2", "phrase 3"],
+  "followUps": [
+    { "question": "Follow-up question?", "proof": "Use your [Project Name] — specifically [detail]" }
+  ]
+}`;
+
+    } else if (mode === 'synthesize-star-answer') {
+      // General Answer Assistant — synthesize MI conversation into polished STAR answer
+      maxTokens = 1500;
+      const isRush = rushMode === true;
+      const questionName = question?.question || question?.text || questionText || 'the interview question';
+
+      // Build conversation transcript
+      const transcript = (conversation || [])
+        .map((m: {role: string, text: string}) => `${m.role === 'user' ? 'Candidate' : 'Coach'}: ${m.text}`)
+        .join('\n\n');
+
+      promptContent = `Synthesize the candidate's experiences from the conversation below into a polished interview answer for: "${questionName}"
+
+Structure as: Situation → Task → Action → Result (STAR).
+
+RULES:
+1. Use ONLY facts and details they actually shared. Do NOT invent anything.
+2. Preserve their strongest phrases and natural voice.
+3. Fill in reasonable connective tissue between their ideas.
+4. Keep it conversational — this should sound like THEM, not a textbook.
+5. Include a Result/outcome if they shared one.
+6. ${isRush ? '100-200 words' : '150-300 words'}. No bullet points — paragraph form.
+7. Return ONLY the synthesized answer — no commentary, no score, no headers, no markdown formatting.
+
+=== CONVERSATION ===
+${transcript}
+
+=== SYNTHESIZED ANSWER ===`;
+
+    } else if (mode === 'portfolio-analysis') {
+      // Portfolio analysis — structured JSON extraction, uses Haiku 4.5 for speed
+      model = haiku45;
+      maxTokens = 4000;
+      promptContent = `${systemPrompt}\n\nUSER REQUEST: ${userMessage}`;
+
     } else if (mode === 'confidence-brief') {
       // Nursing Confidence Builder — uses systemPrompt + userMessage from client
       maxTokens = 1500;
       promptContent = `${systemPrompt}\n\nUSER REQUEST: ${userMessage}`;
+
+    } else if (mode === 'interview-coach') {
+      // ============================================================
+      // Interview Coach — general-purpose coaching chat
+      // Multi-turn conversation using I.N.T.E.R.V.I.E.W. protocol
+      // Model: Haiku 4.5 (fast, cheap, good for conversational coaching)
+      // ============================================================
+      maxTokens = 1500;
+
+      // ── Usage enforcement for interview-coach ──
+      if (!isBetaTester && !isAnonymous) {
+        const { data: profile } = await supabaseClient
+          .from('user_profiles')
+          .select('tier, subscription_status, nursing_pass_expires, general_pass_expires')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        const now = new Date();
+        const generalActive = profile?.general_pass_expires &&
+          new Date(profile.general_pass_expires) > now;
+        const isLegacyPro = profile?.tier === 'pro' && profile?.subscription_status === 'active';
+        const hasUnlimitedGeneral = isLegacyPro || generalActive;
+
+        if (!hasUnlimitedGeneral) {
+          const currentPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+          const { data: usageRow } = await supabaseClient
+            .from('usage_tracking')
+            .select('interview_coach')
+            .eq('user_id', user.id)
+            .eq('period', currentPeriod)
+            .maybeSingle();
+
+          const currentUsage = usageRow?.['interview_coach'] || 0;
+          const INTERVIEW_COACH_FREE_LIMIT = 5;
+
+          if (currentUsage >= INTERVIEW_COACH_FREE_LIMIT) {
+            return new Response(
+              JSON.stringify({ error: 'Monthly coaching limit reached. Get a 30-day pass for unlimited access!' }),
+              { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+        }
+      }
+
+      // Build user context block from practice data
+      let userContextBlock = '';
+      if (userContext) {
+        const parts: string[] = [];
+        if (userContext.practiceStats) {
+          parts.push(`PRACTICE STATS:\n${JSON.stringify(userContext.practiceStats, null, 2)}`);
+        }
+        if (userContext.weakAreas && userContext.weakAreas.length > 0) {
+          parts.push(`WEAK AREAS: ${userContext.weakAreas.join(', ')}`);
+        }
+        if (userContext.strongAreas && userContext.strongAreas.length > 0) {
+          parts.push(`STRONG AREAS: ${userContext.strongAreas.join(', ')}`);
+        }
+        if (userContext.streakDays !== undefined) {
+          parts.push(`CURRENT STREAK: ${userContext.streakDays} day(s)`);
+        }
+        if (userContext.questionsCompleted !== undefined) {
+          parts.push(`QUESTIONS COMPLETED: ${userContext.questionsCompleted}`);
+        }
+        if (userContext.totalQuestions !== undefined) {
+          parts.push(`TOTAL QUESTIONS AVAILABLE: ${userContext.totalQuestions}`);
+        }
+        if (userContext.targetRole) {
+          parts.push(`TARGET ROLE: ${userContext.targetRole}`);
+        }
+        if (userContext.targetCompany) {
+          parts.push(`TARGET COMPANY: ${userContext.targetCompany}`);
+        }
+        if (userContext.questionGroups && userContext.questionGroups.length > 0) {
+          parts.push(`ACTIVE QUESTION GROUPS: ${userContext.questionGroups.join(', ')}`);
+        }
+        if (userContext.daysUntilInterview !== undefined) {
+          parts.push(`DAYS UNTIL INTERVIEW: ${userContext.daysUntilInterview}`);
+        }
+        if (parts.length > 0) {
+          userContextBlock = `\n\n=== USER CONTEXT ===\n${parts.join('\n')}\n=== END USER CONTEXT ===\n\nUse this context to personalize your coaching. Reference actual data — NEVER fabricate practice stats.`;
+        }
+      }
+
+      // I.N.T.E.R.V.I.E.W. Protocol system prompt
+      const interviewCoachSystemPrompt = `You are an Interview Coach for InterviewAnswers.ai. You help users prepare for job interviews by coaching their communication skills, answer structure, and confidence.
+
+## I.N.T.E.R.V.I.E.W. Protocol
+
+**I — Insight from history:** When the user's practice data is provided, reference their actual scores, patterns, and progress. Never fabricate practice data.
+
+**N — Never fabricate answers:** Do not generate model interview answers from your training data. Instead, guide users to build their OWN answers using frameworks like STAR, PREP, Problem-Solution-Benefit. Reference the app's Question Bank and Learn Center as resources.
+
+**T — Tailor to context:** Adapt your coaching based on:
+- The user's practice history (scores, weak areas, streaks)
+- Their question group focus
+- Whether they're a beginner or experienced interviewer
+- How much time they have before their interview
+
+**E — Encourage practice:** Suggest specific actions: "Try practicing 3 behavioral questions today" or "Your STAR stories are strong — work on closing questions next." Be encouraging without being fake.
+
+**R — Redirect out-of-scope:** You coach COMMUNICATION skills for interviews. You do not:
+- Provide industry-specific technical advice
+- Evaluate clinical accuracy (nursing track)
+- Write resumes or cover letters
+- Negotiate salary on behalf of the user
+If asked, warmly redirect: "I specialize in interview communication coaching. For [topic], I'd recommend [alternative resource]."
+
+**V — Validate effort:** Acknowledge progress and effort. Streaks, score improvements, and consistency deserve recognition. Never be patronizing — treat users as capable adults preparing for important conversations.
+
+**I — Integrate sources:** When relevant, cite:
+- Learn Center lessons by name (e.g., "Lesson 3 covers the STAR Deep Dive")
+- Question categories (e.g., "The Curveball group has questions that test composure")
+- Communication frameworks (STAR, SBAR, PREP, Problem-Solution-Benefit)
+Format citations as [Source: Learn Center] or [Source: Question Bank]
+
+**E — Evidence-based coaching:** Ground all advice in established interview coaching principles:
+- STAR method (Situation, Task, Action, Result)
+- Behavioral interviewing science (past behavior predicts future behavior)
+- Communication structures (PREP, PSB, What-So What-Now What)
+- Anxiety management (breathing, reframing, preparation)
+
+**W — Walled garden:** Stay within interview preparation. Do not become a general chatbot. If a message is completely off-topic, gently redirect: "I'm your interview coach — let's focus on getting you ready for your interview!"
+
+## Anti-Hallucination Rules
+1. ONLY reference practice data that is provided in the USER CONTEXT block above. Never invent scores, streaks, or stats.
+2. When suggesting resources, only cite Learn Center lessons and Question Bank categories that exist in the app.
+3. If you don't have context about the user's history, say so: "I don't have your practice data loaded yet — try a few practice sessions and I'll be able to give more personalized coaching."
+4. Never generate model interview answers. Guide the user to build their own.
+
+## Response Style
+- Concise: 2-4 paragraphs max unless the user asks for detail
+- Actionable: Every response should include something the user can DO
+- Warm but professional: Like a supportive coach, not a robotic system
+- Use bullet points for lists, bold for emphasis
+- Never start with "Great question!" or similar filler — get to the substance${userContextBlock}`;
+
+      // Build multi-turn messages array
+      const messages: Array<{role: string, content: string}> = [];
+      if (conversationHistory && Array.isArray(conversationHistory) && conversationHistory.length > 0) {
+        for (const msg of conversationHistory) {
+          messages.push({
+            role: msg.role === 'assistant' ? 'assistant' : 'user',
+            content: msg.content || '',
+          });
+        }
+      }
+      // Append the current user message
+      messages.push({ role: 'user', content: userMessage || '' });
+
+      const coachModel = haiku45;
+
+      // Call Anthropic with system prompt as system parameter (multi-turn)
+      const coachResponse = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': Deno.env.get('ANTHROPIC_API_KEY') ?? '',
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: coachModel,
+          max_tokens: maxTokens,
+          temperature: 0.7,
+          system: interviewCoachSystemPrompt,
+          messages,
+        })
+      });
+
+      const coachData = await coachResponse.json();
+
+      // Log metrics
+      logMetrics({
+        functionName: 'ai-feedback',
+        mode: 'interview-coach',
+        userId: user.id,
+        model: coachModel,
+        latencyMs: Date.now() - requestStart,
+        inputTokens: coachData?.usage?.input_tokens,
+        outputTokens: coachData?.usage?.output_tokens,
+      });
+
+      if (!coachResponse.ok || coachData?.error) {
+        logError({
+          functionName: 'ai-feedback',
+          errorType: 'anthropic_api_error',
+          errorMessage: coachData?.error?.message || `Anthropic returned ${coachResponse.status}`,
+          userId: user.id,
+          mode: 'interview-coach',
+          httpStatus: coachResponse.status,
+          latencyMs: Date.now() - requestStart,
+        });
+      }
+
+      return new Response(
+        JSON.stringify(coachData),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
 
     } else if (mode === 'nursing-coach') {
       // Nursing Track — AI Coach, Mock Interview, Practice, SBAR Drill, Offer Coach
@@ -271,23 +872,30 @@ Return ONLY the bullets in this format:
         'nursingPractice': 'nursing_practice',
         'nursingMock': 'nursing_mock',
         'nursingSbar': 'nursing_sbar',
+        'nursingCoach': 'nursing_coach',
+        'nursingOfferCoach': 'nursing_coach',   // Offer Coach shares AI Coach pool
+        'confidenceBrief': 'nursing_coach',      // Confidence Brief shares AI Coach pool
       };
 
       const dbColumn = nursingFeatureMap[nursingFeature];
 
-      // Only enforce credits for tracked features (not AI Coach which is Pro-gated at UI level)
+      // Enforce credits for all tracked features (including AI Coach now with session cap)
       if (dbColumn && !isBetaTester) {
-        // Check if user is Pro
+        // Check profile including pass expiry columns
         const { data: profile } = await supabaseClient
           .from('user_profiles')
-          .select('tier')
+          .select('tier, nursing_pass_expires, general_pass_expires')
           .eq('user_id', user.id)
           .maybeSingle();
 
-        const isPro = profile?.tier === 'pro';
+        // Determine if user has active nursing access
+        const isLegacyPro = profile?.tier === 'pro';
+        const hasNursingPass = profile?.nursing_pass_expires &&
+          new Date(profile.nursing_pass_expires) > new Date();
+        const hasUnlimitedNursing = isLegacyPro || hasNursingPass;
 
-        if (!isPro) {
-          // Check beta_testers table
+        if (!hasUnlimitedNursing) {
+          // Check beta_testers table as final fallback
           const { data: betaRow } = await supabaseClient
             .from('beta_testers')
             .select('unlimited_access')
@@ -308,22 +916,24 @@ Return ONLY the bullets in this format:
 
             const currentUsage = usageRow?.[dbColumn] || 0;
 
-            // Limits: nursing_practice=5, nursing_mock=3, nursing_sbar=3
+            // Free tier limits — must match creditSystem.js TIER_LIMITS.free
             const featureLimits: Record<string, number> = {
-              'nursing_practice': 5,
-              'nursing_mock': 3,
-              'nursing_sbar': 3,
+              'nursing_practice': 3,
+              'nursing_mock': 2,
+              'nursing_sbar': 2,
+              'nursing_coach': 0,     // Free users cannot use AI Coach
             };
-            const limit = featureLimits[dbColumn] || 5;
+            const limit = featureLimits[dbColumn] ?? 0;
 
             if (currentUsage >= limit) {
               return new Response(
-                JSON.stringify({ error: 'Monthly credit limit reached. Upgrade to Pro for unlimited access!' }),
+                JSON.stringify({ error: 'Monthly credit limit reached. Get a 30-day pass for unlimited access!' }),
                 { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
               );
             }
           }
         }
+        // Pass holders: AI Coach is unlimited (no server-side cap needed)
       }
 
       // Build Anthropic messages array from conversation history
@@ -339,6 +949,14 @@ Return ONLY the bullets in this format:
       // Append the current user message
       messages.push({ role: 'user', content: userMessage || '' });
 
+      // Select model: Sonnet 4 for multi-turn (Mock Interview, AI Coach),
+      // Haiku 4.5 for single-call (Practice, SBAR, Offer Coach, Confidence Brief)
+      // Haiku 4.5 benchmarks match Sonnet 4 on single-call scoring tasks at ~1/3 cost.
+      const multiTurnFeatures = ['nursingMock', 'nursingCoach'];
+      const nursingModel = multiTurnFeatures.includes(nursingFeature)
+        ? 'claude-sonnet-4-20250514'
+        : 'claude-haiku-4-5-20251001';
+
       // Call Anthropic with system prompt as system parameter (not in messages)
       const nursingResponse = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -348,7 +966,7 @@ Return ONLY the bullets in this format:
           'content-type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: nursingModel,
           max_tokens: maxTokens,
           system: systemPrompt || '',
           messages,
@@ -356,6 +974,30 @@ Return ONLY the bullets in this format:
       });
 
       const nursingData = await nursingResponse.json();
+
+      // Log metrics for nursing-coach calls
+      logMetrics({
+        functionName: 'ai-feedback',
+        mode: `nursing-coach:${nursingFeature || 'unknown'}`,
+        userId: user.id,
+        model: nursingModel,
+        latencyMs: Date.now() - requestStart,
+        inputTokens: nursingData?.usage?.input_tokens,
+        outputTokens: nursingData?.usage?.output_tokens,
+      });
+
+      if (!nursingResponse.ok || nursingData?.error) {
+        logError({
+          functionName: 'ai-feedback',
+          errorType: 'anthropic_api_error',
+          errorMessage: nursingData?.error?.message || `Anthropic returned ${nursingResponse.status}`,
+          userId: user.id,
+          mode: `nursing-coach:${nursingFeature || 'unknown'}`,
+          httpStatus: nursingResponse.status,
+          latencyMs: Date.now() - requestStart,
+        });
+      }
+
       return new Response(
         JSON.stringify(nursingData),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -363,7 +1005,12 @@ Return ONLY the bullets in this format:
 
     } else {
       // Original practice/ai-interviewer modes
-      promptContent = `You are an expert interview coach conducting ${mode === 'ai-interviewer' ? 'an interactive mock interview' : 'a practice session'}.
+      // Format-specific persona (only applied to ai-interviewer mode when interviewFormat is provided)
+      const interviewerPersona = mode === 'ai-interviewer'
+        ? buildInterviewerPersona(interviewFormat, interviewStage, slotType, questionNumber, totalQuestions)
+        : '';
+
+      promptContent = `${interviewerPersona}You are an expert interview coach conducting ${mode === 'ai-interviewer' ? 'an interactive mock interview' : 'a practice session'}.
 
 ${contextSection}
 
@@ -490,13 +1137,46 @@ Return ONLY valid JSON. No markdown, no explanations.`;
     })
 
     const data = await response.json()
-    
+
+    // Log metrics for general calls
+    logMetrics({
+      functionName: 'ai-feedback',
+      mode: requestMode,
+      userId: user.id,
+      model,
+      latencyMs: Date.now() - requestStart,
+      inputTokens: data?.usage?.input_tokens,
+      outputTokens: data?.usage?.output_tokens,
+    });
+
+    if (!response.ok || data?.error) {
+      logError({
+        functionName: 'ai-feedback',
+        errorType: 'anthropic_api_error',
+        errorMessage: data?.error?.message || `Anthropic returned ${response.status}`,
+        userId: user.id,
+        mode: requestMode,
+        httpStatus: response.status,
+        latencyMs: Date.now() - requestStart,
+      });
+    }
+
     return new Response(
       JSON.stringify(data),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
   } catch (error) {
+    logError({
+      functionName: 'ai-feedback',
+      errorType: 'unhandled_exception',
+      errorMessage: error.message || String(error),
+      userId,
+      mode: requestMode,
+      httpStatus: 500,
+      latencyMs: Date.now() - requestStart,
+    });
+
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

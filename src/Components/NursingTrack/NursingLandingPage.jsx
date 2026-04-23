@@ -1,6 +1,6 @@
-// NursingTrack — NurseInterviewPro.ai Landing Page
+// NursingTrack — NurseAnswerPro Landing Page
 // Marketing landing page that funnels into the nursing track within InterviewAnswers.AI
-// In production, NurseInterviewPro.ai domain points to this route
+// Landing page lives at interviewanswers.ai/nurse
 //
 // ⚠️ D.R.A.F.T. Protocol: This is a NEW file. No existing code modified.
 
@@ -16,18 +16,18 @@ import { trackPricingView } from '../../utils/googleAdsTracking';
 export default function NursingLandingPage() {
   // SEO: Dynamic meta tags for the nursing interview landing page
   useDocumentHead({
-    title: 'NurseInterviewPro - AI Nursing Interview Practice | SBAR & STAR Coaching',
+    title: 'NurseAnswerPro - AI Nursing Interview Practice | SBAR & STAR Coaching',
     description: 'Practice nursing interview questions with AI coaching. SBAR communication drills, STAR method feedback, and specialty-specific questions for ED, ICU, OR, L&D, Pediatrics, and more. Built by nurses, for nurses.',
     keywords: 'nursing interview questions, nurse interview practice, nursing job interview, SBAR interview, STAR method nursing, nursing interview tips, RN interview questions, nursing interview preparation, clinical interview questions, healthcare interview practice, ICU interview, ED interview, nurse interview coach, nursing behavioral interview, travel nurse interview',
     canonical: 'https://www.interviewanswers.ai/nurse',
     og: {
-      title: 'NurseInterviewPro - AI Nursing Interview Practice & SBAR Coaching',
-      description: 'Practice nursing interviews with AI. SBAR drills, STAR coaching, 68 clinically-sourced questions across 8 specialties. Built by nurses, for nurses.',
+      title: 'NurseAnswerPro - AI Nursing Interview Practice & SBAR Coaching',
+      description: 'Practice nursing interviews with AI. SBAR drills, STAR coaching, 70 clinically-sourced questions across 8 specialties. Built by nurses, for nurses.',
       url: 'https://www.interviewanswers.ai/nurse',
       type: 'website',
     },
     twitter: {
-      title: 'NurseInterviewPro - AI Nursing Interview Practice',
+      title: 'NurseAnswerPro - AI Nursing Interview Practice',
       description: 'Practice nursing interviews with AI. SBAR drills, STAR coaching, specialty-specific questions. Built by nurses, for nurses.',
     },
   });
@@ -42,8 +42,7 @@ export default function NursingLandingPage() {
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <Stethoscope className="w-6 h-6 text-sky-700" />
-              <span className="font-bold text-lg text-gray-900">NurseInterviewPro</span>
-              <span className="text-xs text-sky-600 font-medium">.ai</span>
+              <span className="font-bold text-lg text-gray-900">NurseAnswerPro</span>
             </div>
             <Link to="/" className="text-[10px] text-gray-400 hover:text-indigo-500 ml-8 -mt-0.5 transition-colors">by InterviewAnswers.AI</Link>
           </div>
@@ -344,7 +343,7 @@ export default function NursingLandingPage() {
           <div className="grid sm:grid-cols-3 gap-6">
             <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
               <div className="text-2xl sm:text-3xl mb-2 sm:mb-3">🩺</div>
-              <p className="text-gray-900 font-semibold text-lg mb-1">68 Clinically-Sourced Questions</p>
+              <p className="text-gray-900 font-semibold text-lg mb-1">70 Clinically-Sourced Questions</p>
               <p className="text-gray-500 text-sm sm:text-base">Across 8 nursing specialties, grounded in NCSBN, SBAR, and Nursing Process frameworks</p>
             </div>
             <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
@@ -429,7 +428,7 @@ export default function NursingLandingPage() {
             {[
               {
                 q: 'Is this a replacement for NCLEX prep?',
-                a: 'No. NurseInterviewPro focuses exclusively on interview communication skills — how you tell your clinical stories, not clinical knowledge itself. For NCLEX prep, please use dedicated review courses.',
+                a: 'No. NurseAnswerPro focuses exclusively on interview communication skills — how you tell your clinical stories, not clinical knowledge itself. For NCLEX prep, please use dedicated review courses.',
               },
               {
                 q: 'Who writes the interview questions?',
@@ -445,7 +444,7 @@ export default function NursingLandingPage() {
               },
               {
                 q: 'Can I practice on my phone?',
-                a: 'Yes. NurseInterviewPro is fully responsive and works on any device with a web browser — phone, tablet, or desktop. Practice between shifts, on the bus, or wherever you have a few minutes.',
+                a: 'Yes. NurseAnswerPro is fully responsive and works on any device with a web browser — phone, tablet, or desktop. Practice between shifts, on the bus, or wherever you have a few minutes.',
               },
               {
                 q: 'How is this different from practicing with a friend?',
@@ -476,7 +475,7 @@ export default function NursingLandingPage() {
               <p className="text-gray-500 text-sm sm:text-base mb-4">Get started with basic practice</p>
               <p className="text-4xl font-bold text-gray-900 mb-6">$0 <span className="text-base font-normal text-gray-400">/month</span></p>
               <ul className="space-y-2 mb-6">
-                {['3 mock interview sessions/month', 'General nursing questions', 'STAR coaching', 'Flashcards'].map(f => (
+                {['2 mock interview sessions/month', 'General nursing questions', 'STAR coaching', 'Flashcards'].map(f => (
                   <li key={f} className="flex items-center gap-2 text-sm sm:text-base text-gray-600">
                     <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />{f}
                   </li>
@@ -494,8 +493,7 @@ export default function NursingLandingPage() {
               </div>
               <h3 className="text-gray-900 font-bold text-xl mb-1">Nursing Pass</h3>
               <p className="text-gray-500 text-sm sm:text-base mb-4">Full access to all specialties</p>
-              <p className="text-4xl font-bold text-gray-900 mb-2">$19.99 <span className="text-base font-normal text-gray-400">/ 30 days</span></p>
-              <p className="text-green-600 text-sm font-medium mb-4">One-time payment · No subscription · No auto-renewal</p>
+              <p className="text-4xl font-bold text-gray-900 mb-6">$19.99 <span className="text-base font-normal text-gray-400">/ 30 days</span></p>
               <ul className="space-y-2 mb-6">
                 {[
                   'Unlimited mock interviews',
@@ -548,7 +546,7 @@ export default function NursingLandingPage() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <Stethoscope className="w-5 h-5 text-sky-400" />
-              <span className="text-white font-medium">NurseInterviewPro.ai</span>
+              <span className="text-white font-medium">NurseAnswerPro</span>
             </div>
             <p className="text-sm">
               A product of <Link to="/" className="text-white hover:text-indigo-300 transition-colors">InterviewAnswers.AI</Link>

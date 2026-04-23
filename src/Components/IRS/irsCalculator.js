@@ -129,7 +129,7 @@ export function getGrowthTips(consistency, starAdherence, coverage, answerPrepar
   if (answerPreparedness < 100) {
     tips.push('Personalize your answers using the AI Coach to boost your preparedness.');
     if (answerPreparedness < 50) {
-      tips.push('Your Live Prompter works best with personalized answers — not templates.');
+      tips.push('Your Practice Prompter works best with personalized answers — not templates.');
     }
     if (answerPreparedness > 0 && answerPreparedness < 100) {
       tips.push("You've started personalizing — keep going to complete your answer bank.");

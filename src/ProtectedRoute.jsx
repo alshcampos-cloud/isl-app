@@ -13,31 +13,6 @@ function ProtectedRoute({ children }) {
   const [isRecovery, setIsRecovery] = useState(false) // ADDED: Flag recovery flow
 
   useEffect(() => {
-    // DEFENSE: Break any zombie Navigator Locks before Supabase auth init.
-    // Supabase uses Web Locks API for exclusive auth operations. If a previous tab/session
-    // crashed while holding the lock (e.g., from a bad API key), all subsequent auth calls
-    // deadlock and time out silently — causing an infinite "Setting up your session..." spinner.
-    // The { steal: true } option forcefully breaks any held lock so auth can proceed.
-    const lockName = `lock:sb-${new URL(import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co').hostname.split('.')[0]}-auth-token`;
-    if (navigator.locks) {
-      navigator.locks.request(lockName, { steal: true, ifAvailable: false }, () => {
-        console.log('🔓 Auth lock cleared (zombie prevention)');
-        return Promise.resolve();
-      }).catch(() => { /* lock steal failed — not critical, continue */ });
-    }
-
-    // DEFENSE: Global timeout — if loading is STILL true after 15 seconds, force it false.
-    // This prevents infinite spinners from ANY auth failure path we haven't anticipated.
-    const globalTimeout = setTimeout(() => {
-      setLoading(prev => {
-        if (prev) {
-          console.warn('⚠️ ProtectedRoute: Global 15s timeout — forcing loading=false');
-          return false;
-        }
-        return prev;
-      });
-    }, 15000);
-
     // Listen for auth changes - Supabase fires PASSWORD_RECOVERY when processing reset link
     const {
       data: { subscription },
@@ -60,20 +35,16 @@ function ProtectedRoute({ children }) {
           supabase.auth.getUser().then(({ data: { user: freshUser } }) => {
             console.log('🔄 Fresh user data:', freshUser?.email, 'confirmed:', !!freshUser?.email_confirmed_at);
             setUser(freshUser ?? session.user);
-            setLoading(false); // DEFENSE: Always clear loading after user data resolved
           }).catch(() => {
             setUser(session.user); // Fallback to session user if getUser fails
-            setLoading(false); // DEFENSE: Always clear loading even on failure
           });
         } else {
           setUser(null);
-          setLoading(false); // DEFENSE: No user in session — clear loading
         }
       }
 
       if (event === 'SIGNED_OUT') {
         setUser(null);
-        setLoading(false); // DEFENSE: Clear loading on sign out
       }
     });
 
@@ -105,11 +76,24 @@ function ProtectedRoute({ children }) {
       setLoading(false); // Show auth screen even if session check fails
     });
 
+    // SAFETY NET: If getSession/getUser hangs (slow network, Supabase outage),
+    // clear loading after 5 seconds so user isn't stuck on spinner forever.
+    const safetyTimer = setTimeout(() => {
+      setLoading((prev) => {
+        if (prev) {
+          console.warn('⚠️ ProtectedRoute: session check timed out after 5s — clearing loading');
+        }
+        return false;
+      });
+    }, 5000);
+
     // Fallback: If getSession doesn't trigger PASSWORD_RECOVERY within 3 seconds
     // but we have a recovery token, show the modal anyway
+    // Check both hash (implicit flow) and query params (PKCE flow)
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    if (hashParams.get('type') === 'recovery') {
-      console.log('🔑 Recovery token detected in URL');
+    const queryCode = new URLSearchParams(window.location.search).get('code');
+    if (hashParams.get('type') === 'recovery' || queryCode) {
+      console.log('🔑 Recovery token detected in URL (hash or PKCE code)');
       const fallbackTimer = setTimeout(() => {
         if (loading) {
           console.log('⚠️ Fallback: showing reset modal after timeout');
@@ -120,13 +104,13 @@ function ProtectedRoute({ children }) {
       }, 3000);
       return () => {
         clearTimeout(fallbackTimer);
-        clearTimeout(globalTimeout);
+        clearTimeout(safetyTimer);
         subscription.unsubscribe();
       };
     }
 
     return () => {
-      clearTimeout(globalTimeout);
+      clearTimeout(safetyTimer);
       subscription.unsubscribe();
     };
   }, [])

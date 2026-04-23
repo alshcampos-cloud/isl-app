@@ -1,0 +1,29 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3000
+    },
+    {
+      "name": "baby-decoder",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /Users/alshcampos/Downloads/baby-decoder && npx vite --host --port 5174"],
+      "port": 5174
+    },
+    {
+      "name": "anti-silos",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /Users/alshcampos/Downloads/anti-silos && npx vite --host --port 5176"],
+      "port": 5176
+    },
+    {
+      "name": "kodalabs",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /Users/alshcampos/Downloads/kodalabs-web && npx vite --host --port 5177"],
+      "port": 5177
+    }
+  ]
+}

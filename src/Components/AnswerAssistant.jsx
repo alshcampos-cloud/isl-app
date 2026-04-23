@@ -239,8 +239,8 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
       
       // Check if we got an empty response (backend returned metadata/error)
       if (!synthesizedAnswer || synthesizedAnswer.length < 10) {
-        console.error('❌ Backend returned invalid response');
-        alert('⚠️ Not enough information to create an answer yet.\n\nPlease continue the conversation and answer a few more questions, then try again!');
+        console.error('❌ Backend returned invalid response, raw length:', data?.content?.[0]?.text?.length || 0, 'cleaned length:', synthesizedAnswer?.length || 0);
+        alert('⚠️ Something went wrong creating your answer.\n\nPlease try again — if it keeps failing, try adding one more detail to your conversation first.');
         setStage('probing');
         setIsLoading(false);
         return;

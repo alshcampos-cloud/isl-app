@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Brain, Lock } from 'lucide-react';
+import { showNursingFeatures } from '../../utils/appTarget';
 
 export default function LandingFooter() {
   return (
@@ -16,17 +17,33 @@ export default function LandingFooter() {
 
           {/* Links */}
           <div className="flex flex-wrap items-center justify-center gap-6 text-sm">
-            <Link to="/nurse" className="hover:text-white transition-colors">
-              🩺 Nursing Interviews
+            <Link to="/star-method-guide" className="hover:text-white transition-colors">
+              STAR Method Guide
             </Link>
+            <Link to="/behavioral-interview-questions" className="hover:text-white transition-colors">
+              Behavioral Questions
+            </Link>
+            {showNursingFeatures() && (
+            <>
+            <Link to="/nursing-interview-questions" className="hover:text-white transition-colors">
+              Nursing Questions
+            </Link>
+            <Link to="/nurse" className="hover:text-white transition-colors">
+              🩺 NurseAnswerPro
+            </Link>
+            </>
+            )}
             <a href="mailto:support@interviewanswers.ai" className="hover:text-white transition-colors">
               Contact
             </a>
+            <Link to="/ethics" className="hover:text-white transition-colors">
+              Ethics
+            </Link>
             <Link to="/terms" className="hover:text-white transition-colors">
-              Terms of Service
+              Terms
             </Link>
             <Link to="/privacy" className="hover:text-white transition-colors">
-              Privacy Policy
+              Privacy
             </Link>
           </div>
 
@@ -39,6 +56,9 @@ export default function LandingFooter() {
 
         <div className="mt-8 pt-8 border-t border-gray-800 text-center text-sm">
           <p>&copy; {new Date().getFullYear()} InterviewAnswers.ai. All rights reserved.</p>
+          <p className="mt-2 text-xs text-gray-500 italic">
+            Built for practice. Never for cheating.
+          </p>
         </div>
       </div>
     </footer>

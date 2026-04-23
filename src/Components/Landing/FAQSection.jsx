@@ -5,23 +5,31 @@ import { ChevronDown } from 'lucide-react';
 const faqs = [
   {
     q: 'Is it really free to start?',
-    a: 'Yes! The free tier gives you 3 AI Interviewer sessions, 10 Practice sessions, 5 Answer Assistant sessions, 5 Question Generations, and 10 Live Prompter questions per month. No credit card required.',
+    a: 'Yes! The free tier gives you 3 AI Interviewer sessions, 10 Practice sessions, 5 Answer Assistant sessions, 5 Question Generations, and 10 Practice Prompter questions per month. No credit card required.',
   },
   {
     q: 'How is this different from ChatGPT?',
-    a: 'InterviewAnswers.ai is purpose-built for interview prep. It uses motivational interviewing techniques to pull answers from YOUR real experiences, provides scored feedback, has a live prompter for actual interviews, and tracks your progress over time. ChatGPT gives generic advice — InterviewAnswers.ai gives you a complete practice system.',
+    a: 'InterviewAnswers.ai is purpose-built for interview prep. It uses motivational interviewing techniques to pull answers from YOUR real experiences, provides scored feedback based on cognitive-psychology research on retrieval practice, has a Practice Prompter for rehearsing out loud, and tracks your progress over time. ChatGPT gives generic advice — InterviewAnswers.ai gives you a complete practice system built around how people actually learn interview skills.',
   },
   {
-    q: 'Does the Live Prompter work during real interviews?',
-    a: 'Yes. The Live Prompter listens to interview questions and shows you bullet points from your prepared answers in real-time. It works alongside video calls on Teams, Zoom, etc. Note: some companies may have policies about using notes during interviews, so use responsibly.',
+    q: 'What does the Practice Prompter do?',
+    a: 'The Practice Prompter is a rehearsal tool. You read a question out loud, answer out loud, and see bullet points from your prepared answers so you can train yourself to hit your key points naturally. It\u2019s for practice sessions before the interview \u2014 not for use during an actual interview.',
+  },
+  {
+    q: 'Can I use this during a real interview?',
+    a: 'No \u2014 we don\u2019t support that. InterviewAnswers.ai is built for preparation, not cheating. It\u2019s designed to help you practice your answers before the interview so you can deliver them confidently on the day. Our Terms of Service explicitly prohibit using the product during live interviews. See our ethics page at /ethics for the full reasoning.',
+  },
+  {
+    q: 'How are you different from "interview copilot" tools?',
+    a: 'Some AI interview products market themselves as real-time "copilots" you use during live interviews. News outlets like CBS News have reported that this pattern is raising concerns among employers, and some candidates have had offers rescinded after being detected using such tools. We made a different choice: we\u2019re the interview coach you practice with beforehand \u2014 never a tool you bring into the room. Practice, not cheat. See our ethics page at /ethics for more.',
   },
   {
     q: 'Is my data secure?',
     a: 'Absolutely. Your data is encrypted with AES-256. We use Supabase for secure authentication and storage. Your practice sessions and answers are private to your account. We never share your data with third parties.',
   },
   {
-    q: 'Can I cancel anytime?',
-    a: 'Yes. There are no contracts or commitments. You can cancel your Pro subscription at any time and continue using it until the end of your billing period. You can also downgrade to the free tier.',
+    q: 'How does pricing work?',
+    a: 'Start free with generous monthly limits. When you\'re ready for unlimited practice, grab a 30-Day Pass starting at $14.99 — no subscription, no auto-renew. Or save with the Annual All-Access at $99.99/year for the best value.',
   },
 ];
 

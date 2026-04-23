@@ -3,24 +3,41 @@ import { flushSync } from 'react-dom';
 
 import {
   Brain, Database, Play, Plus, Edit2, Trash2, TrendingUp, Download, Upload,
-  Mic, MicOff, Volume2, Eye, EyeOff, Settings, Sparkles, ChevronRight, ChevronDown, X,
+  Mic, MicOff, Volume2, VolumeX, Eye, EyeOff, Settings, Sparkles, ChevronRight, ChevronDown, X,
   Zap, CheckCircle, Target, Bot, BookOpen, SkipForward, Pause, Award, Filter,
-  Crown, Lightbulb, Square, Calendar, AlertCircle, Mail
+  Crown, Lightbulb, Square, Calendar, AlertCircle, Mail, MessageSquare, MessageCircle,
+  Star, BarChart2, ClipboardList, Trophy, RotateCcw, ArrowRight, Globe, Smartphone,
+  Headphones, GraduationCap, MapPin, Briefcase, FileText, Layers
 } from 'lucide-react';
 
+import {
+  GradientDefs, PrompterIcon, InterviewerIcon, PracticeIcon, FlashcardIcon,
+  LearnIcon, RadioIcon, CoachIcon, DecoderIcon, StoryBankIcon, StarDrillIcon,
+  PortfolioIcon, InterviewDayIcon, FollowUpIcon, NotesIcon, FlashcardCompactIcon,
+  CommandCenterIcon, IconContainer,
+  QuestionsStatIcon, SessionsStatIcon, UnlimitedStatIcon, DaysStatIcon, StreakStatIcon
+} from './Components/icons/FeatureIcons';
 import SupabaseTest from './SupabaseTest';
 import ProtectedRoute from './ProtectedRoute';
 import { supabase } from './lib/supabase';
 import FirstTimeConsent from "./Components/FirstTimeConsent";
+import SettingsPage from "./Components/SettingsPage";
 import QuestionAssistant from './Components/QuestionAssistant';
 import AnswerAssistant from './Components/AnswerAssistant';
 import TemplateLibrary from './TemplateLibrary';
 import Tutorial from './Components/Tutorial';
-import { DEFAULT_QUESTIONS } from './default_questions';
-import { canUseFeature, incrementUsage, getUsageStats, TIER_LIMITS, isBetaUser } from './utils/creditSystem';
+import { DEFAULT_QUESTIONS, QUESTION_GROUPS, getDefaultActiveGroups, filterQuestionsByGroups, getQuestionCountsByGroup } from './default_questions';
+import QuestionGroupFilter from './Components/QuestionGroupFilter';
+import AIInterviewCoach from './Components/AIInterviewCoach';
+import HomePageV2 from './Components/HomePageV2';
+import InterviewFormatModal from './Components/Intelligence/InterviewFormatModal';
+import CuratedInterviewsScreen from './Components/Intelligence/CuratedInterviewsScreen';
+import { buildInterviewSequence, buildSequenceFromCurated, swapQuestionInSequence, generateSessionSeed, getFormatById } from './utils/interviewFormats';
+import { loadPersistedGroups } from './Components/QuestionGroupFilter';
+import { canUseFeature, incrementUsage, getUsageStats, TIER_LIMITS, isBetaUser, resolveEffectiveTier } from './utils/creditSystem';
 import { fetchWithRetry } from './utils/fetchWithRetry';
 import UsageLimitModal from './Components/UsageLimitModal';
-import PricingPage from './Components/PricingPage';
+import GeneralPricing from './Components/GeneralPricing';
 import ResetPassword from './Components/ResetPassword';
 import ConsentDialog from './Components/ConsentDialog';
 import SessionDetailsModal from './Components/SessionDetailsModal';
@@ -32,6 +49,32 @@ import StreakDisplay from './Components/Streaks/StreakDisplay';
 import MilestoneToast from './Components/Streaks/MilestoneToast';
 import IRSDisplay from './Components/IRS/IRSDisplay';
 import { updateStreakAfterSession } from './utils/streakSupabase';
+import { trackPurchase } from './utils/googleAdsTracking';
+import { showNursingFeatures, showGeneralFeatures, isTargetedBuild, getAppTarget } from './utils/appTarget';
+import { isNativeApp } from './utils/platform';
+import { getPreferredVoice, VOICE_SETTINGS } from './utils/voiceManager';
+import InterviewContextHub from './Components/InterviewContextHub';
+import InterviewCoach from './Components/InterviewCoach';
+import QuickAddQuestion from './Components/QuickAddQuestion';
+import ScoreTrendSparkline from './Components/Intelligence/ScoreTrendSparkline';
+import DeliveryInsights from './Components/Intelligence/DeliveryInsights';
+import { buildDeliveryContext } from './utils/deliveryPromptBuilder';
+import TimerOverlay, { TimerSelector } from './Components/Intelligence/TimerOverlay';
+import JDDecoder from './Components/Intelligence/JDDecoder';
+import QuestionSparkNotes from './Components/Intelligence/QuestionSparkNotes';
+import StoryBank from './Components/Intelligence/StoryBank';
+import CompanyBrief from './Components/Intelligence/CompanyBrief';
+import SessionReport from './Components/Intelligence/SessionReport';
+import InterviewDayMode from './Components/Intelligence/InterviewDayMode';
+import PrepRadio from './Components/Intelligence/PrepRadio';
+import WeakPointDrill from './Components/Intelligence/WeakPointDrill';
+import FollowUpEmail from './Components/Intelligence/FollowUpEmail';
+import LearnSection from './Components/Intelligence/LearnSection';
+// TrialBanner removed — 24-hour trial killed, free tier is the new onramp
+import { resetAllProgress } from './utils/resetProgress';
+import JobFocusManager, { isFocusModeOn, setFocusMode, getFilteredQuestions, loadFavorites } from './Components/Intelligence/JobFocusManager';
+import Portfolio from './Components/Intelligence/Portfolio';
+import JourneyProgress from './Components/Intelligence/JourneyProgress';
 
 // CSS string is OK at top-level
 const styles = `
@@ -164,6 +207,15 @@ const ISL = () => {
   const [conversationMode, setConversationMode] = useState(false);
   const [followUpQuestion, setFollowUpQuestion] = useState(null);
   const [exchangeCount, setExchangeCount] = useState(0);
+  // Structured Mock Interviewer — format-driven sequencing (see src/utils/interviewFormats.js)
+  const [showFormatModal, setShowFormatModal] = useState(false);
+  const [showCuratedInterviews, setShowCuratedInterviews] = useState(false); // NEW: shown after format picked
+  const [selectedFormat, setSelectedFormat] = useState(null);        // format object
+  const [selectedCuratedInterview, setSelectedCuratedInterview] = useState(null); // NEW: the chosen playlist
+  const [sessionSeed, setSessionSeed] = useState(null);              // numeric seed for reproducibility
+  const [interviewSequence, setInterviewSequence] = useState([]);    // [{slotIndex, stage, slotType, label, question}]
+  const [sequenceIndex, setSequenceIndex] = useState(0);             // current position in sequence
+  const [sessionFeedback, setSessionFeedback] = useState([]);        // per-slot feedback accumulated across session
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   // P0 FIX: Track analyzing state for stale detection and late-response safety
   const isAnalyzingRef = useRef(false); // Mirror of isAnalyzing for visibility handler (avoids stale closure)
@@ -177,11 +229,31 @@ const ISL = () => {
   const [showFollowUps, setShowFollowUps] = useState(false);
   const [spacebarHeld, setSpacebarHeld] = useState(false);
   const [filterCategory, setFilterCategory] = useState('All');
+  const [activeGroups, setActiveGroups] = useState(() => {
+    try { const persisted = loadPersistedGroups ? loadPersistedGroups() : null; return persisted || getDefaultActiveGroups(); } catch { return getDefaultActiveGroups(); }
+  });
   const [filterPriority, setFilterPriority] = useState('All');
   const [aiSpeaking, setAiSpeaking] = useState(false);
   const [aiSubtitle, setAiSubtitle] = useState('');
+  const [voiceMuted, setVoiceMuted] = useState(() => {
+    try { return localStorage.getItem('isl_voice_muted') === 'true'; } catch { return true; }
+  });
   const [questionHistory, setQuestionHistory] = useState([]);
   const [showResumeToast, setShowResumeToast] = useState(false);
+  // Phase 4J: Time Pressure Practice
+  const [timedMode, setTimedMode] = useState(false);
+  const [timerDuration, setTimerDuration] = useState(180);
+  const [timerActive, setTimerActive] = useState(false);
+  const [recordingElapsed, setRecordingElapsed] = useState(null);
+  // Phase 4M: Confidence Calibration
+  const [confidenceRating, setConfidenceRating] = useState(null);
+  // Phase 4E: Question SparkNotes
+  const [sparkNotesQuestion, setSparkNotesQuestion] = useState(null);
+  // Phase 4G: Session Report
+  const [sessionQuestions, setSessionQuestions] = useState([]);
+  const [showSessionReport, setShowSessionReport] = useState(false);
+  // Phase 4L: Drill target from SessionReport
+  const [drillTargetComponent, setDrillTargetComponent] = useState(null);
   const [resumedQuestion, setResumedQuestion] = useState(null);
   const [flashcardSide, setFlashcardSide] = useState('question');
   const [flashcardIndex, setFlashcardIndex] = useState(0);
@@ -197,7 +269,7 @@ const ISL = () => {
   const [revealStage, setRevealStage] = useState(0);
   const [showAllFeedback, setShowAllFeedback] = useState(false);
   const [commandCenterTab, setCommandCenterTab] = useState('analytics');
-  
+
   // SESSION-BASED MICROPHONE STATES
   const [interviewSessionActive, setInterviewSessionActive] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
@@ -221,8 +293,19 @@ const ISL = () => {
   const [dailyGoal, setDailyGoal] = useState(parseInt(localStorage.getItem('isl_daily_goal') || '3', 10));
   const [selectedSession, setSelectedSession] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const [focusModeActive, setFocusModeActive] = useState(false);
+  const [cachedFavorites, setCachedFavorites] = useState(null);
+  // Sync focus mode + favorites from localStorage when user changes
+  useEffect(() => {
+    if (currentUser) {
+      setFocusModeActive(isFocusModeOn(currentUser.id));
+      setCachedFavorites(loadFavorites(currentUser.id));
+    }
+  }, [currentUser]);
   const [userTier, setUserTier] = useState('free');
+  // trialInfo state removed — trial system killed
   const [showPricingPage, setShowPricingPage] = useState(false);
+  const [showCoachPanel, setShowCoachPanel] = useState(false);
   const [showSubscriptionManagement, setShowSubscriptionManagement] = useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState('inactive');
   const [showUsageDashboard, setShowUsageDashboard] = useState(false);
@@ -364,7 +447,7 @@ const ISL = () => {
 
   // CLEANUP 3: Stop mic when app goes to background (Safari tab switch, app switch)
   // ALSO: Refresh session token when returning to prevent 406 errors
-  // BUG 3 FIX: True pause/resume for Live Prompter - don't end session on tab switch
+  // BUG 3 FIX: True pause/resume for Practice Prompter - don't end session on tab switch
   const wasSessionPausedRef = useRef(false); // Track if we paused due to tab switch
 
   useEffect(() => {
@@ -373,7 +456,7 @@ const ISL = () => {
         // Track when user leaves for auto-refresh timing
         window._lastHiddenTime = Date.now();
 
-        // BUG 3 FIX: Only PAUSE mic, don't end session (for Live Prompter resume)
+        // BUG 3 FIX: Only PAUSE mic, don't end session (for Practice Prompter resume)
         if (recognitionRef.current && interviewSessionActiveRef.current) {
           console.log('🧹 App backgrounded - PAUSING mic session (not ending)');
           wasSessionPausedRef.current = true; // Remember we need to resume
@@ -465,7 +548,7 @@ const ISL = () => {
           console.log('Session check skipped:', err.message);
         }
 
-        // BUG 3 FIX: Auto-resume Live Prompter session if it was paused
+        // BUG 3 FIX: Auto-resume Practice Prompter session if it was paused
         if (wasSessionPausedRef.current && interviewSessionActiveRef.current) {
           console.log('🎤 Auto-resuming paused session...');
           wasSessionPausedRef.current = false;
@@ -508,10 +591,14 @@ const ISL = () => {
     document.head.appendChild(styleSheet);
   }, []);
 
+  // PR 3 — dual-schema score accessor. New shape: feedback.score. Legacy: feedback.overall.
+  // Keep as a stable reference inside the component so both render blocks can use it.
+  const getFeedbackScore = (fb) => (fb?.score ?? fb?.overall ?? 0);
+
   // Animate score when feedback appears + Progressive Reveal
   useEffect(() => {
-    if (feedback?.overall || feedback?.match_percentage) {
-      const targetScore = feedback.overall || feedback.match_percentage / 10 || 0;
+    if (feedback?.score || feedback?.overall || feedback?.match_percentage) {
+      const targetScore = getFeedbackScore(feedback) || (feedback.match_percentage / 10) || 0;
 
       setAnimatedScore(0);
       setRevealStage(0);
@@ -554,14 +641,33 @@ const ISL = () => {
   const getUserContext = () => {
     try {
       const saved = localStorage.getItem('isl_question_context');
+      const interviewDate = localStorage.getItem('isl_interview_date');
+      const base = { targetRole: '', targetCompany: '', background: '', interviewType: '', jobDescription: '', interviewDate: interviewDate || '', portfolioSummary: '' };
       if (saved) {
-        const { role, comp, bg } = JSON.parse(saved);
-        return { targetRole: role || '', targetCompany: comp || '', background: bg || '' };
+        const { role, comp, bg, type, jd } = JSON.parse(saved);
+        base.targetRole = role || '';
+        base.targetCompany = comp || '';
+        base.background = bg || '';
+        base.interviewType = type || '';
+        base.jobDescription = jd || '';
       }
+      // Inject portfolio summary for AI context enrichment
+      const portfolioRaw = localStorage.getItem('isl_portfolio');
+      if (portfolioRaw) {
+        try {
+          const projects = JSON.parse(portfolioRaw).filter(p => p.isAnalyzed);
+          if (projects.length > 0) {
+            base.portfolioSummary = projects.map(p =>
+              `${p.title}: ${p.aiSummary || ''} Skills: ${(p.keySkills || []).join(', ')}`
+            ).join('\n');
+          }
+        } catch {}
+      }
+      return base;
     } catch (err) {
       console.error('Error loading user context:', err);
     }
-    return { targetRole: '', targetCompany: '', background: '' };
+    return { targetRole: '', targetCompany: '', background: '', interviewType: '', jobDescription: '', interviewDate: '', portfolioSummary: '' };
   };
 
   const loadQuestions = async () => {
@@ -588,8 +694,9 @@ const ISL = () => {
         const questionsWithStats = data.map(q => {
           const questionSessions = sessions?.filter(s => s.question_id === q.id) || [];
           const practiceCount = questionSessions.length;
+          // PR 3 — support both v1 (overall) and v2 (score) shapes
           const scores = questionSessions
-            .map(s => s.ai_feedback?.overall)
+            .map(s => s.ai_feedback?.score ?? s.ai_feedback?.overall)
             .filter(score => score != null);
           const averageScore = scores.length > 0 
             ? scores.reduce((sum, score) => sum + score, 0) / scores.length 
@@ -627,6 +734,8 @@ const ISL = () => {
         bullets: q.bullets,
         narrative: q.narrative,
         follow_ups: q.followUps,
+        question_group: q.group || null,
+        difficulty: q.difficulty || null,
         is_default: true,
         created_at: new Date().toISOString()
       }));
@@ -692,14 +801,17 @@ const ISL = () => {
     const currentUsage = parseInt(localStorage.getItem(storageKey) || '0');
     
     const isPro = usageStats?.tier === 'pro' ||
-                  usageStats?.tier === 'beta';
+                  usageStats?.tier === 'beta' ||
+                  usageStats?.tier === 'nursing_pass' ||
+                  usageStats?.tier === 'general_pass' ||
+                  usageStats?.tier === 'annual';
 
     const limit = usageStats?.tier === 'beta' ? 999999 :
-                  usageStats?.tier === 'pro' ? 40 : 5;
-    
+                  (usageStats?.tier === 'pro' || usageStats?.tier === 'general_pass' || usageStats?.tier === 'annual') ? 40 : 5;
+
     setUsageThisMonth(currentUsage);
     setUsageLimit(limit);
-    
+
     if (currentUsage >= limit && !isPro) {
       alert(`⚠️ Monthly AI Limit Reached
 
@@ -714,7 +826,7 @@ Upgrade to Pro ($9.99/month) for 40 sessions!
 
 Your free features still work:
 ✓ Flashcards (unlimited)
-✓ Live Prompter (unlimited)
+✓ Practice Prompter (unlimited)
 ✓ Question Bank (unlimited)`);
       return false;
     }
@@ -827,7 +939,7 @@ Consider upgrading to Pro for more sessions!`);
     const currentUsage = parseInt(localStorage.getItem(storageKey) || '0');
     
     const limit = usageStats?.tier === 'beta' ? 999999 :
-                  usageStats?.tier === 'pro' ? 40 : 5;
+                  (usageStats?.tier === 'pro' || usageStats?.tier === 'general_pass' || usageStats?.tier === 'annual') ? 40 : 5;
 
     setUsageThisMonth(currentUsage);
     setUsageLimit(limit);
@@ -961,7 +1073,7 @@ loadPracticeHistory();
       console.log('🔍 Fetching profile for user:', user.id);
       const { data: profile, error: profileError } = await supabase
         .from('user_profiles')
-        .select('tier, subscription_status, stripe_customer_id')
+        .select('tier, subscription_status, stripe_customer_id, nursing_pass_expires, general_pass_expires, premium_trial_ends')
         .eq('user_id', user.id)
         .single();
 
@@ -973,19 +1085,28 @@ loadPracticeHistory();
       }
 
       if (profile) {
-        // CRITICAL: Only set tier if it's a valid non-null value
+        // CRITICAL: Use resolveEffectiveTier to determine tier from pass expiry + legacy
+        // This will be overridden by beta check below if user is in beta_testers table
         tier = profile.tier || 'free';
+        // If user has active passes, resolveEffectiveTier upgrades the tier
+        const effectiveTier = resolveEffectiveTier(profile, false);
+        if (effectiveTier !== 'free') {
+          tier = effectiveTier;
+        }
         // Store subscription status for subscription management
         if (profile.subscription_status) {
           setSubscriptionStatus(profile.subscription_status);
         }
         console.log('📋 Profile loaded:', {
           tier: profile.tier,
+          effectiveTier,
           subscription_status: profile.subscription_status,
-          stripe_customer_id: profile.stripe_customer_id
+          stripe_customer_id: profile.stripe_customer_id,
+          nursing_pass_expires: profile.nursing_pass_expires,
+          general_pass_expires: profile.general_pass_expires,
         });
       } else {
-        // Create profile if doesn't exist
+        // Create profile if doesn't exist — start on free tier
         console.log('📝 Creating new profile for user:', user.id);
         const { error: insertError } = await supabase
           .from('user_profiles')
@@ -994,7 +1115,7 @@ loadPracticeHistory();
         if (insertError) {
           console.error('❌ Profile creation error:', insertError.message);
         } else {
-          console.log('✅ Profile created successfully');
+          console.log('✅ Profile created on free tier');
         }
       }
 
@@ -1091,11 +1212,15 @@ loadPracticeHistory();
     const urlParams = new URLSearchParams(window.location.search);
     const isSuccess = urlParams.get('success') === 'true';
     const sessionId = urlParams.get('session_id');
+    // Also detect new pass-based checkout: ?purchase=success&pass=general_30day
+    const isPurchaseSuccess = urlParams.get('purchase') === 'success';
+    const passType = urlParams.get('pass');
 
-    if (!isSuccess || !sessionId || !currentUser) return;
+    if (!(isSuccess && sessionId) && !isPurchaseSuccess) return;
+    if (!currentUser) return;
 
     // FIX: Prevent duplicate popups - check sessionStorage for this specific session
-    const handledKey = `stripe_success_handled_${sessionId}`;
+    const handledKey = `stripe_success_handled_${sessionId || passType || 'unknown'}`;
     if (sessionStorage.getItem(handledKey)) {
       console.log('💳 Checkout success already handled for this session, skipping...');
       window.history.replaceState({}, document.title, window.location.pathname);
@@ -1103,7 +1228,7 @@ loadPracticeHistory();
     }
 
     console.log('💳 Stripe checkout success detected, polling for tier update...');
-    console.log('📋 Session ID:', sessionId, 'User ID:', currentUser.id);
+    console.log('📋 Session ID:', sessionId, 'Pass type:', passType, 'User ID:', currentUser.id);
 
     let pollCount = 0;
     const maxPolls = 30; // Poll for up to 30 seconds (webhook can be slow)
@@ -1118,28 +1243,35 @@ loadPracticeHistory();
         // Force fresh data - bypass any caching
         const { data: profile, error } = await supabase
           .from('user_profiles')
-          .select('tier, subscription_status, stripe_customer_id')
+          .select('tier, subscription_status, stripe_customer_id, nursing_pass_expires, general_pass_expires, premium_trial_ends')
           .eq('user_id', currentUser.id)
           .single();
 
         console.log('📊 Profile data:', profile, 'Error:', error);
 
-        if (profile?.tier === 'pro' || profile?.subscription_status === 'active') {
-          console.log('🎉 Pro tier confirmed!');
+        // Check for any paid tier: legacy pro, or pass-based via resolveEffectiveTier
+        const resolvedTier = resolveEffectiveTier(profile, false);
+        if (profile?.tier === 'pro' || profile?.subscription_status === 'active' || resolvedTier !== 'free') {
+          const finalTier = resolvedTier !== 'free' ? resolvedTier : 'pro';
+          console.log('🎉 Paid tier confirmed:', finalTier);
           alreadyHandled = true;
 
           // FIX: Mark this session as handled to prevent duplicate popups
           sessionStorage.setItem(handledKey, 'true');
 
-          setUserTier('pro');
-          const stats = await getUsageStats(supabase, currentUser.id, 'pro');
-          setUsageStatsData({ ...stats, tier: 'pro' });
+          setUserTier(finalTier);
+          const stats = await getUsageStats(supabase, currentUser.id, finalTier);
+          setUsageStatsData({ ...stats, tier: finalTier });
 
           // Clean up URL parameters
           window.history.replaceState({}, document.title, window.location.pathname);
 
+          // Google Ads purchase conversion tracking (dynamic by pass type)
+          const passAmounts = { general_30day: 14.99, nursing_30day: 19.99, annual_all_access: 99.99 };
+          trackPurchase(passAmounts[passType] || 14.99, sessionId || 'pass_purchase');
+
           // Show success message
-          alert('🎉 Welcome to Pro! Your subscription is now active.');
+          alert(isPurchaseSuccess ? '🎉 Your pass is now active! Enjoy your new features.' : '🎉 Welcome to Pro! Your subscription is now active.');
           return true;
         }
 
@@ -1422,6 +1554,10 @@ recognition.onerror = (event) => {
           return count + (userAnswer.match(regex) || []).length;
         }, 0);
 
+        // PR 3 — mark row with schema version. v2 when the new 5-field shape is
+        // present (feedback.fix). Legacy 8-field rows persist as v1.
+        const _feedbackVersion = (aiFeedback && aiFeedback.fix) ? 2 : 1;
+
         return supabase
           .from('practice_sessions')
           .insert({
@@ -1434,6 +1570,7 @@ recognition.onerror = (event) => {
             word_count: wordCount,
             filler_word_count: fillerCount,
             ai_feedback: aiFeedback,
+            feedback_version: _feedbackVersion,
           })
           .select()
           .single();
@@ -1492,9 +1629,9 @@ Upgrade to Pro for UNLIMITED:
 • Unlimited Practice Mode
 • Unlimited Answer Assistant
 • Unlimited Question Generator
-• Unlimited Live Prompter
+• Unlimited Practice Prompter
 
-Just $29.99/month - practice as much as you need!`);
+Get a 30-Day Pass for just $14.99 — no subscription!`);
       setShowPricingPage(true);
       return false;
     }
@@ -1516,9 +1653,9 @@ Just $29.99/month - practice as much as you need!`);
       return true;
     }
 
-    // Pro users have unlimited access
-    if (userTier === 'pro') {
-      console.log('👑 Pro user - unlimited access for', featureName);
+    // Pro / pass / annual users have unlimited access to general features
+    if (userTier === 'pro' || userTier === 'general_pass' || userTier === 'annual') {
+      console.log('👑 Paid user - unlimited access for', featureName);
       return true;
     }
 
@@ -1551,9 +1688,9 @@ Upgrade to Pro for UNLIMITED:
 • Unlimited Practice Mode
 • Unlimited Answer Assistant
 • Unlimited Question Generator
-• Unlimited Live Prompter
+• Unlimited Practice Prompter
 
-Just $29.99/month - practice as much as you need!`);
+Get a 30-Day Pass for just $14.99 — no subscription!`);
       setShowPricingPage(true);
       return false;
     }
@@ -1611,9 +1748,9 @@ Upgrade to Pro for UNLIMITED:
 • Unlimited Practice Mode
 • Unlimited Answer Assistant
 • Unlimited Question Generator
-• Unlimited Live Prompter
+• Unlimited Practice Prompter
 
-Just $29.99/month - practice as much as you need!`);
+Get a 30-Day Pass for just $14.99 — no subscription!`);
         setShowPricingPage(true);
         return false;
       }
@@ -1737,7 +1874,7 @@ Just $29.99/month - practice as much as you need!`);
         .from('usage_tracking')
         .select('*')
         .eq('user_id', user.id)
-        .eq('month', currentMonth)
+        .eq('period', currentMonth)
         .maybeSingle();
 
       // Return usage data with correct tier from user_profiles
@@ -2268,10 +2405,10 @@ const startListening = () => {
       // LIVE PROMPTER USAGE: Track when question is matched/displayed
       // SECURITY FIX: Check limits before tracking (prevents bypass)
       if (currentModeRef.current === 'prompter') {
-        if (checkUsageLimitsSync('livePrompterQuestions', 'Live Prompter')) {
-          trackUsageInBackground('livePrompterQuestions', 'Live Prompter');
+        if (checkUsageLimitsSync('livePrompterQuestions', 'Practice Prompter')) {
+          trackUsageInBackground('livePrompterQuestions', 'Practice Prompter');
         } else {
-          console.log('🚫 Live Prompter action blocked - over limit');
+          console.log('🚫 Practice Prompter action blocked - over limit');
         }
       }
       return;
@@ -2428,10 +2565,10 @@ const startListening = () => {
       // LIVE PROMPTER USAGE: Track when question is matched/displayed
       // SECURITY FIX: Check limits before tracking (prevents bypass)
       if (currentModeRef.current === 'prompter') {
-        if (checkUsageLimitsSync('livePrompterQuestions', 'Live Prompter')) {
-          trackUsageInBackground('livePrompterQuestions', 'Live Prompter');
+        if (checkUsageLimitsSync('livePrompterQuestions', 'Practice Prompter')) {
+          trackUsageInBackground('livePrompterQuestions', 'Practice Prompter');
         } else {
-          console.log('🚫 Live Prompter action blocked - over limit');
+          console.log('🚫 Practice Prompter action blocked - over limit');
         }
       }
     } else { 
@@ -2498,47 +2635,56 @@ useEffect(() => {
     
     if (currentMode) { window.addEventListener('keydown', handleKeyDown); window.addEventListener('keyup', handleKeyUp); return () => { window.removeEventListener('keydown', handleKeyDown); window.removeEventListener('keyup', handleKeyUp); }; }
   }, [currentMode, spacebarHeld, isListening, interviewSessionActive, isCapturing]);
-  // TTS with improved voice selection
-  const speakText = (text) => {
+  // TTS with smart voice selection — supports HD (Google Cloud Neural2) and Web Speech fallback
+  const speakText = async (text) => {
+    // Respect mute toggle
+    if (voiceMuted) {
+      console.log('🔇 Voice muted — skipping TTS');
+      return;
+    }
+
+    // Try HD voice first (paid users + free trial: 3 uses)
+    const hasHD = userTier !== 'free' || (() => {
+      try {
+        const used = parseInt(localStorage.getItem('isl_hd_voice_trials') || '0', 10);
+        return used < 3;
+      } catch { return false; }
+    })();
+
+    if (hasHD) {
+      try {
+        const { generateTTSAudio } = await import('./utils/ttsService');
+        const blobUrl = await generateTTSAudio([text], { voice: 'nova', speed: 1.0 });
+        if (blobUrl) {
+          // Track free trial usage
+          if (userTier === 'free') {
+            try {
+              const used = parseInt(localStorage.getItem('isl_hd_voice_trials') || '0', 10);
+              localStorage.setItem('isl_hd_voice_trials', String(used + 1));
+            } catch {}
+          }
+          const audio = new Audio(blobUrl);
+          setAiSpeaking(true); setAiSubtitle(text);
+          audio.onended = () => { setAiSpeaking(false); setAiSubtitle(''); URL.revokeObjectURL(blobUrl); };
+          audio.onerror = () => { setAiSpeaking(false); setAiSubtitle(''); };
+          await audio.play();
+          return;
+        }
+      } catch (err) {
+        console.warn('HD voice failed, falling back to Web Speech:', err.message);
+      }
+    }
+
+    // Fallback: Web Speech API
     if (!synthRef.current) { console.warn('TTS not available'); return; }
     synthRef.current.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     const voices = synthRef.current.getVoices();
-    
-    // Priority order for best voices (more natural sounding)
-    const voicePriority = [
-      'Samantha',           // macOS - very natural
-      'Google US English',  // Google voices are good
-      'Google UK English Female',
-      'Microsoft Zira',     // Windows - decent
-      'Microsoft David',
-      'Alex',              // macOS male
-      'Karen',             // macOS female
-      'Fiona'              // macOS Scottish
-    ];
-    
-    // Find the best available voice
-    let selectedVoice = null;
-    for (const voiceName of voicePriority) {
-      selectedVoice = voices.find(v => v.name.includes(voiceName));
-      if (selectedVoice) break;
-    }
-    
-    // Fallback to any English voice if no priority match
-    if (!selectedVoice) {
-      selectedVoice = voices.find(v => v.lang.startsWith('en-')) || voices[0];
-    }
-    
-    if (selectedVoice) { 
-      utterance.voice = selectedVoice; 
-      console.log('🎙️ Voice:', selectedVoice.name); 
-    }
-    
-    // Optimized settings for more natural speech
-    utterance.rate = 0.92;   // Slightly slower for clarity
-    utterance.pitch = 1.05;  // Slightly higher pitch sounds more natural
-    utterance.volume = 1.0;
-    
+    const selectedVoice = getPreferredVoice(voices);
+    if (selectedVoice) { utterance.voice = selectedVoice; }
+    utterance.rate = VOICE_SETTINGS.rate;
+    utterance.pitch = VOICE_SETTINGS.pitch;
+    utterance.volume = VOICE_SETTINGS.volume;
     utterance.onstart = () => { setAiSpeaking(true); setAiSubtitle(text); };
     utterance.onend = () => { setAiSpeaking(false); setAiSubtitle(''); };
     synthRef.current.speak(utterance);
@@ -2658,7 +2804,9 @@ Respond in this exact JSON format:
         priority: question.priority,
         bullets: question.bullets || [],
         narrative: question.narrative || '',
-        keywords: question.keywords || []
+        keywords: question.keywords || [],
+        question_group: question.group || question.question_group || null,
+        difficulty: question.difficulty || null
       }])
       .select()
       .single();
@@ -2683,7 +2831,9 @@ Respond in this exact JSON format:
         priority: updatedQ.priority,
         bullets: updatedQ.bullets || [],
         narrative: updatedQ.narrative || '',
-        keywords: updatedQ.keywords || []
+        keywords: updatedQ.keywords || [],
+        question_group: updatedQ.group || updatedQ.question_group || null,
+        difficulty: updatedQ.difficulty || null
       })
       .eq('id', id);
 
@@ -2781,46 +2931,110 @@ Respond in this exact JSON format:
   };
 
   const exportQuestions = () => { const dataStr = JSON.stringify(questions, null, 2); const blob = new Blob([dataStr], { type: 'application/json' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = `isl-questions-${Date.now()}.json`; link.click(); };
-  const importQuestions = async (jsonData) => { 
-    try { 
-      const imported = JSON.parse(jsonData); 
-      if (!Array.isArray(imported)) {
-        alert('Invalid format: Expected an array of questions');
+  // Smart multi-format question parser — accepts JSON, plain text, numbered lists, CSV
+  const parseQuestionsFromText = (rawText) => {
+    const text = rawText.trim();
+    if (!text) return [];
+
+    // Try JSON first (backward compatible)
+    try {
+      const parsed = JSON.parse(text);
+      if (Array.isArray(parsed)) {
+        return parsed.filter(q => q.question).map(q => ({
+          question: q.question,
+          category: q.category || 'Imported',
+          priority: q.priority || 'Standard',
+          bullets: q.bullets || [],
+          narrative: q.narrative || '',
+          keywords: q.keywords || [],
+        }));
+      }
+    } catch (e) {
+      // Not JSON — try other formats
+    }
+
+    // Split by newlines and parse each line
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    const questions = [];
+
+    for (const line of lines) {
+      // Skip CSV headers
+      if (/^question\s*[,\t]/i.test(line)) continue;
+
+      // Try CSV: "question","category" or question,category
+      const csvMatch = line.match(/^"?([^"]+)"?\s*[,\t]\s*"?([^"]*)"?$/);
+      if (csvMatch && csvMatch[1].length > 10) {
+        questions.push({
+          question: csvMatch[1].trim(),
+          category: csvMatch[2]?.trim() || 'Imported',
+          priority: 'Standard',
+          bullets: [],
+          narrative: '',
+          keywords: [],
+        });
+        continue;
+      }
+
+      // Strip numbered list prefixes: "1.", "1)", "- ", "• ", etc.
+      let cleaned = line.replace(/^\d+[.)]\s*/, '').replace(/^[-•*]\s*/, '').trim();
+
+      // Skip very short lines (likely not questions)
+      if (cleaned.length < 10) continue;
+
+      questions.push({
+        question: cleaned,
+        category: 'Imported',
+        priority: 'Standard',
+        bullets: [],
+        narrative: '',
+        keywords: [],
+      });
+    }
+
+    return questions;
+  };
+
+  const importQuestions = async (rawData) => {
+    try {
+      const parsed = parseQuestionsFromText(rawData);
+
+      if (!parsed || parsed.length === 0) {
+        alert('No questions found. Try pasting one question per line, a numbered list, or a JSON array.');
         return;
       }
-      
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         alert('Please sign in to import questions');
         return;
       }
-      
+
       // Import to Supabase
-      const questionsToImport = imported.map(q => ({
+      const questionsToImport = parsed.map(q => ({
         user_id: user.id,
         question: q.question,
-        category: q.category || 'Imported',
-        priority: q.priority || 'Standard',
-        bullets: q.bullets || [],
-        narrative: q.narrative || '',
-        keywords: q.keywords || []
+        category: q.category,
+        priority: q.priority,
+        bullets: q.bullets,
+        narrative: q.narrative,
+        keywords: q.keywords,
       }));
-      
+
       const { data, error } = await supabase
         .from('questions')
         .insert(questionsToImport)
         .select();
-      
+
       if (error) throw error;
-      
+
       // Reload questions to get the imported ones with IDs
       await loadQuestions();
-      
-      alert(`✅ Imported ${data.length} questions!`); 
-    } catch (error) { 
+
+      alert(`Imported ${data.length} question${data.length !== 1 ? 's' : ''}!`);
+    } catch (error) {
       console.error('Import error:', error);
-      alert('Failed to import: ' + error.message); 
-    } 
+      alert('Failed to import: ' + error.message);
+    }
   };
 
   // MODE STARTERS
@@ -2832,9 +3046,9 @@ Respond in this exact JSON format:
       return;
     }
 
-    // USAGE LIMIT GATE: Block before starting Live Prompter
-    if (!checkUsageLimitsSync('livePrompterQuestions', 'Live Prompter')) {
-      console.log('🚫 Live Prompter blocked - usage limit reached');
+    // USAGE LIMIT GATE: Block before starting Practice Prompter
+    if (!checkUsageLimitsSync('livePrompterQuestions', 'Practice Prompter')) {
+      console.log('🚫 Practice Prompter blocked - usage limit reached');
       return;
     }
 
@@ -2845,7 +3059,7 @@ Respond in this exact JSON format:
       return;
     }
     
-    console.log('✅ Has consent - showing Live Prompter warning');
+    console.log('✅ Has consent - showing Practice Prompter warning');
     setPendingMode('prompter');
     setShowLivePrompterWarning(true);
   };
@@ -2860,41 +3074,100 @@ Respond in this exact JSON format:
     setPendingMode(null);
     setShowLivePrompterWarning(false);
   };
- const startAIInterviewer = async () => { 
+ const startAIInterviewer = async () => {
     console.log('🎬 startAIInterviewer called');
-    
-    if (questions.length === 0) { 
-      alert('Add questions first!'); 
-      return; 
+
+    if (questions.length === 0) {
+      alert('Add questions first!');
+      return;
     }
-    
+
     if (!hasConsented) {
       console.log('⚠️ No consent - showing dialog');
       setPendingMode('ai-interviewer');
       setShowConsentDialog(true);
       return;
     }
-    
-    console.log('✅ Has consent - starting AI Interviewer');
-    await actuallyStartAIInterviewer();
+
+    console.log('✅ Has consent - showing format modal');
+    // NEW: Show format selection modal before starting the interview
+    setShowFormatModal(true);
   };
-  
-  const actuallyStartAIInterviewer = async () => {
+
+  /**
+   * Called from InterviewFormatModal when the user picks a format.
+   * NEW BEHAVIOR: Opens the CuratedInterviewsScreen (list of named playlists)
+   * instead of starting the interview immediately.
+   */
+  const handleFormatSelected = async (format, seed) => {
+    console.log('🎯 Format selected:', format.id, 'seed:', seed);
+    setShowFormatModal(false);
+    setSelectedFormat(format);
+    setSessionSeed(seed);
+    // Show the curated interviews screen for this format
+    setShowCuratedInterviews(true);
+  };
+
+  /**
+   * Called from CuratedInterviewsScreen when the user picks a specific curated playlist.
+   * Builds the sequence from the curated interview's ordered question list
+   * (rather than randomly picking from the bank) and starts the interview.
+   */
+  const handleCuratedInterviewSelected = async (curatedInterview, seed) => {
+    console.log('🎬 Curated interview selected:', curatedInterview.id);
+    setShowCuratedInterviews(false);
+
+    // Build the question pool from user's bank
+    let pool = getFilteredQuestions(questions, currentUser?.id);
+    pool = pool.filter(q => !q.question_group || activeGroups.has(q.question_group));
+    if (pool.length === 0) pool = getFilteredQuestions(questions, currentUser?.id);
+
+    // Build sequence from the CURATED interview's specific question list
+    // (falls back to curated suggestedText when user's bank has no match)
+    const sequence = buildSequenceFromCurated(curatedInterview, pool);
+    if (!sequence || sequence.length === 0) {
+      console.error('Failed to build sequence from curated interview');
+      alert('Unable to start this curated interview.');
+      return;
+    }
+
+    console.log(`📋 Built curated sequence: ${sequence.length} questions from "${curatedInterview.title}"`);
+
+    setSelectedCuratedInterview(curatedInterview);
+    setInterviewSequence(sequence);
+    setSequenceIndex(0);
+    setSessionFeedback([]);
+
+    // Launch the interview with the first question
+    await actuallyStartAIInterviewer(sequence);
+  };
+
+  const actuallyStartAIInterviewer = async (sequence) => {
     console.log('🚀 Actually starting AI Interviewer');
 
     // AUTHORITATIVE FIX: Server-side usage check (cannot be bypassed)
     const canUse = await checkUsageServerSide('ai_interviewer', 'AI Interviewer');
     if (!canUse) return;
-    
-    // Set UI state IMMEDIATELY (no await blocking)
-    accumulatedTranscript.current = ''; 
-    const randomQ = questions[Math.floor(Math.random() * questions.length)]; 
-    setCurrentQuestion(randomQ); 
-    setCurrentMode('ai-interviewer'); 
-    setCurrentView('ai-interviewer'); 
+
+    // Reset transcript & use first slot from the sequence
+    accumulatedTranscript.current = '';
+    const seqToUse = sequence || interviewSequence;
+    if (!seqToUse || seqToUse.length === 0) {
+      console.error('No interview sequence available');
+      return;
+    }
+    const firstSlot = seqToUse[0];
+    if (!firstSlot || !firstSlot.question) {
+      console.error('First slot has no question');
+      return;
+    }
+
+    setCurrentQuestion(firstSlot.question);
+    setCurrentMode('ai-interviewer');
+    setCurrentView('ai-interviewer');
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    setUserAnswer(''); 
-    setSpokenAnswer(''); 
+    setUserAnswer('');
+    setSpokenAnswer('');
     flushSync(() => {
       setFeedback(null);
     });
@@ -2905,10 +3178,67 @@ Respond in this exact JSON format:
 
     // BUG 7 FIX: Usage now tracked AFTER successful feedback (not at session start)
     // Prevents charging users for failed API calls or abandoned sessions
-    // See handleAIInterviewerSubmit() for tracking location
 
     // Start interview
-    setTimeout(() => { speakText(randomQ.question); }, 500);
+    setTimeout(() => { speakText(firstSlot.question.question); }, 500);
+  };
+
+  /**
+   * Swap the current question for another of the same slot type.
+   * Preserves the rest of the sequence and the seed.
+   */
+  const handleSwapQuestion = () => {
+    if (!interviewSequence || interviewSequence.length === 0) return;
+    let pool = getFilteredQuestions(questions, currentUser?.id);
+    pool = pool.filter(q => !q.question_group || activeGroups.has(q.question_group));
+    if (pool.length === 0) pool = getFilteredQuestions(questions, currentUser?.id);
+
+    const newSequence = swapQuestionInSequence(interviewSequence, sequenceIndex, pool, sessionSeed);
+    setInterviewSequence(newSequence);
+    const newQuestion = newSequence[sequenceIndex]?.question;
+    if (!newQuestion) {
+      alert('No alternative question available for this slot.');
+      return;
+    }
+    setCurrentQuestion(newQuestion);
+    setUserAnswer('');
+    setSpokenAnswer('');
+    setConversationHistory([]);
+    setFollowUpQuestion(null);
+    setExchangeCount(0);
+    setFeedback(null);
+    setTimeout(() => { speakText(newQuestion.question); }, 300);
+  };
+
+  /**
+   * Advance to the next question in the sequence after the current one is done.
+   * Called from handleAIInterviewerSubmit when the backend signals continue_conversation: false
+   * AND there are still questions remaining in the sequence.
+   */
+  const advanceToNextSlot = () => {
+    const nextIndex = sequenceIndex + 1;
+    if (nextIndex >= interviewSequence.length) {
+      console.log('🏁 Interview sequence complete');
+      return false; // signal to caller: show final feedback
+    }
+    const nextSlot = interviewSequence[nextIndex];
+    if (!nextSlot || !nextSlot.question) return false;
+
+    console.log(`➡️  Advancing to slot ${nextIndex + 1}/${interviewSequence.length}: ${nextSlot.label}`);
+    setSequenceIndex(nextIndex);
+    setCurrentQuestion(nextSlot.question);
+    setUserAnswer('');
+    setSpokenAnswer('');
+    setConversationHistory([]);
+    setFollowUpQuestion(null);
+    setExchangeCount(0);
+    // Do NOT clear feedback — we'll show aggregated at the end
+    // Speak the next question with a transition
+    const transition = nextIndex === interviewSequence.length - 1
+      ? "One last question. "
+      : "Great. Next question. ";
+    setTimeout(() => { speakText(transition + nextSlot.question.question); }, 500);
+    return true; // signal to caller: we advanced, don't show feedback
   };
 const startPracticeMode = async () => { 
     console.log('🎬 startPracticeMode called');
@@ -2937,14 +3267,22 @@ const startPracticeMode = async () => {
     if (!canUse) return;
     
     // Set UI state IMMEDIATELY (no await blocking)
-    accumulatedTranscript.current = ''; 
-    const randomQ = questions[Math.floor(Math.random() * questions.length)]; 
-    setCurrentQuestion(randomQ); 
-    setCurrentMode('practice'); 
-    setCurrentView('practice'); 
+    accumulatedTranscript.current = '';
+    let pool = getFilteredQuestions(questions, currentUser?.id);
+    // Apply question group filter
+    pool = pool.filter(q => !q.question_group || activeGroups.has(q.question_group));
+    if (pool.length === 0) pool = getFilteredQuestions(questions, currentUser?.id); // fallback if all filtered out
+    if (!pool || pool.length === 0) { console.error('No questions available'); return; }
+    const randomQ = pool[Math.floor(Math.random() * pool.length)];
+    setCurrentQuestion(randomQ);
+    setCurrentMode('practice');
+    setCurrentView('practice');
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    setUserAnswer(''); 
-    setSpokenAnswer(''); 
+    setUserAnswer('');
+    setSpokenAnswer('');
+    setSessionQuestions([]);
+    setConfidenceRating(null);
+    setTranscript('');
     flushSync(() => {
       setFeedback(null);
     });
@@ -2958,9 +3296,11 @@ const startPracticeMode = async () => {
   // Navigation functions for prev/next question
   const goToNextQuestion = () => {
     if (!currentQuestion || questions.length === 0) return;
-    const currentIndex = questions.findIndex(q => q.id === currentQuestion.id);
-    const nextIndex = (currentIndex + 1) % questions.length;
-    const nextQ = questions[nextIndex];
+    const filtered = questions.filter(q => !q.question_group || activeGroups.has(q.question_group));
+    const pool = filtered.length > 0 ? filtered : questions;
+    const currentIdx = pool.findIndex(q => q.id === currentQuestion?.id);
+    const nextIdx = (currentIdx + 1) % pool.length;
+    const nextQ = pool[nextIdx];
     setCurrentQuestion(nextQ);
     setUserAnswer('');
     setSpokenAnswer('');
@@ -2976,9 +3316,11 @@ const startPracticeMode = async () => {
 
   const goToPreviousQuestion = () => {
     if (!currentQuestion || questions.length === 0) return;
-    const currentIndex = questions.findIndex(q => q.id === currentQuestion.id);
-    const prevIndex = (currentIndex - 1 + questions.length) % questions.length;
-    const prevQ = questions[prevIndex];
+    const filtered = questions.filter(q => !q.question_group || activeGroups.has(q.question_group));
+    const pool = filtered.length > 0 ? filtered : questions;
+    const currentIdx = pool.findIndex(q => q.id === currentQuestion?.id);
+    const prevIdx = (currentIdx - 1 + pool.length) % pool.length;
+    const prevQ = pool[prevIdx];
     setCurrentQuestion(prevQ);
     setUserAnswer('');
     setSpokenAnswer('');
@@ -2992,7 +3334,7 @@ const startPracticeMode = async () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   
-  const startFlashcardMode = () => { if (questions.length === 0) { alert('Add questions first!'); return; } let available = questions; if (filterCategory !== 'All') available = available.filter(q => q.category === filterCategory); if (available.length === 0) { alert('No matching questions!'); return; } const sorted = [...available].sort((a, b) => { if (a.practiceCount === 0) return -1; if (b.practiceCount === 0) return 1; return a.averageScore - b.averageScore; }); setCurrentQuestion(sorted[0]); setCurrentMode('flashcard'); setCurrentView('flashcard'); setFlashcardSide('question'); setShowBullets(false); setShowNarrative(false); };
+  const startFlashcardMode = () => { if (questions.length === 0) { alert('Add questions first!'); return; } let available = questions.filter(q => !q.question_group || activeGroups.has(q.question_group)); if (available.length === 0) available = questions; if (filterCategory !== 'All') available = available.filter(q => q.category === filterCategory); if (available.length === 0) { alert('No matching questions!'); return; } const sorted = [...available].sort((a, b) => { if (a.practiceCount === 0) return -1; if (b.practiceCount === 0) return 1; return a.averageScore - b.averageScore; }); setCurrentQuestion(sorted[0]); setCurrentMode('flashcard'); setCurrentView('flashcard'); setFlashcardSide('question'); };
 
   // ============================================================================
   // CALLBACK FIX: Stable handlers to prevent stale closure issues
@@ -3049,7 +3391,9 @@ const startPracticeMode = async () => {
           body: JSON.stringify({
             questionText: currentQuestion.question,
             userAnswer: answer,
+            deliveryContext: buildDeliveryContext(answer),
             expectedBullets: currentQuestion.bullets || [],
+            userContext: getUserContext(),
             mode: 'practice',
             selfEfficacyData: {
               previousScores: practiceHistory.slice(-10).map(h => h.feedback?.overall).filter(Boolean),
@@ -3068,6 +3412,13 @@ const startPracticeMode = async () => {
 
         if (!response.ok) {
           console.error('Error from Supabase function:', data.error);
+          // Apr 11 2026: Handle typed errors from the Anthropic retry wrapper.
+          // Server returns { error: 'rate_limited'|'upstream_unavailable'|..., message: friendly, retryable: bool }
+          // with HTTP 429 or 503 after the wrapper has already retried upstream 3 times.
+          // We surface the friendly message directly — no client-side retry (already handled).
+          if (data?.retryable && data?.message) {
+            throw new Error(data.message);
+          }
           throw new Error(data.error?.message || data.error || 'Failed to get feedback');
         }
 
@@ -3081,12 +3432,12 @@ const startPracticeMode = async () => {
         if (data.content && data.content[0]) {
           let feedbackText = data.content[0].text;
           console.log('Raw AI text:', feedbackText);
-          
+
           const jsonMatch = feedbackText.match(/\{[\s\S]*\}/);
           if (jsonMatch) {
             feedbackText = jsonMatch[0];
           }
-          
+
           feedbackJson = JSON.parse(feedbackText);
         } else {
           feedbackJson = data;
@@ -3117,6 +3468,14 @@ const startPracticeMode = async () => {
               date: new Date().toISOString(),
             },
           ]);
+
+          // Phase 4G: Track this question in current session for SessionReport
+          setSessionQuestions(prev => [...prev, {
+            question: currentQuestion.question,
+            answer,
+            feedback: feedbackJson,
+            date: new Date().toISOString(),
+          }]);
         });
 
         console.log('🎯 FLUSHSYNC FIX: Feedback committed to DOM, now saving to database in parallel');
@@ -3213,11 +3572,18 @@ const startPracticeMode = async () => {
             body: JSON.stringify({
               questionText: followUpQuestion || currentQuestion.question,
               userAnswer: answer,
+              deliveryContext: buildDeliveryContext(answer),
               expectedBullets: currentQuestion.bullets || [],
               userContext: getUserContext(),
               mode: 'ai-interviewer',
               conversationHistory: conversationHistory,
               exchangeCount: exchangeCount,
+              // NEW: Structured interview format context
+              interviewFormat: selectedFormat?.id || null,
+              interviewStage: interviewSequence[sequenceIndex]?.stage || null,
+              slotType: interviewSequence[sequenceIndex]?.slotType || null,
+              questionNumber: interviewSequence.length > 0 ? sequenceIndex + 1 : null,
+              totalQuestions: interviewSequence.length || null,
               selfEfficacyData: {
                 previousScores: practiceHistory.slice(-10).map(h => h.feedback?.overall).filter(Boolean),
                 streakDays: 0, // TODO Phase 3: wire to streak system
@@ -3237,6 +3603,11 @@ const startPracticeMode = async () => {
 
         if (!response.ok) {
           console.error('Error from Supabase function:', data.error);
+          // Apr 11 2026: Handle typed errors from the Anthropic retry wrapper.
+          // Same pattern as handlePracticeSubmit above. See that function for rationale.
+          if (data?.retryable && data?.message) {
+            throw new Error(data.message);
+          }
           throw new Error(
             data.error?.message || data.error || 'Failed to get feedback'
           );
@@ -3298,8 +3669,7 @@ const startPracticeMode = async () => {
           return Promise.resolve();
 
         } else {
-          // CONVERSATION ENDED - Show final feedback
-          // Build complete conversation summary
+          // CONVERSATION ENDED for this slot - build conversation summary
           const fullConversation = [
             ...conversationHistory,
             {
@@ -3307,8 +3677,32 @@ const startPracticeMode = async () => {
               answer: answer
             }
           ];
-          
-          // Create a text summary of the entire conversation
+
+          // STRUCTURED FORMAT: Accumulate per-slot feedback and advance through sequence
+          if (interviewSequence && interviewSequence.length > 0) {
+            // Save this slot's feedback to the running aggregate
+            const slotFeedback = {
+              slotIndex: sequenceIndex,
+              slotLabel: interviewSequence[sequenceIndex]?.label,
+              question: currentQuestion.question,
+              conversation: fullConversation,
+              feedback: feedbackJson,
+            };
+            setSessionFeedback(prev => [...prev, slotFeedback]);
+
+            // Check if there are more slots to go
+            const isLastSlot = sequenceIndex >= interviewSequence.length - 1;
+            if (!isLastSlot) {
+              // Advance to next slot — do NOT show feedback yet
+              console.log(`✅ Slot ${sequenceIndex + 1} complete, advancing...`);
+              setTimeout(() => advanceToNextSlot(), 600);
+              return Promise.resolve();
+            }
+            // else fall through to show final aggregated feedback
+            console.log('🏁 Final slot complete, showing session feedback');
+          }
+
+          // Create a text summary of the entire conversation (for DB save)
           const conversationSummary = fullConversation
             .map((exchange, idx) => `Q${idx + 1}: ${exchange.question}\nA${idx + 1}: ${exchange.answer}`)
             .join('\n\n');
@@ -3337,8 +3731,16 @@ const startPracticeMode = async () => {
                 date: new Date().toISOString(),
               },
             ]);
+
+            // Phase 4G: Track this question in current session for SessionReport
+            setSessionQuestions(prev => [...prev, {
+              question: currentQuestion.question,
+              answer,
+              feedback: feedbackJson,
+              date: new Date().toISOString(),
+            }]);
           });
-          
+
           console.log('🎯 FLUSHSYNC FIX: Feedback committed to DOM, now saving AI interview to database in parallel');
 
           // BUG 7 FIX: Track usage AFTER successful feedback (not at session start)
@@ -3382,9 +3784,9 @@ const startPracticeMode = async () => {
         });
       });
   }, [
-    spokenAnswer, 
-    userAnswer, 
-    currentQuestion, 
+    spokenAnswer,
+    userAnswer,
+    currentQuestion,
     followUpQuestion,
     conversationHistory,
     exchangeCount,
@@ -3392,7 +3794,11 @@ const startPracticeMode = async () => {
     accumulatedTranscript,
     supabase,
     getUserContext,
-    speakText
+    speakText,
+    // Structured format state
+    selectedFormat,
+    interviewSequence,
+    sequenceIndex,
   ]);
 
   // ==========================================
@@ -3426,7 +3832,7 @@ const startPracticeMode = async () => {
       {showAddQuestionsPrompt && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
           <div 
-            className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl max-w-2xl w-full p-8 shadow-2xl border-2 border-teal-500/50 my-auto"
+            className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl max-w-2xl w-full p-8 shadow-lg border-2 border-teal-500/50 my-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="text-center mb-6">
@@ -3458,7 +3864,7 @@ const startPracticeMode = async () => {
                       Enter your target role, background, and job description. AI generates personalized questions.
                     </p>
                     <span className="inline-block px-3 py-1 bg-teal-500/20 text-teal-300 text-xs font-bold rounded-full border border-teal-500/50">
-                      ⭐ RECOMMENDED
+                      <Star className="w-3 h-3 inline mr-1" /> RECOMMENDED
                     </span>
                   </div>
                 </div>
@@ -3514,7 +3920,7 @@ const startPracticeMode = async () => {
 
             <div className="bg-teal-500/20 border-2 border-teal-400/50 rounded-xl p-4 mb-6">
               <p className="text-sm text-teal-200">
-                <strong>💡 Tip:</strong> You need at least a few questions to use Live Prompter, AI Interviewer, and Practice modes.
+                <strong><Lightbulb className="w-4 h-4 inline" /> Tip:</strong> You need at least a few questions to use Practice Prompter, AI Interviewer, and Practice modes.
               </p>
             </div>
 
@@ -3531,7 +3937,7 @@ const startPracticeMode = async () => {
       {/* WELCOME MODAL - First-time user onboarding */}
       {showWelcomeModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl max-w-2xl w-full p-8 shadow-2xl border border-teal-500/30">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl max-w-2xl w-full p-8 shadow-lg border border-teal-500/30">
             <div className="text-center mb-6">
               <div className="w-20 h-20 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Sparkles className="w-10 h-10 text-white" />
@@ -3541,11 +3947,11 @@ const startPracticeMode = async () => {
             </div>
 
             <div className="bg-gray-800/50 rounded-xl p-6 mb-6">
-              <h3 className="font-bold text-lg mb-3 text-teal-400">✨ You can now use:</h3>
+              <h3 className="font-bold text-lg mb-3 text-teal-400">You can now use:</h3>
               <ul className="space-y-2 text-gray-300">
                 <li className="flex items-start gap-2">
                   <span className="text-teal-400 font-bold">✓</span>
-                  <span><strong>Live Prompter</strong> - Real-time interview assistance (works right now!)</span>
+                  <span><strong>Practice Prompter</strong> - Real-time interview assistance (works right now!)</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-teal-400 font-bold">✓</span>
@@ -3559,10 +3965,10 @@ const startPracticeMode = async () => {
             </div>
 
             <div className="bg-teal-900/30 rounded-xl p-6 mb-8 border border-teal-500/30">
-              <h3 className="font-bold text-lg mb-3 text-teal-300">💡 Pro Tip:</h3>
+              <h3 className="font-bold text-lg mb-3 text-teal-300"><Lightbulb className="w-4 h-4 inline" /> Pro Tip:</h3>
               <p className="text-gray-300 mb-3">
                 These default questions work great, but <strong>customizing them for YOUR specific role</strong> makes 
-                Live Prompter 10x more accurate.
+                Practice Prompter 10x more accurate.
               </p>
               <p className="text-sm text-gray-400">
                 You can customize anytime in Command Center → Bank
@@ -3589,7 +3995,7 @@ const startPracticeMode = async () => {
                 }}
                 className="flex-1 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 py-4 rounded-xl font-bold transition-all shadow-lg"
               >
-                Try Live Prompter Now! →
+                Try Practice Prompter Now! →
               </button>
             </div>
           </div>
@@ -3599,7 +4005,7 @@ const startPracticeMode = async () => {
       {/* CUSTOMIZATION NUDGE - After sessions 4 and 6 */}
       {showCustomizationNudge && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl max-w-lg w-full p-8 shadow-2xl border border-yellow-500/30">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl max-w-lg w-full p-8 shadow-lg border border-yellow-500/30">
             <div className="text-center mb-6">
               <div className="w-16 h-16 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <TrendingUp className="w-8 h-8 text-gray-900" />
@@ -3609,7 +4015,7 @@ const startPracticeMode = async () => {
             </div>
 
             <div className="bg-yellow-900/20 rounded-xl p-6 mb-6 border border-yellow-500/30">
-              <h3 className="font-bold mb-3 text-yellow-300">💡 Want better accuracy?</h3>
+              <h3 className="font-bold mb-3 text-yellow-300"><Lightbulb className="w-4 h-4 inline" /> Want better accuracy?</h3>
               <p className="text-gray-300 mb-4">
                 Customizing questions for YOUR specific role and adding more keywords can boost 
                 match rates to 90%+
@@ -3646,7 +4052,7 @@ const startPracticeMode = async () => {
       {/* DELETE ALL CONFIRMATION MODAL */}
       {showDeleteAllConfirm && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl">
+          <div className="bg-white rounded-xl max-w-md w-full p-8 shadow-lg">
             <div className="text-center mb-6">
               <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <AlertCircle className="w-10 h-10 text-red-600" />
@@ -3688,7 +4094,7 @@ const startPracticeMode = async () => {
       {/* DELETE CHOICE MODAL - After deleting all questions */}
       {showDeleteChoiceModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl max-w-lg w-full p-8 shadow-2xl border border-teal-500/30">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl max-w-lg w-full p-8 shadow-lg border border-teal-500/30">
             <div className="text-center mb-6">
               <div className="w-20 h-20 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="w-10 h-10 text-teal-600" />
@@ -3699,14 +4105,14 @@ const startPracticeMode = async () => {
 
             <div className="space-y-4 mb-6">
               <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
-                <h3 className="font-bold text-teal-400 mb-2">📦 Load 12 Default Questions</h3>
+                <h3 className="font-bold text-teal-400 mb-2">Load Default Questions</h3>
                 <p className="text-sm text-gray-400">
-                  Get common interview questions to start using Live Prompter immediately
+                  Get common interview questions to start using Practice Prompter immediately
                 </p>
               </div>
               
               <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
-                <h3 className="font-bold text-teal-400 mb-2">🗑️ Keep Question Bank Empty</h3>
+                <h3 className="font-bold text-teal-400 mb-2"><Trash2 className="w-4 h-4 inline" /> Keep Question Bank Empty</h3>
                 <p className="text-sm text-gray-400">
                   Start fresh - you can add custom questions or load defaults anytime in Command Center
                 </p>
@@ -3734,12 +4140,12 @@ const startPracticeMode = async () => {
                     await loadQuestions();
                     localStorage.setItem(`isl_defaults_initialized_${currentUser.id}`, 'true');
                     setShowDeleteChoiceModal(false);
-                    console.log('✅ Loaded 12 default questions');
+                    console.log(`✅ Loaded ${DEFAULT_QUESTIONS.length} default questions`);
                   }
                 }}
                 className="flex-1 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg"
               >
-                Load 12 Defaults
+                Load Default Questions
               </button>
             </div>
           </div>
@@ -3774,6 +4180,26 @@ const startPracticeMode = async () => {
         }}
       />
 
+      {/* Phase 4E: Question SparkNotes modal */}
+      <QuestionSparkNotes
+        question={sparkNotesQuestion}
+        isOpen={!!sparkNotesQuestion}
+        onClose={() => setSparkNotesQuestion(null)}
+        getUserContext={getUserContext}
+      />
+
+      {/* Phase 4G: Session Report */}
+      {showSessionReport && (
+        <SessionReport
+          sessions={sessionQuestions}
+          allHistory={practiceHistory}
+          questions={questions}
+          onClose={() => { setShowSessionReport(false); setSessionQuestions([]); }}
+          onDrill={(component) => { setShowSessionReport(false); setDrillTargetComponent(component); setCurrentView('weak-drill'); }}
+          onNavigate={(view) => { setShowSessionReport(false); setSessionQuestions([]); view === 'practice' ? startPracticeMode() : setCurrentView(view); }}
+        />
+      )}
+
       {/* FIRST-TIME CONSENT - Terms & Privacy acceptance for new users */}
       {/* onAccepted sets hasAcceptedFirstTimeTerms so Tutorial waits until consent is done */}
       {currentUser && <FirstTimeConsent user={currentUser} onAccepted={() => { console.log('✅ User accepted Terms & Privacy'); setHasAcceptedFirstTimeTerms(true); }} onAlreadyAccepted={() => setHasAcceptedFirstTimeTerms(true)} />}
@@ -3782,7 +4208,7 @@ const startPracticeMode = async () => {
       {showLivePrompterWarning && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 overflow-y-auto">
           <div 
-            className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-auto shadow-2xl my-auto"
+            className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-auto shadow-lg my-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-6">
@@ -3792,7 +4218,7 @@ const startPracticeMode = async () => {
                 </div>
                 <button
                   onClick={() => {
-                    console.log('❌ Live Prompter warning canceled via X');
+                    console.log('❌ Practice Prompter warning canceled via X');
                     setShowLivePrompterWarning(false);
                     setPendingMode(null);
                   }}
@@ -3804,11 +4230,11 @@ const startPracticeMode = async () => {
               </div>
               
               <h2 className="text-xl font-bold text-center mb-3 text-red-600">
-                Live Prompter - Legal Warning
+                Practice Prompter - Legal Warning
               </h2>
               
               <p className="text-gray-700 mb-3 text-sm text-center">
-                You're about to use Live Prompter during real interviews.
+                You're about to use Practice Prompter during real interviews.
               </p>
 
               <div className="bg-red-50 border-l-4 border-red-400 rounded p-3 mb-3">
@@ -3836,7 +4262,7 @@ const startPracticeMode = async () => {
 
               {/* Browser compatibility notice */}
               <div className="bg-teal-50 border-l-4 border-teal-400 rounded p-3 mb-4">
-                <p className="font-bold text-teal-900 text-xs mb-1">🌐 Browser Compatibility:</p>
+                <p className="font-bold text-teal-900 text-xs mb-1"><Globe className="w-3 h-3 inline" /> Browser Compatibility:</p>
                 <p className="text-teal-800 text-xs mb-2">
                   Voice recognition works in:
                 </p>
@@ -3846,7 +4272,7 @@ const startPracticeMode = async () => {
                   <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-medium">✓ Samsung Internet (Android)</span>
                 </div>
                 <p className="text-red-600 text-xs font-medium mb-1">
-                  📱 iPhone users: Use <strong>Safari</strong> only. Chrome, Edge, and Firefox on iPhone do not support voice.
+                  <Smartphone className="w-3 h-3 inline" /> iPhone users: Use <strong>Safari</strong> only. Chrome, Edge, and Firefox on iPhone do not support voice.
                 </p>
                 <p className="text-teal-700 text-xs">
                   <strong>Not supported for voice:</strong> Edge, Firefox, Opera, Brave.
@@ -3857,7 +4283,7 @@ const startPracticeMode = async () => {
               <div className="flex gap-2">
                 <button
                   onClick={() => {
-                    console.log('❌ Live Prompter warning canceled');
+                    console.log('❌ Practice Prompter warning canceled');
                     setShowLivePrompterWarning(false);
                     setPendingMode(null);
                   }}
@@ -3867,7 +4293,7 @@ const startPracticeMode = async () => {
                 </button>
                 <button
                   onClick={() => {
-                    console.log('✅ User accepted Live Prompter warning');
+                    console.log('✅ User accepted Practice Prompter warning');
                     setShowLivePrompterWarning(false);
                     actuallyStartPrompter();
                   }}
@@ -3888,13 +4314,46 @@ const startPracticeMode = async () => {
   if (currentView === 'home') {
     const categories = ['All', ...new Set(questions.map(q => q.category))];
     const priorities = ['All', ...new Set(questions.map(q => q.priority))];
-    
+
     // Calculate user progress metrics
     const totalSessions = practiceHistory.length;
     const questionsCount = questions.length;
-    
+
+    // FEATURE FLAG: HomePageV2 Hero+Feed layout.
+    // Enable in browser console: localStorage.setItem('isl_home_v2', '1')
+    // Disable: localStorage.removeItem('isl_home_v2')
+    const useHomeV2 = typeof window !== 'undefined' && localStorage.getItem('isl_home_v2') === '1';
+    if (useHomeV2) {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-sky-50">
+          <GradientDefs />
+          <HomePageV2
+            currentUser={currentUser}
+            userData={{ user: currentUser, tier: userTier, usage: usageStats, streak: null }}
+            userTier={userTier}
+            questions={questions}
+            practiceHistory={practiceHistory}
+            activeGroups={activeGroups}
+            streakRefreshTrigger={streakRefreshTrigger}
+            interviewDate={interviewDate}
+            onStartPractice={startPracticeMode}
+            onStartAIInterviewer={startAIInterviewer}
+            onStartPrompter={startPrompterMode}
+            onStartFlashcard={startFlashcardMode}
+            onNavigate={(view) => setCurrentView(view)}
+            onOpenCoachPanel={() => setShowCoachPanel(true)}
+            onOpenUsageDashboard={() => setShowUsageDashboard(true)}
+            onOpenPricing={() => setShowPricingPage(true)}
+            onOpenProfileMenu={() => setShowProfileDropdown(true)}
+          />
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-sky-50">
+        <GradientDefs />
+        {/* Trial banner removed — free tier is the new onramp */}
         <div className="container mx-auto px-4 pt-6 pb-8">
 
           {/* Profile Menu - Top Right Corner */}
@@ -3913,7 +4372,7 @@ const startPracticeMode = async () => {
 
               {/* Dropdown - UNCHANGED */}
               {showProfileDropdown && (
-                <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-xl shadow-2xl overflow-hidden z-50">
+                <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-xl shadow-lg overflow-hidden z-50">
                   <div className="bg-gradient-to-r from-teal-600 to-emerald-600 p-4 text-white">
                     <p className="font-bold text-lg">
                       {currentUser?.user_metadata?.full_name || currentUser?.email?.split('@')[0] || 'User'}
@@ -4005,10 +4464,11 @@ const startPracticeMode = async () => {
 
           {/* Clean Centered Title */}
           <div className="text-center mb-4 sm:mb-6">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-slate-800 mb-1 sm:mb-2 tracking-tight">InterviewAnswers.ai</h1>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-navy-700 font-['DM_Sans'] mb-1 sm:mb-2 tracking-tight">InterviewAnswers.ai</h1>
             <p className="text-base sm:text-lg md:text-xl text-slate-500 font-medium">Master Your Interview Answers with AI</p>
 
-            {/* Track Switcher — toggle between General and Nursing */}
+            {/* Track Switcher — only shown in targeted native builds, hidden on web */}
+            {showNursingFeatures() && isTargetedBuild() && (
             <div className="flex items-center justify-center gap-1 mt-3 bg-slate-100 rounded-full p-1 max-w-xs mx-auto border border-slate-200">
               <span className="flex-1 text-center px-4 py-2 rounded-full text-sm font-semibold bg-white text-teal-700 shadow-sm">
                 General
@@ -4017,80 +4477,93 @@ const startPracticeMode = async () => {
                 🩺 Nursing
               </a>
             </div>
+            )}
           </div>
 
-          {/* IRS Hero Card — Phase 3 Unit 2 */}
-          <IRSDisplay refreshTrigger={streakRefreshTrigger} />
+          {/* IRS Hero + Score Trend side-by-side on lg:, stacked on mobile.
+              FIXED 2026-04-09: was two full-width banners creating "panel soup" on desktop.
+              Viewport auditor flagged this as the #1 layout fix. */}
+          <div className={`${practiceHistory.length >= 2 ? 'grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-5' : ''} mb-4 sm:mb-6`}>
+            <IRSDisplay refreshTrigger={streakRefreshTrigger} />
+            {practiceHistory.length >= 2 && (
+              <ScoreTrendSparkline
+                practiceHistory={practiceHistory}
+                onClick={() => {
+                  setCurrentView('command-center');
+                  setCommandCenterTab('progress');
+                }}
+              />
+            )}
+          </div>
 
           {/* Compact Stats Row */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-2 sm:gap-3 mb-4 sm:mb-6">
-            <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 text-slate-800 hover:shadow-lg hover:scale-[1.02] transition-all duration-200 border border-slate-200 shadow-sm cursor-pointer" onClick={() => {
+            <div className="bg-white rounded-xl p-3 sm:p-4 text-slate-800 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 border border-slate-200 shadow-sm cursor-pointer" onClick={() => {
               setCurrentView('command-center');
               setCommandCenterTab('bank');
             }}>
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-teal-400 to-teal-600 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
-                  <Database className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-teal-600 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <QuestionsStatIcon size={24} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xl sm:text-2xl font-black leading-tight">{questions.length}</p>
-                  <p className="text-[10px] sm:text-xs text-slate-500 leading-tight font-semibold">Questions</p>
+                  <p className="text-2xl font-bold leading-tight text-slate-800">{questions.length}</p>
+                  <p className="text-xs text-slate-500 leading-tight font-medium">Questions</p>
                 </div>
               </div>
             </div>
-            <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 text-slate-800 hover:shadow-lg hover:scale-[1.02] transition-all duration-200 border border-slate-200 shadow-sm cursor-pointer" onClick={() => {
+            <div className="bg-white rounded-xl p-3 sm:p-4 text-slate-800 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 border border-slate-200 shadow-sm cursor-pointer" onClick={() => {
               setCurrentView('command-center');
               setCommandCenterTab('progress');
             }}>
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
-                  <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-teal-600 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <SessionsStatIcon size={24} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xl sm:text-2xl font-black leading-tight">{practiceHistory.length}</p>
-                  <p className="text-[10px] sm:text-xs text-slate-500 leading-tight font-semibold">Sessions</p>
+                  <p className="text-2xl font-bold leading-tight text-slate-800">{practiceHistory.length}</p>
+                  <p className="text-xs text-slate-500 leading-tight font-medium">Sessions</p>
                 </div>
               </div>
             </div>
             {/* Usage Dashboard Link Card */}
             <div
-              className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 text-slate-800 hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer border border-slate-200 shadow-sm"
+              className="bg-white rounded-xl p-3 sm:p-4 text-slate-800 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 cursor-pointer border border-slate-200 shadow-sm"
               onClick={() => setShowUsageDashboard(true)}
             >
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-amber-400 to-amber-600 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
-                  <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-amber-500 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <UnlimitedStatIcon size={24} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-lg sm:text-xl font-black leading-tight">
-                    {userTier === 'pro' ? '∞' : 'View'}
+                  <p className="text-2xl font-bold leading-tight text-slate-800">
+                    {(userTier === 'pro' || userTier === 'general_pass' || userTier === 'annual' || userTier === 'beta') ? '∞' : 'View'}
                   </p>
-                  <p className="text-[10px] sm:text-xs text-slate-500 leading-tight font-semibold whitespace-nowrap">
-                    {userTier === 'pro' ? 'Unlimited' : 'Usage'}
+                  <p className="text-xs text-slate-500 leading-tight font-medium whitespace-nowrap">
+                    {(userTier === 'pro' || userTier === 'general_pass' || userTier === 'annual' || userTier === 'beta') ? 'Unlimited' : 'Usage'}
                   </p>
                 </div>
               </div>
             </div>
             {/* Days Until Interview Card */}
             <div
-              className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 text-slate-800 hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer border border-slate-200 shadow-sm"
+              className="bg-white rounded-xl p-3 sm:p-4 text-slate-800 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 cursor-pointer border border-slate-200 shadow-sm"
               onClick={() => {
                 setCurrentView('command-center');
                 setCommandCenterTab('prep');
               }}
             >
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-sky-400 to-sky-600 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
-                  <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-slate-600 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <DaysStatIcon size={24} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xl sm:text-2xl font-black leading-tight">
+                  <p className="text-2xl font-bold leading-tight text-slate-800">
                     {interviewDate
                       ? (() => {
                           const today = new Date();
                           today.setHours(0, 0, 0, 0);
-                          const interview = new Date(interviewDate);
-                          interview.setHours(0, 0, 0, 0);
+                          const interview = new Date(interviewDate + 'T00:00:00');
                           const diffTime = interview.getTime() - today.getTime();
                           const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
                           return Math.max(0, diffDays);
@@ -4098,7 +4571,7 @@ const startPracticeMode = async () => {
                       : '—'
                     }
                   </p>
-                  <p className="text-[10px] sm:text-xs text-slate-500 leading-tight font-semibold whitespace-nowrap">
+                  <p className="text-xs text-slate-500 leading-tight font-medium whitespace-nowrap">
                     {interviewDate ? 'Days' : 'Set Date'}
                   </p>
                 </div>
@@ -4113,9 +4586,9 @@ const startPracticeMode = async () => {
 
           {/* Quick Start Tip - Enhanced */}
           {questions.length === 0 && (
-            <div className="bg-gradient-to-r from-teal-50 to-emerald-50 border-2 border-teal-200 rounded-2xl p-6 text-slate-800 mb-6 shadow-sm">
+            <div className="bg-white border border-slate-200 rounded-xl p-6 text-slate-800 mb-6 shadow-sm">
               <div className="flex items-start gap-4">
-                <div className="text-4xl">👋</div>
+                <div className="text-4xl font-bold text-navy-700">Welcome</div>
                 <div className="flex-1">
                   <p className="text-xl font-black mb-2">Welcome{currentUser?.user_metadata?.full_name ? `, ${currentUser.user_metadata.full_name.split(' ')[0]}` : ''}! Let's build your confidence.</p>
                   <p className="text-base text-slate-600 font-medium mb-4">Start with a quick practice or explore your question bank.</p>
@@ -4142,69 +4615,120 @@ const startPracticeMode = async () => {
           <ArchetypeCTA onAction={(action, archetype) => {
             if (action === 'practice') startPracticeMode();
             else if (action === 'assessment') setCurrentView('command-center');
-            else if (action === 'tracks') window.location.href = '/nursing';
+            else if (action === 'tracks' && showNursingFeatures()) window.location.href = '/nursing';
           }} />
 
-          {/* Practice Modes - Enhanced with Psychology */}
-          <div className="mb-8">
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-800 mb-2">🎯 Practice Modes</h2>
-            <p className="text-slate-500 text-sm sm:text-base mb-5 font-medium">Choose your training method and level up your skills</p>
+          {/* Journey Progress — 5-step prep milestone tracker */}
+          <JourneyProgress
+            practiceHistory={practiceHistory}
+            questions={questions}
+            getUserContext={getUserContext}
+            onNavigate={(view) => view === 'practice' ? startPracticeMode() : setCurrentView(view)}
+          />
+
+          {/* Phase 4: Smart Next Step Recommendation */}
+          {(() => {
+            const ctx = getUserContext();
+            const practicedTexts = new Set(practiceHistory.map(s => s.question));
+            const coverage = questions.length > 0 ? Math.round((practicedTexts.size / questions.length) * 100) : 0;
+            const hasStories = (() => { try { return JSON.parse(localStorage.getItem('isl_stories') || '[]').length > 0; } catch { return false; } })();
+            const hasJD = !!(ctx.jobDescription && ctx.jobDescription.length > 20);
+            const hasCompany = !!(ctx.targetCompany && ctx.targetCompany.length > 1);
+            const daysUntil = (() => {
+              if (!ctx.interviewDate) return null;
+              const today = new Date(); today.setHours(0,0,0,0);
+              const interview = new Date(ctx.interviewDate + 'T00:00:00');
+              return Math.max(0, Math.round((interview - today) / 86400000));
+            })();
+
+            let rec = null;
+            if (daysUntil === 0) {
+              rec = { icon: <Star className="w-5 h-5 inline text-rose-500" />, text: "It's interview day! Review your prep and breathe.", action: 'interview-day', btn: 'Enter Day Mode', color: 'from-rose-500 to-pink-500', bg: 'from-rose-50 to-pink-50', border: 'border-rose-200' };
+            } else if (questions.length === 0) {
+              rec = null; // Welcome banner handles this
+            } else if (!hasJD && questions.length > 0) {
+              rec = { icon: <ClipboardList className="w-5 h-5 inline text-sky-500" />, text: 'Decode your job description to unlock tailored questions and strategy.', action: 'jd-decoder', btn: 'Decode JD', color: 'from-sky-500 to-blue-500', bg: 'from-sky-50 to-blue-50', border: 'border-sky-200' };
+            } else if (practiceHistory.length === 0) {
+              rec = { icon: <Target className="w-5 h-5 inline text-teal-500" />, text: 'Start your first practice session to build momentum.', action: 'practice', btn: 'Start Practicing', color: 'from-teal-500 to-emerald-500', bg: 'from-teal-50 to-emerald-50', border: 'border-teal-200' };
+            } else if (!hasStories && practiceHistory.length >= 5) {
+              rec = { icon: <BookOpen className="w-5 h-5 inline text-emerald-500" />, text: 'You\'ve practiced enough to build your Story Bank — 7 stories cover 50 questions.', action: 'story-bank', btn: 'Build Stories', color: 'from-emerald-500 to-teal-500', bg: 'from-emerald-50 to-teal-50', border: 'border-emerald-200' };
+            } else if (coverage < 50 && practiceHistory.length >= 3) {
+              rec = { icon: <BarChart2 className="w-5 h-5 inline text-amber-500" />, text: `You've covered ${coverage}% of your questions. Keep going to build full coverage.`, action: 'practice', btn: 'Practice More', color: 'from-amber-500 to-orange-500', bg: 'from-amber-50 to-orange-50', border: 'border-amber-200' };
+            } else if (daysUntil !== null && daysUntil <= 3 && daysUntil > 0) {
+              rec = { icon: '🔥', text: `${daysUntil} day${daysUntil !== 1 ? 's' : ''} until your interview! Focus on your weakest areas.`, action: 'weak-drill', btn: 'STAR Drill', color: 'from-orange-500 to-red-500', bg: 'from-orange-50 to-red-50', border: 'border-orange-200' };
+            }
+
+            if (!rec) return null;
+            return (
+              <div className={`mb-4 sm:mb-6 bg-gradient-to-r ${rec.bg} rounded-xl p-3.5 sm:p-4 border ${rec.border} cursor-pointer hover:shadow-md transition-all`}
+                onClick={() => rec.action === 'practice' ? startPracticeMode() : setCurrentView(rec.action)}>
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl flex-shrink-0">{rec.icon}</span>
+                  <p className="text-xs sm:text-sm text-slate-700 font-medium flex-1">{rec.text}</p>
+                  <span className={`px-3 py-1.5 bg-gradient-to-r ${rec.color} text-white text-xs font-bold rounded-lg shadow-sm flex-shrink-0 whitespace-nowrap`}>
+                    {rec.btn}
+                  </span>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Practice Modes — PRIMARY ACTIONS */}
+          <div className="mb-6">
+            <h2 className="text-lg sm:text-xl font-semibold text-navy-700 mb-1 tracking-tight font-['DM_Sans']">Practice</h2>
+            <p className="text-slate-500 text-xs sm:text-sm mb-3 font-medium">Build your skills with hands-on training</p>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
-              {/* Live Prompter - Enhanced */}
-              <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:shadow-xl hover:shadow-teal-500/30 hover:-translate-y-1 cursor-pointer group relative overflow-hidden border border-slate-100">
-                <div className="absolute inset-0 bg-gradient-to-br from-teal-400/0 to-emerald-500/0 group-hover:from-teal-400/10 group-hover:to-emerald-500/10 transition-all duration-300"></div>
-                <div className="text-center flex flex-col h-full relative z-10">
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300 shadow-md">
-                    <Mic className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-white" />
-                  </div>
-                  <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-1 sm:mb-2 text-slate-800">Live Prompter</h3>
+              {/* Practice Prompter */}
+              <div className="bg-white rounded-xl shadow-sm p-4 sm:p-5 lg:p-6 transition-all duration-200 hover:shadow-md active:scale-[0.98] cursor-pointer group border border-slate-200/80 hover:border-teal-300">
+                <div className="text-center flex flex-col h-full">
+                  <IconContainer color="teal" size="lg" className="mx-auto mb-3 sm:mb-4">
+                    <PrompterIcon size={28} gradient="teal" />
+                  </IconContainer>
+                  <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-1 sm:mb-2 text-navy-700">Practice Prompter</h3>
                   <p className="text-slate-500 text-xs sm:text-sm mb-3 sm:mb-4 flex-1 font-medium">Real-time bullet prompts</p>
-                  <button onClick={(e) => { e.stopPropagation(); startPrompterMode(); }} className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg hover:brightness-110 active:scale-[0.98] text-sm sm:text-base">
+                  <button onClick={(e) => { e.stopPropagation(); startPrompterMode(); }} onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); startPrompterMode(); }} className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-lg transition-all shadow-sm hover:shadow-md text-sm sm:text-base active:scale-[0.98]">
                     Start Practice
                   </button>
                 </div>
               </div>
 
-              {/* AI Interviewer - Enhanced */}
-              <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/30 hover:-translate-y-1 cursor-pointer group relative overflow-hidden border border-slate-100">
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-400/0 to-indigo-500/0 group-hover:from-purple-400/10 group-hover:to-indigo-500/10 transition-all duration-300"></div>
-                <div className="text-center flex flex-col h-full relative z-10">
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300 shadow-md">
-                    <Bot className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-white" />
-                  </div>
-                  <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-1 sm:mb-2 text-slate-800">AI Interviewer</h3>
+              {/* AI Interviewer */}
+              <div className="bg-white rounded-xl shadow-sm p-4 sm:p-5 lg:p-6 transition-all duration-200 hover:shadow-md active:scale-[0.98] cursor-pointer group border border-slate-200/80 hover:border-slate-300">
+                <div className="text-center flex flex-col h-full">
+                  <IconContainer color="navy" size="lg" className="mx-auto mb-3 sm:mb-4">
+                    <InterviewerIcon size={28} gradient="navy" />
+                  </IconContainer>
+                  <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-1 sm:mb-2 text-navy-700">AI Interviewer</h3>
                   <p className="text-slate-500 text-xs sm:text-sm mb-3 sm:mb-4 flex-1 font-medium">Realistic interview practice</p>
-                  <button onClick={(e) => { e.stopPropagation(); startAIInterviewer(); }} className="w-full bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg hover:brightness-110 active:scale-[0.98] text-sm sm:text-base">
+                  <button onClick={(e) => { e.stopPropagation(); startAIInterviewer(); }} onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); startAIInterviewer(); }} className="w-full bg-gradient-to-r from-slate-700 to-slate-900 hover:from-slate-800 hover:to-slate-950 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-lg transition-all shadow-sm hover:shadow-md text-sm sm:text-base active:scale-[0.98]">
                     Start Interview
                   </button>
                 </div>
               </div>
 
-              {/* Practice Mode - Enhanced */}
-              <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/30 hover:-translate-y-1 cursor-pointer group relative overflow-hidden border border-slate-100">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-400/0 to-cyan-500/0 group-hover:from-blue-400/10 group-hover:to-cyan-500/10 transition-all duration-300"></div>
-                <div className="text-center flex flex-col h-full relative z-10">
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300 shadow-md">
-                    <Target className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-white" />
-                  </div>
-                  <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-1 sm:mb-2 text-slate-800">Practice</h3>
+              {/* Practice Mode */}
+              <div className="bg-white rounded-xl shadow-sm p-4 sm:p-5 lg:p-6 transition-all duration-200 hover:shadow-md active:scale-[0.98] cursor-pointer group border border-slate-200/80 hover:border-teal-300">
+                <div className="text-center flex flex-col h-full">
+                  <IconContainer color="teal" size="lg" className="mx-auto mb-3 sm:mb-4">
+                    <PracticeIcon size={28} gradient="teal" />
+                  </IconContainer>
+                  <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-1 sm:mb-2 text-navy-700">Practice</h3>
                   <p className="text-slate-500 text-xs sm:text-sm mb-3 sm:mb-4 flex-1 font-medium">AI-powered feedback</p>
-                  <button onClick={(e) => { e.stopPropagation(); startPracticeMode(); }} className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg hover:brightness-110 active:scale-[0.98] text-sm sm:text-base">
+                  <button onClick={(e) => { e.stopPropagation(); startPracticeMode(); }} onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); startPracticeMode(); }} className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-lg transition-all shadow-sm hover:shadow-md text-sm sm:text-base active:scale-[0.98]">
                     Start Session
                   </button>
                 </div>
               </div>
 
-              {/* Flashcard - Enhanced */}
-              <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:shadow-xl hover:shadow-orange-500/30 hover:-translate-y-1 cursor-pointer group relative overflow-hidden border border-slate-100">
-                <div className="absolute inset-0 bg-gradient-to-br from-orange-400/0 to-amber-500/0 group-hover:from-orange-400/10 group-hover:to-amber-500/10 transition-all duration-300"></div>
-                <div className="text-center flex flex-col h-full relative z-10">
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300 shadow-md">
-                    <BookOpen className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-white" />
-                  </div>
-                  <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-1 sm:mb-2 text-slate-800">Flashcard</h3>
+              {/* Flashcard */}
+              <div className="bg-white rounded-xl shadow-sm p-4 sm:p-5 lg:p-6 transition-all duration-200 hover:shadow-md active:scale-[0.98] cursor-pointer group border border-slate-200/80 hover:border-amber-300">
+                <div className="text-center flex flex-col h-full">
+                  <IconContainer color="amber" size="lg" className="mx-auto mb-3 sm:mb-4">
+                    <FlashcardIcon size={28} gradient="amber" />
+                  </IconContainer>
+                  <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-1 sm:mb-2 text-navy-700">Flashcards</h3>
                   <p className="text-slate-500 text-xs sm:text-sm mb-3 sm:mb-4 flex-1 font-medium">Quick memory drill</p>
-                  <button onClick={(e) => { e.stopPropagation(); startFlashcardMode(); }} className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg hover:brightness-110 active:scale-[0.98] text-sm sm:text-base">
+                  <button onClick={(e) => { e.stopPropagation(); startFlashcardMode(); }} onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); startFlashcardMode(); }} className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-lg transition-all shadow-sm hover:shadow-md text-sm sm:text-base active:scale-[0.98]">
                     Start Review
                   </button>
                 </div>
@@ -4212,23 +4736,102 @@ const startPracticeMode = async () => {
             </div>
           </div>
 
-          {/* Command Center - Enhanced */}
-          <div data-tutorial="command-center" className="bg-gradient-to-r from-teal-600 to-emerald-600 rounded-xl sm:rounded-2xl shadow-lg hover:shadow-xl hover:shadow-teal-500/30 p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:-translate-y-0.5 cursor-pointer border border-teal-500/20 relative overflow-hidden group" onClick={() => setCurrentView('command-center')}>
-            <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 transform translate-x-full group-hover:translate-x-[-100%] transition-transform duration-1000"></div>
-            <div className="flex items-center justify-between gap-3 sm:gap-4 relative z-10">
+          {/* Learn & Listen */}
+          <div className="mb-6">
+            <h2 className="text-lg sm:text-xl font-semibold text-navy-700 mb-1 tracking-tight font-['DM_Sans']">Learn & Listen</h2>
+            <p className="text-xs text-slate-500 mb-3 font-medium">Master interview skills at your own pace</p>
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
+              <button
+                onClick={() => setCurrentView('learn')}
+                onTouchEnd={(e) => { e.preventDefault(); setCurrentView('learn'); }}
+                className="bg-gradient-to-br from-teal-600 to-emerald-600 rounded-xl p-4 sm:p-5 text-left text-white hover:shadow-lg hover:shadow-teal-500/20 hover:scale-[1.02] transition-all active:scale-[0.98] relative overflow-hidden group"
+              >
+                <span className="absolute top-2.5 right-2.5 px-1.5 py-0.5 bg-white/20 text-white rounded text-[9px] font-bold">NEW</span>
+                <LearnIcon size={28} gradient="teal" className="mb-2" />
+                <p className="text-sm sm:text-base font-bold">Learn</p>
+                <p className="text-[10px] sm:text-xs text-white/70 mt-0.5">25 lessons • Quizzes • Daily goals</p>
+              </button>
+              <button
+                onClick={() => setCurrentView('prep-radio')}
+                onTouchEnd={(e) => { e.preventDefault(); setCurrentView('prep-radio'); }}
+                className="bg-gradient-to-br from-slate-700 to-slate-900 rounded-xl p-4 sm:p-5 text-left text-white hover:shadow-lg hover:shadow-slate-500/20 hover:scale-[1.02] transition-all active:scale-[0.98] overflow-hidden group"
+              >
+                <RadioIcon size={28} gradient="navy" className="mb-2" />
+                <p className="text-sm sm:text-base font-bold">Prep Radio</p>
+                <p className="text-[10px] sm:text-xs text-white/70 mt-0.5">8 playlists • Hands-free audio prep</p>
+              </button>
+            </div>
+          </div>
+
+          {/* Tools */}
+          <div className="mb-6">
+            <h2 className="text-lg sm:text-xl font-semibold text-navy-700 mb-1 tracking-tight font-['DM_Sans']">Tools</h2>
+            <p className="text-xs text-slate-500 mb-3 font-medium">Research, strategize, and prepare</p>
+            <div className="grid grid-cols-4 gap-2 sm:gap-3 mb-2 sm:mb-3">
+              {[
+                { view: 'jd-decoder', icon: <DecoderIcon size={20} gradient="teal" />, label: 'JD Decoder', desc: 'Analyze job descriptions', badge: 'AI' },
+                { view: 'story-bank', icon: <StoryBankIcon size={20} gradient="teal" />, label: 'Story Bank', desc: 'Build STAR stories', badge: null },
+                { view: 'interview-coach', icon: <CoachIcon size={20} gradient="slate" />, label: 'AI Coach', desc: 'Guided strategy', badge: null },
+                { view: 'weak-drill', icon: <StarDrillIcon size={20} gradient="amber" />, label: 'STAR Drill', desc: 'Target weak areas', badge: null },
+              ].map(tool => (
+                <button
+                  key={tool.view}
+                  onClick={() => tool.view === 'interview-coach' ? setShowCoachPanel(true) : setCurrentView(tool.view)}
+                  onTouchEnd={(e) => { e.preventDefault(); tool.view === 'interview-coach' ? setShowCoachPanel(true) : setCurrentView(tool.view); }}
+                  className="bg-white rounded-xl p-2.5 sm:p-3 border border-slate-200/80 hover:border-slate-300 hover:shadow-md transition-all text-center group relative"
+                >
+                  {tool.badge && (
+                    <span className="absolute top-1.5 right-1.5 px-1 py-0.5 bg-teal-50 text-teal-700 rounded text-[8px] font-bold">{tool.badge}</span>
+                  )}
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center mx-auto mb-1 sm:mb-1.5">
+                    {tool.icon}
+                  </div>
+                  <p className="text-[10px] sm:text-xs font-semibold text-slate-700 leading-tight">{tool.label}</p>
+                  <p className="text-[8px] sm:text-[9px] text-slate-400 leading-tight mt-0.5 hidden sm:block">{tool.desc}</p>
+                </button>
+              ))}
+            </div>
+            <div className="grid grid-cols-5 gap-2 sm:gap-3">
+              {[
+                { view: 'portfolio', icon: <PortfolioIcon size={20} gradient="slate" />, label: 'Portfolio', desc: 'Your past work' },
+                { view: 'interview-day', icon: <InterviewDayIcon size={20} gradient="amber" />, label: 'Day Mode', desc: 'Interview day prep' },
+                { view: 'follow-up-email', icon: <FollowUpIcon size={20} gradient="teal" />, label: 'Follow-Up', desc: 'Thank-you email' },
+                { view: 'flashcard', icon: <FlashcardCompactIcon size={20} gradient="amber" />, label: 'Flashcards', desc: 'Quick review' },
+              ].map(tool => (
+                <button
+                  key={tool.view}
+                  onClick={() => tool.view === 'flashcard' ? startFlashcardMode() : setCurrentView(tool.view)}
+                  onTouchEnd={(e) => { e.preventDefault(); tool.view === 'flashcard' ? startFlashcardMode() : setCurrentView(tool.view); }}
+                  className="bg-white rounded-xl p-2.5 sm:p-3 border border-slate-200/80 hover:border-slate-300 hover:shadow-md transition-all text-center group"
+                >
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center mx-auto mb-1 sm:mb-1.5">
+                    {tool.icon}
+                  </div>
+                  <p className="text-[10px] sm:text-xs font-semibold text-slate-700 leading-tight">{tool.label}</p>
+                  <p className="text-[8px] sm:text-[9px] text-slate-400 leading-tight mt-0.5 hidden sm:block">{tool.desc}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Command Center */}
+          <div data-tutorial="command-center" className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-xl hover:shadow-lg p-4 sm:p-5 lg:p-6 transition-all duration-200 cursor-pointer group" onClick={() => setCurrentView('command-center')} onTouchEnd={(e) => { e.preventDefault(); setCurrentView('command-center'); }}>
+            <div className="flex items-center justify-between gap-3 sm:gap-4">
               <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-                <div className="text-3xl sm:text-4xl lg:text-5xl flex-shrink-0 leading-none group-hover:scale-110 transition-transform duration-300">🎯</div>
+                <div className="flex-shrink-0"><CommandCenterIcon size={32} gradient="teal" /></div>
                 <div className="text-white min-w-0 flex-1">
                   <h3 className="text-lg sm:text-xl lg:text-2xl font-bold mb-0.5 sm:mb-1">Command Center</h3>
-                  <p className="text-xs sm:text-sm lg:text-base text-white/80 font-medium">Track progress, manage questions, prep interviews</p>
+                  <p className="text-xs sm:text-sm text-slate-400 font-medium">Track progress, manage questions, prep interviews</p>
                 </div>
               </div>
               <div className="flex items-center gap-1 sm:gap-2 text-white font-bold flex-shrink-0 group-hover:translate-x-1 transition-transform duration-300">
-                <span className="hidden sm:inline text-sm lg:text-lg">Open</span>
-                <span className="text-xl sm:text-2xl lg:text-3xl">→</span>
+                <span className="hidden sm:inline text-sm lg:text-lg text-slate-400">Open</span>
+                <ChevronRight className="w-5 h-5 text-slate-500" />
               </div>
             </div>
           </div>
+
+          {/* Quick Add Question FAB removed — use Question Catalog in Command Center instead */}
 
         </div>
       </div>
@@ -4265,7 +4868,7 @@ const startPracticeMode = async () => {
             
             <button
               onClick={() => {
-                setCurrentView('commandCenter');
+                setCurrentView('command-center');
                 setCommandCenterTab('bank');
               }}
               className="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 px-8 py-4 rounded-xl font-bold text-lg transition-all shadow-lg"
@@ -4304,8 +4907,8 @@ const startPracticeMode = async () => {
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between mb-6">
             <button onClick={() => { 
-              // CRITICAL: Comprehensive cleanup when exiting Live Prompter
-              console.log('🚪 Exiting Live Prompter - full cleanup');
+              // CRITICAL: Comprehensive cleanup when exiting Practice Prompter
+              console.log('🚪 Exiting Practice Prompter - full cleanup');
               
               // 1. End interview session if active
               if (interviewSessionActive) endInterviewSession();
@@ -4380,7 +4983,7 @@ const startPracticeMode = async () => {
                   <div className="flex items-center gap-3 bg-teal-500/20 px-4 py-2 rounded-lg border-2 border-teal-500">
                     <div className={`w-3 h-3 rounded-full ${isCapturing ? 'bg-red-500 animate-pulse' : 'bg-teal-500'}`}></div>
                     <span className="font-bold text-sm">
-                      {isCapturing ? '🔴 CAPTURING...' : '🟢 Session Active'}
+                      {isCapturing ? <><span className="w-2 h-2 rounded-full bg-red-500 inline-block" /> CAPTURING...</> : <><span className="w-2 h-2 rounded-full bg-green-500 inline-block" /> Session Active</>}
                     </span>
                   </div>
                   <button
@@ -4412,17 +5015,17 @@ const startPracticeMode = async () => {
                   <p className="text-xl text-gray-300 mb-8">Click "Start Session" to begin</p>
                   <SpeechUnavailableWarning variant="banner" darkMode className="mt-4 mb-6 max-w-2xl mx-auto" />
                   <div className="mt-12 bg-teal-900/30 rounded-lg p-6 max-w-2xl mx-auto">
-                    <h4 className="font-bold mb-3">💡 Session Mode Benefits:</h4>
+                    <h4 className="font-bold mb-3"><Lightbulb className="w-4 h-4 inline" /> Session Mode Benefits:</h4>
                     <ul className="text-left text-sm space-y-2">
-                      <li>✅ Only 2 sounds (start + end) - no annoying beeps!</li>
-                      <li>✅ Hold SPACEBAR to capture questions</li>
-                      <li>✅ Your answers NOT recorded</li>
-                      <li>✅ Clean separation between questions</li>
-                      <li>✅ Works with external keyboard on mobile</li>
+                      <li><CheckCircle className="w-4 h-4 inline text-teal-400" /> Only 2 sounds (start + end) - no annoying beeps!</li>
+                      <li><CheckCircle className="w-4 h-4 inline text-teal-400" /> Hold SPACEBAR to capture questions</li>
+                      <li><CheckCircle className="w-4 h-4 inline text-teal-400" /> Your answers NOT recorded</li>
+                      <li><CheckCircle className="w-4 h-4 inline text-teal-400" /> Clean separation between questions</li>
+                      <li><CheckCircle className="w-4 h-4 inline text-teal-400" /> Works with external keyboard on mobile</li>
                     </ul>
                     {!document.documentElement.classList.contains('capacitor') && (
                       <div className="mt-4 pt-4 border-t border-teal-500/30">
-                        <h5 className="font-bold mb-2 text-teal-300">🎧 For Teams/Zoom Calls:</h5>
+                        <h5 className="font-bold mb-2 text-teal-300"><Headphones className="w-4 h-4 inline" /> For Teams/Zoom Calls:</h5>
                         <p className="text-sm text-gray-300">Click "Tab Audio" before starting to capture audio from the browser tab where your Teams/Zoom call is running.</p>
                       </div>
                     )}
@@ -4432,12 +5035,12 @@ const startPracticeMode = async () => {
                 <>
                   {getBrowserInfo().hasReliableSpeech ? (
                     <>
-                      <p className="text-xl text-teal-300 mb-4">✨ Session Active - Ready to capture questions!</p>
+                      <p className="text-xl text-teal-300 mb-4">Session Active - Ready to capture questions!</p>
                       <p className="text-lg text-gray-300 mb-8">Hold SPACEBAR when interviewer asks a question</p>
                     </>
                   ) : (
                     <>
-                      <p className="text-xl text-teal-300 mb-4">✨ Session Active — Use Text Search Below</p>
+                      <p className="text-xl text-teal-300 mb-4">Session Active — Use Text Search Below</p>
                       <SpeechUnavailableWarning variant="banner" darkMode className="max-w-2xl mx-auto mb-8" />
                     </>
                   )}
@@ -4445,7 +5048,7 @@ const startPracticeMode = async () => {
                   {transcript && (
                     <div className="mt-8 bg-gray-800 rounded-lg p-6 max-w-2xl mx-auto">
                       <p className="text-sm text-gray-400 mb-2">
-                        {isCapturing ? '🔴 Capturing...' : '✅ Last captured:'}
+                        {isCapturing ? <><span className="w-2 h-2 rounded-full bg-red-500 inline-block" /> Capturing...</> : <><CheckCircle className="w-4 h-4 inline text-teal-400" /> Last captured:</>}
                       </p>
                       <p className="text-lg">{transcript}</p>
                     </div>
@@ -4454,7 +5057,7 @@ const startPracticeMode = async () => {
                   {/* Voice instructions — only shown when speech is available */}
                   {getBrowserInfo().hasReliableSpeech && (
                   <div className="mt-12 bg-teal-900/30 rounded-lg p-6 max-w-2xl mx-auto border-2 border-teal-500/50">
-                    <h4 className="font-bold mb-3 text-teal-300">🎤 How to Use (Session Mode):</h4>
+                    <h4 className="font-bold mb-3 text-teal-300"><Mic className="w-4 h-4 inline" /> How to Use (Session Mode):</h4>
                     <ol className="text-left text-sm space-y-2">
                       <li>1. Interviewer asks: "Tell me about yourself"</li>
                       <li>2. <strong>Hold SPACEBAR</strong> → Mic captures question</li>
@@ -4503,7 +5106,7 @@ const startPracticeMode = async () => {
             </div>
           ) : (
             <div className="max-w-5xl mx-auto">
-              <div className="bg-gradient-to-br from-teal-600 to-emerald-700 rounded-2xl p-8 mb-6 shadow-2xl">
+              <div className="bg-gradient-to-br from-teal-600 to-emerald-700 rounded-xl p-8 mb-6 shadow-lg">
                 <div className="flex items-center gap-3 mb-6">
                   <CheckCircle className="w-10 h-10" />
                   <h2 className="text-3xl font-bold">Matched!</h2>
@@ -4512,7 +5115,7 @@ const startPracticeMode = async () => {
                   <h3 className="text-4xl font-bold">{matchedQuestion.question}</h3>
                 </div>
               </div>
-              <div className="bg-gray-800 rounded-2xl p-8 mb-6">
+              <div className="bg-gray-800 rounded-xl p-8 mb-6">
                 <h4 className="text-2xl font-bold mb-6 flex items-center gap-3">
                   <Target className="w-8 h-8 text-yellow-400" />
                   Your Key Points:
@@ -4538,7 +5141,7 @@ const startPracticeMode = async () => {
                     {showNarrative ? 'Hide' : 'Show'} Full Narrative
                   </button>
                   {showNarrative && (
-                    <div className="bg-gray-800 rounded-2xl p-8">
+                    <div className="bg-gray-800 rounded-xl p-8">
                       <h4 className="text-xl font-bold mb-4">Full Narrative:</h4>
                       <p className="text-xl leading-relaxed whitespace-pre-line">{matchedQuestion.narrative}</p>
                     </div>
@@ -4554,11 +5157,11 @@ const startPracticeMode = async () => {
             <div className="fixed bottom-8 right-8 z-50">
               {/* LIVE TRANSCRIPT BOX - Shows what mic is hearing in real-time */}
               {(isCapturing || liveTranscript) && (
-                <div className="absolute bottom-24 right-0 w-80 max-w-[90vw] bg-black/90 backdrop-blur-lg rounded-2xl p-4 shadow-2xl border border-teal-500/50 animate-fadeIn">
+                <div className="absolute bottom-24 right-0 w-80 max-w-[90vw] bg-black/90 backdrop-blur-lg rounded-xl p-4 shadow-lg border border-teal-500/50 animate-fadeIn">
                   <div className="flex items-center gap-2 mb-2">
                     <div className={`w-3 h-3 rounded-full ${isCapturing ? 'bg-red-500 animate-pulse' : 'bg-teal-500'}`}></div>
                     <span className="text-xs font-bold text-gray-400 uppercase tracking-wide">
-                      {isCapturing ? '🎤 Listening...' : '✓ Captured'}
+                      {isCapturing ? <><Mic className="w-3 h-3 inline" /> Listening...</> : '✓ Captured'}
                     </span>
                     {matchConfidence > 0 && !isCapturing && (
                       <span className={`ml-auto text-xs font-bold px-2 py-1 rounded ${
@@ -4602,7 +5205,7 @@ const startPracticeMode = async () => {
                   e.preventDefault();
                   if (interviewSessionActive) handleSpacebarUp('touch');
                 }}
-                className={`relative w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 shadow-2xl ${
+                className={`relative w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg ${
                   isCapturing
                     ? 'bg-red-500 hover:bg-red-600 animate-pulse'
                     : 'bg-teal-500 hover:bg-teal-600'
@@ -4644,9 +5247,24 @@ const startPracticeMode = async () => {
       <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-between mb-6 text-white">
-            <button onClick={() => { stopSpeaking(); setCurrentView('home'); }} className="text-gray-300 hover:text-white">← Exit</button>
-            <h1 className="text-2xl font-bold">AI Mock Interview</h1>
+            <button onClick={() => { stopSpeaking(); setCurrentView('home');
+                setSpokenAnswer(''); setUserAnswer(''); setTranscript(''); setFeedback(null);
+                accumulatedTranscript.current = '';
+              }} className="text-gray-300 hover:text-white">← Exit</button>
+            <h1 className="text-2xl font-bold">
+              {selectedCuratedInterview?.title || (selectedFormat ? selectedFormat.shortName : 'AI Mock Interview')}
+            </h1>
             <div className="flex items-center gap-2">
+              {interviewSequence.length > 0 && (
+                <button
+                  onClick={handleSwapQuestion}
+                  onTouchEnd={(e) => { e.preventDefault(); handleSwapQuestion(); }}
+                  className="bg-white/10 hover:bg-white/20 px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-1.5"
+                  title="Try a different question of the same type"
+                >
+                  <RotateCcw className="w-4 h-4" /> Swap
+                </button>
+              )}
               <button onClick={goToPreviousQuestion} className="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg font-semibold flex items-center gap-1">
                 ← Prev
               </button>
@@ -4655,10 +5273,39 @@ const startPracticeMode = async () => {
               </button>
             </div>
           </div>
+
+          {/* Structured Interview Progress Bar */}
+          {interviewSequence.length > 0 && (
+            <div className="max-w-4xl mx-auto mb-6">
+              <div className="flex items-center justify-between text-sm text-white/70 mb-2">
+                <span className="font-medium">
+                  Question {sequenceIndex + 1} of {interviewSequence.length}
+                  {interviewSequence[sequenceIndex]?.label && (
+                    <span className="ml-2 text-white/50">• {interviewSequence[sequenceIndex].label}</span>
+                  )}
+                </span>
+                {sessionSeed && (
+                  <span className="font-mono text-xs text-white/40">Session #{sessionSeed}</span>
+                )}
+              </div>
+              <div className="flex gap-1">
+                {interviewSequence.map((slot, idx) => (
+                  <div
+                    key={idx}
+                    className={`h-1.5 flex-1 rounded-full transition-colors ${
+                      idx < sequenceIndex ? 'bg-teal-400' :
+                      idx === sequenceIndex ? 'bg-teal-300' :
+                      'bg-white/15'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
           
-          <div className="max-w-4xl mx-auto mb-8">
+          <div className="max-w-4xl mx-auto mb-8 min-h-[55vh] flex items-center justify-center">
             {/* CLOUD AVATAR CONTAINER */}
-            <div ref={aiQuestionRef} className="relative bg-gradient-to-br from-teal-800/50 to-slate-800/50 backdrop-blur-lg rounded-3xl p-12 shadow-2xl">
+            <div ref={aiQuestionRef} className="relative bg-gradient-to-br from-teal-800/50 to-slate-800/50 backdrop-blur-lg rounded-xl p-12 shadow-lg w-full">
               {/* Animated Cloud Avatar */}
               <div className="flex justify-center mb-8">
                 <div className="relative">
@@ -4700,22 +5347,44 @@ const startPracticeMode = async () => {
                 </div>
               </div>
               
-              {/* AI Name */}
-              <h3 className="text-3xl font-bold text-white text-center mb-6">
-                {aiSpeaking ? '🎙️ AI Interviewer Speaking...' : '💭 AI Interviewer'}
+              {/* AI Name + Voice Toggle */}
+              <h3 className="text-3xl font-bold text-white text-center mb-2">
+                {aiSpeaking ? <><Mic className="w-6 h-6 inline" /> AI Interviewer Speaking...</> : <><MessageSquare className="w-6 h-6 inline" /> AI Interviewer</>}
               </h3>
+              <div className="flex justify-center mb-4">
+                <button
+                  onClick={() => {
+                    const newMuted = !voiceMuted;
+                    setVoiceMuted(newMuted);
+                    try { localStorage.setItem('isl_voice_muted', String(newMuted)); } catch {}
+                    if (newMuted && synthRef.current) { synthRef.current.cancel(); setAiSpeaking(false); setAiSubtitle(''); }
+                  }}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                    voiceMuted
+                      ? 'bg-white/10 text-white/60 hover:bg-white/20'
+                      : 'bg-teal-500/20 text-teal-300 hover:bg-teal-500/30 ring-1 ring-teal-500/40'
+                  }`}
+                >
+                  {voiceMuted ? <><VolumeX className="w-4 h-4 inline" /> Voice Off</> : <><Volume2 className="w-4 h-4 inline" /> Voice On</>}
+                  {!voiceMuted && userTier === 'free' && (
+                    <span className="text-xs bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full">
+                      HD Trial: {Math.max(0, 3 - parseInt(localStorage.getItem('isl_hd_voice_trials') || '0', 10))} left
+                    </span>
+                  )}
+                </button>
+              </div>
               
               {/* SUBTITLE DISPLAY */}
               <div className="relative min-h-32">
                 {aiSubtitle ? (
-                  <div className="bg-black/70 backdrop-blur rounded-2xl p-8 border-2 border-white/30 shadow-xl">
+                  <div className="bg-black/70 backdrop-blur rounded-xl p-8 border-2 border-white/30 shadow-xl">
                     <div className="flex items-start gap-4">
                       <Volume2 className="w-8 h-8 text-teal-400 flex-shrink-0 animate-pulse" />
                       <p className="text-3xl text-white font-medium leading-relaxed">"{aiSubtitle}"</p>
                     </div>
                   </div>
                 ) : (
-                  <div className="bg-white/20 backdrop-blur rounded-2xl p-6 border-2 border-white/20">
+                  <div className="bg-white/20 backdrop-blur rounded-xl p-6 border-2 border-white/20">
 <p className="text-2xl text-white/90 text-center italic">{followUpQuestion || currentQuestion.question}</p>
                   </div>
                 )}
@@ -4740,7 +5409,7 @@ const startPracticeMode = async () => {
           
           {/* INPUT SECTION - Only show when NO feedback */}
           {!feedback && (
-            <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-2xl p-8">
+            <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-8">
               <h3 className="text-2xl font-bold mb-6">Your Answer:</h3>
               
               {/* SPEECH INPUT SECTION */}
@@ -4760,7 +5429,7 @@ const startPracticeMode = async () => {
                   onTouchEnd={stopListening}
                   className={`w-full py-6 rounded-lg font-bold text-lg transition mb-4 ${isListening ? 'bg-red-600 text-white animate-pulse' : 'bg-teal-600 hover:bg-teal-700 text-white'}`}
                 >
-                  {isListening ? '🎤 Release to Stop Recording' : '🎤 Hold to Speak Your Answer'}
+                  {isListening ? <><Mic className="w-5 h-5 inline" /> Release to Stop Recording</> : <><Mic className="w-5 h-5 inline" /> Hold to Speak Your Answer</>}
                 </button>
                 <p className="text-xs text-center text-gray-600">Hold SPACEBAR or this button to speak. Your answer will appear below.</p>
               </div>
@@ -4786,7 +5455,7 @@ const startPracticeMode = async () => {
                     </button>
                   </div>
                   <p className="text-lg text-gray-800 leading-relaxed">{spokenAnswer || transcript || 'Start speaking...'}</p>
-                  <p className="text-xs text-gray-500 mt-2">📊 Word count: {(spokenAnswer || transcript).split(' ').filter(w => w).length}</p>
+                  <p className="text-xs text-gray-500 mt-2"><BarChart2 className="w-3 h-3 inline" /> Word count: {(spokenAnswer || transcript).split(' ').filter(w => w).length}</p>
                 </div>
               )}
               
@@ -4802,7 +5471,7 @@ const startPracticeMode = async () => {
                 
                 {/* Help Button - Below Textarea */}
                 <div className="mt-2 flex justify-center">
-                  {(usageStats?.tier === 'pro' || usageStats?.tier === 'beta') ? (
+                  {(usageStats?.tier === 'pro' || usageStats?.tier === 'beta' || usageStats?.tier === 'general_pass' || usageStats?.tier === 'annual') ? (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -4814,15 +5483,15 @@ const startPracticeMode = async () => {
                       className="text-sm bg-gradient-to-r from-teal-100 to-sky-100 hover:from-teal-200 hover:to-sky-200 text-teal-700 px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2"
                     >
                       <Lightbulb className="w-4 h-4" />
-                      💡 Can't Think of an Answer? AI Can Help
+                      Can't Think of an Answer? AI Can Help
                     </button>
                   ) : (
                     <button
-                      onClick={(e) => { e.stopPropagation(); alert('⭐ Pro Feature\n\nUpgrade to Pro ($29.99/month) for UNLIMITED access!\n\n✓ Unlimited AI Answer Coach sessions\n✓ Unlimited AI Interview practice\n✓ Unlimited Practice Mode\n✓ Everything unlimited - practice as much as you need!'); }}
+                      onClick={(e) => { e.stopPropagation(); alert('Pro Feature\n\nGet a 30-Day Pass ($14.99) for UNLIMITED access!\n\n✓ Unlimited AI Answer Coach sessions\n✓ Unlimited AI Interview practice\n✓ Unlimited Practice Mode\n✓ No subscription — just one payment!'); }}
                       className="text-sm bg-gradient-to-r from-yellow-100 to-amber-100 hover:from-yellow-200 hover:to-amber-200 text-yellow-800 px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2"
                     >
                       <Crown className="w-4 h-4" />
-                      💡 Can't Think of an Answer? Upgrade for AI Help
+                      Can't Think of an Answer? Upgrade for AI Help
                     </button>
                   )}
                 </div>
@@ -4848,15 +5517,43 @@ const startPracticeMode = async () => {
             </div>
           )}
 
- {feedback && (
-  <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-2xl p-8">
+ {feedback && (() => {
+  // Read-time chip — sums words across all renderable feedback fields, divides by 200wpm
+  const _wordCount = (v) => {
+    if (!v) return 0;
+    if (Array.isArray(v)) return v.reduce((n, x) => n + _wordCount(x), 0);
+    if (typeof v === 'object') return Object.values(v).reduce((n, x) => n + _wordCount(x), 0);
+    return String(v).trim().split(/\s+/).filter(Boolean).length;
+  };
+  // PR 3 — count words across BOTH v1 (legacy) and v2 (new 5-field) fields
+  const _totalWords =
+    _wordCount(feedback.strengths) +
+    _wordCount(feedback.gaps) +
+    _wordCount(feedback.specific_improvements) +
+    _wordCount(feedback.ideal_answer) +
+    _wordCount(feedback.framework_analysis) +
+    _wordCount(feedback.points_covered) +
+    _wordCount(feedback.points_missed) +
+    _wordCount(feedback.verdict) +
+    _wordCount(feedback.fix) +
+    _wordCount(feedback.strength);
+  const _readMinutes = Math.max(1, Math.ceil(_totalWords / 200));
+  return (
+  <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-8">
     {/* AI DISCLAIMER */}
     <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded p-3 mb-4">
       <p className="text-xs text-yellow-900">
-        <span className="font-semibold">🤖 AI-Generated:</span> For practice only. Not professional advice.
+        <span className="font-semibold"><Bot className="w-4 h-4 inline" /> AI-Generated:</span> For practice only. Not professional advice.
       </p>
     </div>
-    
+
+    {/* Read-time chip */}
+    <div className="mb-3">
+      <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-700 text-xs font-semibold px-3 py-1 rounded-full">
+        📖 ~{_readMinutes} min read
+      </span>
+    </div>
+
     <div className="flex items-center justify-between mb-6">
       <h3 className="text-3xl font-bold">Your Performance</h3>
       
@@ -4869,7 +5566,7 @@ const startPracticeMode = async () => {
           }}
           className="text-sm bg-teal-100 hover:bg-teal-200 text-teal-700 px-4 py-2 rounded-lg font-semibold transition-all"
         >
-          ⚡ Show All
+          <Zap className="w-4 h-4 inline" /> Show All
         </button>
       )}
     </div>
@@ -4882,32 +5579,97 @@ const startPracticeMode = async () => {
       </p>
       <p className="text-xl opacity-90">out of 10</p>
       <div className="mt-4 w-full bg-white/20 rounded-full h-3">
-        <div 
+        <div
           className="bg-white h-3 rounded-full transition-all duration-1000 ease-out"
           style={{ width: `${(animatedScore / 10) * 100}%` }}
         ></div>
       </div>
+      {/* Phase 4M: Confidence Calibration gap */}
+      {confidenceRating > 0 && getFeedbackScore(feedback) > 0 && (() => {
+        const actual = getFeedbackScore(feedback);
+        const predicted = confidenceRating * 2;
+        const gap = Math.abs(actual - predicted);
+        const msg = gap <= 1 ? 'Great self-awareness! Your confidence matched your score.'
+          : actual > predicted ? 'You scored higher than expected! Trust yourself more.'
+          : `You rated ${confidenceRating}/5 but scored ${actual.toFixed(1)}/10. More practice needed here.`;
+        return <p className="mt-3 text-sm opacity-90">{msg}</p>;
+      })()}
     </div>
 
-    {/* ==================== IDEAL ANSWER - Stage 1 ==================== */}
-    {feedback.ideal_answer && isSectionVisible(1) && (
+    {/* ==================== PR 3 — NEW 5-FIELD COACHING CARD (v2 schema) ==================== */}
+    {feedback.fix && (
+      <div className="mb-6 feedback-section visible fade-in-up">
+        {/* Verdict */}
+        {feedback.verdict && (
+          <div className="bg-gradient-to-r from-teal-50 to-sky-50 border-2 border-teal-300 rounded-xl p-5 mb-4">
+            <p className="text-sm font-bold text-teal-700 mb-1 uppercase tracking-wide">Verdict</p>
+            <p className="text-gray-900 text-lg leading-relaxed">{feedback.verdict}</p>
+          </div>
+        )}
+
+        {/* The Fix — quote / issue / rewrite */}
+        <div className="bg-amber-50 border-2 border-amber-300 rounded-xl p-5 mb-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Target className="w-6 h-6 text-amber-600" />
+            <h4 className="font-bold text-amber-900 text-xl">The One Thing to Fix</h4>
+          </div>
+          {feedback.fix.quote && feedback.fix.quote !== 'NO_QUOTE_AVAILABLE' && (
+            <div className="bg-white rounded-lg p-3 mb-3 border-l-4 border-amber-500">
+              <p className="text-xs font-bold text-amber-700 mb-1 uppercase">You said</p>
+              <p className="text-gray-800 italic">"{feedback.fix.quote}"</p>
+            </div>
+          )}
+          {feedback.fix.issue && (
+            <div className="mb-3">
+              <p className="text-xs font-bold text-amber-700 mb-1 uppercase">Why it's weak</p>
+              <p className="text-gray-800 leading-relaxed">{feedback.fix.issue}</p>
+            </div>
+          )}
+          {feedback.fix.rewrite && (
+            <div className="bg-teal-50 rounded-lg p-3 border-l-4 border-teal-500">
+              <p className="text-xs font-bold text-teal-700 mb-1 uppercase">Try saying</p>
+              <p className="text-teal-900 leading-relaxed font-medium">{feedback.fix.rewrite}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Strength — last, anti-sandwich */}
+        {feedback.strength && (
+          <div className="bg-green-50 border-l-4 border-green-500 rounded-xl p-5 mb-4">
+            <div className="flex items-start gap-3">
+              <span className="text-3xl">✓</span>
+              <div>
+                <p className="text-xs font-bold text-green-700 mb-1 uppercase tracking-wide">What worked</p>
+                <p className="text-green-900 leading-relaxed">{feedback.strength}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delivery insights still useful on v2 rows */}
+        <DeliveryInsights answer={spokenAnswer || userAnswer} />
+      </div>
+    )}
+
+    {/* ==================== IDEAL ANSWER - Stage 1 (legacy v1 only) ==================== */}
+    {!feedback.fix && feedback.ideal_answer && isSectionVisible(1) && (
       <div className={`mb-6 feedback-section ${isSectionVisible(1) ? 'visible' : ''}`}>
-        <button 
+        <button
           onClick={() => setShowIdealAnswer(!showIdealAnswer)}
           className="w-full bg-gradient-to-r from-teal-50 to-sky-50 hover:from-teal-100 hover:to-sky-100 border-2 border-teal-300 rounded-xl p-5 flex items-center justify-between transition-all"
         >
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-teal-500 rounded-full flex items-center justify-center">
-              <span className="text-2xl">💡</span>
+              <Lightbulb className="w-6 h-6 text-white" />
             </div>
             <div className="text-left">
-              <span className="font-bold text-teal-900 text-lg block">Example of Strong Answer</span>
+              <span className="font-bold text-teal-900 text-lg block">Your Answer, Coached</span>
               <span className="text-sm text-teal-700">Click to compare with your response</span>
             </div>
           </div>
           <span className="text-teal-600 text-2xl font-bold">{showIdealAnswer ? '▼' : '▶'}</span>
         </button>
-        
+
         {showIdealAnswer && (
           <div className="mt-4 grid md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-xl border-2 border-teal-200 fade-in-up">
             <div className="bg-white rounded-lg p-5 border-2 border-gray-300">
@@ -4919,11 +5681,11 @@ const startPracticeMode = async () => {
               </div>
               <p className="text-gray-800 leading-relaxed text-sm">{spokenAnswer || userAnswer}</p>
             </div>
-            
+
             <div className="bg-teal-50 rounded-lg p-5 border-2 border-teal-400">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-lg">⭐</span>
+                  <Star className="w-4 h-4 text-white" />
                 </div>
                 <h5 className="font-bold text-teal-900">Strong Example</h5>
               </div>
@@ -4934,8 +5696,11 @@ const startPracticeMode = async () => {
       </div>
     )}
 
-    {/* ==================== STRENGTHS - Stage 2 ==================== */}
-    {feedback.strengths && feedback.strengths.length > 0 && isSectionVisible(2) && (
+    {/* ==================== DELIVERY INSIGHTS - Phase 4B (v1 only; v2 renders it inside the coaching card) ==================== */}
+    {!feedback.fix && <DeliveryInsights answer={spokenAnswer || userAnswer} />}
+
+    {/* ==================== STRENGTHS - Stage 2 (legacy v1 only) ==================== */}
+    {!feedback.fix && feedback.strengths && feedback.strengths.length > 0 && isSectionVisible(2) && (
       <div className={`mb-6 feedback-section ${isSectionVisible(2) ? 'visible' : ''}`}>
         <button
           onClick={() => setShowStrengths(!showStrengths)}
@@ -4965,15 +5730,15 @@ const startPracticeMode = async () => {
       </div>
     )}
 
-    {/* ==================== GAPS - Stage 3 ==================== */}
-    {feedback.gaps && feedback.gaps.length > 0 && isSectionVisible(3) && (
+    {/* ==================== GAPS - Stage 3 (legacy v1 only) ==================== */}
+    {!feedback.fix && feedback.gaps && feedback.gaps.length > 0 && isSectionVisible(3) && (
       <div className={`mb-6 feedback-section ${isSectionVisible(3) ? 'visible' : ''}`}>
         <button
           onClick={() => setShowGaps(!showGaps)}
           className="w-full bg-amber-50 hover:bg-amber-100 border-2 border-amber-300 rounded-xl p-4 flex items-center justify-between transition-all mb-3"
         >
           <h4 className="font-bold text-amber-900 text-xl flex items-center gap-2">
-            <span className="text-3xl">📈</span> 
+            <TrendingUp className="w-8 h-8 text-teal-600" /> 
             <span>Growth Areas ({feedback.gaps.length})</span>
           </h4>
           <span className="text-amber-600 text-xl font-bold">{showGaps ? '▼' : '▶'}</span>
@@ -4996,12 +5761,12 @@ const startPracticeMode = async () => {
       </div>
     )}
 
-    {/* ==================== ACTION STEPS - Stage 4 ==================== */}
-    {feedback.specific_improvements && feedback.specific_improvements.length > 0 && isSectionVisible(4) && (
+    {/* ==================== ACTION STEPS - Stage 4 (legacy v1 only) ==================== */}
+    {!feedback.fix && feedback.specific_improvements && feedback.specific_improvements.length > 0 && isSectionVisible(4) && (
       <div className={`mb-6 feedback-section ${isSectionVisible(4) ? 'visible' : ''}`}>
         <div className="bg-teal-50 border-2 border-teal-300 rounded-xl p-4 mb-3">
           <h4 className="font-bold text-teal-900 text-xl flex items-center gap-2">
-            <span className="text-3xl">🎯</span> 
+            <Target className="w-8 h-8 text-teal-600" /> 
             <span>Action Steps ({feedback.specific_improvements.length})</span>
           </h4>
           <p className="text-sm text-teal-700 mt-1">Specific ways to improve your answer</p>
@@ -5022,12 +5787,21 @@ const startPracticeMode = async () => {
       </div>
     )}
 
-    {/* ==================== STAR FRAMEWORK - Stage 5 ==================== */}
-    {feedback.framework_analysis && isSectionVisible(5) && (
+    {/* ==================== STAR FRAMEWORK - Stage 5 (legacy v1 only) ==================== */}
+    {!feedback.fix && feedback.framework_analysis && isSectionVisible(5) && (() => {
+      const _starMissingRe = /missing|not provided|n\/?a|absent|—/i;
+      const _fa = feedback.framework_analysis;
+      const _allStarMissing =
+        (!_fa.situation || _starMissingRe.test(_fa.situation)) &&
+        (!_fa.task || _starMissingRe.test(_fa.task)) &&
+        (!_fa.action || _starMissingRe.test(_fa.action)) &&
+        (!_fa.result || _starMissingRe.test(_fa.result));
+      if (_allStarMissing) return null;
+      return (
       <div className={`mb-6 feedback-section ${isSectionVisible(5) ? 'visible' : ''}`}>
         <div className="bg-gradient-to-r from-teal-50 to-sky-50 border-2 border-teal-300 rounded-xl p-4 mb-4">
           <h4 className="font-bold text-teal-900 text-xl flex items-center gap-2">
-            <span className="text-3xl">⭐</span> 
+            <Star className="w-8 h-8 text-amber-500" /> 
             <span>STAR Framework Analysis</span>
           </h4>
           <p className="text-sm text-teal-700 mt-1">How your answer maps to the STAR method</p>
@@ -5046,7 +5820,7 @@ const startPracticeMode = async () => {
                   ? 'bg-green-500' 
                   : 'bg-gray-400'
               }`}>
-                <span className="text-2xl">📍</span>
+                <MapPin className="w-5 h-5 text-teal-600" />
               </div>
               <h5 className="font-bold text-gray-900">Situation</h5>
             </div>
@@ -5065,7 +5839,7 @@ const startPracticeMode = async () => {
                   ? 'bg-green-500' 
                   : 'bg-gray-400'
               }`}>
-                <span className="text-2xl">🎯</span>
+                <Target className="w-5 h-5 text-teal-600" />
               </div>
               <h5 className="font-bold text-gray-900">Task</h5>
             </div>
@@ -5084,7 +5858,7 @@ const startPracticeMode = async () => {
                   ? 'bg-green-500' 
                   : 'bg-gray-400'
               }`}>
-                <span className="text-2xl">⚡</span>
+                <Zap className="w-5 h-5 text-amber-500" />
               </div>
               <h5 className="font-bold text-gray-900">Action</h5>
             </div>
@@ -5103,7 +5877,7 @@ const startPracticeMode = async () => {
                   ? 'bg-green-500' 
                   : 'bg-gray-400'
               }`}>
-                <span className="text-2xl">🏆</span>
+                <Trophy className="w-5 h-5 text-amber-500" />
               </div>
               <h5 className="font-bold text-gray-900">Result</h5>
             </div>
@@ -5139,13 +5913,14 @@ const startPracticeMode = async () => {
           </div>
         </div>
       </div>
-    )}
+      );
+    })()}
 
-    {/* ==================== KEY POINTS COVERAGE - Stage 6 ==================== */}
-    {(feedback.points_covered || feedback.points_missed) && isSectionVisible(6) && (
+    {/* ==================== KEY POINTS COVERAGE - Stage 6 (legacy v1 only) ==================== */}
+    {!feedback.fix && (feedback.points_covered || feedback.points_missed) && isSectionVisible(6) && (
       <div className={`bg-gray-50 rounded-xl p-6 mb-6 border-2 border-gray-300 feedback-section ${isSectionVisible(6) ? 'visible' : ''}`}>
         <h4 className="font-bold text-gray-900 text-xl mb-4 flex items-center gap-2">
-          <span className="text-2xl">📊</span>
+          <BarChart2 className="w-5 h-5 text-teal-600" />
           <span>Key Points Coverage</span>
         </h4>
         
@@ -5197,7 +5972,7 @@ const startPracticeMode = async () => {
           }} 
           className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 rounded-xl transition-all hover:scale-105 shadow-lg"
         >
-          🔄 Try Again
+          <RotateCcw className="w-4 h-4 inline" /> Try Again
         </button>
         <button 
           onClick={() => { 
@@ -5211,12 +5986,13 @@ const startPracticeMode = async () => {
           }} 
           className="flex-1 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-bold py-4 rounded-xl transition-all hover:scale-105 shadow-lg"
         >
-          ➡️ Next Question
+          <ArrowRight className="w-4 h-4 inline" /> Next Question
         </button>
       </div>
     )}
   </div>
-)}
+  );
+})()}
         </div>
         
         {/* Answer Assistant Modal */}
@@ -5285,22 +6061,103 @@ const startPracticeMode = async () => {
       <div className="min-h-screen bg-gray-50">
         <div className="bg-white shadow-sm border-b">
           <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <button onClick={() => setCurrentView('home')} className="text-gray-600 hover:text-gray-900">← Exit</button>
+            <button onClick={() => {
+                if (sessionQuestions.length >= 2) { setShowSessionReport(true); }
+                setCurrentView('home'); setTimerActive(false); setConfidenceRating(null);
+                setSpokenAnswer(''); setUserAnswer(''); setTranscript(''); setFeedback(null);
+                accumulatedTranscript.current = '';
+              }} className="text-gray-600 hover:text-gray-900">← Exit</button>
             <h1 className="text-2xl font-bold">Practice Mode</h1>
             <div className="flex items-center gap-2">
+              {/* Phase 4J: Timed toggle */}
+              <button
+                onClick={() => { setTimedMode(!timedMode); setTimerActive(false); }}
+                className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all ${timedMode ? 'bg-teal-100 text-teal-700 border border-teal-300' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+              >
+                ⏱ {timedMode ? 'Timed' : 'Timer'}
+              </button>
               <button onClick={goToPreviousQuestion} className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg font-semibold flex items-center gap-1">
                 ← Prev
               </button>
-              <button onClick={goToNextQuestion} className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-semibold flex items-center gap-1">
+              <button onClick={() => { goToNextQuestion(); setTimerActive(false); setConfidenceRating(null); }} className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-semibold flex items-center gap-1">
                 Next →
               </button>
             </div>
           </div>
         </div>
         <div className="container mx-auto px-4 py-8 max-w-4xl">
-          <div className="bg-white rounded-2xl shadow-lg p-8 mb-6">
-            <h2 className="text-4xl font-bold mb-8">{currentQuestion.question}</h2>
-            
+          {/* Question Group Filter */}
+          <div className="mb-4">
+            <QuestionGroupFilter
+              groups={QUESTION_GROUPS}
+              activeGroups={activeGroups}
+              onToggle={(groupId) => {
+                setActiveGroups(prev => {
+                  const next = new Set(prev);
+                  if (next.has(groupId)) next.delete(groupId);
+                  else next.add(groupId);
+                  try { localStorage.setItem('isl_active_groups', JSON.stringify([...next])); } catch {}
+                  return next;
+                });
+              }}
+              questionCounts={getQuestionCountsByGroup(questions.length > 0 ? questions : DEFAULT_QUESTIONS)}
+              compact
+            />
+          </div>
+          {/* Phase 4J: Timer controls & overlay */}
+          {timedMode && (
+            <div className="mb-4 flex items-center justify-between bg-white rounded-xl shadow-sm p-3 border border-slate-200">
+              <TimerSelector selectedDuration={timerDuration} onSelect={setTimerDuration} />
+              <TimerOverlay
+                isActive={timerActive}
+                durationSeconds={timerDuration}
+                onTimeUp={() => setTimerActive(false)}
+                onElapsed={(elapsed) => setRecordingElapsed(elapsed)}
+              />
+            </div>
+          )}
+
+          <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
+            <h2 className="text-4xl font-bold mb-4">{currentQuestion.question}</h2>
+            {/* Phase 4E: Teach Me button */}
+            <button
+              onClick={() => setSparkNotesQuestion(currentQuestion)}
+              className="mb-6 px-4 py-1.5 bg-purple-50 text-purple-600 rounded-full text-sm font-medium hover:bg-purple-100 transition-colors border border-purple-200"
+            >
+              <BookOpen className="w-4 h-4 inline" /> Teach Me This Question
+            </button>
+
+            {/* Phase 4M: Confidence Calibration - pre-answer rating */}
+            {!feedback && confidenceRating === null && (
+              <div className="mb-6 p-4 bg-gradient-to-r from-slate-50 to-teal-50 rounded-xl border border-slate-200">
+                <p className="text-sm font-semibold text-slate-700 mb-2">How confident are you on this question?</p>
+                <div className="flex items-center gap-2">
+                  {[
+                    { val: 1, emoji: '😰', label: 'Not at all' },
+                    { val: 2, emoji: '😟', label: 'Shaky' },
+                    { val: 3, emoji: '😐', label: 'Okay' },
+                    { val: 4, emoji: '🙂', label: 'Good' },
+                    { val: 5, emoji: '😎', label: 'Nailed it' },
+                  ].map(opt => (
+                    <button
+                      key={opt.val}
+                      onClick={() => { setConfidenceRating(opt.val); if (timedMode) setTimerActive(true); }}
+                      className="flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg hover:bg-white hover:shadow-md transition-all border border-transparent hover:border-slate-200"
+                    >
+                      <span className="text-2xl">{opt.emoji}</span>
+                      <span className="text-[10px] text-slate-500">{opt.label}</span>
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => { setConfidenceRating(0); if (timedMode) setTimerActive(true); }}
+                    className="ml-2 text-xs text-slate-400 hover:text-slate-600 underline"
+                  >
+                    Skip
+                  </button>
+                </div>
+              </div>
+            )}
+
             {!feedback && (
               <>
                 {/* Speech Input */}
@@ -5318,7 +6175,7 @@ const startPracticeMode = async () => {
                     onTouchEnd={stopListening}
                     className={`w-full py-6 rounded-lg font-bold text-lg transition mb-4 ${isListening ? 'bg-red-600 text-white animate-pulse' : 'bg-teal-600 hover:bg-teal-700 text-white'}`}
                   >
-                    {isListening ? '🎤 Release to Stop' : '🎤 Hold to Speak (or use SPACEBAR)'}
+                    {isListening ? <><Mic className="w-5 h-5 inline" /> Release to Stop</> : <><Mic className="w-5 h-5 inline" /> Hold to Speak (or use SPACEBAR)</>}
                   </button>
                 </div>
                 )}
@@ -5339,7 +6196,7 @@ const startPracticeMode = async () => {
                       </button>
                     </div>
                     <p className="text-lg text-gray-800 leading-relaxed">{spokenAnswer || transcript}</p>
-                    <p className="text-xs text-gray-500 mt-2">📊 {(spokenAnswer || transcript).split(' ').filter(w => w).length} words</p>
+                    <p className="text-xs text-gray-500 mt-2"><BarChart2 className="w-3 h-3 inline" /> {(spokenAnswer || transcript).split(' ').filter(w => w).length} words</p>
                   </div>
                 )}
                 
@@ -5354,7 +6211,7 @@ const startPracticeMode = async () => {
                   
                   {/* Help Button - Below Textarea */}
                   <div className="mt-2 flex justify-center">
-                    {(usageStats?.tier === 'pro' || usageStats?.tier === 'beta') ? (
+                    {(usageStats?.tier === 'pro' || usageStats?.tier === 'beta' || usageStats?.tier === 'general_pass' || usageStats?.tier === 'annual') ? (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -5366,15 +6223,15 @@ const startPracticeMode = async () => {
                         className="text-sm bg-gradient-to-r from-teal-100 to-sky-100 hover:from-teal-200 hover:to-sky-200 text-teal-700 px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2"
                       >
                         <Lightbulb className="w-4 h-4" />
-                        💡 Can't Think of an Answer? AI Can Help
+                        Can't Think of an Answer? AI Can Help
                       </button>
                     ) : (
                       <button
-                        onClick={(e) => { e.stopPropagation(); alert('⭐ Pro Feature\n\nUpgrade to Pro ($29.99/month) for UNLIMITED access!\n\n✓ Unlimited AI Answer Coach sessions\n✓ Unlimited AI Interview practice\n✓ Unlimited Practice Mode\n✓ Everything unlimited - practice as much as you need!'); }}
+                        onClick={(e) => { e.stopPropagation(); alert('Pro Feature\n\nGet a 30-Day Pass ($14.99) for UNLIMITED access!\n\n✓ Unlimited AI Answer Coach sessions\n✓ Unlimited AI Interview practice\n✓ Unlimited Practice Mode\n✓ No subscription — just one payment!'); }}
                         className="text-sm bg-gradient-to-r from-yellow-100 to-amber-100 hover:from-yellow-200 hover:to-amber-200 text-yellow-800 px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2"
                       >
                         <Crown className="w-4 h-4" />
-                        💡 Can't Think of an Answer? Upgrade for AI Help
+                        Can't Think of an Answer? Upgrade for AI Help
                       </button>
                     )}
                   </div>
@@ -5401,15 +6258,43 @@ const startPracticeMode = async () => {
               </>
             )}
 
- {feedback && (
-  <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-2xl p-8">
+ {feedback && (() => {
+  // Read-time chip — sums words across all renderable feedback fields, divides by 200wpm
+  const _wordCount = (v) => {
+    if (!v) return 0;
+    if (Array.isArray(v)) return v.reduce((n, x) => n + _wordCount(x), 0);
+    if (typeof v === 'object') return Object.values(v).reduce((n, x) => n + _wordCount(x), 0);
+    return String(v).trim().split(/\s+/).filter(Boolean).length;
+  };
+  // PR 3 — count words across BOTH v1 (legacy) and v2 (new 5-field) fields
+  const _totalWords =
+    _wordCount(feedback.strengths) +
+    _wordCount(feedback.gaps) +
+    _wordCount(feedback.specific_improvements) +
+    _wordCount(feedback.ideal_answer) +
+    _wordCount(feedback.framework_analysis) +
+    _wordCount(feedback.points_covered) +
+    _wordCount(feedback.points_missed) +
+    _wordCount(feedback.verdict) +
+    _wordCount(feedback.fix) +
+    _wordCount(feedback.strength);
+  const _readMinutes = Math.max(1, Math.ceil(_totalWords / 200));
+  return (
+  <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-8">
     {/* AI DISCLAIMER */}
     <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded p-3 mb-4">
       <p className="text-xs text-yellow-900">
-        <span className="font-semibold">🤖 AI-Generated:</span> For practice only. Not professional advice.
+        <span className="font-semibold"><Bot className="w-4 h-4 inline" /> AI-Generated:</span> For practice only. Not professional advice.
       </p>
     </div>
-    
+
+    {/* Read-time chip */}
+    <div className="mb-3">
+      <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-700 text-xs font-semibold px-3 py-1 rounded-full">
+        📖 ~{_readMinutes} min read
+      </span>
+    </div>
+
     <div className="flex items-center justify-between mb-6">
       <h3 className="text-3xl font-bold">Your Performance</h3>
       
@@ -5422,7 +6307,7 @@ const startPracticeMode = async () => {
           }}
           className="text-sm bg-teal-100 hover:bg-teal-200 text-teal-700 px-4 py-2 rounded-lg font-semibold transition-all"
         >
-          ⚡ Show All
+          <Zap className="w-4 h-4 inline" /> Show All
         </button>
       )}
     </div>
@@ -5435,32 +6320,97 @@ const startPracticeMode = async () => {
       </p>
       <p className="text-xl opacity-90">out of 10</p>
       <div className="mt-4 w-full bg-white/20 rounded-full h-3">
-        <div 
+        <div
           className="bg-white h-3 rounded-full transition-all duration-1000 ease-out"
           style={{ width: `${(animatedScore / 10) * 100}%` }}
         ></div>
       </div>
+      {/* Phase 4M: Confidence Calibration gap */}
+      {confidenceRating > 0 && getFeedbackScore(feedback) > 0 && (() => {
+        const actual = getFeedbackScore(feedback);
+        const predicted = confidenceRating * 2;
+        const gap = Math.abs(actual - predicted);
+        const msg = gap <= 1 ? 'Great self-awareness! Your confidence matched your score.'
+          : actual > predicted ? 'You scored higher than expected! Trust yourself more.'
+          : `You rated ${confidenceRating}/5 but scored ${actual.toFixed(1)}/10. More practice needed here.`;
+        return <p className="mt-3 text-sm opacity-90">{msg}</p>;
+      })()}
     </div>
 
-    {/* ==================== IDEAL ANSWER - Stage 1 ==================== */}
-    {feedback.ideal_answer && isSectionVisible(1) && (
+    {/* ==================== PR 3 — NEW 5-FIELD COACHING CARD (v2 schema) ==================== */}
+    {feedback.fix && (
+      <div className="mb-6 feedback-section visible fade-in-up">
+        {/* Verdict */}
+        {feedback.verdict && (
+          <div className="bg-gradient-to-r from-teal-50 to-sky-50 border-2 border-teal-300 rounded-xl p-5 mb-4">
+            <p className="text-sm font-bold text-teal-700 mb-1 uppercase tracking-wide">Verdict</p>
+            <p className="text-gray-900 text-lg leading-relaxed">{feedback.verdict}</p>
+          </div>
+        )}
+
+        {/* The Fix — quote / issue / rewrite */}
+        <div className="bg-amber-50 border-2 border-amber-300 rounded-xl p-5 mb-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Target className="w-6 h-6 text-amber-600" />
+            <h4 className="font-bold text-amber-900 text-xl">The One Thing to Fix</h4>
+          </div>
+          {feedback.fix.quote && feedback.fix.quote !== 'NO_QUOTE_AVAILABLE' && (
+            <div className="bg-white rounded-lg p-3 mb-3 border-l-4 border-amber-500">
+              <p className="text-xs font-bold text-amber-700 mb-1 uppercase">You said</p>
+              <p className="text-gray-800 italic">"{feedback.fix.quote}"</p>
+            </div>
+          )}
+          {feedback.fix.issue && (
+            <div className="mb-3">
+              <p className="text-xs font-bold text-amber-700 mb-1 uppercase">Why it's weak</p>
+              <p className="text-gray-800 leading-relaxed">{feedback.fix.issue}</p>
+            </div>
+          )}
+          {feedback.fix.rewrite && (
+            <div className="bg-teal-50 rounded-lg p-3 border-l-4 border-teal-500">
+              <p className="text-xs font-bold text-teal-700 mb-1 uppercase">Try saying</p>
+              <p className="text-teal-900 leading-relaxed font-medium">{feedback.fix.rewrite}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Strength — last, anti-sandwich */}
+        {feedback.strength && (
+          <div className="bg-green-50 border-l-4 border-green-500 rounded-xl p-5 mb-4">
+            <div className="flex items-start gap-3">
+              <span className="text-3xl">✓</span>
+              <div>
+                <p className="text-xs font-bold text-green-700 mb-1 uppercase tracking-wide">What worked</p>
+                <p className="text-green-900 leading-relaxed">{feedback.strength}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delivery insights still useful on v2 rows */}
+        <DeliveryInsights answer={spokenAnswer || userAnswer} />
+      </div>
+    )}
+
+    {/* ==================== IDEAL ANSWER - Stage 1 (legacy v1 only) ==================== */}
+    {!feedback.fix && feedback.ideal_answer && isSectionVisible(1) && (
       <div className={`mb-6 feedback-section ${isSectionVisible(1) ? 'visible' : ''}`}>
-        <button 
+        <button
           onClick={() => setShowIdealAnswer(!showIdealAnswer)}
           className="w-full bg-gradient-to-r from-teal-50 to-sky-50 hover:from-teal-100 hover:to-sky-100 border-2 border-teal-300 rounded-xl p-5 flex items-center justify-between transition-all"
         >
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-teal-500 rounded-full flex items-center justify-center">
-              <span className="text-2xl">💡</span>
+              <Lightbulb className="w-6 h-6 text-white" />
             </div>
             <div className="text-left">
-              <span className="font-bold text-teal-900 text-lg block">Example of Strong Answer</span>
+              <span className="font-bold text-teal-900 text-lg block">Your Answer, Coached</span>
               <span className="text-sm text-teal-700">Click to compare with your response</span>
             </div>
           </div>
           <span className="text-teal-600 text-2xl font-bold">{showIdealAnswer ? '▼' : '▶'}</span>
         </button>
-        
+
         {showIdealAnswer && (
           <div className="mt-4 grid md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-xl border-2 border-teal-200 fade-in-up">
             <div className="bg-white rounded-lg p-5 border-2 border-gray-300">
@@ -5472,11 +6422,11 @@ const startPracticeMode = async () => {
               </div>
               <p className="text-gray-800 leading-relaxed text-sm">{spokenAnswer || userAnswer}</p>
             </div>
-            
+
             <div className="bg-teal-50 rounded-lg p-5 border-2 border-teal-400">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-lg">⭐</span>
+                  <Star className="w-4 h-4 text-white" />
                 </div>
                 <h5 className="font-bold text-teal-900">Strong Example</h5>
               </div>
@@ -5487,8 +6437,11 @@ const startPracticeMode = async () => {
       </div>
     )}
 
-    {/* ==================== STRENGTHS - Stage 2 ==================== */}
-    {feedback.strengths && feedback.strengths.length > 0 && isSectionVisible(2) && (
+    {/* ==================== DELIVERY INSIGHTS - Phase 4B (v1 only; v2 renders it inside the coaching card) ==================== */}
+    {!feedback.fix && <DeliveryInsights answer={spokenAnswer || userAnswer} />}
+
+    {/* ==================== STRENGTHS - Stage 2 (legacy v1 only) ==================== */}
+    {!feedback.fix && feedback.strengths && feedback.strengths.length > 0 && isSectionVisible(2) && (
       <div className={`mb-6 feedback-section ${isSectionVisible(2) ? 'visible' : ''}`}>
         <button
           onClick={() => setShowStrengths(!showStrengths)}
@@ -5518,15 +6471,15 @@ const startPracticeMode = async () => {
       </div>
     )}
 
-    {/* ==================== GAPS - Stage 3 ==================== */}
-    {feedback.gaps && feedback.gaps.length > 0 && isSectionVisible(3) && (
+    {/* ==================== GAPS - Stage 3 (legacy v1 only) ==================== */}
+    {!feedback.fix && feedback.gaps && feedback.gaps.length > 0 && isSectionVisible(3) && (
       <div className={`mb-6 feedback-section ${isSectionVisible(3) ? 'visible' : ''}`}>
         <button
           onClick={() => setShowGaps(!showGaps)}
           className="w-full bg-amber-50 hover:bg-amber-100 border-2 border-amber-300 rounded-xl p-4 flex items-center justify-between transition-all mb-3"
         >
           <h4 className="font-bold text-amber-900 text-xl flex items-center gap-2">
-            <span className="text-3xl">📈</span> 
+            <TrendingUp className="w-8 h-8 text-teal-600" /> 
             <span>Growth Areas ({feedback.gaps.length})</span>
           </h4>
           <span className="text-amber-600 text-xl font-bold">{showGaps ? '▼' : '▶'}</span>
@@ -5549,12 +6502,12 @@ const startPracticeMode = async () => {
       </div>
     )}
 
-    {/* ==================== ACTION STEPS - Stage 4 ==================== */}
-    {feedback.specific_improvements && feedback.specific_improvements.length > 0 && isSectionVisible(4) && (
+    {/* ==================== ACTION STEPS - Stage 4 (legacy v1 only) ==================== */}
+    {!feedback.fix && feedback.specific_improvements && feedback.specific_improvements.length > 0 && isSectionVisible(4) && (
       <div className={`mb-6 feedback-section ${isSectionVisible(4) ? 'visible' : ''}`}>
         <div className="bg-teal-50 border-2 border-teal-300 rounded-xl p-4 mb-3">
           <h4 className="font-bold text-teal-900 text-xl flex items-center gap-2">
-            <span className="text-3xl">🎯</span> 
+            <Target className="w-8 h-8 text-teal-600" /> 
             <span>Action Steps ({feedback.specific_improvements.length})</span>
           </h4>
           <p className="text-sm text-teal-700 mt-1">Specific ways to improve your answer</p>
@@ -5575,12 +6528,21 @@ const startPracticeMode = async () => {
       </div>
     )}
 
-    {/* ==================== STAR FRAMEWORK - Stage 5 ==================== */}
-    {feedback.framework_analysis && isSectionVisible(5) && (
+    {/* ==================== STAR FRAMEWORK - Stage 5 (legacy v1 only) ==================== */}
+    {!feedback.fix && feedback.framework_analysis && isSectionVisible(5) && (() => {
+      const _starMissingRe = /missing|not provided|n\/?a|absent|—/i;
+      const _fa = feedback.framework_analysis;
+      const _allStarMissing =
+        (!_fa.situation || _starMissingRe.test(_fa.situation)) &&
+        (!_fa.task || _starMissingRe.test(_fa.task)) &&
+        (!_fa.action || _starMissingRe.test(_fa.action)) &&
+        (!_fa.result || _starMissingRe.test(_fa.result));
+      if (_allStarMissing) return null;
+      return (
       <div className={`mb-6 feedback-section ${isSectionVisible(5) ? 'visible' : ''}`}>
         <div className="bg-gradient-to-r from-teal-50 to-sky-50 border-2 border-teal-300 rounded-xl p-4 mb-4">
           <h4 className="font-bold text-teal-900 text-xl flex items-center gap-2">
-            <span className="text-3xl">⭐</span> 
+            <Star className="w-8 h-8 text-amber-500" /> 
             <span>STAR Framework Analysis</span>
           </h4>
           <p className="text-sm text-teal-700 mt-1">How your answer maps to the STAR method</p>
@@ -5599,7 +6561,7 @@ const startPracticeMode = async () => {
                   ? 'bg-green-500' 
                   : 'bg-gray-400'
               }`}>
-                <span className="text-2xl">📍</span>
+                <MapPin className="w-5 h-5 text-teal-600" />
               </div>
               <h5 className="font-bold text-gray-900">Situation</h5>
             </div>
@@ -5618,7 +6580,7 @@ const startPracticeMode = async () => {
                   ? 'bg-green-500' 
                   : 'bg-gray-400'
               }`}>
-                <span className="text-2xl">🎯</span>
+                <Target className="w-5 h-5 text-teal-600" />
               </div>
               <h5 className="font-bold text-gray-900">Task</h5>
             </div>
@@ -5637,7 +6599,7 @@ const startPracticeMode = async () => {
                   ? 'bg-green-500' 
                   : 'bg-gray-400'
               }`}>
-                <span className="text-2xl">⚡</span>
+                <Zap className="w-5 h-5 text-amber-500" />
               </div>
               <h5 className="font-bold text-gray-900">Action</h5>
             </div>
@@ -5656,7 +6618,7 @@ const startPracticeMode = async () => {
                   ? 'bg-green-500' 
                   : 'bg-gray-400'
               }`}>
-                <span className="text-2xl">🏆</span>
+                <Trophy className="w-5 h-5 text-amber-500" />
               </div>
               <h5 className="font-bold text-gray-900">Result</h5>
             </div>
@@ -5692,13 +6654,14 @@ const startPracticeMode = async () => {
           </div>
         </div>
       </div>
-    )}
+      );
+    })()}
 
-    {/* ==================== KEY POINTS COVERAGE - Stage 6 ==================== */}
-    {(feedback.points_covered || feedback.points_missed) && isSectionVisible(6) && (
+    {/* ==================== KEY POINTS COVERAGE - Stage 6 (legacy v1 only) ==================== */}
+    {!feedback.fix && (feedback.points_covered || feedback.points_missed) && isSectionVisible(6) && (
       <div className={`bg-gray-50 rounded-xl p-6 mb-6 border-2 border-gray-300 feedback-section ${isSectionVisible(6) ? 'visible' : ''}`}>
         <h4 className="font-bold text-gray-900 text-xl mb-4 flex items-center gap-2">
-          <span className="text-2xl">📊</span>
+          <BarChart2 className="w-5 h-5 text-teal-600" />
           <span>Key Points Coverage</span>
         </h4>
         
@@ -5750,7 +6713,7 @@ const startPracticeMode = async () => {
           }} 
           className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 rounded-xl transition-all hover:scale-105 shadow-lg"
         >
-          🔄 Try Again
+          <RotateCcw className="w-4 h-4 inline" /> Try Again
         </button>
         <button 
           onClick={() => { 
@@ -5764,12 +6727,13 @@ const startPracticeMode = async () => {
           }} 
           className="flex-1 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-bold py-4 rounded-xl transition-all hover:scale-105 shadow-lg"
         >
-          ➡️ Next Question
+          <ArrowRight className="w-4 h-4 inline" /> Next Question
         </button>
       </div>
     )}
   </div>
-)}
+  );
+})()}
 
           </div>
         </div>
@@ -5847,8 +6811,6 @@ const startPracticeMode = async () => {
       setFlashcardIndex(nextIndex);
       setCurrentQuestion(flashcardDeck[nextIndex]);
       setFlashcardSide('question');
-      setShowBullets(false);
-      setShowNarrative(false);
       setShowStudyTips(false);
     };
 
@@ -5857,8 +6819,6 @@ const startPracticeMode = async () => {
       setFlashcardIndex(prevIndex);
       setCurrentQuestion(flashcardDeck[prevIndex]);
       setFlashcardSide('question');
-      setShowBullets(false);
-      setShowNarrative(false);
       setShowStudyTips(false);
     };
 
@@ -5931,14 +6891,14 @@ const startPracticeMode = async () => {
               {/* Left Arrow - Desktop Only */}
               <button
                 onClick={goToPreviousCard}
-                className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-16 w-12 h-12 bg-white/20 hover:bg-white/30 backdrop-blur rounded-full items-center justify-center text-white text-2xl font-bold transition-all hover:scale-110 z-10"
+                className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-16 w-12 h-12 bg-white/20 hover:bg-white/30 backdrop-blur rounded-full items-center justify-center text-white text-2xl font-bold transition-all hover:scale-105 z-10"
               >
                 ←
               </button>
 
               {/* Flashcard - Swipeable on Mobile, Clickable to Flip */}
               <div 
-                className="bg-white rounded-2xl shadow-2xl p-8 md:p-12 min-h-[400px] flex items-center justify-center cursor-pointer transition-all select-none"
+                className="bg-white rounded-xl shadow-lg p-8 md:p-12 min-h-[400px] flex items-center justify-center cursor-pointer transition-all select-none"
                 onClick={flipCard}
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
@@ -5967,6 +6927,12 @@ const startPracticeMode = async () => {
                         </li>
                       ))}
                     </ul>
+                    {currentQuestion.narrative && (
+                      <div className="mt-4 pt-4 border-t border-gray-200">
+                        <h4 className="text-lg font-bold text-gray-900 mb-2">Full Narrative:</h4>
+                        <p className="text-base text-gray-800 leading-relaxed whitespace-pre-line">{currentQuestion.narrative}</p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -5974,7 +6940,7 @@ const startPracticeMode = async () => {
               {/* Right Arrow - Desktop Only */}
               <button
                 onClick={goToNextCard}
-                className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-16 w-12 h-12 bg-white/20 hover:bg-white/30 backdrop-blur rounded-full items-center justify-center text-white text-2xl font-bold transition-all hover:scale-110 z-10"
+                className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-16 w-12 h-12 bg-white/20 hover:bg-white/30 backdrop-blur rounded-full items-center justify-center text-white text-2xl font-bold transition-all hover:scale-105 z-10"
               >
                 →
               </button>
@@ -6042,7 +7008,7 @@ const startPracticeMode = async () => {
                           { emoji: '😐', label: 'Vague', rating: 2 },
                           { emoji: '🙂', label: 'Okay', rating: 3 },
                           { emoji: '😊', label: 'Good', rating: 4 },
-                          { emoji: '🎯', label: 'Mastered', rating: 5 }
+                          { emoji: '✓', label: 'Mastered', rating: 5 }
                         ].map((option) => (
                           <button
                             key={option.rating}
@@ -6063,53 +7029,6 @@ const startPracticeMode = async () => {
               </div>
             )}
 
-            {/* Show Bullets/Narrative Buttons */}
-            <div className="mt-6 flex gap-3">
-              <button
-                onClick={() => {
-                  if (flashcardSide === 'question') {
-                    flipCard();
-                  }
-                  setShowBullets(!showBullets);
-                }}
-                className="flex-1 bg-white/20 hover:bg-white/30 backdrop-blur text-white font-bold py-3 rounded-xl transition text-sm"
-              >
-                {showBullets ? '👁️ Hide' : '👁️ Show'} Bullets
-              </button>
-              {currentQuestion.narrative && (
-                <button
-                  onClick={() => setShowNarrative(!showNarrative)}
-                  className="flex-1 bg-white/20 hover:bg-white/30 backdrop-blur text-white font-bold py-3 rounded-xl transition text-sm"
-                >
-                  {showNarrative ? '📖 Hide' : '📖 Show'} Narrative
-                </button>
-              )}
-            </div>
-
-            {/* Bullets Overlay */}
-            {showBullets && (
-              <div className="mt-4 bg-white rounded-xl p-6 shadow-xl">
-                <h4 className="text-xl font-bold mb-3 text-gray-900">Key Points:</h4>
-                <ul className="space-y-2">
-                  {currentQuestion.bullets.filter(b => b).map((bullet, idx) => (
-                    <li key={idx} className="flex items-start gap-3">
-                      <span className="flex-shrink-0 w-6 h-6 bg-teal-500 text-white rounded-full flex items-center justify-center font-bold text-xs">
-                        {idx + 1}
-                      </span>
-                      <span className="text-base text-gray-800">{bullet}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Narrative */}
-            {showNarrative && currentQuestion.narrative && (
-              <div className="mt-4 bg-white rounded-xl p-6 shadow-xl">
-                <h4 className="text-xl font-bold mb-3 text-gray-900">Full Narrative:</h4>
-                <p className="text-base text-gray-800 leading-relaxed whitespace-pre-line">{currentQuestion.narrative}</p>
-              </div>
-            )}
 
             {/* Progress */}
             <div className="mt-6 bg-white/10 backdrop-blur rounded-xl p-5 text-white">
@@ -6133,6 +7052,97 @@ const startPracticeMode = async () => {
     );
   }
 
+// INTERVIEW COACH
+  // Phase 4D: JD Decoder
+  if (currentView === 'jd-decoder') {
+    return <JDDecoder
+      onBack={() => setCurrentView('home')}
+      jobDescription={getUserContext().jobDescription || ''}
+      getUserContext={getUserContext}
+      onSaveQuestions={async (newQs) => {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) { alert('Please sign in to save questions'); return; }
+          const rows = newQs.map(q => ({
+            user_id: user.id,
+            question: q.question,
+            category: q.category || 'Behavioral',
+            priority: q.priority || 'Standard',
+            keywords: q.keywords || [],
+            bullets: q.bullets || [],
+            narrative: '',
+          }));
+          const { error } = await supabase.from('questions').insert(rows);
+          if (error) throw error;
+          await loadQuestions();
+          console.log(`✅ ${rows.length} JD Decoder questions saved to Supabase`);
+        } catch (err) {
+          console.error('❌ JD Decoder save error:', err);
+          alert('Failed to save questions: ' + err.message);
+        }
+      }}
+      onNavigate={(view) => view === 'practice' ? startPracticeMode() : setCurrentView(view)}
+    />;
+  }
+
+  // Phase 4F: Story Bank
+  if (currentView === 'story-bank') {
+    return <StoryBank onBack={() => setCurrentView('home')} questions={questions} getUserContext={getUserContext} onNavigate={(view) => view === 'practice' ? startPracticeMode() : setCurrentView(view)} />;
+  }
+
+  // Portfolio: Work History & Confidence Builder
+  if (currentView === 'portfolio') {
+    return <Portfolio onBack={() => setCurrentView('home')} getUserContext={getUserContext} questions={questions} onNavigate={(view) => view === 'practice' ? startPracticeMode() : setCurrentView(view)} />;
+  }
+
+  // Phase 4K: Prep Radio
+  if (currentView === 'prep-radio') {
+    return <PrepRadio onBack={() => setCurrentView('home')} questions={questions} practiceHistory={practiceHistory} getUserContext={getUserContext} userTier={userTier} onUpgrade={() => setShowPricingPage(true)} />;
+  }
+
+  // Phase 5: Learn Section
+  if (currentView === 'interview-coach') {
+    // Redirect to home and open the popup panel instead
+    setCurrentView('home');
+    setShowCoachPanel(true);
+    return null;
+  }
+
+  if (currentView === 'learn') {
+    return <LearnSection onBack={() => setCurrentView('home')} userTier={userTier} onUpgrade={() => setShowPricingPage(true)} supabase={supabase} userId={currentUser?.id} />;
+  }
+
+  // Phase 4L: Weak STAR Drill
+  if (currentView === 'weak-drill') {
+    return <WeakPointDrill onBack={() => { setDrillTargetComponent(null); setCurrentView('home'); }} practiceHistory={practiceHistory} questions={questions} getUserContext={getUserContext} targetComponent={drillTargetComponent} />;
+  }
+
+  // Phase 4I: Interview Day Mode
+  if (currentView === 'interview-day') {
+    return <InterviewDayMode onBack={() => setCurrentView('home')} practiceHistory={practiceHistory} questions={questions} getUserContext={getUserContext} />;
+  }
+
+  // Phase 4N: Follow-Up Email
+  if (currentView === 'follow-up-email') {
+    return <FollowUpEmail onBack={() => setCurrentView('home')} getUserContext={getUserContext} />;
+  }
+
+  if (currentView === 'interview-coach') {
+    return (
+      <div className="min-h-screen" style={{ background: 'linear-gradient(to bottom right, #fafaf8, #f5f5f0, #f0f4f8)' }}>
+        <InterviewCoach
+          onBack={() => setCurrentView('home')}
+          getUserContext={getUserContext}
+          questions={questions}
+          practiceHistory={practiceHistory}
+          speakText={speakText}
+          stopSpeaking={() => synthRef.current?.cancel()}
+          aiSpeaking={aiSpeaking}
+        />
+      </div>
+    );
+  }
+
 // COMMAND CENTER
   if (currentView === 'command-center') {
     return (
@@ -6144,7 +7154,7 @@ const startPracticeMode = async () => {
             <button onClick={() => setCurrentView('home')} className="text-slate-600 hover:text-slate-900 font-semibold text-sm sm:text-base flex items-center gap-1 hover:gap-2 transition-all">
               ← <span className="hidden sm:inline">Back</span>
             </button>
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-800">🎯 Command Center</h1>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-navy-700"><Target className="w-6 h-6 inline" /> Command Center</h1>
             <div className="w-12 sm:w-16"></div>
           </div>
         </div>
@@ -6161,7 +7171,7 @@ const startPracticeMode = async () => {
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                📊 Analytics
+                <BarChart2 className="w-4 h-4 inline" /> Analytics
               </button>
               <button
                 onClick={() => setCommandCenterTab('queue')}
@@ -6171,7 +7181,7 @@ const startPracticeMode = async () => {
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                🎯 Queue
+                <Target className="w-4 h-4 inline" /> Queue
               </button>
               <button
                 onClick={() => setCommandCenterTab('prep')}
@@ -6191,7 +7201,7 @@ const startPracticeMode = async () => {
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                📚 Bank
+                <BookOpen className="w-4 h-4 inline" /> Bank
               </button>
               <button
                 onClick={() => setCommandCenterTab('progress')}
@@ -6201,7 +7211,7 @@ const startPracticeMode = async () => {
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                📈 Progress
+                <TrendingUp className="w-4 h-4 inline" /> Progress
               </button>
             </div>
           </div>
@@ -6214,26 +7224,26 @@ const startPracticeMode = async () => {
             <div>
               {/* Stats Overview */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 lg:gap-4 mb-5 sm:mb-6">
-                <div className="bg-gradient-to-br from-teal-500 to-emerald-600 rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-5 text-white cursor-pointer hover:scale-[1.02] hover:shadow-lg transition-all" onClick={() => setCommandCenterTab('progress')}>
+                <div className="bg-gradient-to-br from-teal-500 to-emerald-600 rounded-xl sm:rounded-xl p-3 sm:p-4 lg:p-5 text-white cursor-pointer hover:scale-[1.02] hover:shadow-md transition-all" onClick={() => setCommandCenterTab('progress')}>
                   <p className="text-xs sm:text-sm text-white/90 font-medium mb-0.5 sm:mb-1">Total Sessions</p>
                   <p className="text-2xl sm:text-3xl lg:text-4xl font-black">{practiceHistory.length}</p>
-                  <p className="text-[10px] sm:text-xs text-white/75 mt-0.5 sm:mt-1">🎯 Keep it up!</p>
+                  <p className="text-[10px] sm:text-xs text-white/75 mt-0.5 sm:mt-1">Keep it up!</p>
                 </div>
-                <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-5 text-white cursor-pointer hover:scale-[1.02] hover:shadow-lg transition-all" onClick={() => setCommandCenterTab('progress')}>
+                <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl sm:rounded-xl p-3 sm:p-4 lg:p-5 text-white cursor-pointer hover:scale-[1.02] hover:shadow-md transition-all" onClick={() => setCommandCenterTab('progress')}>
                   <p className="text-xs sm:text-sm text-white/90 font-medium mb-0.5 sm:mb-1">Average Score</p>
                   <p className="text-2xl sm:text-3xl lg:text-4xl font-black">
                     {practiceHistory.length > 0
                       ? (practiceHistory.reduce((sum, s) => sum + (s.feedback?.overall || 0), 0) / practiceHistory.length).toFixed(1)
                       : '0.0'}
                   </p>
-                  <p className="text-[10px] sm:text-xs text-white/75 mt-0.5 sm:mt-1">📈 Improving</p>
+                  <p className="text-[10px] sm:text-xs text-white/75 mt-0.5 sm:mt-1">Improving</p>
                 </div>
-                <div className="bg-gradient-to-br from-teal-500 to-sky-600 rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-5 text-white cursor-pointer hover:scale-[1.02] hover:shadow-lg transition-all" onClick={() => setCommandCenterTab('bank')}>
+                <div className="bg-gradient-to-br from-teal-500 to-sky-600 rounded-xl sm:rounded-xl p-3 sm:p-4 lg:p-5 text-white cursor-pointer hover:scale-[1.02] hover:shadow-md transition-all" onClick={() => setCommandCenterTab('bank')}>
                   <p className="text-xs sm:text-sm text-white/90 font-medium mb-0.5 sm:mb-1">Practiced</p>
                   <p className="text-2xl sm:text-3xl lg:text-4xl font-black">{questions.filter(q => q.practiceCount > 0).length}</p>
                   <p className="text-[10px] sm:text-xs text-white/75 mt-0.5 sm:mt-1">of {questions.length} total</p>
                 </div>
-                <div className="bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-5 text-white cursor-pointer hover:scale-[1.02] hover:shadow-lg transition-all" onClick={() => setCommandCenterTab('prep')}>
+                <div className="bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl sm:rounded-xl p-3 sm:p-4 lg:p-5 text-white cursor-pointer hover:scale-[1.02] hover:shadow-md transition-all" onClick={() => setCommandCenterTab('prep')}>
                   <p className="text-xs sm:text-sm text-white/90 font-medium mb-0.5 sm:mb-1">This Month</p>
                   <p className="text-2xl sm:text-3xl lg:text-4xl font-black">
                     {practiceHistory.filter(s => {
@@ -6248,8 +7258,8 @@ const startPracticeMode = async () => {
               </div>
 
               {/* Most Practiced Questions */}
-              <div className="bg-white rounded-xl sm:rounded-2xl shadow-md border border-slate-100 p-4 sm:p-5 mb-5 sm:mb-6">
-                <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-slate-800">🔥 Most practiced</h3>
+              <div className="bg-white rounded-xl sm:rounded-xl shadow-md border border-slate-100 p-4 sm:p-5 mb-5 sm:mb-6">
+                <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-navy-700">Most practiced</h3>
                 {(() => {
                   // Calculate practice counts and averages from history
                   const questionStats = {};
@@ -6346,7 +7356,7 @@ const startPracticeMode = async () => {
             <div>
               {/* Never Practiced */}
               <div className="bg-white rounded-xl shadow-md p-5 mb-6">
-                <h3 className="text-xl font-bold mb-4 text-red-600">🎯 Let's Strengthen These {questions.filter(q => q.practiceCount === 0).length} Questions!</h3>
+                <h3 className="text-xl font-bold mb-4 text-red-600"><Target className="w-5 h-5 inline" /> Let's Strengthen These {questions.filter(q => q.practiceCount === 0).length} Questions!</h3>
                 {questions.filter(q => q.practiceCount === 0).length === 0 ? (
                   <div className="text-center py-8">
                     <p className="text-2xl mb-2">🎉</p>
@@ -6401,10 +7411,10 @@ const startPracticeMode = async () => {
 
               {/* Needs Improvement */}
               <div className="bg-white rounded-xl shadow-md p-5">
-                <h3 className="text-xl font-bold mb-4 text-amber-600">📈 Almost There - Keep Going!</h3>
+                <h3 className="text-xl font-bold mb-4 text-amber-600"><TrendingUp className="w-5 h-5 inline" /> Almost There - Keep Going!</h3>
                 {questions.filter(q => q.practiceCount > 0 && q.averageScore < 7).length === 0 ? (
                   <div className="text-center py-8">
-                    <p className="text-2xl mb-2">⭐</p>
+                    <p className="mb-2"><Star className="w-6 h-6 inline text-amber-500" /></p>
                     <p className="text-gray-800 text-base font-bold mb-1">You're crushing it!</p>
                     <p className="text-sm text-gray-600">All practiced questions scored 7+ average!</p>
                   </div>
@@ -6448,150 +7458,16 @@ const startPracticeMode = async () => {
 
           {/* ==================== INTERVIEW PREP TAB ==================== */}
           {commandCenterTab === 'prep' && (
-            <div>
-              {/* Interview Countdown */}
-              <div className="bg-gradient-to-br from-teal-600 to-sky-600 rounded-xl sm:rounded-2xl p-4 sm:p-5 lg:p-6 text-white mb-5 sm:mb-6">
-                <h3 className="text-lg sm:text-xl lg:text-2xl font-bold mb-3 sm:mb-4">🗓️ {interviewDate ? `${(() => {
-                  const today = new Date();
-                  today.setHours(0, 0, 0, 0);
-                  const interview = new Date(interviewDate);
-                  interview.setHours(0, 0, 0, 0);
-                  const diffTime = interview.getTime() - today.getTime();
-                  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-                  return Math.max(0, diffDays + 1); // +1 so interview day = 1, not 0
-                })()} Days to Shine!` : 'Set Your Interview Date'}</h3>
-                <div className="flex flex-col md:flex-row items-start md:items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
-                  <div className="flex-1 w-full">
-                    <label className="block text-xs sm:text-sm text-white/90 font-medium mb-1.5 sm:mb-2">Interview Date:</label>
-                    <input
-                      type="date"
-                      value={interviewDate}
-                      onChange={(e) => {
-                        setInterviewDate(e.target.value);
-                        localStorage.setItem('isl_interview_date', e.target.value);
-                      }}
-                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg text-slate-900 font-semibold text-sm sm:text-base"
-                    />
-                  </div>
-                  {interviewDate && (
-                    <div className="text-center bg-white/20 backdrop-blur rounded-xl p-3 sm:p-4 lg:p-5 min-w-[120px] sm:min-w-[140px]">
-                      <div className="text-3xl sm:text-4xl lg:text-5xl font-black mb-0.5 sm:mb-1">
-                        {Math.max(0, Math.ceil((new Date(interviewDate).setHours(0,0,0,0) - new Date().setHours(0,0,0,0)) / (1000 * 60 * 60 * 24)) + 1)}
-                      </div>
-                      <div className="text-xs sm:text-sm text-white/90 font-bold">days left!</div>
-                      <div className="text-[10px] sm:text-xs text-white/75 mt-0.5 sm:mt-1">⭐ You've got this!</div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Daily Goal */}
-              <div className="bg-white rounded-xl sm:rounded-2xl shadow-md border border-slate-100 p-4 sm:p-5 mb-5 sm:mb-6">
-                <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-slate-800">🎯 Daily Practice Goal</h3>
-                <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
-                  <label className="text-slate-700 font-semibold text-sm sm:text-base">Sessions per day:</label>
-                  {document.documentElement.classList.contains('capacitor') ? (
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => {
-                          const newVal = Math.max(1, dailyGoal - 1);
-                          setDailyGoal(newVal);
-                          localStorage.setItem('isl_daily_goal', String(newVal));
-                        }}
-                        className="w-10 h-10 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xl flex items-center justify-center transition-colors"
-                      >−</button>
-                      <span className="w-12 text-center font-bold text-lg text-slate-800">{dailyGoal}</span>
-                      <button
-                        onClick={() => {
-                          const newVal = Math.min(20, dailyGoal + 1);
-                          setDailyGoal(newVal);
-                          localStorage.setItem('isl_daily_goal', String(newVal));
-                        }}
-                        className="w-10 h-10 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xl flex items-center justify-center transition-colors"
-                      >+</button>
-                    </div>
-                  ) : (
-                    <input
-                      type="number"
-                      min="1"
-                      max="20"
-                      value={dailyGoal}
-                      onChange={(e) => {
-                        const value = parseInt(e.target.value);
-                        if (!isNaN(value) && value > 0) {
-                          setDailyGoal(value);
-                          localStorage.setItem('isl_daily_goal', e.target.value);
-                        }
-                      }}
-                      className="w-16 sm:w-20 px-3 sm:px-4 py-2 border-2 border-slate-200 rounded-lg text-center font-bold text-sm sm:text-base focus:border-teal-500 focus:outline-none transition-colors"
-                    />
-                  )}
-                </div>
-                <div className="bg-slate-50 rounded-lg sm:rounded-xl p-3 sm:p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs sm:text-sm font-semibold text-slate-700">Today's Progress:</span>
-                    <span className="text-lg sm:text-xl font-black text-teal-600">
-                      {practiceHistory.filter(s => new Date(s.date).toDateString() === new Date().toDateString()).length} / {dailyGoal}
-                    </span>
-                  </div>
-                  <div className="w-full bg-slate-200 rounded-full h-3 sm:h-4">
-                    <div
-                      className="bg-gradient-to-r from-teal-500 to-sky-500 h-3 sm:h-4 rounded-full transition-all flex items-center justify-end pr-2"
-                      style={{
-                        width: `${Math.min(100, (practiceHistory.filter(s => new Date(s.date).toDateString() === new Date().toDateString()).length / dailyGoal) * 100)}%`
-                      }}
-                    >
-                      {practiceHistory.filter(s => new Date(s.date).toDateString() === new Date().toDateString()).length >= dailyGoal && (
-                        <span className="text-white text-[10px] sm:text-xs font-bold">🎉 Goal reached!</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Category Coverage */}
-              <div className="bg-white rounded-xl shadow-md p-5">
-                <h3 className="text-xl font-bold mb-4 text-gray-900">📚 Category Mastery</h3>
-                <div className="space-y-4">
-                  {['Core Narrative', 'System-Level', 'Behavioral', 'Technical'].map(category => {
-                    const categoryQuestions = questions.filter(q => q.category === category);
-                    const total = categoryQuestions.length;
-                    
-                    // Calculate how many questions in this category have been practiced
-                    const practicedQuestionTexts = new Set(
-                      practiceHistory.map(s => s.question)
-                    );
-                    const practiced = categoryQuestions.filter(q => 
-                      practicedQuestionTexts.has(q.question)
-                    ).length;
-                    
-                    const percentage = total > 0 ? (practiced / total) * 100 : 0;
-                    
-                    return (
-                      <div key={category} className="p-4 bg-gray-50 rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="font-bold text-gray-900 text-base">{category}</span>
-                          <span className="text-sm text-gray-700 font-bold">{practiced} / {total} practiced</span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-3">
-                          <div 
-                            className={`h-3 rounded-full transition-all ${
-                              percentage === 100 ? 'bg-gradient-to-r from-green-500 to-emerald-500' :
-                              percentage >= 50 ? 'bg-gradient-to-r from-teal-500 to-sky-500' :
-                              'bg-gradient-to-r from-yellow-500 to-orange-500'
-                            }`}
-                            style={{ width: `${percentage}%` }}
-                          ></div>
-                        </div>
-                        {percentage === 100 && (
-                          <p className="text-xs text-green-600 font-bold mt-1">✓ Mastered!</p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
+            <InterviewContextHub
+              questions={questions}
+              practiceHistory={practiceHistory}
+              dailyGoal={dailyGoal}
+              setDailyGoal={setDailyGoal}
+              interviewDate={interviewDate}
+              setInterviewDate={setInterviewDate}
+              setCurrentView={setCurrentView}
+              onGenerateQuestions={() => setCommandCenterTab('bank')}
+            />
           )}
           
          {/* ==================== PROGRESS TAB ==================== */}
@@ -6604,7 +7480,7 @@ const startPracticeMode = async () => {
         onClick={() => setSelectedSession(null)}
       >
         <div 
-          className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-slideUp"
+          className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-lg animate-slideUp"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Modal Header */}
@@ -6615,7 +7491,7 @@ const startPracticeMode = async () => {
                 <div className="flex items-center gap-4 text-sm opacity-90">
                   <span>📅 {new Date(selectedSession.date).toLocaleDateString()}</span>
                   <span>🕐 {new Date(selectedSession.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                  <span>⭐ Score: {(selectedSession.feedback?.overall || selectedSession.feedback?.match_percentage / 10).toFixed(1)}/10</span>
+                  <span><Star className="w-4 h-4 inline" /> Score: {(selectedSession.feedback?.overall || selectedSession.feedback?.match_percentage / 10).toFixed(1)}/10</span>
                 </div>
               </div>
               <button 
@@ -6632,7 +7508,7 @@ const startPracticeMode = async () => {
             {/* Your Answer */}
             <div className="bg-gradient-to-br from-teal-50 to-sky-50 rounded-xl p-6 border-2 border-teal-200">
               <h4 className="font-bold text-lg mb-3 text-teal-900 flex items-center gap-2">
-                <span className="text-2xl">💬</span>
+                <MessageCircle className="w-6 h-6 text-teal-600" />
                 Your Answer
               </h4>
               <p className="text-gray-800 leading-relaxed whitespace-pre-line">
@@ -6644,7 +7520,7 @@ const startPracticeMode = async () => {
             {selectedSession.feedback?.ideal_answer && (
               <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border-2 border-green-200">
                 <h4 className="font-bold text-lg mb-3 text-green-900 flex items-center gap-2">
-                  <span className="text-2xl">⭐</span>
+                  <Star className="w-6 h-6 text-green-600" />
                   Example Strong Answer
                 </h4>
                 <p className="text-gray-800 leading-relaxed">
@@ -6657,7 +7533,7 @@ const startPracticeMode = async () => {
             {selectedSession.feedback?.strengths && selectedSession.feedback.strengths.length > 0 && (
               <div className="bg-green-50 rounded-xl p-6 border-2 border-green-200">
                 <h4 className="font-bold text-lg mb-4 text-green-900 flex items-center gap-2">
-                  <span className="text-2xl">✅</span>
+                  <CheckCircle className="w-6 h-6 text-green-600" />
                   Strengths ({selectedSession.feedback.strengths.length})
                 </h4>
                 <div className="space-y-3">
@@ -6677,7 +7553,7 @@ const startPracticeMode = async () => {
             {selectedSession.feedback?.gaps && selectedSession.feedback.gaps.length > 0 && (
               <div className="bg-amber-50 rounded-xl p-6 border-2 border-amber-200">
                 <h4 className="font-bold text-lg mb-4 text-amber-900 flex items-center gap-2">
-                  <span className="text-2xl">📈</span>
+                  <TrendingUp className="w-6 h-6 text-amber-600" />
                   Growth Areas ({selectedSession.feedback.gaps.length})
                 </h4>
                 <div className="space-y-3">
@@ -6697,7 +7573,7 @@ const startPracticeMode = async () => {
             {selectedSession.feedback?.specific_improvements && selectedSession.feedback.specific_improvements.length > 0 && (
               <div className="bg-teal-50 rounded-xl p-6 border-2 border-teal-200">
                 <h4 className="font-bold text-lg mb-4 text-teal-900 flex items-center gap-2">
-                  <span className="text-2xl">🎯</span>
+                  <Target className="w-5 h-5 text-teal-600" />
                   Action Steps ({selectedSession.feedback.specific_improvements.length})
                 </h4>
                 <div className="space-y-3">
@@ -6728,12 +7604,12 @@ const startPracticeMode = async () => {
     )}
 
     {/* Overall Progress Timeline */}
-    <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
-      <h3 className="text-2xl font-bold mb-6">📈 Overall Progress Timeline</h3>
+    <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
+      <h3 className="text-2xl font-bold mb-6"><TrendingUp className="w-6 h-6 inline" /> Overall Progress Timeline</h3>
       
       {practiceHistory.length === 0 ? (
         <div className="text-center py-16 bg-gradient-to-br from-teal-50 to-sky-50 rounded-xl border-2 border-dashed border-teal-200">
-          <div className="text-6xl mb-4">📊</div>
+          <div className="mb-4"><BarChart2 className="w-16 h-16 inline text-teal-400" /></div>
           <h4 className="text-2xl font-bold text-gray-900 mb-2">No Practice Data Yet</h4>
           <p className="text-gray-600 mb-6">Complete some practice sessions to see your progress!</p>
           <button 
@@ -6844,7 +7720,7 @@ const startPracticeMode = async () => {
                   </svg>
                 </div>
                 {validSessions.length > 10 && (
-                  <p className="text-xs text-gray-500 text-center mt-2">💡 Scroll horizontally to see all {validSessions.length} data points →</p>
+                  <p className="text-xs text-gray-500 text-center mt-2">Scroll horizontally to see all {validSessions.length} data points</p>
                 )}
               </div>
             );
@@ -6903,8 +7779,8 @@ const startPracticeMode = async () => {
     </div>
 
     {/* Question-by-Question Progress */}
-    <div className="bg-white rounded-2xl shadow-lg p-8">
-      <h3 className="text-2xl font-bold mb-6">📊 Question-by-Question Progress</h3>
+    <div className="bg-white rounded-xl shadow-lg p-8">
+      <h3 className="text-2xl font-bold mb-6"><BarChart2 className="w-6 h-6 inline" /> Question-by-Question Progress</h3>
       
       {(() => {
         // Build question stats from practice history
@@ -6963,8 +7839,8 @@ const startPracticeMode = async () => {
                     <div className="flex-1">
                       <h4 className="font-bold text-base md:text-lg mb-2">{qStat.question}</h4>
                       <div className="flex gap-4 text-sm text-gray-600">
-                        <span>📊 {qStat.sessions.length} attempts</span>
-                        <span>⭐ {average.toFixed(1)} avg</span>
+                        <span><BarChart2 className="w-3 h-3 inline" /> {qStat.sessions.length} attempts</span>
+                        <span><Star className="w-3 h-3 inline" /> {average.toFixed(1)} avg</span>
                         {trend !== 0 && (
                           <span className={trend > 0 ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
                             {trend > 0 ? '↗' : '↘'} {Math.abs(trend).toFixed(1)}
@@ -7068,7 +7944,7 @@ const startPracticeMode = async () => {
                   
                   <details className="mt-4 pt-4 border-t">
                     <summary className="cursor-pointer text-sm font-bold text-teal-600">
-                      📋 View {qStat.sessions.length} attempts →
+                      <ClipboardList className="w-4 h-4 inline" /> View {qStat.sessions.length} attempts
                     </summary>
                     <div className="mt-4 space-y-2">
                       {qStat.sessions.slice().reverse().map((session, sIdx) => {
@@ -7119,7 +7995,7 @@ const startPracticeMode = async () => {
                   className="w-full bg-gradient-to-br from-teal-50 via-sky-50 to-emerald-50 rounded-xl p-4 border-2 border-teal-300 hover:border-teal-400 transition flex items-center justify-between"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="text-3xl">✨</div>
+                    <div><Sparkles className="w-8 h-8 text-teal-500" /></div>
                     <div className="text-left">
                       <h3 className="text-lg font-bold text-gray-900">AI Question Generator</h3>
                       <p className="text-sm text-gray-600">Generate personalized interview questions</p>
@@ -7181,7 +8057,7 @@ const startPracticeMode = async () => {
                               
                               if (!error && data) {
                                 setQuestions([...questions, data]);
-                                alert('✅ Question added to bank!');
+                                alert('Question added to bank!');
                                 setAiGeneratorCollapsed(true); // Collapse after adding
                               }
                             }
@@ -7206,26 +8082,70 @@ const startPracticeMode = async () => {
                         <div className="bg-teal-50 rounded-lg p-4 mb-6 max-w-sm mx-auto">
                           <p className="text-sm font-semibold text-teal-900 mb-2">💎 Pro Benefits:</p>
                           <ul className="text-sm text-left text-teal-800 space-y-1">
-                            <li>✨ <strong>UNLIMITED</strong> Question Generator</li>
-                            <li>✨ <strong>UNLIMITED</strong> AI Interviewer</li>
-                            <li>✨ <strong>UNLIMITED</strong> Practice Mode</li>
-                            <li>✨ <strong>UNLIMITED</strong> Answer Assistant</li>
-                            <li>✨ <strong>UNLIMITED</strong> Live Prompter</li>
+                            <li><CheckCircle className="w-4 h-4 inline text-teal-500" /> <strong>UNLIMITED</strong> Question Generator</li>
+                            <li><CheckCircle className="w-4 h-4 inline text-teal-500" /> <strong>UNLIMITED</strong> AI Interviewer</li>
+                            <li><CheckCircle className="w-4 h-4 inline text-teal-500" /> <strong>UNLIMITED</strong> Practice Mode</li>
+                            <li><CheckCircle className="w-4 h-4 inline text-teal-500" /> <strong>UNLIMITED</strong> Answer Assistant</li>
+                            <li><CheckCircle className="w-4 h-4 inline text-teal-500" /> <strong>UNLIMITED</strong> Practice Prompter</li>
                           </ul>
                         </div>
                         <button
                           onClick={() => setShowPricingPage(true)}
                           className="bg-gradient-to-r from-teal-600 to-sky-600 text-white px-10 py-4 rounded-lg font-bold text-lg hover:from-teal-700 hover:to-sky-700 shadow-lg transform hover:scale-105 transition"
                         >
-                          Upgrade to Pro - $29.99/month
+                          Get 30-Day Pass — $14.99
                         </button>
                       </div>
                     )}
                   </div>
                 )}
               </div>
+
+              {/* Job Focus Manager — AI-curated favorites for target role */}
+              <JobFocusManager
+                questions={questions}
+                getUserContext={getUserContext}
+                userId={currentUser?.id}
+                onFavoritesUpdated={(data) => {
+                  setCachedFavorites(data);
+                  if (data) {
+                    setFocusModeActive(true);
+                    setFocusMode(currentUser?.id, true);
+                  } else {
+                    setFocusModeActive(false);
+                    setFocusMode(currentUser?.id, false);
+                  }
+                }}
+              />
+
+              {/* Focus Mode Toggle — only shown when favorites exist */}
+              {currentUser && cachedFavorites && (
+                <div className="mb-4 flex items-center justify-between bg-indigo-50 rounded-lg px-4 py-3 border border-indigo-200">
+                  <div>
+                    <span className="text-sm font-semibold text-indigo-800"><Target className="w-4 h-4 inline" /> Focus Mode</span>
+                    <p className="text-xs text-indigo-600">
+                      {focusModeActive ? 'Practicing only job-relevant questions' : 'Practicing all questions'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const newState = !focusModeActive;
+                      setFocusModeActive(newState);
+                      setFocusMode(currentUser?.id, newState);
+                    }}
+                    className={`relative w-12 h-7 rounded-full transition-colors ${
+                      focusModeActive ? 'bg-indigo-600' : 'bg-gray-300'
+                    }`}
+                  >
+                    <div className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform ${
+                      focusModeActive ? 'translate-x-5' : 'translate-x-0.5'
+                    }`} />
+                  </button>
+                </div>
+              )}
+
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 mb-5 sm:mb-6">
-                <button onClick={() => setEditingQuestion({ question: '', keywords: [], category: 'Core Narrative', priority: 'Must-Know', bullets: [''], narrative: '', followups: [] })} className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all active:scale-[0.98] text-sm sm:text-base">
+                <button onClick={() => setEditingQuestion({ question: '', keywords: [], category: 'Core Narrative', priority: 'Must-Know', bullets: [''], narrative: '', followups: [] })} className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl flex items-center justify-center gap-2 shadow-md hover:shadow-md transition-all active:scale-[0.98] text-sm sm:text-base">
                   <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                   Add Question
                 </button>
@@ -7242,7 +8162,7 @@ const startPracticeMode = async () => {
               </div>
 
               <div className="flex flex-wrap gap-2 mb-5 sm:mb-6">
-                <button onClick={() => { const input = document.createElement('input'); input.type = 'file'; input.accept = '.json'; input.onchange = (e) => { const file = e.target.files[0]; const reader = new FileReader(); reader.onload = (event) => importQuestions(event.target.result); reader.readAsText(file); }; input.click(); }} className="px-3 sm:px-4 py-2 sm:py-2.5 bg-slate-100 hover:bg-slate-200 rounded-lg font-medium flex items-center gap-1.5 sm:gap-2 text-slate-700 transition-all active:scale-[0.98] text-sm">
+                <button onClick={() => { const input = document.createElement('input'); input.type = 'file'; input.accept = '.json,.txt,.csv'; input.onchange = (e) => { const file = e.target.files[0]; const reader = new FileReader(); reader.onload = (event) => importQuestions(event.target.result); reader.readAsText(file); }; input.click(); }} className="px-3 sm:px-4 py-2 sm:py-2.5 bg-slate-100 hover:bg-slate-200 rounded-lg font-medium flex items-center gap-1.5 sm:gap-2 text-slate-700 transition-all active:scale-[0.98] text-sm">
                   <Upload className="w-4 h-4" />
                   Import
                 </button>
@@ -7252,11 +8172,12 @@ const startPracticeMode = async () => {
                 </button>
                 <button onClick={() => setShowTemplateLibrary(true)} className="px-3 sm:px-4 py-2 sm:py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-semibold flex items-center gap-1.5 sm:gap-2 shadow-sm hover:shadow-md transition-all active:scale-[0.98] text-sm">
                   <BookOpen className="w-4 h-4" />
-                  Templates
+                  Question Catalog
                 </button>
                 {showTemplateLibrary && (
                   <TemplateLibrary
                     onClose={() => setShowTemplateLibrary(false)}
+                    existingQuestions={questions}
                     onOpenAICoach={handleOpenAICoachFromTemplate}
                     checkUsageLimit={checkAIUsageLimit}
                     onImport={async (importedQuestions) => {
@@ -7308,9 +8229,9 @@ const startPracticeMode = async () => {
                         // FIXED: Show accurate count with duplicate info
                         const skipped = importedQuestions.length - newQuestions.length;
                         if (skipped > 0) {
-                          alert(`✅ Imported ${newQuestions.length} new question(s)!\n\n(${skipped} duplicate(s) skipped)`);
+                          alert(`Imported ${newQuestions.length} new question(s)!\n\n(${skipped} duplicate(s) skipped)`);
                         } else {
-                          alert(`✅ Imported ${newQuestions.length} template question(s)!`);
+                          alert(`Imported ${newQuestions.length} template question(s)!`);
                         }
                       } catch (error) {
                         console.error('Error importing:', error);
@@ -7323,7 +8244,7 @@ const startPracticeMode = async () => {
               
               {editingQuestion && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-                  <div className="bg-white rounded-2xl p-6 max-w-3xl w-full my-8">
+                  <div className="bg-white rounded-xl p-6 max-w-3xl w-full my-8">
                     <div className="flex items-center justify-between mb-6">
                       <h3 className="text-2xl font-bold">{editingQuestion.id ? 'Edit' : 'Add'} Question</h3>
                       <button onClick={() => setEditingQuestion(null)} className="text-gray-500 hover:text-gray-700">
@@ -7357,7 +8278,7 @@ const startPracticeMode = async () => {
                         </div>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-2">Keywords (for Live Prompter matching)</label>
+                        <label className="block text-sm font-medium mb-2">Keywords (for Practice Prompter matching)</label>
                         <textarea value={editingQuestion.keywords?.join(', ') || ''} onChange={(e) => setEditingQuestion({ ...editingQuestion, keywords: e.target.value.split(',').map(k => k.trim()) })} className="w-full px-4 py-2 border rounded-lg h-20" placeholder="tell me about yourself, background, introduce yourself" />
                       </div>
                       <div>
@@ -7395,6 +8316,9 @@ const startPracticeMode = async () => {
                         <div className="flex gap-2 mb-2">
                           <span className={`px-2 py-1 rounded text-xs font-semibold ${q.priority === 'Must-Know' ? 'bg-red-100 text-red-800' : q.priority === 'Technical' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'}`}>{q.priority}</span>
                           <span className="px-2 py-1 bg-gray-100 rounded text-xs">{q.category}</span>
+                          {focusModeActive && cachedFavorites?.questionIds?.includes(q.id) && (
+                            <span className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs font-semibold"><Target className="w-3 h-3 inline" /> Focus</span>
+                          )}
                         </div>
                         <h3 className="text-xl font-bold mb-2">{q.question}</h3>
                         {q.bullets.length > 0 && (
@@ -7404,8 +8328,8 @@ const startPracticeMode = async () => {
                         )}
                         {q.practiceCount > 0 && (
                           <div className="flex gap-4 text-sm text-gray-600 mt-4">
-                            <span>📊 Practiced: {q.practiceCount}x</span>
-                            <span>⭐ Avg: {q.averageScore.toFixed(1)}/10</span>
+                            <span><BarChart2 className="w-3 h-3 inline" /> Practiced: {q.practiceCount}x</span>
+                            <span><Star className="w-3 h-3 inline" /> Avg: {q.averageScore.toFixed(1)}/10</span>
                           </div>
                         )}
                       </div>
@@ -7494,6 +8418,20 @@ const startPracticeMode = async () => {
   // SETTINGS
   if (currentView === 'settings') {
     return (
+      <SettingsPage
+        user={currentUser}
+        userData={{ user: currentUser, tier: userTier }}
+        supabase={supabase}
+        onBack={() => setCurrentView('home')}
+        onNavigate={(view) => setCurrentView(view)}
+        onOpenPricing={() => setShowPricingPage(true)}
+      />
+    );
+  }
+
+  // LEGACY SETTINGS (replaced by SettingsPage component above)
+  if (false) {
+    return (
       <div className="min-h-screen bg-gray-50">
         <div className="bg-white shadow-sm border-b">
           <div className="container mx-auto px-4 py-4">
@@ -7504,6 +8442,12 @@ const startPracticeMode = async () => {
         </div>
         <div className="max-w-2xl mx-auto px-4 py-8">
           <h1 className="text-2xl font-bold mb-6">Settings</h1>
+
+          {/* Account */}
+          <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200 mb-4">
+            <h3 className="text-sm font-semibold text-navy-700 mb-2">Account</h3>
+            <p className="text-xs text-slate-500">{user?.email || 'Not signed in'}</p>
+          </div>
 
           <div className="bg-white rounded-xl shadow-sm p-5 mb-4">
             <h2 className="text-lg font-semibold mb-3 text-gray-800">App Information</h2>
@@ -7535,6 +8479,61 @@ const startPracticeMode = async () => {
               </span>
               <ChevronRight className="w-4 h-4 text-gray-400" />
             </button>
+            {isNativeApp() && (
+              <div className="mt-2">
+                <button
+                  onClick={async () => {
+                    if (!user?.id) return;
+                    // Show restoring state inline
+                    const btn = document.getElementById('restore-purchases-btn');
+                    const msg = document.getElementById('restore-purchases-msg');
+                    if (btn) btn.textContent = 'Restoring...';
+                    if (btn) btn.disabled = true;
+                    if (msg) msg.textContent = '';
+                    try {
+                      const { restorePurchases } = await import('./utils/nativePurchases');
+                      const result = await restorePurchases(user.id);
+                      if (result.restored) {
+                        if (msg) msg.textContent = 'Purchases restored successfully!';
+                        if (msg) msg.className = 'text-center text-xs text-green-600 mt-1';
+                        setTimeout(() => window.location.reload(), 1500);
+                      } else {
+                        if (msg) msg.textContent = result.error || 'No active purchases found.';
+                        if (msg) msg.className = 'text-center text-xs text-slate-500 mt-1';
+                      }
+                    } catch (err) {
+                      if (msg) msg.textContent = 'Unable to restore. Please contact support@interviewanswers.ai';
+                      if (msg) msg.className = 'text-center text-xs text-red-500 mt-1';
+                    }
+                    if (btn) btn.textContent = 'Restore Purchases';
+                    if (btn) btn.disabled = false;
+                  }}
+                  id="restore-purchases-btn"
+                  className="w-full text-center text-sm text-blue-600 hover:text-blue-800 py-2"
+                >
+                  Restore Purchases
+                </button>
+                <p id="restore-purchases-msg" className="text-center text-xs text-slate-500 mt-1"></p>
+              </div>
+            )}
+          </div>
+
+          {/* AI Data Sharing */}
+          <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200 mb-4">
+            <h3 className="text-sm font-semibold text-navy-700 mb-2">AI Data Sharing</h3>
+            <p className="text-xs text-slate-500 mb-3">
+              Your interview practice responses are sent to Anthropic's Claude AI service for personalized coaching feedback. Audio is transcribed on your device — only text is sent.
+            </p>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-slate-700">AI-powered coaching enabled</span>
+              <div className="text-xs text-emerald-600 font-medium bg-emerald-50 px-2 py-1 rounded-full">Active</div>
+            </div>
+            <p className="text-xs text-slate-400 mt-2">
+              To revoke consent, contact support@interviewanswers.ai. AI features require this data sharing to function.
+            </p>
+            <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline mt-1 block">
+              Anthropic Privacy Policy →
+            </a>
           </div>
 
           <div className="bg-white rounded-xl shadow-sm p-5 mb-4">
@@ -7567,6 +8566,55 @@ const startPracticeMode = async () => {
               <span className="font-medium text-gray-700">Need help? Contact us</span>
               <Mail className="w-4 h-4 text-gray-400" />
             </a>
+          </div>
+
+          {/* Reset Progress — for new job prep */}
+          <div className="bg-white rounded-xl shadow-sm p-5 mb-4">
+            <h2 className="text-lg font-semibold mb-3 text-gray-800">Progress Reset</h2>
+            <p className="text-sm text-gray-600 mb-3">
+              Preparing for a new job? Reset your scores, streaks, and session history
+              while keeping your question bank and saved answers.
+            </p>
+            <button
+              onClick={async () => {
+                if (window.confirm(
+                  'Reset Practice Progress?\n\n' +
+                  'This will reset:\n' +
+                  '• All practice scores and session history\n' +
+                  '• Streaks and learning progress\n' +
+                  '• Coach chat history\n\n' +
+                  'This will KEEP:\n' +
+                  '• Your question bank\n' +
+                  '• Your saved answers\n' +
+                  '• Your subscription\n\n' +
+                  'This cannot be undone.'
+                )) {
+                  try {
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (!user) { alert('Please sign in first.'); return; }
+                    const result = await resetAllProgress(user.id);
+                    if (result.success) {
+                      setPracticeHistory([]);
+                      setSessionCount(0);
+                      await loadQuestions(); // Refresh stats (practiceCount/averageScore reset)
+                      alert('Progress reset! Your questions and answers are still here. Fresh start!');
+                    } else {
+                      alert('⚠️ Progress partially reset. Some operations may have failed.\n\n' + (result.errors || []).join('\n'));
+                    }
+                  } catch (error) {
+                    console.error('Reset error:', error);
+                    alert('❌ Reset failed: ' + error.message);
+                  }
+                }
+              }}
+              className="w-full flex justify-between items-center py-3 px-3 bg-amber-50 hover:bg-amber-100 border-2 border-amber-300 rounded-lg text-sm transition-all"
+            >
+              <span className="font-medium text-amber-800"><RotateCcw className="w-4 h-4 inline" /> Reset Progress for New Job</span>
+              <ChevronRight className="w-4 h-4 text-amber-500" />
+            </button>
+            <p className="text-xs text-gray-500 mt-2">
+              Keeps your question bank and saved answers intact.
+            </p>
           </div>
 
           <div className="bg-white rounded-xl shadow-sm p-5 mb-4">
@@ -7622,12 +8670,19 @@ const startPracticeMode = async () => {
                         } catch (err) {
                           console.warn('⚠️ user_profiles reset failed/timeout:', err.message);
                         }
+
+                        // Attempt to delete the Supabase auth account
+                        try {
+                          await supabase.rpc('delete_user');
+                        } catch (e) {
+                          console.log('Account deletion via RPC not available, signing out instead');
+                        }
                       }
-                      
+
                       // Clear ALL localStorage (including consent so user starts fresh)
                       localStorage.clear();
                       
-                      alert('✅ All data deleted. You will be signed out.');
+                      alert('All data deleted. You will be signed out.');
                       
                       // Sign out user completely with timeout
                       try {
@@ -7652,12 +8707,25 @@ const startPracticeMode = async () => {
               }}
               className="w-full bg-red-50 hover:bg-red-100 border-2 border-red-400 text-red-700 font-bold py-3 px-4 rounded-lg text-sm"
             >
-              🗑️ Delete All My Data
+              <Trash2 className="w-4 h-4 inline" /> Delete All My Data
             </button>
             
             <p className="text-xs text-gray-500 mt-2">
               Permanently deletes everything. <strong>Cannot be undone.</strong>
             </p>
+          </div>
+
+          {/* Sign Out */}
+          <div className="mb-4">
+            <button
+              onClick={async () => {
+                await supabase.auth.signOut();
+                window.location.href = '/login';
+              }}
+              className="w-full py-3 rounded-xl text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 transition-all"
+            >
+              Sign Out
+            </button>
           </div>
 
           <div className="bg-white rounded-xl shadow-sm p-5">
@@ -7701,8 +8769,8 @@ const startPracticeMode = async () => {
         <div className="max-w-3xl mx-auto px-4 py-12">
           <h1 className="text-3xl font-bold mb-8">Privacy Policy</h1>
           <div className="prose prose-gray max-w-none">
-            <p className="text-sm text-gray-600 mb-6">Last updated: January 12, 2026</p>
-            
+            <p className="text-sm text-gray-600 mb-6">Last updated: April 5, 2026</p>
+
             <p className="mb-6 text-gray-700 leading-relaxed">
               InterviewAnswers.ai is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and protect your personal information.
             </p>
@@ -7723,7 +8791,7 @@ const startPracticeMode = async () => {
               <li>Authenticate your account and enable access across devices</li>
               <li>Generate AI-powered feedback on your interview responses</li>
               <li>Track your progress and improvement over time</li>
-              <li>Improve our AI models and service features</li>
+              <li>Improve our service features and user experience</li>
               <li>Send service-related communications and product updates</li>
               <li>Provide customer support when requested</li>
             </ul>
@@ -7740,9 +8808,19 @@ const startPracticeMode = async () => {
             <p className="mb-4 text-gray-700">We use the following third-party services:</p>
             <ul className="list-disc pl-6 mb-6 space-y-2 text-gray-700">
               <li><strong>Supabase:</strong> Database and authentication services</li>
-              <li><strong>OpenAI:</strong> AI-powered feedback generation</li>
-              <li><strong>Web Speech API:</strong> Browser-based speech recognition (no data sent to external servers)</li>
+              <li><strong>Anthropic (Claude API):</strong> AI-powered interview coaching and feedback generation</li>
+              <li><strong>Stripe:</strong> Payment processing for subscriptions</li>
+              <li><strong>Web Speech API:</strong> On-device speech recognition (no audio sent to external servers)</li>
             </ul>
+
+            <h3 className="text-xl font-semibold mt-6 mb-3">AI Data Processing — Anthropic (Claude)</h3>
+            <p className="mb-4 text-gray-700">
+              Your practice responses (text only) are sent to Anthropic's Claude AI to generate personalized coaching feedback.
+              No personal identifiers (email, password, payment info) are included in AI requests. Audio is transcribed on your
+              device — only the text transcript is sent for analysis. Anthropic processes your data in accordance with their Privacy Policy ({' '}
+              <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener noreferrer" className="text-teal-600 underline">anthropic.com/privacy</a>
+              ) and provides protection of user data consistent with the standards described in this Privacy Policy. Anthropic does not use data submitted via its API to train or improve its AI models.
+            </p>
             <p className="mb-6 text-gray-700">
               We do not sell, rent, or share your personal information with third parties for their marketing purposes.
             </p>
@@ -7757,8 +8835,9 @@ const startPracticeMode = async () => {
             
             <h3 className="text-xl font-semibold mt-6 mb-3">Recording Consent and Legal Compliance</h3>
             <p className="mb-4 text-gray-700">
-              <strong>Important:</strong> If you use InterviewAnswers.ai's Live Prompter feature during actual interviews with other people, 
-              you are solely responsible for obtaining consent from all parties being recorded and complying with 
+              <strong>Important:</strong> Practice Prompter is designed for rehearsal sessions, not live interviews with other people.
+              If despite our guidance you choose to use any audio feature during a live conversation with another party,
+              you are solely responsible for obtaining consent from all parties being recorded and complying with
               applicable recording laws. Many jurisdictions require all-party consent before recording conversations.
             </p>
             <p className="mb-4 text-gray-700">
@@ -7789,7 +8868,7 @@ const startPracticeMode = async () => {
               <li>Right to non-discrimination for exercising your privacy rights</li>
             </ul>
             <p className="mb-6 text-gray-700">
-              To exercise these rights, use the Delete Data function in Settings or contact us at YOUR_EMAIL@example.com
+              To exercise these rights, use the Delete Data function in Settings or contact us at support@interviewanswers.ai
             </p>
             
             <h2 className="text-2xl font-semibold mt-8 mb-4">Data Retention</h2>
@@ -7818,8 +8897,7 @@ const startPracticeMode = async () => {
             <p className="mb-4 text-gray-700">
               If you have questions about this Privacy Policy or wish to exercise your privacy rights, please contact us:
             </p>
-            <p className="mb-2 text-gray-700">Email: YOUR_EMAIL@example.com</p>
-            <p className="text-sm text-gray-500 italic">Please replace with your actual email address</p>
+            <p className="mb-2 text-gray-700">Email: support@interviewanswers.ai</p>
           </div>
         </div>
       </div>
@@ -7840,7 +8918,7 @@ const startPracticeMode = async () => {
         <div className="max-w-3xl mx-auto px-4 py-12">
           <h1 className="text-3xl font-bold mb-8">Terms of Service</h1>
           <div className="prose prose-gray max-w-none">
-            <p className="text-sm text-gray-600 mb-6">Last updated: January 12, 2026</p>
+            <p className="text-sm text-gray-600 mb-6">Last updated: April 5, 2026</p>
             
             <h2 className="text-2xl font-semibold mt-8 mb-4">1. Acceptance of Terms</h2>
             <p className="mb-6 text-gray-700">
@@ -7872,8 +8950,8 @@ const startPracticeMode = async () => {
               User Responsibility for Recording Consent:
             </p>
             <p className="mb-4 text-gray-700">
-              If you use InterviewAnswers.ai's Live Prompter feature or any recording functionality during actual interviews 
-              or conversations with other people, you are solely responsible for:
+              Practice Prompter is designed for rehearsal, not live interviews. If despite our guidance you use any recording
+              functionality during a live conversation with another party, you are solely responsible for:
             </p>
             <ul className="list-disc pl-6 mb-4 space-y-2 text-gray-700">
               <li>Obtaining explicit consent from all parties before recording</li>
@@ -8033,42 +9111,18 @@ const startPracticeMode = async () => {
       )}
 
       {/* ==========================================
-          PRICING PAGE MODAL - FIXED SCROLL
+          PRICING PAGE MODAL — GeneralPricing (pass-based)
+          Replaces old PricingPage (Pro $29.99/mo subscription)
           ========================================== */}
       {showPricingPage && (
-        <div
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[9999] overflow-y-auto"
-          onClick={() => { setShowPricingPage(false); const r = sessionStorage.getItem('upgradeReturnTo'); if (r) { sessionStorage.removeItem('upgradeReturnTo'); window.location.href = r; } }}
-        >
-          {/* Close button - FIXED to viewport, always visible */}
-          <button
-            onClick={() => { setShowPricingPage(false); const r = sessionStorage.getItem('upgradeReturnTo'); if (r) { sessionStorage.removeItem('upgradeReturnTo'); window.location.href = r; } }}
-            className="fixed top-4 right-4 text-white hover:text-gray-300 z-[10000] bg-black/50 rounded-full p-2 backdrop-blur-sm"
-          >
-            <X className="w-8 h-8" />
-          </button>
-          
-          {/* Content wrapper - allows scrolling */}
-          <div 
-            className="min-h-screen w-full py-16 px-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <PricingPage
-              currentTier={userTier}
-              user={currentUser}
-              userEmail={currentUser?.email}
-              onSelectTier={(tier) => {
-                if (tier === 'free') {
-                  setShowPricingPage(false);
-                  const r = sessionStorage.getItem('upgradeReturnTo'); if (r) { sessionStorage.removeItem('upgradeReturnTo'); window.location.href = r; }
-                  return;
-                }
-                // Stripe checkout is now handled by StripeCheckout component
-                console.log('User selected tier:', tier);
-              }}
-            />
-          </div>
-        </div>
+        <GeneralPricing
+          userData={{ user: currentUser, tier: userTier }}
+          onClose={() => {
+            setShowPricingPage(false);
+            const r = sessionStorage.getItem('upgradeReturnTo');
+            if (r) { sessionStorage.removeItem('upgradeReturnTo'); window.location.href = r; }
+          }}
+        />
       )}
 
       {/* ==========================================
@@ -8081,6 +9135,7 @@ const startPracticeMode = async () => {
             onClick={(e) => e.stopPropagation()}
           >
             <TemplateLibrary
+              existingQuestions={questions}
               onClose={() => {
                 console.log('🔵 Closing Template Library modal');
                 setShowTemplateLibrary(false);
@@ -8136,9 +9191,9 @@ const startPracticeMode = async () => {
                   // FIXED: Show accurate count with duplicate info
                   const skipped = importedQuestions.length - newQuestions.length;
                   if (skipped > 0) {
-                    alert(`✅ Imported ${newQuestions.length} new question(s)!\n\n(${skipped} duplicate(s) skipped)`);
+                    alert(`Imported ${newQuestions.length} new question(s)!\n\n(${skipped} duplicate(s) skipped)`);
                   } else {
-                    alert(`✅ Imported ${newQuestions.length} template question(s)!`);
+                    alert(`Imported ${newQuestions.length} template question(s)!`);
                   }
                 } catch (error) {
                   console.error('Error importing:', error);
@@ -8154,6 +9209,66 @@ const startPracticeMode = async () => {
           PASSWORD RESET MODAL
           ========================================== */}
       {/* REMOVED: PASSWORD RESET MODAL - Now handled in ProtectedRoute.jsx */}
+
+      {/* Interview Format Selection Modal */}
+      <InterviewFormatModal
+        isOpen={showFormatModal}
+        onClose={() => setShowFormatModal(false)}
+        onStart={(format, seed) => handleFormatSelected(format, seed)}
+      />
+
+      {/* Curated Interviews Screen (shown after format pick) */}
+      <CuratedInterviewsScreen
+        isOpen={showCuratedInterviews}
+        format={selectedFormat}
+        onBack={() => {
+          setShowCuratedInterviews(false);
+          setShowFormatModal(true); // go back to format picker
+        }}
+        onStart={(curated, seed) => handleCuratedInterviewSelected(curated, seed)}
+        sessionSeed={sessionSeed}
+      />
+
+      {/* Floating AI Coach Button + Popup Chat Panel */}
+      {currentView !== 'ai-interviewer' && !interviewSessionActive && currentUser && (
+        <>
+          {/* FAB toggle */}
+          {!showCoachPanel && (
+            <button
+              onClick={() => setShowCoachPanel(true)}
+              onTouchEnd={(e) => { e.preventDefault(); setShowCoachPanel(true); }}
+              className="fixed bottom-6 right-6 z-40 w-12 h-12 bg-slate-800 hover:bg-slate-900 rounded-full shadow-md flex items-center justify-center active:scale-95 transition-all duration-200"
+              aria-label="Open Interview Coach"
+            >
+              <MessageCircle className="w-5 h-5 text-white" />
+            </button>
+          )}
+
+          {/* Slide-up chat panel */}
+          {showCoachPanel && (
+            <div className="fixed inset-0 z-50 flex flex-col justify-end">
+              {/* Backdrop */}
+              <div
+                className="absolute inset-0 bg-black/30"
+                onClick={() => setShowCoachPanel(false)}
+                onTouchEnd={(e) => { e.preventDefault(); setShowCoachPanel(false); }}
+              />
+              {/* Panel */}
+              <div className="relative bg-white rounded-t-2xl shadow-2xl flex flex-col" style={{ height: 'min(85vh, 680px)', maxHeight: '85vh' }}>
+                <AIInterviewCoach
+                  user={currentUser}
+                  userData={{ user: currentUser, tier: userTier, usage: usageStats }}
+                  questions={questions}
+                  practiceHistory={practiceHistory}
+                  userContextData={getUserContext()}
+                  onClose={() => setShowCoachPanel(false)}
+                  isPanel={true}
+                />
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </>
   ); {/* Close fragment that contains dialogs + views */}
 }; // Close ISL component
@@ -8166,9 +9281,20 @@ import AuthPage from './Components/AuthPage';
 const LandingPage = lazy(() => import('./Components/Landing/LandingPage'));
 const TermsPage = lazy(() => import('./Components/Landing/TermsPage'));
 const PrivacyPage = lazy(() => import('./Components/Landing/PrivacyPage'));
-const NursingTrackApp = lazy(() => import('./Components/NursingTrack/NursingTrackApp'));
-const NursingLandingPage = lazy(() => import('./Components/NursingTrack/NursingLandingPage'));
+const EthicsPage = lazy(() => import('./Components/Landing/EthicsPage'));
+const NursingTrackApp = showNursingFeatures() ? lazy(() => import('./Components/NursingTrack/NursingTrackApp')) : () => null;
+const NursingLandingPage = showNursingFeatures() ? lazy(() => import('./Components/NursingTrack/NursingLandingPage')) : () => null;
 const ArchetypeOnboarding = lazy(() => import('./Components/Onboarding/ArchetypeOnboarding'));
+const STARMethodGuidePage = lazy(() => import('./Components/Landing/STARMethodGuidePage'));
+const BehavioralInterviewQuestionsPage = lazy(() => import('./Components/Landing/BehavioralInterviewQuestionsPage'));
+const MockInterviewPracticePage = lazy(() => import('./Components/Landing/MockInterviewPracticePage'));
+const TellMeAboutYourselfPage = lazy(() => import('./Components/Landing/TellMeAboutYourselfPage'));
+const InterviewQuestionsPage = lazy(() => import('./Components/Landing/InterviewQuestionsPage'));
+const InterviewCoachingLessonsPage = lazy(() => import('./Components/Landing/InterviewCoachingLessonsPage'));
+const InterviewPrepPodcastPage = lazy(() => import('./Components/Landing/InterviewPrepPodcastPage'));
+const NursingInterviewQuestionsPage = showNursingFeatures() ? lazy(() => import('./Components/Landing/NursingInterviewQuestionsPage')) : () => null;
+const AuthConfirm = lazy(() => import('./Components/AuthConfirm'));
+const OAuthCallback = lazy(() => import('./Components/OAuthCallback'));
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-sky-50 flex items-center justify-center">
@@ -8183,14 +9309,44 @@ function App() {
   return (
     <Suspense fallback={<LoadingFallback />}>
       <Routes>
-        <Route path="/" element={<LandingPage />} />
+        {/* Root route: web → landing page, general iOS → /app, nursing iOS → /nursing */}
+        <Route path="/" element={
+          getAppTarget() === 'nursing' ? <Navigate to="/nursing" replace /> :
+          isTargetedBuild() ? <Navigate to="/app" replace /> :
+          <LandingPage />
+        } />
         <Route path="/login" element={<AuthPage mode="login" />} />
         <Route path="/signup" element={<AuthPage mode="signup" />} />
+        <Route path="/auth/confirm" element={<AuthConfirm />} />
+        <Route path="/auth/callback" element={<OAuthCallback />} />
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
-        <Route path="/app" element={<ProtectedRoute><ISL /></ProtectedRoute>} />
-        <Route path="/nursing" element={<ProtectedRoute><NursingTrackApp /></ProtectedRoute>} />
-        <Route path="/nurse" element={<NursingLandingPage />} />
+        <Route path="/ethics" element={<EthicsPage />} />
+
+        {/* General app: available in 'all' and 'general' builds */}
+        {showGeneralFeatures() ? (
+          <Route path="/app" element={<ProtectedRoute><ISL /></ProtectedRoute>} />
+        ) : (
+          <Route path="/app" element={<Navigate to="/nursing" replace />} />
+        )}
+
+        {/* Specialty routes: only registered when the specialty track is enabled. */}
+        {showNursingFeatures() && (
+          <>
+            <Route path="/nursing" element={<ProtectedRoute><NursingTrackApp /></ProtectedRoute>} />
+            <Route path="/nurse" element={getAppTarget() === 'nursing' ? <Navigate to="/nursing" replace /> : <NursingLandingPage />} />
+            <Route path="/nursing-interview-questions" element={<NursingInterviewQuestionsPage />} />
+          </>
+        )}
+
+        {/* SEO content pages: available in all builds */}
+        <Route path="/star-method-guide" element={<STARMethodGuidePage />} />
+        <Route path="/behavioral-interview-questions" element={<BehavioralInterviewQuestionsPage />} />
+        <Route path="/mock-interview-practice" element={<MockInterviewPracticePage />} />
+        <Route path="/tell-me-about-yourself" element={<TellMeAboutYourselfPage />} />
+        <Route path="/interview-questions-and-answers" element={<InterviewQuestionsPage />} />
+        <Route path="/interview-coaching-lessons" element={<InterviewCoachingLessonsPage />} />
+        <Route path="/interview-prep-podcast" element={<InterviewPrepPodcastPage />} />
         <Route path="/onboarding" element={<ArchetypeOnboarding />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

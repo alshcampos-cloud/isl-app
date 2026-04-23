@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1080">
+<title>Instagram Carousel — Slide 2</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    width: 1080px; height: 1080px; overflow: hidden;
+    background: #0f0f23;
+    color: #fff;
+    display: flex; flex-direction: column;
+    position: relative;
+    padding: 60px;
+  }
+  body::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(13,148,136,0.06) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 40px; z-index: 1;
+  }
+  .slide-num {
+    font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.4);
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+  .topic-badge {
+    font-size: 14px; font-weight: 700; color: #0D9488;
+    background: rgba(13,148,136,0.12);
+    padding: 8px 16px; border-radius: 8px;
+    border: 1px solid rgba(13,148,136,0.2);
+  }
+  .question-bubble {
+    background: rgba(13,148,136,0.1);
+    border: 1px solid rgba(13,148,136,0.2);
+    border-radius: 20px; padding: 28px 34px;
+    margin-bottom: 40px; z-index: 1;
+  }
+  .q-label {
+    font-size: 12px; font-weight: 700; color: #0D9488;
+    text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;
+  }
+  .q-text {
+    font-size: 28px; font-weight: 800; line-height: 1.3;
+    letter-spacing: -0.5px;
+  }
+  .answers { flex: 1; display: flex; flex-direction: column; gap: 24px; z-index: 1; }
+  .answer-block {
+    border-radius: 18px; padding: 28px 32px;
+    position: relative;
+  }
+  .bad {
+    background: rgba(239,68,68,0.06);
+    border: 1.5px solid rgba(239,68,68,0.2);
+  }
+  .good {
+    background: rgba(34,197,94,0.06);
+    border: 1.5px solid rgba(34,197,94,0.25);
+  }
+  .answer-label {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 14px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.8px; margin-bottom: 14px;
+  }
+  .bad .answer-label { color: #ef4444; }
+  .good .answer-label { color: #22c55e; }
+  .icon-circle {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 900;
+  }
+  .bad .icon-circle { background: rgba(239,68,68,0.15); color: #ef4444; }
+  .good .icon-circle { background: rgba(34,197,94,0.15); color: #22c55e; }
+  .answer-text {
+    font-size: 18px; line-height: 1.6;
+  }
+  .bad .answer-text {
+    color: rgba(255,255,255,0.45);
+    text-decoration: line-through;
+    text-decoration-color: rgba(239,68,68,0.4);
+  }
+  .good .answer-text {
+    color: rgba(255,255,255,0.9);
+  }
+  .good .answer-text .placeholder {
+    color: #0D9488; font-weight: 600;
+    background: rgba(13,148,136,0.1);
+    padding: 2px 6px; border-radius: 4px;
+  }
+  .strikethrough-line {
+    position: absolute; top: 50%; left: 24px; right: 24px;
+    height: 2px; background: rgba(239,68,68,0.3);
+    transform: rotate(-1deg);
+  }
+  .footer {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 32px; z-index: 1;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+  .footer-left {
+    font-size: 15px; font-weight: 600; color: rgba(255,255,255,0.4);
+  }
+  .footer-left .handle { color: #0D9488; }
+  .footer-right {
+    font-size: 14px; color: rgba(255,255,255,0.3);
+  }
+  .swipe-arrow {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: #0D9488; font-weight: 600; font-size: 14px;
+  }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div class="slide-num">Slide 2 of 7</div>
+    <div class="topic-badge">The Classic Opener</div>
+  </div>
+
+  <div class="question-bubble">
+    <div class="q-label">Interviewer asks:</div>
+    <div class="q-text">"Tell me about yourself."</div>
+  </div>
+
+  <div class="answers">
+    <div class="answer-block bad">
+      <div class="answer-label"><div class="icon-circle">&times;</div> Don't say this</div>
+      <div class="answer-text">
+        "Well, I graduated in 2024 and I've been looking for jobs since then. I really like this company and thought I'd apply. I'm a hard worker and a team player..."
+      </div>
+    </div>
+
+    <div class="answer-block good">
+      <div class="answer-label"><div class="icon-circle">&check;</div> Say this instead</div>
+      <div class="answer-text">
+        "I'm a <span class="placeholder">[role]</span> with <span class="placeholder">[X years]</span> specializing in <span class="placeholder">[Y]</span>. Most recently, I <span class="placeholder">[key achievement]</span>. I'm excited about this role because <span class="placeholder">[specific connection to company]</span>."
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="footer-left"><span class="handle">@interviewanswers.ai</span> &bull; Save this!</div>
+    <div class="footer-right">
+      <span class="swipe-arrow">Next question &rarr;</span>
+    </div>
+  </div>
+</body>
+</html>

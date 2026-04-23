@@ -33,12 +33,15 @@ supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_YOUR_WEBHOOK_SECRET_HERE
 
 Add these in Vercel Dashboard → Project Settings → Environment Variables:
 
-| Variable | Value | Environment |
-|----------|-------|-------------|
-| VITE_STRIPE_PUBLISHABLE_KEY | pk_test_... | Preview, Production |
-| VITE_STRIPE_PRO_PRICE_ID | price_... | Preview, Production |
-| VITE_SUPABASE_URL | https://... | Preview, Production |
-| VITE_SUPABASE_ANON_KEY | sb_... | Preview, Production |
+| Variable | Value | Environment | Status |
+|----------|-------|-------------|--------|
+| VITE_STRIPE_PUBLISHABLE_KEY | pk_live_... | Preview, Production | ✅ Set |
+| VITE_STRIPE_PRO_PRICE_ID | price_... (legacy Pro $29.99/mo) | Preview, Production | ✅ Set |
+| VITE_STRIPE_NURSING_PASS_PRICE_ID | price_... (Nursing 30-day $19.99) | Preview, Production | ⬜ Needs Step 4+5 |
+| VITE_STRIPE_GENERAL_PASS_PRICE_ID | price_... (General 30-day $14.99) | Preview, Production | ⬜ Needs Step 4+5 |
+| VITE_STRIPE_ANNUAL_PRICE_ID | price_... (Annual $149.99/yr) | Preview, Production | ⬜ Needs Step 4+5 |
+| VITE_SUPABASE_URL | https://... | Preview, Production | ✅ Set |
+| VITE_SUPABASE_ANON_KEY | sb_... | Preview, Production | ✅ Set |
 
 ---
 
@@ -69,12 +72,79 @@ Add these in Vercel Dashboard → Project Settings → Environment Variables:
    - ☐ Switch plans (optional - we only have one paid plan)
 4. Save changes
 
-### Step 3: Verify Product & Price
+### Step 3: Verify Product & Price (Legacy Pro)
 
 1. Go to: https://dashboard.stripe.com/products
 2. Verify "InterviewAnswers.ai Pro" exists
 3. Verify price is $29.99/month recurring
 4. Copy Price ID if different from what's in .env.local
+
+### Step 4: Create Pass-Based Products (P2 — February 2026)
+
+Create these 3 new products in Stripe Dashboard → Products → Add product:
+
+**Product 1: Nursing Interview Pro — 30-Day Pass**
+- Name: `Nursing Interview Pro — 30-Day Pass`
+- Description: `30 days of unlimited nursing interview practice including mock interviews, SBAR drills, AI coaching, and all 70 questions.`
+- Price: `$19.99` — One time
+- Copy the `price_xxx` ID → this becomes `VITE_STRIPE_NURSING_PASS_PRICE_ID`
+
+**Product 2: General Interview Prep — 30-Day Pass**
+- Name: `General Interview Prep — 30-Day Pass`
+- Description: `30 days of unlimited general interview practice including mock interviews, STAR coaching, AI feedback, and practice mode.`
+- Price: `$14.99` — One time
+- Copy the `price_xxx` ID → this becomes `VITE_STRIPE_GENERAL_PASS_PRICE_ID`
+
+**Product 3: Annual All-Access**
+- Name: `InterviewAnswers.ai Annual All-Access`
+- Description: `Full year of unlimited access to both Nursing and General interview prep. All features, all modes, priority support.`
+- Price: `$149.99` — Recurring / Yearly
+- Copy the `price_xxx` ID → this becomes `VITE_STRIPE_ANNUAL_PRICE_ID`
+
+### Step 5: Add New Vercel Env Vars
+
+After creating the 3 products above, add their price IDs to Vercel:
+
+```bash
+cd ~/Downloads/isl-complete
+
+# Use printf (NOT echo) to avoid trailing newline — Battle Scar!
+printf 'price_xxx' | npx vercel env add VITE_STRIPE_NURSING_PASS_PRICE_ID production
+printf 'price_xxx' | npx vercel env add VITE_STRIPE_NURSING_PASS_PRICE_ID preview
+printf 'price_xxx' | npx vercel env add VITE_STRIPE_GENERAL_PASS_PRICE_ID production
+printf 'price_xxx' | npx vercel env add VITE_STRIPE_GENERAL_PASS_PRICE_ID preview
+printf 'price_xxx' | npx vercel env add VITE_STRIPE_ANNUAL_PRICE_ID production
+printf 'price_xxx' | npx vercel env add VITE_STRIPE_ANNUAL_PRICE_ID preview
+```
+
+Replace `price_xxx` with the actual price IDs from Step 4.
+
+### Step 6: Add charge.refunded Webhook Event
+
+1. Go to: https://dashboard.stripe.com/webhooks
+2. Click on your existing endpoint (`https://tzrlpwtkrtvjpdhcaayu.supabase.co/functions/v1/stripe-webhook`)
+3. Click "Update details" or the pencil icon
+4. Add this event to the existing list:
+   - ☑️ charge.refunded
+5. Save changes
+
+The updated webhook should now listen for these events:
+   - ☑️ checkout.session.completed
+   - ☑️ customer.subscription.updated
+   - ☑️ customer.subscription.deleted
+   - ☑️ invoice.payment_succeeded
+   - ☑️ invoice.payment_failed
+   - ☑️ **charge.refunded** (NEW)
+
+### Step 7: Deploy Frontend
+
+```bash
+# Option A: Vercel CLI
+npx vercel deploy --prod
+
+# Option B: Git push (triggers auto-deploy)
+git add -A && git commit -m "P2: Pass-based pricing + product separation" && git push
+```
 
 ---
 
@@ -151,6 +221,34 @@ supabase functions list
 1. In Stripe Dashboard, cancel the test subscription
 2. Verify webhook `customer.subscription.deleted` is sent
 3. Verify `user_profiles.tier = 'free'` in database
+
+### Test 6: Nursing 30-Day Pass Purchase
+
+1. Go to `/nursing` → select specialty → dashboard
+2. Click any "Get Nursing Pass" button (or use pricing modal)
+3. Verify NursingPricing modal opens with 2 options
+4. Click "Get 30-Day Pass" ($19.99)
+5. Complete checkout with test card
+6. Verify redirect to `/nursing?purchase=success&pass=nursing_30day`
+7. Verify `user_profiles.nursing_pass_expires` is set to 30 days from now
+8. Verify `resolveEffectiveTier()` returns `nursing_pass`
+9. Verify all nursing features are unlocked (unlimited badge, no credit limits)
+
+### Test 7: Annual All-Access Purchase
+
+1. Open NursingPricing modal
+2. Click "Get Annual All-Access" ($149.99)
+3. Complete checkout
+4. Verify `user_profiles.tier = 'annual'` and `subscription_status = 'active'`
+5. Verify BOTH nursing and general features are unlocked
+6. Verify 30-Day Pass button shows "Included in Annual"
+
+### Test 8: Pass Expiry & Extension
+
+1. Manually set `nursing_pass_expires` to a past date in Supabase
+2. Verify user is treated as `free` tier (pass expired)
+3. Purchase another 30-day pass
+4. Verify `nursing_pass_expires` is extended from current date (not from old expiry)
 
 ---
 

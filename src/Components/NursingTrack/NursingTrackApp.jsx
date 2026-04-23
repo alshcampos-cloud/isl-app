@@ -6,10 +6,13 @@
 //
 // ⚠️ D.R.A.F.T. Protocol: This is a NEW file. No existing code modified.
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
-import { isBetaUser, getUsageStats } from '../../utils/creditSystem';
+import { isBetaUser, getUsageStats, resolveEffectiveTier, hasActiveNursingPass } from '../../utils/creditSystem';
+import { showGeneralFeatures } from '../../utils/appTarget';
+import FirstTimeConsent from '../FirstTimeConsent';
+import NursingTutorial from './NursingTutorial';
 import { fetchSessionHistory, insertPracticeSession } from './nursingSupabase';
 import SpecialtySelection from './SpecialtySelection';
 import NursingDashboard from './NursingDashboard';
@@ -22,6 +25,10 @@ import NursingAICoach from './NursingAICoach';
 import NursingResources from './NursingResources';
 import NursingConfidenceBuilder from './NursingConfidenceBuilder';
 import NursingOfferCoach from './NursingOfferCoach';
+import NursingPricing from './NursingPricing';
+import { isIOS, isNativeApp } from '../../utils/platform';
+import { Browser } from '@capacitor/browser';
+import { trackPurchase } from '../../utils/googleAdsTracking';
 
 // Internal view states for the nursing track
 const VIEWS = {
@@ -40,6 +47,18 @@ const VIEWS = {
 
 export default function NursingTrackApp() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Track whether we're verifying a recent Stripe purchase
+  const [verifyingPurchase, setVerifyingPurchase] = useState(
+    searchParams.get('purchase') === 'success'
+  );
+  // Track whether terms have been accepted (to trigger re-render after FirstTimeConsent)
+  const [termsJustAccepted, setTermsJustAccepted] = useState(false);
+  // Show nursing tutorial for first-time users (after terms accepted)
+  const [showNursingTutorial, setShowNursingTutorial] = useState(
+    !localStorage.getItem('nursing_tutorial_seen')
+  );
 
   // Track internal view state
   const [currentView, setCurrentView] = useState(VIEWS.SPECIALTY_SELECTION);
@@ -96,14 +115,44 @@ export default function NursingTrackApp() {
         const user = session.user;
         const userId = user.id;
 
-        // Fetch profile (name, tier) and beta status in parallel
+        // Fetch profile (name, tier, pass expiry) and beta status in parallel
         const [profileResult, betaResult] = await Promise.all([
-          supabase.from('user_profiles').select('tier').eq('user_id', userId).maybeSingle(),
+          supabase.from('user_profiles').select('tier, subscription_status, nursing_pass_expires, general_pass_expires, premium_trial_ends, accepted_terms').eq('user_id', userId).maybeSingle(),
           isBetaUser(supabase, userId),
         ]);
 
-        const profile = profileResult.data;
-        const tier = betaResult ? 'beta' : (profile?.tier || 'free');
+        let profile = profileResult.data;
+
+        // ── Profile creation fallback ──────────────────────────────
+        // If no profile exists yet (nursing users who never visited /app),
+        // create one. Mirrors App.jsx line 1002-1013 pattern.
+        if (!profile) {
+          console.log('NursingTrackApp: No profile found, creating one...');
+          const { data: newProfile, error: insertErr } = await supabase
+            .from('user_profiles')
+            .insert({ user_id: userId, tier: 'free', onboarding_field: 'nursing' })
+            .select('tier, subscription_status, nursing_pass_expires, general_pass_expires, premium_trial_ends, accepted_terms')
+            .single();
+          if (!insertErr && newProfile) {
+            profile = newProfile;
+            console.log('NursingTrackApp: Profile created successfully');
+          } else if (insertErr?.code === '23505') {
+            // Duplicate key — profile was created between our check and insert (race condition)
+            // Re-fetch it
+            const { data: refetch } = await supabase
+              .from('user_profiles')
+              .select('tier, subscription_status, nursing_pass_expires, general_pass_expires, premium_trial_ends, accepted_terms')
+              .eq('user_id', userId)
+              .maybeSingle();
+            profile = refetch;
+            console.log('NursingTrackApp: Profile already existed (race), re-fetched');
+          } else {
+            console.error('NursingTrackApp: Profile creation failed:', insertErr);
+          }
+        }
+
+        // Use resolveEffectiveTier to determine active tier from pass expiry + beta + legacy
+        const tier = resolveEffectiveTier(profile, betaResult);
 
         // Now fetch usage stats with resolved tier
         const usageStats = await getUsageStats(supabase, userId, tier);
@@ -114,7 +163,9 @@ export default function NursingTrackApp() {
             tier,
             isBeta: betaResult,
             usage: usageStats,
-            displayName: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Nurse',
+            displayName: user.email?.split('@')[0] || 'Nurse',
+            nursingPassExpires: profile?.nursing_pass_expires || null,
+            generalPassExpires: profile?.general_pass_expires || null,
             loading: false,
           });
         }
@@ -128,7 +179,84 @@ export default function NursingTrackApp() {
 
     loadUserData();
     return () => { cancelled = true; };
-  }, []);
+  }, [termsJustAccepted]); // Re-run when terms are accepted (profile may have been created/updated)
+
+  // ── Post-payment verification polling ────────────────────────
+  // When Stripe redirects back with ?purchase=success, the webhook may not have
+  // fired yet. Poll the profile until nursing_pass_expires appears.
+  useEffect(() => {
+    if (!verifyingPurchase || !userData.user || userData.loading) return;
+
+    // Pass type → price mapping for Google Ads conversion tracking
+    const passAmounts = { nursing_30day: 19.99, annual_all_access: 149.99 };
+    const purchasedPass = searchParams.get('pass');
+
+    // If tier is already set (webhook was fast), just clear the flag
+    if (userData.tier === 'nursing_pass' || userData.tier === 'annual' || userData.tier === 'beta' || userData.tier === 'pro') {
+      console.log('NursingTrackApp: Payment already verified, tier =', userData.tier);
+      // Google Ads purchase conversion
+      trackPurchase(passAmounts[purchasedPass] || 19.99, 'nursing_pass_purchase');
+      setVerifyingPurchase(false);
+      // Clean up URL params
+      searchParams.delete('purchase');
+      searchParams.delete('pass');
+      setSearchParams(searchParams, { replace: true });
+      return;
+    }
+
+    let attempts = 0;
+    const maxAttempts = 15; // 15 * 2s = 30 seconds max
+    const pollInterval = setInterval(async () => {
+      attempts++;
+      console.log(`NursingTrackApp: Polling for payment verification (attempt ${attempts}/${maxAttempts})...`);
+
+      try {
+        const { data: freshProfile } = await supabase
+          .from('user_profiles')
+          .select('nursing_pass_expires, general_pass_expires, tier')
+          .eq('user_id', userData.user.id)
+          .maybeSingle();
+
+        const freshTier = resolveEffectiveTier(freshProfile);
+
+        if (freshTier !== 'free') {
+          console.log('NursingTrackApp: Payment verified! Tier =', freshTier);
+          // Google Ads purchase conversion
+          trackPurchase(passAmounts[purchasedPass] || 19.99, 'nursing_pass_purchase');
+          clearInterval(pollInterval);
+          setVerifyingPurchase(false);
+          // Clean up URL params
+          searchParams.delete('purchase');
+          searchParams.delete('pass');
+          setSearchParams(searchParams, { replace: true });
+          // Reload full user data with new tier
+          const usageStats = await getUsageStats(supabase, userData.user.id, freshTier);
+          setUserData(prev => ({
+            ...prev,
+            tier: freshTier,
+            usage: usageStats,
+            nursingPassExpires: freshProfile?.nursing_pass_expires || null,
+            generalPassExpires: freshProfile?.general_pass_expires || null,
+          }));
+          return;
+        }
+      } catch (err) {
+        console.warn('NursingTrackApp: Poll error:', err);
+      }
+
+      if (attempts >= maxAttempts) {
+        console.log('NursingTrackApp: Payment verification timeout. Showing refresh prompt.');
+        clearInterval(pollInterval);
+        setVerifyingPurchase(false);
+        // Clean up URL params
+        searchParams.delete('purchase');
+        searchParams.delete('pass');
+        setSearchParams(searchParams, { replace: true });
+      }
+    }, 2000);
+
+    return () => clearInterval(pollInterval);
+  }, [verifyingPurchase, userData.user, userData.loading, userData.tier]);
 
   // Load session history from Supabase once user data is available
   useEffect(() => {
@@ -216,15 +344,20 @@ export default function NursingTrackApp() {
     setTargetQuestionId(null);
   }, []);
 
-  const handleBackToApp = useCallback(() => {
-    // Navigate back to the main InterviewAnswers.AI app
-    navigate('/app');
-  }, [navigate]);
+  // "Back to App" hidden on web — each track is standalone
+  const handleBackToApp = null;
 
   // ============================================================
   // PRO GATE — blocks free users from premium modes
   // ============================================================
-  const isProUser = userData?.isBeta || userData?.tier === 'pro' || userData?.tier === 'beta';
+  // User has nursing access if: beta, nursing_pass, annual, or legacy pro
+  const isProUser = userData?.isBeta || userData?.tier === 'nursing_pass' || userData?.tier === 'annual' || userData?.tier === 'pro' || userData?.tier === 'beta';
+
+  // State for showing the in-app pricing modal
+  const [showPricing, setShowPricing] = useState(false);
+
+  // Detect if running inside iOS native app
+  const isIOSNative = isIOS() && isNativeApp();
 
   const ProGateScreen = ({ modeName, modeIcon, onBack }) => (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-sky-950 to-slate-900 flex items-center justify-center p-4">
@@ -232,16 +365,28 @@ export default function NursingTrackApp() {
         <div className="bg-white/5 border border-white/10 rounded-2xl p-8">
           <div className="text-4xl mb-4">{modeIcon}</div>
           <h2 className="text-white text-xl font-bold mb-2">{modeName}</h2>
-          <p className="text-slate-400 text-sm mb-1">This is a Pro feature.</p>
+          <p className="text-slate-400 text-sm mb-1">This feature requires a Nursing Pass.</p>
           <p className="text-slate-500 text-xs mb-6">
-            Upgrade to get unlimited access to {modeName}, plus all other nursing interview tools.
+            Get unlimited access to {modeName}, plus all other nursing interview tools.
           </p>
-          <a
-            href="/app?upgrade=true&returnTo=/nursing"
-            className="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-500 text-white font-medium px-6 py-3 rounded-xl transition-colors text-sm mb-4"
-          >
-            Upgrade to Pro — $29.99/mo
-          </a>
+          {isIOSNative ? (
+            <button
+              onClick={async () => {
+                try { await Browser.open({ url: 'https://www.interviewanswers.ai/nursing' }); }
+                catch { setShowPricing(true); }
+              }}
+              className="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-500 text-white font-medium px-6 py-3 rounded-xl transition-colors text-sm mb-4"
+            >
+              Purchase on Website — $19.99
+            </button>
+          ) : (
+            <button
+              onClick={() => setShowPricing(true)}
+              className="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-500 text-white font-medium px-6 py-3 rounded-xl transition-colors text-sm mb-4"
+            >
+              Get Nursing Pass — $19.99
+            </button>
+          )}
           <div>
             <button
               onClick={onBack}
@@ -280,6 +425,7 @@ export default function NursingTrackApp() {
             userData={userData}
             sessionHistory={sessionHistory}
             streakRefreshTrigger={streakRefreshTrigger}
+            onShowPricing={() => setShowPricing(true)}
           />
         );
 
@@ -292,6 +438,7 @@ export default function NursingTrackApp() {
             refreshUsage={refreshUsage}
             addSession={addSession}
             triggerStreakRefresh={triggerStreakRefresh}
+            onShowPricing={() => setShowPricing(true)}
           />
         );
 
@@ -305,6 +452,7 @@ export default function NursingTrackApp() {
             addSession={addSession}
             startQuestionId={targetQuestionId}
             triggerStreakRefresh={triggerStreakRefresh}
+            onShowPricing={() => setShowPricing(true)}
           />
         );
 
@@ -317,6 +465,7 @@ export default function NursingTrackApp() {
             refreshUsage={refreshUsage}
             addSession={addSession}
             triggerStreakRefresh={triggerStreakRefresh}
+            onShowPricing={() => setShowPricing(true)}
           />
         );
 
@@ -337,6 +486,7 @@ export default function NursingTrackApp() {
             onStartMode={handleStartMode}
             sessionHistory={sessionHistory}
             userData={userData}
+            onShowPricing={() => setShowPricing(true)}
           />
         );
 
@@ -350,6 +500,7 @@ export default function NursingTrackApp() {
             refreshUsage={refreshUsage}
             addSession={addSession}
             triggerStreakRefresh={triggerStreakRefresh}
+            onShowPricing={() => setShowPricing(true)}
           />
         );
 
@@ -361,13 +512,14 @@ export default function NursingTrackApp() {
         );
 
       case VIEWS.CONFIDENCE:
-        if (!isProUser) return <ProGateScreen modeName="Confidence Builder" modeIcon="💪" onBack={handleBackToDashboard} />;
+        // Confidence Builder: Profile + Evidence + Reset are FREE; only AI Brief is gated by credits
         return (
           <NursingConfidenceBuilder
             specialty={selectedSpecialty}
             onBack={handleBackToDashboard}
             userData={userData}
             refreshUsage={refreshUsage}
+            onShowPricing={() => setShowPricing(true)}
           />
         );
 
@@ -380,6 +532,8 @@ export default function NursingTrackApp() {
             userData={userData}
             refreshUsage={refreshUsage}
             addSession={addSession}
+            triggerStreakRefresh={triggerStreakRefresh}
+            onShowPricing={() => setShowPricing(true)}
           />
         );
 
@@ -393,5 +547,68 @@ export default function NursingTrackApp() {
     }
   };
 
-  return <div className="nursing-track">{renderView()}</div>;
+  // ── Loading screen while user data initializes ───────────
+  // FIX: Guideline 2.1(a) — App must not appear unresponsive after login.
+  // Without this, renderView() fires with null userData on iPad (slower networks),
+  // causing blank/broken screen that looks "unresponsive" to Apple reviewers.
+  if (userData.loading) {
+    return (
+      <div className="nursing-track">
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-sky-950 to-slate-900 flex items-center justify-center p-4">
+          <div className="text-center">
+            <div className="w-12 h-12 border-4 border-sky-200 border-t-sky-500 rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-slate-300 text-lg">Loading your dashboard...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Payment verification loading screen ───────────────────
+  if (verifyingPurchase) {
+    return (
+      <div className="nursing-track">
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-sky-950 to-slate-900 flex items-center justify-center p-4">
+          <div className="max-w-md w-full text-center">
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-8">
+              <div className="w-12 h-12 border-4 border-sky-200 border-t-sky-500 rounded-full animate-spin mx-auto mb-4"></div>
+              <h2 className="text-white text-xl font-bold mb-2">Verifying your purchase...</h2>
+              <p className="text-slate-400 text-sm">This usually takes just a few seconds.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="nursing-track">
+      {/* Terms & Privacy acceptance — blocks UI until accepted */}
+      {userData.user && (
+        <FirstTimeConsent
+          user={userData.user}
+          onAccepted={() => {
+            console.log('NursingTrackApp: Terms accepted, refreshing user data');
+            setTermsJustAccepted(prev => !prev); // Toggle to trigger loadUserData re-run
+          }}
+          onAlreadyAccepted={() => {
+            // No action needed — terms already accepted
+          }}
+        />
+      )}
+      {/* Nursing tutorial — shows once for first-time nursing users */}
+      {showNursingTutorial && (
+        <NursingTutorial
+          onComplete={() => setShowNursingTutorial(false)}
+        />
+      )}
+      {renderView()}
+      {showPricing && (
+        <NursingPricing
+          userData={userData}
+          onClose={() => setShowPricing(false)}
+        />
+      )}
+    </div>
+  );
 }

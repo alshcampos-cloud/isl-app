@@ -6,8 +6,10 @@
 // ⚠️ D.R.A.F.T. Protocol: NEW file. No existing code modified.
 // All links are to free, publicly available resources.
 
+import { useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, ExternalLink, BookOpen, Stethoscope, Shield, FileText, Globe, Award } from 'lucide-react';
+import { ArrowLeft, ExternalLink, BookOpen, Stethoscope, Shield, FileText, Globe, Award, Link2 } from 'lucide-react';
+import { CLINICAL_FRAMEWORKS } from './nursingQuestions';
 
 const RESOURCE_CATEGORIES = [
   {
@@ -160,6 +162,11 @@ const RESOURCE_CATEGORIES = [
 ];
 
 export default function NursingResources({ onBack }) {
+  // Scroll to top when component mounts (fixes staying at dashboard scroll position)
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-sky-950 to-slate-900">
       {/* Header */}
@@ -205,6 +212,46 @@ export default function NursingResources({ onBack }) {
               </span>
             </p>
           </div>
+        </motion.div>
+
+        {/* Clinical Frameworks Referenced — Apple Guideline 1.4.1 */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="mb-10 bg-white/5 border border-white/10 rounded-2xl p-6"
+        >
+          <h2 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
+            <Link2 className="w-5 h-5 text-sky-400" />
+            Clinical Frameworks Referenced in This App
+          </h2>
+          <p className="text-slate-400 text-xs mb-4">
+            All interview questions and coaching are grounded in these published nursing frameworks.
+            Content reviewed by licensed healthcare professionals.
+          </p>
+          <div className="space-y-3">
+            {Object.values(CLINICAL_FRAMEWORKS).map((fw) => (
+              <div key={fw.name} className="flex items-start gap-3 group">
+                <div className="w-1.5 h-1.5 rounded-full bg-sky-400 mt-2 flex-shrink-0" />
+                <div className="flex-1">
+                  {fw.url ? (
+                    <a href={fw.url} target="_blank" rel="noopener noreferrer"
+                       className="text-sky-300 hover:text-sky-200 text-sm font-medium underline transition-colors">
+                      {fw.name}
+                    </a>
+                  ) : (
+                    <span className="text-white text-sm font-medium">{fw.name}</span>
+                  )}
+                  <p className="text-slate-500 text-xs mt-0.5">{fw.source}</p>
+                  <p className="text-slate-600 text-xs">{fw.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-slate-600 text-xs mt-4 italic">
+            NurseAnswerPro is not affiliated with NCSBN, ANA, IHI, AHA, or any listed organization.
+            Framework names are referenced for educational context under nominative fair use.
+          </p>
         </motion.div>
 
         {/* Resource Categories */}
@@ -258,7 +305,7 @@ export default function NursingResources({ onBack }) {
         {/* Bottom note */}
         <div className="mt-12 mb-8 text-center">
           <p className="text-slate-500 text-xs">
-            All resources are freely available to the public. NurseInterviewPro.ai is not
+            All resources are freely available to the public. NurseAnswerPro is not
             affiliated with the listed organizations. Links open in a new tab.
           </p>
         </div>

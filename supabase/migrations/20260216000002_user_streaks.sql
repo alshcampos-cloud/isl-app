@@ -1,6 +1,7 @@
 -- Phase 3, Unit 1: Streak Counter
 -- D.R.A.F.T. protocol: NEW table. No existing tables modified.
 -- RLS pattern matches nursing_user_profiles (auth.uid() = user_id)
+-- SAFE TO RE-RUN: All statements are idempotent.
 
 CREATE TABLE IF NOT EXISTS user_streaks (
   user_id UUID REFERENCES auth.users PRIMARY KEY,
@@ -15,6 +16,14 @@ CREATE TABLE IF NOT EXISTS user_streaks (
 
 -- Row Level Security — users can only see/modify their own streak
 ALTER TABLE user_streaks ENABLE ROW LEVEL SECURITY;
+
+-- Idempotent policy creation (DROP IF EXISTS + CREATE)
+DO $$
+BEGIN
+  DROP POLICY IF EXISTS "Users can view own streak" ON user_streaks;
+  DROP POLICY IF EXISTS "Users can insert own streak" ON user_streaks;
+  DROP POLICY IF EXISTS "Users can update own streak" ON user_streaks;
+END $$;
 
 CREATE POLICY "Users can view own streak"
   ON user_streaks FOR SELECT TO authenticated
@@ -31,6 +40,9 @@ CREATE POLICY "Users can update own streak"
 -- Auto-update updated_at on changes (reuse existing function if available)
 DO $$
 BEGIN
+  -- Drop existing trigger if it exists to make this idempotent
+  DROP TRIGGER IF EXISTS trg_user_streaks_updated_at ON user_streaks;
+
   -- Try to use existing trigger function from nursing track
   IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'update_nursing_updated_at') THEN
     CREATE TRIGGER trg_user_streaks_updated_at

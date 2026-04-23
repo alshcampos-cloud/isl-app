@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<title>Reddit Ad — Nursing</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    width: 1200px; height: 628px; overflow: hidden;
+    background: linear-gradient(135deg, #042f2e 0%, #0D9488 50%, #0f766e 100%);
+    color: #fff;
+    display: flex;
+    position: relative;
+  }
+  /* Medical cross pattern overlay */
+  body::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M24 0h12v24h24v12H36v24H24V36H0V24h24V0z' fill='%23ffffff' fill-opacity='0.03'/%3E%3C/svg%3E");
+    background-size: 60px 60px;
+    pointer-events: none;
+  }
+  body::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 30% 50%, rgba(255,255,255,0.06) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .left {
+    flex: 1; padding: 55px 50px; display: flex; flex-direction: column; justify-content: center; z-index: 1;
+  }
+  .logo-row {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 28px;
+  }
+  .logo-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: rgba(255,255,255,0.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .logo {
+    font-size: 15px; font-weight: 700; color: #fff;
+    letter-spacing: -0.3px;
+  }
+  .logo .sub { color: rgba(255,255,255,0.6); font-weight: 400; font-size: 13px; display: block; }
+  h1 {
+    font-size: 54px; font-weight: 900; line-height: 1.05; margin-bottom: 16px;
+    letter-spacing: -2px; color: #fff;
+    text-shadow: 0 2px 20px rgba(0,0,0,0.15);
+  }
+  .subtext {
+    font-size: 19px; color: rgba(255,255,255,0.85); line-height: 1.5; margin-bottom: 30px;
+    max-width: 440px;
+  }
+  .cta {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #fff; color: #0D9488;
+    font-size: 18px; font-weight: 800;
+    padding: 16px 32px; border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+    letter-spacing: -0.3px;
+    margin-bottom: 24px;
+  }
+  .trust {
+    display: flex; gap: 20px; font-size: 12.5px; color: rgba(255,255,255,0.7);
+    flex-wrap: wrap;
+  }
+  .trust span {
+    background: rgba(255,255,255,0.1);
+    padding: 6px 12px; border-radius: 20px;
+    backdrop-filter: blur(4px);
+  }
+  .right {
+    width: 510px; display: flex; align-items: center; justify-content: center;
+    padding: 40px 50px 40px 0; z-index: 1;
+  }
+  .chat-window {
+    width: 100%; background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 16px; overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    backdrop-filter: blur(10px);
+  }
+  .chat-header {
+    padding: 14px 20px;
+    background: rgba(0,0,0,0.15);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.8);
+  }
+  .pulse { width: 8px; height: 8px; border-radius: 50%; background: #34d399; box-shadow: 0 0 8px #34d399; }
+  .chat-body { padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+  .msg {
+    padding: 14px 18px; border-radius: 14px; font-size: 14px; line-height: 1.5;
+    max-width: 92%;
+  }
+  .msg.ai {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.9);
+    align-self: flex-start;
+  }
+  .msg.ai .label { font-size: 11px; font-weight: 700; color: #34d399; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .msg.user {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #fff;
+    align-self: flex-end;
+  }
+  .cursor {
+    display: inline-block; width: 2px; height: 15px; background: #34d399;
+    vertical-align: text-bottom; margin-left: 2px;
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+  .sbar-badges {
+    display: flex; gap: 6px; margin-top: 10px; align-self: flex-start;
+  }
+  .sbar-badge {
+    font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 6px;
+    background: rgba(52,211,153,0.15); color: #34d399;
+    border: 1px solid rgba(52,211,153,0.25);
+    letter-spacing: 0.5px;
+  }
+</style>
+</head>
+<body>
+  <div class="left">
+    <div class="logo-row">
+      <div class="logo-icon">+</div>
+      <div class="logo">NurseInterviewPro.ai<span class="sub">by InterviewAnswers.ai</span></div>
+    </div>
+    <h1>Nail Your<br>Nursing<br>Interview</h1>
+    <p class="subtext">SBAR coaching. Clinical scenarios. AI that gets nursing.</p>
+    <div class="cta">Practice Free &rarr; NurseInterviewPro.ai</div>
+    <div class="trust">
+      <span>70 curated questions</span>
+      <span>SBAR + STAR frameworks</span>
+      <span>Built with nurses</span>
+    </div>
+  </div>
+  <div class="right">
+    <div class="chat-window">
+      <div class="chat-header">
+        <div class="pulse"></div>
+        Nursing Mock Interview
+      </div>
+      <div class="chat-body">
+        <div class="msg ai">
+          <div class="label">Clinical Interviewer</div>
+          Walk me through how you'd assess a patient with sudden onset chest pain. What's your priority assessment?
+        </div>
+        <div class="msg user">
+          First, I'd follow my ABCs. Ensure the airway is patent, check breathing rate and O2 sat, then assess circulation &mdash; BP, heart rate, skin color...<span class="cursor"></span>
+        </div>
+        <div class="sbar-badges">
+          <span class="sbar-badge">S</span>
+          <span class="sbar-badge">B</span>
+          <span class="sbar-badge">A</span>
+          <span class="sbar-badge">R</span>
+          <span class="sbar-badge" style="background:rgba(251,191,36,0.15);color:#fbbf24;border-color:rgba(251,191,36,0.25);">Coaching</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

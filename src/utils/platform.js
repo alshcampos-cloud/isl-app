@@ -40,19 +40,12 @@ export function isWeb() {
 }
 
 /**
- * Get the payment method that should be used on the current platform
- * - Web → Stripe (existing flow)
- * - iOS → Apple In-App Purchase (required by App Store rules)
- * - Android → Google Play Billing (required by Play Store rules)
+ * Get the payment method that should be used on the current platform.
+ * iOS native uses Apple IAP (StoreKit 2 via @capgo/native-purchases).
+ * Web and Android use Stripe.
  */
 export function getPaymentProvider() {
-  const platform = getPlatform();
-  switch (platform) {
-    case 'ios':
-      return 'apple';
-    case 'android':
-      return 'google';
-    default:
-      return 'stripe';
-  }
+  if (isIOS() && isNativeApp()) return 'apple';
+  if (isAndroid() && isNativeApp()) return 'google';
+  return 'stripe';
 }

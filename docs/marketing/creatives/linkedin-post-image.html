@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<title>LinkedIn Post Image</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    width: 1200px; height: 627px; overflow: hidden;
+    background: #fff;
+    color: #1a1a2e;
+    display: flex;
+    position: relative;
+  }
+  .left-accent {
+    position: absolute; left: 0; top: 0; bottom: 0; width: 6px;
+    background: linear-gradient(180deg, #0D9488, #065f46);
+  }
+  .main {
+    flex: 1; padding: 56px 56px 56px 62px;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .top-row {
+    display: flex; align-items: flex-start; justify-content: space-between;
+  }
+  .author {
+    display: flex; align-items: center; gap: 16px;
+  }
+  .avatar {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: linear-gradient(135deg, #0D9488, #065f46);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 800; color: #fff;
+    flex-shrink: 0;
+  }
+  .author-info .name {
+    font-size: 17px; font-weight: 700; color: #1a1a2e;
+  }
+  .author-info .role {
+    font-size: 13px; color: #666; margin-top: 2px;
+  }
+  .badge {
+    font-size: 12px; font-weight: 600; color: #0D9488;
+    background: rgba(13,148,136,0.08);
+    padding: 6px 14px; border-radius: 6px;
+    border: 1px solid rgba(13,148,136,0.15);
+  }
+  h1 {
+    font-size: 46px; font-weight: 900; line-height: 1.1;
+    letter-spacing: -1.5px; color: #1a1a2e;
+    margin: 8px 0;
+  }
+  .subtitle {
+    font-size: 20px; color: #555; line-height: 1.5;
+    max-width: 520px;
+  }
+  .stats-row {
+    display: flex; gap: 40px;
+  }
+  .stat {
+    display: flex; flex-direction: column;
+  }
+  .stat-num {
+    font-size: 38px; font-weight: 900; color: #0D9488;
+    letter-spacing: -1px;
+  }
+  .stat-label {
+    font-size: 14px; color: #888; font-weight: 500; margin-top: 2px;
+  }
+  .bottom-row {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .company {
+    font-size: 13px; color: #999;
+  }
+  .company strong { color: #666; font-weight: 600; }
+  .url-tag {
+    font-size: 15px; font-weight: 700; color: #0D9488;
+    background: rgba(13,148,136,0.06);
+    padding: 10px 20px; border-radius: 8px;
+    border: 1px solid rgba(13,148,136,0.12);
+  }
+  /* Right side visual */
+  .right-panel {
+    width: 420px; background: linear-gradient(180deg, #f0fdf4 0%, #ecfdf5 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 40px;
+    position: relative;
+  }
+  .right-panel::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(circle at 50% 30%, rgba(13,148,136,0.08) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .app-mockup {
+    width: 280px;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04);
+    overflow: hidden;
+    z-index: 1;
+  }
+  .mock-header {
+    background: linear-gradient(135deg, #0D9488, #0f766e);
+    padding: 20px; color: #fff;
+  }
+  .mock-header .app-name { font-size: 12px; font-weight: 600; opacity: 0.8; }
+  .mock-header .app-title { font-size: 16px; font-weight: 800; margin-top: 4px; }
+  .mock-body { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .mock-tile {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px; border-radius: 10px;
+    background: #f8faf9;
+    border: 1px solid #e5e7eb;
+  }
+  .tile-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+  .tile-icon.teal { background: rgba(13,148,136,0.1); color: #0D9488; }
+  .tile-icon.blue { background: rgba(59,130,246,0.1); color: #3b82f6; }
+  .tile-icon.purple { background: rgba(139,92,246,0.1); color: #8b5cf6; }
+  .tile-icon.amber { background: rgba(245,158,11,0.1); color: #f59e0b; }
+  .tile-icon.rose { background: rgba(244,63,94,0.1); color: #f43f5e; }
+  .tile-text { font-size: 12px; font-weight: 600; color: #374151; }
+  .feature-tags {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; z-index: 1;
+  }
+  .f-tag {
+    font-size: 11px; font-weight: 600; color: #0D9488;
+    background: rgba(255,255,255,0.8);
+    padding: 6px 12px; border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+</style>
+</head>
+<body>
+  <div class="left-accent"></div>
+  <div class="main">
+    <div>
+      <div class="top-row">
+        <div class="author">
+          <div class="avatar">AC</div>
+          <div class="author-info">
+            <div class="name">Alex Campos</div>
+            <div class="role">Founder, InterviewAnswers.ai</div>
+          </div>
+        </div>
+        <div class="badge">Founder Story</div>
+      </div>
+    </div>
+
+    <div>
+      <h1>Why I Built an<br>AI Interview Coach</h1>
+      <div class="subtitle">The story of going from $0 to a live product with 5 AI-powered tools and real users.</div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat">
+        <div class="stat-num">34</div>
+        <div class="stat-label">Active users</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">5</div>
+        <div class="stat-label">AI tools built</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">$0</div>
+        <div class="stat-label">To launch</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">1</div>
+        <div class="stat-label">Engineer</div>
+      </div>
+    </div>
+
+    <div class="bottom-row">
+      <div class="company">Koda Labs LLC &bull; <strong>InterviewAnswers.ai</strong></div>
+      <div class="url-tag">interviewanswers.ai</div>
+    </div>
+  </div>
+
+  <div class="right-panel">
+    <div class="app-mockup">
+      <div class="mock-header">
+        <div class="app-name">InterviewAnswers.ai</div>
+        <div class="app-title">Your AI Coach</div>
+      </div>
+      <div class="mock-body">
+        <div class="mock-tile">
+          <div class="tile-icon teal">&#x1F399;</div>
+          <div class="tile-text">Mock Interviews</div>
+        </div>
+        <div class="mock-tile">
+          <div class="tile-icon blue">&#x1F4DD;</div>
+          <div class="tile-text">Practice Prompter</div>
+        </div>
+        <div class="mock-tile">
+          <div class="tile-icon purple">&#x2B50;</div>
+          <div class="tile-text">STAR Coaching</div>
+        </div>
+        <div class="mock-tile">
+          <div class="tile-icon amber">&#x1F4A1;</div>
+          <div class="tile-text">Practice Mode</div>
+        </div>
+        <div class="mock-tile">
+          <div class="tile-icon rose">&#x1F3AF;</div>
+          <div class="tile-text">Nursing Track</div>
+        </div>
+      </div>
+    </div>
+    <div class="feature-tags">
+      <div class="f-tag">React + Vite</div>
+      <div class="f-tag">Supabase</div>
+      <div class="f-tag">Claude AI</div>
+      <div class="f-tag">Stripe</div>
+    </div>
+  </div>
+</body>
+</html>

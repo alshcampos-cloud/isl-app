@@ -12,8 +12,8 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, Send, Loader2, Stethoscope, AlertCircle,
-  CheckCircle, XCircle, ChevronRight, Timer, TimerOff,
-  RotateCcw, Zap, BarChart3, Mic, MicOff
+  CheckCircle, XCircle, ChevronRight, ChevronDown, Timer, TimerOff,
+  RotateCcw, Zap, BarChart3, Mic, MicOff, User, BookOpen
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { getFrameworkDetails } from './nursingQuestions';
@@ -44,12 +44,21 @@ The scenario question is:
 "${question.question}"
 Category: ${question.category}${frameworkContext}${citationLine}
 
+CRITICAL PRE-CHECK (do this FIRST):
+Count the words in the candidate's response. If 3 or fewer words, gibberish, off-topic, or a non-answer like "I don't know", score ALL components 1/10. Keep feedback brief and encouraging: "Let's try again — walk through what's happening with the patient, the relevant history, your assessment, and your recommendation."
+
 The candidate just gave their SBAR-structured response. Score EACH component individually on a scale of 1-10:
 
 SITUATION (1-10): Did they clearly state what is happening RIGHT NOW with the patient? Specific, concise, no excessive background.
 BACKGROUND (1-10): Did they provide relevant clinical history, pertinent findings, and context that informs the current situation?
 ASSESSMENT (1-10): Did they share their clinical reasoning — what they believe is occurring and why?
 RECOMMENDATION (1-10): Did they state a clear recommendation, specific action taken or requested, with follow-up plan?
+
+SCORING ANCHORS (apply to each component):
+1-3/10 — Missing or a single vague sentence with no useful detail
+4-6/10 — Present but generic, lacks specificity or clinical grounding
+7-8/10 — Specific, relevant, well-structured for this component
+9-10/10 — Exceptional detail, natural delivery, ready for a real clinical handoff
 
 Give brief feedback (2-3 sentences per component). Label each section with S:, B:, A:, R: for parsing, but your coaching MUST follow this critical rule:
 
@@ -75,13 +84,61 @@ TONE: Constructive, encouraging, never patronizing.`;
 };
 
 const SBAR_COMPONENTS = [
-  { key: 'situation', label: 'S', fullLabel: 'Situation', color: 'sky', description: 'What is happening right now?' },
-  { key: 'background', label: 'B', fullLabel: 'Background', color: 'blue', description: 'Relevant history and context' },
-  { key: 'assessment', label: 'A', fullLabel: 'Assessment', color: 'cyan', description: 'Your clinical reasoning' },
-  { key: 'recommendation', label: 'R', fullLabel: 'Recommendation', color: 'teal', description: 'Clear action or request' },
+  { key: 'situation', label: 'S', fullLabel: 'Situation', color: 'sky', description: 'What is happening right now?', gradient: 'from-green-600 to-emerald-400', borderLeft: 'border-l-green-500', tint: 'bg-green-500/10', tintBorder: 'border-green-500/20', textAccent: 'text-green-400' },
+  { key: 'background', label: 'B', fullLabel: 'Background', color: 'blue', description: 'Relevant history and context', gradient: 'from-sky-600 to-blue-400', borderLeft: 'border-l-sky-500', tint: 'bg-sky-500/10', tintBorder: 'border-sky-500/20', textAccent: 'text-sky-400' },
+  { key: 'assessment', label: 'A', fullLabel: 'Assessment', color: 'cyan', description: 'Your clinical reasoning', gradient: 'from-purple-600 to-violet-400', borderLeft: 'border-l-purple-500', tint: 'bg-purple-500/10', tintBorder: 'border-purple-500/20', textAccent: 'text-purple-400' },
+  { key: 'recommendation', label: 'R', fullLabel: 'Recommendation', color: 'teal', description: 'Clear action or request', gradient: 'from-amber-600 to-yellow-400', borderLeft: 'border-l-amber-500', tint: 'bg-amber-500/10', tintBorder: 'border-amber-500/20', textAccent: 'text-amber-400' },
 ];
 
-export default function NursingSBARDrill({ specialty, onBack, userData, refreshUsage, addSession, triggerStreakRefresh }) {
+// Maps average SBAR score (1-10) to tier label + colors
+function getSBARTier(scores) {
+  const vals = Object.values(scores || {}).filter(v => v !== null && v !== undefined);
+  if (vals.length === 0) {
+    return { label: 'Unscored', textColor: 'text-slate-400', bgColor: 'bg-slate-500/20', borderColor: 'border-slate-500/30', barGradient: 'from-slate-600 to-slate-500' };
+  }
+  const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+  if (avg >= 9) return { label: 'Exceptional SBAR', textColor: 'text-green-400', bgColor: 'bg-green-500/10', borderColor: 'border-green-500/30', barGradient: 'from-green-600 to-emerald-400' };
+  if (avg >= 7) return { label: 'Strong SBAR', textColor: 'text-green-400', bgColor: 'bg-green-500/10', borderColor: 'border-green-500/30', barGradient: 'from-green-600 to-emerald-400' };
+  if (avg >= 5) return { label: 'Developing', textColor: 'text-yellow-400', bgColor: 'bg-yellow-500/10', borderColor: 'border-yellow-500/30', barGradient: 'from-yellow-600 to-amber-400' };
+  if (avg >= 3) return { label: 'Needs Work', textColor: 'text-amber-400', bgColor: 'bg-amber-500/10', borderColor: 'border-amber-500/30', barGradient: 'from-amber-600 to-orange-400' };
+  return { label: 'Minimal', textColor: 'text-red-400', bgColor: 'bg-red-500/10', borderColor: 'border-red-500/30', barGradient: 'from-red-600 to-red-400' };
+}
+
+// Parses "- S: ...", "- B: ...", "- A: ...", "- R: ..." coaching lines from AI text.
+// Note: score tags are already stripped by stripSBARScoreTags before this runs,
+// so we use the next "- X:" marker or double-newline as section boundaries.
+function parseSBARFeedbackSections(text) {
+  if (!text) return { sections: {}, overallTip: '', hasSections: false, rawText: '' };
+  const sections = {};
+  let overallTip = '';
+
+  const sMatch = text.match(/-\s*S:\s*([\s\S]*?)(?=-\s*B:)/i);
+  const bMatch = text.match(/-\s*B:\s*([\s\S]*?)(?=-\s*A:)/i);
+  const aMatch = text.match(/-\s*A:\s*([\s\S]*?)(?=-\s*R:)/i);
+  // R section ends at a double-newline (overall tip separator) or end of string
+  const rMatch = text.match(/-\s*R:\s*([\s\S]*?)(?=\n\n|$)/i);
+
+  if (sMatch) sections.situation = sMatch[1].trim();
+  if (bMatch) sections.background = bMatch[1].trim();
+  if (aMatch) sections.assessment = aMatch[1].trim();
+  if (rMatch) sections.recommendation = rMatch[1].trim();
+
+  // Overall tip = anything after the R section content (separated by blank line)
+  const rEnd = text.lastIndexOf('- R:');
+  if (rEnd !== -1) {
+    const afterR = text.substring(rEnd);
+    const tipMatch = afterR.match(/-\s*R:[\s\S]*?\n\n([\s\S]+)/i);
+    if (tipMatch && tipMatch[1].trim()) {
+      overallTip = tipMatch[1].trim();
+    }
+  }
+
+  // If parsing failed (no sections found), treat the whole text as a single coaching block
+  const hasSections = Object.keys(sections).length > 0;
+  return { sections, overallTip, hasSections, rawText: text };
+}
+
+export default function NursingSBARDrill({ specialty, onBack, userData, refreshUsage, addSession, triggerStreakRefresh, onShowPricing }) {
   // Questions — loaded from Supabase (fallback: static), filtered to SBAR only, shuffled once
   const { questions: rawQuestions, loading: questionsLoading } = useNursingQuestions(specialty.id);
   const [questions, setQuestions] = useState([]);
@@ -114,6 +171,12 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
   const [drillComplete, setDrillComplete] = useState(false);
 
   const inputRef = useRef(null);
+
+  // Collapsible section state for feedback cards
+  const [expandedSections, setExpandedSections] = useState({});
+  const toggleSection = useCallback((key) => {
+    setExpandedSections(prev => ({ ...prev, [key]: !prev[key] }));
+  }, []);
 
   // Speech recognition (Battle Scars #4-7)
   const {
@@ -208,6 +271,17 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
       }
 
       const data = await response.json();
+
+      // Detect Anthropic API errors passed through Edge Function (overloaded, rate limit, etc.)
+      if (data.type === 'error' && data.error) {
+        const errType = data.error.type || 'unknown';
+        const errMsg = data.error.message || 'AI service error';
+        console.error('❌ Anthropic API error:', errType, errMsg);
+        throw new Error(errType === 'overloaded_error'
+          ? 'AI service is temporarily busy. Please try again in a moment.'
+          : `AI error: ${errMsg}`);
+      }
+
       const rawContent = data.content?.[0]?.text || data.response || data.feedback || '';
 
       const scores = parseSBARScores(rawContent);
@@ -224,13 +298,15 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
         scores,
       }]);
 
-      // Report to Command Center session store
+      // Report to Command Center session store (includes answer + feedback for review)
       if (addSession && currentQuestion) {
         addSession(createSBARDrillSession(
           currentQuestion.id,
           currentQuestion.question,
           currentQuestion.category,
           scores,
+          userAnswer.trim(),
+          cleanContent,
         ));
       }
 
@@ -268,6 +344,7 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
       setFeedback(null);
       setValidationFlags(null);
       setError(null);
+      setExpandedSections({});
     } else {
       setDrillComplete(true);
     }
@@ -372,7 +449,7 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
 
           {/* Actions */}
           <div className="flex flex-col sm:flex-row gap-3">
-            <button onClick={() => { setDrillResults([]); setDrillComplete(false); setQuestionIndex(0); setUserAnswer(''); setFeedback(null); setValidationFlags(null); }}
+            <button onClick={() => { setDrillResults([]); setDrillComplete(false); setQuestionIndex(0); setUserAnswer(''); setFeedback(null); setValidationFlags(null); setExpandedSections({}); }}
               className="flex-1 bg-gradient-to-r from-sky-600 to-cyan-500 text-white font-semibold py-3 rounded-xl shadow-lg shadow-sky-500/30 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2">
               <RotateCcw className="w-4 h-4" /> Drill Again
             </button>
@@ -423,7 +500,7 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
           {/* Timer toggle */}
           <button
             onClick={() => setTimedMode(prev => !prev)}
-            className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full transition-colors ${
+            className={`flex items-center gap-1 text-xs px-3 py-2 rounded-full transition-colors ${
               timedMode ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'text-slate-400 hover:text-white'
             }`}
           >
@@ -452,12 +529,12 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
           {creditBlocked && (
             <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-4 text-center">
               <p className="text-red-300 text-sm mb-2">Free practice limit reached this month.</p>
-              <a
-                href="/app?upgrade=true&returnTo=/nursing"
+              <button
+                onClick={onShowPricing}
                 className="inline-block text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-sky-500 px-4 py-2 rounded-lg hover:-translate-y-0.5 transition-all"
               >
-                Upgrade to Pro — Unlimited Drills
-              </a>
+                Get Nursing Pass — Unlimited Drills
+              </button>
             </div>
           )}
 
@@ -477,7 +554,7 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
 
           {/* SBAR structure hint */}
           {!feedback && (
-            <div className="grid grid-cols-4 gap-2 mb-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
               {SBAR_COMPONENTS.map(comp => (
                 <div key={comp.key} className="bg-green-500/5 border border-green-500/10 rounded-lg p-2 text-center">
                   <div className="text-green-400 text-xs font-bold">{comp.label}</div>
@@ -546,27 +623,66 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
                 </button>
               </motion.div>
             ) : (
-              <motion.div key="feedback" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-                {/* Per-component score bars */}
-                <div className="grid grid-cols-4 gap-2 mb-4">
+              <motion.div key="feedback" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                {/* ── Overall Tier Badge + Animated Gradient Bar ── */}
+                {(() => {
+                  const tier = getSBARTier(feedback.scores);
+                  const vals = Object.values(feedback.scores || {}).filter(v => v !== null && v !== undefined);
+                  const avg = vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length) : 0;
+                  return (
+                    <div className={`${tier.bgColor} border ${tier.borderColor} rounded-2xl p-4`}>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <Stethoscope className={`w-4 h-4 ${tier.textColor}`} />
+                          <span className="text-white font-semibold text-sm">SBAR Communication Report</span>
+                        </div>
+                        <span className={`${tier.bgColor} border ${tier.borderColor} ${tier.textColor} text-xs font-bold px-3 py-1 rounded-full`}>
+                          {tier.label}
+                        </span>
+                      </div>
+                      {/* Animated gradient bar */}
+                      <div className="relative h-3 bg-white/10 rounded-full overflow-hidden">
+                        <motion.div
+                          className={`absolute inset-y-0 left-0 rounded-full bg-gradient-to-r ${tier.barGradient}`}
+                          initial={{ width: 0 }}
+                          animate={{ width: `${(avg / 10) * 100}%` }}
+                          transition={{ duration: 1, ease: 'easeOut' }}
+                        />
+                      </div>
+                      {/* Scale markers */}
+                      <div className="flex justify-between mt-1 px-0.5">
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
+                          <span key={n} className="text-slate-600 text-[9px]">{n}</span>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* ── Per-Component Score Cards (2x2 mobile, 4-col desktop) ── */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                   {SBAR_COMPONENTS.map(comp => {
                     const score = feedback.scores[comp.key];
                     return (
-                      <div key={comp.key} className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
-                        <div className="text-green-400 text-xs font-bold mb-1">{comp.fullLabel}</div>
-                        <div className={`text-xl font-bold ${scoreColor10(score)}`}>
-                          {score !== null ? score : '-'}
+                      <div key={comp.key} className={`${comp.tint} border ${comp.tintBorder} rounded-xl p-3`}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className={`w-7 h-7 rounded-full bg-gradient-to-br ${comp.gradient} flex items-center justify-center text-white text-xs font-bold shadow-lg`}>
+                            {comp.label}
+                          </div>
+                          <div>
+                            <div className="text-white text-xs font-semibold">{comp.fullLabel}</div>
+                            <div className={`text-lg font-bold ${comp.textAccent}`}>
+                              {score !== null ? score : '-'}<span className="text-slate-500 text-[10px] font-normal">/10</span>
+                            </div>
+                          </div>
                         </div>
-                        <div className="text-slate-500 text-[10px]">/ 10</div>
-                        {/* Score bar */}
-                        <div className="mt-2 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all ${
-                              score === null ? 'bg-slate-600' :
-                              score >= 8 ? 'bg-green-500' :
-                              score >= 6 ? 'bg-yellow-500' : 'bg-red-500'
-                            }`}
-                            style={{ width: score !== null ? `${score * 10}%` : '0%' }}
+                        {/* Animated bar */}
+                        <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                          <motion.div
+                            className={`h-full rounded-full bg-gradient-to-r ${comp.gradient}`}
+                            initial={{ width: 0 }}
+                            animate={{ width: score !== null ? `${score * 10}%` : '0%' }}
+                            transition={{ duration: 0.8, ease: 'easeOut', delay: 0.2 }}
                           />
                         </div>
                       </div>
@@ -574,19 +690,9 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
                   })}
                 </div>
 
-                {/* User's submitted answer */}
-                {userAnswer && (
-                  <div className="bg-slate-800/50 border border-white/10 rounded-xl p-4 mb-3">
-                    <p className="text-slate-400 text-xs font-medium mb-2">Your Response:</p>
-                    <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">
-                      {userAnswer}
-                    </p>
-                  </div>
-                )}
-
-                {/* Walled garden warning */}
+                {/* ── Walled Garden Warning ── */}
                 {validationFlags?.walledGardenFlag && (
-                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-2 mb-3 flex items-start gap-2">
+                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-2 flex items-start gap-2">
                     <AlertCircle className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
                     <p className="text-amber-300 text-xs">
                       This response may contain clinical guidance. Always verify with your facility protocols.
@@ -594,21 +700,95 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
                   </div>
                 )}
 
-                {/* Feedback text */}
-                <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-4">
-                  <p className="text-slate-200 text-sm leading-relaxed whitespace-pre-wrap">{feedback.text}</p>
-                </div>
+                {/* ── Per-Component Coaching Cards ── */}
+                {(() => {
+                  const parsed = parseSBARFeedbackSections(feedback.text);
+                  if (!parsed.hasSections) {
+                    // Fallback: raw text in a single card
+                    return (
+                      <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Stethoscope className="w-4 h-4 text-teal-400" />
+                          <span className="text-white font-semibold text-sm">Coaching Notes</span>
+                        </div>
+                        <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{feedback.text}</p>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div className="space-y-2">
+                      {SBAR_COMPONENTS.map(comp => {
+                        const coaching = parsed.sections[comp.key];
+                        if (!coaching) return null;
+                        return (
+                          <div key={comp.key} className={`bg-white/5 border border-white/10 ${comp.borderLeft} border-l-4 rounded-xl p-4`}>
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <div className={`w-5 h-5 rounded-full bg-gradient-to-br ${comp.gradient} flex items-center justify-center text-white text-[10px] font-bold`}>
+                                {comp.label}
+                              </div>
+                              <span className={`${comp.textAccent} font-semibold text-sm`}>{comp.fullLabel}</span>
+                            </div>
+                            <p className="text-slate-300 text-sm leading-relaxed">{coaching}</p>
+                          </div>
+                        );
+                      })}
 
-                {/* Actions */}
+                      {/* Overall Tip */}
+                      {parsed.overallTip && (
+                        <div className="bg-sky-500/10 border border-sky-500/20 border-l-4 border-l-sky-500 rounded-xl p-4">
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <BookOpen className="w-4 h-4 text-sky-400" />
+                            <span className="text-sky-400 font-semibold text-sm">Overall Tip</span>
+                          </div>
+                          <p className="text-slate-300 text-sm leading-relaxed">{parsed.overallTip}</p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {/* ── Collapsible: View Your Answer ── */}
+                {userAnswer && (
+                  <button
+                    onClick={() => toggleSection('answer')}
+                    onTouchEnd={(e) => { e.preventDefault(); toggleSection('answer'); }}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 flex items-center justify-between hover:bg-white/10 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4 text-slate-400" />
+                      <span className="text-slate-300 text-sm font-medium">View Your Answer</span>
+                    </div>
+                    <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${expandedSections.answer ? 'rotate-180' : ''}`} />
+                  </button>
+                )}
+                <AnimatePresence>
+                  {expandedSections.answer && userAnswer && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="bg-slate-800/50 border border-white/10 rounded-xl p-4">
+                        <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{userAnswer}</p>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* ── Action Buttons ── */}
                 <div className="flex gap-3">
                   <button
-                    onClick={() => { setUserAnswer(''); setFeedback(null); setValidationFlags(null); }}
+                    onClick={() => { setUserAnswer(''); setFeedback(null); setValidationFlags(null); setExpandedSections({}); }}
+                    onTouchEnd={(e) => { e.preventDefault(); setUserAnswer(''); setFeedback(null); setValidationFlags(null); setExpandedSections({}); }}
                     className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-sm hover:bg-white/20 transition-all"
                   >
                     <RotateCcw className="w-4 h-4" /> Retry
                   </button>
                   <button
                     onClick={nextQuestion}
+                    onTouchEnd={(e) => { e.preventDefault(); nextQuestion(); }}
                     className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-green-600 to-emerald-500 text-white font-semibold text-sm shadow-lg shadow-green-500/30 hover:-translate-y-0.5 transition-all"
                   >
                     {questionIndex + 1 < questions.length ? (

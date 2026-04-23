@@ -99,7 +99,7 @@ export default function NativeCheckout({
         ) : (
           children || (
             <>
-              <span>Subscribe to Pro - $29.99/mo</span>
+              <span>Get 30-Day Pass — $14.99</span>
             </>
           )
         )}

@@ -11,8 +11,8 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, Send, Loader2, Stethoscope, AlertCircle,
-  CheckCircle, XCircle, Shuffle, ChevronRight, Target,
-  RotateCcw, BookOpen, Mic, MicOff
+  CheckCircle, XCircle, Shuffle, ChevronRight, ChevronDown, Target,
+  RotateCcw, BookOpen, Mic, MicOff, Save, User
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { getFrameworkDetails } from './nursingQuestions';
@@ -24,6 +24,7 @@ import { updateStreakAfterSession } from '../../utils/streakSupabase';
 import { parseScoreFromResponse, stripScoreTag, scoreColor5, getCitationSource, validateNursingResponse } from './nursingUtils';
 import { trackBeginPractice } from '../../utils/googleAdsTracking';
 import { createPracticeSession } from './nursingSessionStore';
+import { upsertSavedAnswer } from './nursingSupabase';
 import useSpeechRecognition from './useSpeechRecognition';
 import SpeechUnavailableWarning from '../SpeechUnavailableWarning';
 import { buildSelfEfficacyPrompt } from '../../utils/selfEfficacyFeedback';
@@ -56,22 +57,39 @@ const PRACTICE_SYSTEM_PROMPT = (specialty, question) => {
     ? `\nKEY POINTS this answer should cover:\n${question.bullets.map((b, i) => `${i + 1}. ${b}`).join('\n')}`
     : '';
 
+  // Detect theory/knowledge questions vs behavioral
+  const isTheoryQuestion = /^(How do you|What is your|Describe your|What steps|What factors|What approach|How would you|What do you consider)/i.test(question.question);
+
   return `Nursing interview coach for ${specialty.shortName}. Question: "${question.question}" | Category: ${question.category} | Framework: ${frameworkLabel}${frameworkContext}${bulletPoints}
 
-${evalCriteria}
+QUESTION TYPE: ${isTheoryQuestion ? 'THEORY/KNOWLEDGE — This asks about approach/methodology, NOT a specific past experience. Do NOT penalize for missing ' + frameworkLabel + ' structure. Evaluate clarity of reasoning, specificity of methodology, and evidence of real-world application instead.' : 'BEHAVIORAL — Evaluate using ' + frameworkLabel + ' structure.'}
+
+${isTheoryQuestion ? `Evaluate their response for:
+1. Clarity of reasoning — Is their approach well-explained?
+2. Specificity — Do they describe concrete steps/methods, or just vague platitudes?
+3. Real-world grounding — Do they reference actual experience or protocols?
+4. Completeness — Did they address all parts of the question?` : evalCriteria}
+
+RESULT EVALUATION — When assessing Results:
+Accept ALL of these as valid: measurable outcomes (numbers, timelines), patient/team outcomes, closure and reflection ("I learned...", "I believe..."), values-based conclusions, and process improvements. Do NOT mark Result as "Incomplete" just because it lacks hard numbers.
 
 RESPOND WITH ALL 4 SECTIONS BELOW. Every section is MANDATORY — do not skip any.
 
 **Feedback:**
-2-3 sentences on what they did well and what to improve. Be specific. Frame improvements as opportunities.
+2-3 sentences on what they did well and what to improve. Be specific and genuine — match your praise to the actual quality of their answer. If the answer is weak, acknowledge what they got right but be honest about what needs work. If the answer is strong, say why specifically. Never say "Great work" for a weak answer.
 
-**${frameworkLabel} Breakdown:**
-${isSBAR
-  ? `- S (Situation): [What they said or "Missing"]
+**${isTheoryQuestion ? 'Approach' : frameworkLabel} Breakdown:**
+${isTheoryQuestion
+  ? `- Reasoning: [How well did they explain their approach?]
+- Specificity: [Did they give concrete steps or stay vague?]
+- Application: [Did they ground it in real experience?]
+- Completeness: [Did they address the full question?]`
+  : isSBAR
+    ? `- S (Situation): [What they said or "Missing"]
 - B (Background): [What they said or "Missing"]
 - A (Assessment): [What they said or "Missing"]
 - R (Recommendation): [What they said or "Missing"]`
-  : `- S (Situation): [What they said or "Missing"]
+    : `- S (Situation): [What they said or "Missing"]
 - T (Task): [What they said or "Missing"]
 - A (Action): [What they said or "Missing"]
 - R (Result): [What they said or "Missing"]`}
@@ -81,15 +99,39 @@ ${isSBAR
 
 **Resources to Review:**
 ${citationSource
-  ? `📚 Cite this source: "${citationSource}" — one sentence on how it relates to this question.`
-  : `📚 [Pick ONE from: SBAR Toolkit (IHI), TeamSTEPPS (AHRQ), NCSBN Clinical Judgment Model, ANA Code of Ethics, Joint Commission Safety Goals, CDC Infection Control] — one sentence why it helps.`}
+  ? `📚 "${citationSource}" — one sentence on how it relates to this question. Include the URL if it's one of these: APIC (apic.org), AWHONN (awhonn.org), ENA (ena.org), ANA (nursingworld.org), NCSBN (ncsbn.org), BCEN (bcen.org), AACN (aacn.org), CDC (cdc.gov), IHI (ihi.org), Joint Commission (jointcommission.org), AHRQ (ahrq.gov).`
+  : `📚 [Pick ONE from: SBAR Toolkit — ihi.org, TeamSTEPPS — ahrq.gov, NCSBN Clinical Judgment Model — ncsbn.org, ANA Code of Ethics — nursingworld.org, Joint Commission Safety Goals — jointcommission.org, CDC Infection Control — cdc.gov, APIC — apic.org, AWHONN — awhonn.org] — one sentence why it helps and include the URL.`}
 
+CRITICAL PRE-CHECK (do this FIRST before writing feedback):
+Count the words in the user's answer. If the answer has 3 or fewer words, OR is gibberish, off-topic, or a non-answer like "I don't know" or "pass", you MUST score 1/5 and keep all sections brief. No exceptions.
+
+SCORING GUIDE (BE STRICT — do not default to 3-4):
+1/5 — Minimal: 3 or fewer words, "I don't know", off-topic, gibberish, or non-answer
+2/5 — Vague: Shows some awareness but no structure, generic platitudes, lacks any specific detail
+3/5 — Developing: Attempted ${frameworkLabel} structure but missing key components or vague on details
+4/5 — Strong: Clear ${frameworkLabel} structure, specific real details, demonstrates genuine experience
+5/5 — Exceptional: Complete ${frameworkLabel}, vivid specifics, authentic reflection, would impress a hiring manager
+
+At the very end, include the score on a new line in EXACTLY this format:
 [SCORE: X/5]
+The score line should be the LAST line of your response.
 
-Rules: Coach communication ONLY. Never generate clinical content. Never patronizing.`;
+Rules: Coach communication ONLY. Never generate clinical content. Never patronizing. Match praise to actual answer quality.`;
 };
 
-export default function NursingPracticeMode({ specialty, onBack, userData, refreshUsage, addSession, startQuestionId = null, triggerStreakRefresh }) {
+// Map score to tier label + color palette for Clinical Coaching Report
+function getScoreTier(score) {
+  if (score === null || score === undefined) {
+    return { label: 'Unscored', textColor: 'text-slate-400', bgColor: 'bg-slate-500/20', borderColor: 'border-slate-500/30', barBgGradient: 'from-slate-600 to-slate-500', borderLeftClass: 'border-l-slate-500' };
+  }
+  if (score >= 5) return { label: 'Exceptional', textColor: 'text-green-400', bgColor: 'bg-green-500/10', borderColor: 'border-green-500/30', barBgGradient: 'from-green-600 to-emerald-400', borderLeftClass: 'border-l-green-500' };
+  if (score >= 4) return { label: 'Strong Response', textColor: 'text-green-400', bgColor: 'bg-green-500/10', borderColor: 'border-green-500/30', barBgGradient: 'from-green-600 to-emerald-400', borderLeftClass: 'border-l-green-500' };
+  if (score >= 3) return { label: 'Developing', textColor: 'text-yellow-400', bgColor: 'bg-yellow-500/10', borderColor: 'border-yellow-500/30', barBgGradient: 'from-yellow-600 to-amber-400', borderLeftClass: 'border-l-yellow-500' };
+  if (score >= 2) return { label: 'Needs Work', textColor: 'text-amber-400', bgColor: 'bg-amber-500/10', borderColor: 'border-amber-500/30', barBgGradient: 'from-amber-600 to-orange-400', borderLeftClass: 'border-l-amber-500' };
+  return { label: 'Minimal', textColor: 'text-red-400', bgColor: 'bg-red-500/10', borderColor: 'border-red-500/30', barBgGradient: 'from-red-600 to-red-400', borderLeftClass: 'border-l-red-500' };
+}
+
+export default function NursingPracticeMode({ specialty, onBack, userData, refreshUsage, addSession, startQuestionId = null, triggerStreakRefresh, onShowPricing }) {
   // Questions — loaded from Supabase (fallback: static), shuffled once loaded
   const { questions: rawQuestions, loading: questionsLoading } = useNursingQuestions(specialty.id);
   const [questions, setQuestions] = useState([]);
@@ -124,6 +166,13 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
   const [questionsAnswered, setQuestionsAnswered] = useState(0);
   const [totalScore, setTotalScore] = useState(0);
   const [scoredCount, setScoredCount] = useState(0);
+  const [savedAsBest, setSavedAsBest] = useState(false); // "Save as Best Answer" per-question indicator
+  const [savingBest, setSavingBest] = useState(false);
+  const [expandedSections, setExpandedSections] = useState({}); // Collapsible feedback sections
+
+  const toggleSection = useCallback((key) => {
+    setExpandedSections(prev => ({ ...prev, [key]: !prev[key] }));
+  }, []);
 
   const inputRef = useRef(null);
   const hasTrackedPracticeRef = useRef(false); // Google Ads: fire trackBeginPractice once per mount
@@ -208,46 +257,69 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
       }
 
       const data = await response.json();
+
+      // Detect Anthropic API errors passed through Edge Function (overloaded, rate limit, etc.)
+      if (data.type === 'error' && data.error) {
+        const errType = data.error.type || 'unknown';
+        const errMsg = data.error.message || 'AI service error';
+        console.error('❌ Anthropic API error:', errType, errMsg);
+        throw new Error(errType === 'overloaded_error'
+          ? 'AI service is temporarily busy. Please try again in a moment.'
+          : `AI error: ${errMsg}`);
+      }
+
       const rawContent = data.content?.[0]?.text || data.response || data.feedback || 'Good effort! Keep practicing.';
 
       const score = parseScoreFromResponse(rawContent);
       const cleanContent = stripScoreTag(rawContent);
       const validation = validateNursingResponse(rawContent, 'practice');
 
-      setFeedback({ text: cleanContent, score });
+      // Client-side guardrail: trivial answers (≤3 words) can never score above 2/5
+      // Belt-and-suspenders with PRACTICE_SYSTEM_PROMPT's CRITICAL PRE-CHECK
+      const wordCount = userAnswer.trim().split(/\s+/).filter(Boolean).length;
+      let cappedScore = score;
+      if (wordCount <= 3 && score !== null && score > 2) {
+        console.warn(`[Practice scoring guardrail] Capped score from ${score} to 2 (answer was ${wordCount} words)`);
+        cappedScore = 2;
+      }
+
+      setFeedback({ text: cleanContent, score: cappedScore });
       setValidationFlags(validation);
       setQuestionsAnswered(prev => prev + 1);
-      if (score !== null) {
-        setTotalScore(prev => prev + score);
+      if (cappedScore !== null) {
+        setTotalScore(prev => prev + cappedScore);
         setScoredCount(prev => prev + 1);
       }
 
-      // Report to Command Center session store
+      // Report to Command Center session store (includes answer + feedback for review)
       if (addSession && currentQuestion) {
         addSession(createPracticeSession(
           currentQuestion.id,
           currentQuestion.question,
           currentQuestion.category,
           currentQuestion.responseFramework,
-          score,
+          cappedScore,
+          userAnswer.trim(),
+          cleanContent,
         ));
       }
 
       // CHARGE AFTER SUCCESS (Battle Scar #8)
       if (userData?.user?.id) {
         try {
-          await incrementUsage(supabase, userData.user.id, 'nursingPractice');
+          const usageResult = await incrementUsage(supabase, userData.user.id, 'nursingPractice');
           updateStreakAfterSession(supabase, userData.user.id).then(() => triggerStreakRefresh?.()).catch(() => {}); // Phase 3 streak
           if (refreshUsage) refreshUsage();
-          // Re-check credits after charge to catch hitting zero (prevents stale state bypass)
+          // Re-check credits using ACTUAL DB count (fixes off-by-one with synthetic formula)
+          const actualUsed = usageResult?.nursing_practice ?? ((userData.usage.nursingPractice?.used || 0) + 1);
           const recheck = canUseFeature(
-            { nursing_practice: (userData.usage.nursingPractice?.used || 0) + questionsAnswered + 1 },
+            { nursing_practice: actualUsed },
             userData.tier,
             'nursingPractice'
           );
           if (!recheck.allowed) setCreditBlocked(true);
         } catch (chargeErr) {
-          console.warn('⚠️ Practice usage increment failed (non-blocking):', chargeErr);
+          console.warn('\u26a0\ufe0f Practice usage increment failed (non-blocking):', chargeErr);
         }
       }
 
@@ -272,6 +344,8 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
     setFeedback(null);
     setValidationFlags(null);
     setError(null);
+    setSavedAsBest(false);
+    setExpandedSections({});
   }, [questionIndex, questions.length]);
 
   // Shuffle to random question
@@ -285,6 +359,8 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
     setFeedback(null);
     setValidationFlags(null);
     setError(null);
+    setSavedAsBest(false);
+    setExpandedSections({});
   }, [questionIndex, questions.length]);
 
   // Handle Enter
@@ -296,7 +372,7 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
   };
 
   const creditInfo = userData?.usage?.nursingPractice;
-  const isUnlimited = userData?.isBeta || userData?.tier === 'pro';
+  const isUnlimited = userData?.isBeta || userData?.tier === 'nursing_pass' || userData?.tier === 'annual' || userData?.tier === 'pro' || userData?.tier === 'beta';
   const avgScore = scoredCount > 0 ? (totalScore / scoredCount).toFixed(1) : null;
 
   if (questionsLoading) return <NursingLoadingSkeleton title="Quick Practice" onBack={onBack} />;
@@ -343,12 +419,12 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
               <p className="text-red-300 text-sm mb-2">
                 You've used all {creditInfo?.limit} free practice sessions this month.
               </p>
-              <a
-                href="/app?upgrade=true&returnTo=/nursing"
+              <button
+                onClick={onShowPricing}
                 className="inline-block text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-sky-500 px-4 py-2 rounded-lg hover:-translate-y-0.5 transition-all"
               >
-                Upgrade to Pro — Unlimited Practice
-              </a>
+                Get Nursing Pass — Unlimited Practice
+              </button>
             </div>
           )}
 
@@ -389,12 +465,21 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
                   {currentQuestion.question}
                 </h2>
 
-                {/* Framework citation */}
-                {currentQuestion.clinicalFramework && (
-                  <p className="text-slate-500 text-xs mt-3 italic">
-                    Framework: {getFrameworkDetails(currentQuestion.clinicalFramework)?.name}
-                  </p>
-                )}
+                {/* Framework citation — Apple Guideline 1.4.1: citations must be easy to find */}
+                {currentQuestion.clinicalFramework && (() => {
+                  const fw = getFrameworkDetails(currentQuestion.clinicalFramework);
+                  if (!fw) return null;
+                  return (
+                    <p className="text-slate-500 text-xs mt-3 italic">
+                      Framework: {fw.url ? (
+                        <a href={fw.url} target="_blank" rel="noopener noreferrer" className="underline text-sky-400 hover:text-sky-300">
+                          {fw.name}
+                        </a>
+                      ) : fw.name}
+                      {fw.source && <span className="text-slate-600"> — {fw.source}</span>}
+                    </p>
+                  );
+                })()}
               </motion.div>
 
               {/* Answer Input or Feedback */}
@@ -477,118 +562,221 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                   >
-                    {/* Score badge */}
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <Stethoscope className="w-4 h-4 text-sky-400" />
-                        <span className="text-white font-medium text-sm">Feedback</span>
-                      </div>
-                      <div className={`text-lg font-bold ${scoreColor5(feedback.score)}`}>
-                        {feedback.score !== null ? `${feedback.score}/5` : 'Unscored'}
-                      </div>
-                    </div>
-
-                    {/* User's submitted answer */}
-                    {userAnswer && (
-                      <div className="bg-slate-800/50 border border-white/10 rounded-xl p-4 mb-3">
-                        <p className="text-slate-400 text-xs font-medium mb-2">Your Answer:</p>
-                        <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">
-                          {userAnswer}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Walled garden warning */}
-                    {validationFlags?.walledGardenFlag && (
-                      <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-2 mb-3 flex items-start gap-2">
-                        <AlertCircle className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
-                        <p className="text-amber-300 text-xs">
-                          This response may contain clinical guidance. Always verify with your facility protocols.
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Feedback text — parse structured sections */}
+                    {/* === CLINICAL COACHING REPORT === */}
                     {(() => {
+                      const tier = getScoreTier(feedback.score);
                       const text = feedback.text || '';
                       const frameworkLabel = currentQuestion.responseFramework === 'sbar' ? 'SBAR' : 'STAR';
 
-                      // Parse sections — use section-header-aware lookaheads (not just **)
-                      const sectionPattern = /\*\*(?:Feedback|(?:STAR|SBAR) Breakdown|Ideal Answer Approach|Resources to Review):\*\*/;
-                      const feedbackMatch = text.match(/\*\*Feedback:\*\*([\s\S]*?)(?=\*\*(?:STAR|SBAR) Breakdown:\*\*|\*\*Ideal Answer|\*\*Resources to Review|\[SCORE|$)/);
-                      const breakdownMatch = text.match(/\*\*(?:STAR|SBAR) Breakdown:\*\*([\s\S]*?)(?=\*\*Ideal Answer Approach:\*\*|\*\*Resources to Review|\[SCORE|$)/);
+                      // Parse sections (updated: includes Approach for theory questions)
+                      const feedbackMatch = text.match(/\*\*Feedback:\*\*([\s\S]*?)(?=\*\*(?:STAR|SBAR|Approach) Breakdown:\*\*|\*\*Ideal Answer|\*\*Resources to Review|\[SCORE|$)/);
+                      const breakdownMatch = text.match(/\*\*(?:STAR|SBAR|Approach) Breakdown:\*\*([\s\S]*?)(?=\*\*Ideal Answer Approach:\*\*|\*\*Resources to Review|\[SCORE|$)/);
                       const idealMatch = text.match(/\*\*Ideal Answer Approach:\*\*([\s\S]*?)(?=\*\*Resources to Review:\*\*|\[SCORE|$)/);
                       const resourceMatch = text.match(/\*\*Resources to Review:\*\*([\s\S]*?)(?=\[SCORE|$)/);
-
                       const hasSections = feedbackMatch || breakdownMatch;
 
-                      return hasSections ? (
-                        <div className="space-y-3 mb-4">
-                          {/* Main feedback */}
-                          {feedbackMatch && (
-                            <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-                              <p className="text-slate-200 text-sm leading-relaxed whitespace-pre-wrap">
-                                {feedbackMatch[1].trim()}
+                      // Parse breakdown into step data for the step flow
+                      const breakdownSteps = breakdownMatch
+                        ? breakdownMatch[1].trim().split('\n').filter(l => l.trim().startsWith('-')).map(line => {
+                            const clean = line.replace(/^-\s*/, '').trim();
+                            const letterParsed = clean.match(/^([SBARTU])\s*\(([^)]+)\):\s*(.*)/);
+                            const approachParsed = !letterParsed && clean.match(/^(Reasoning|Specificity|Application|Completeness):\s*(.*)/i);
+                            const isMissing = clean.toLowerCase().includes('missing') || clean.toLowerCase().includes('not provided') || clean.toLowerCase().includes('not addressed');
+                            if (letterParsed) return { letter: letterParsed[1], name: letterParsed[2], detail: letterParsed[3], isMissing };
+                            if (approachParsed) {
+                              const lMap = { reasoning: 'R', specificity: 'S', application: 'A', completeness: 'C' };
+                              return { letter: lMap[approachParsed[1].toLowerCase()] || '?', name: approachParsed[1], detail: approachParsed[2], isMissing };
+                            }
+                            return { letter: '\u2022', name: '', detail: clean, isMissing };
+                          })
+                        : null;
+
+                      return (
+                        <>
+                          {/* 1. Score Header — Tier Badge + Gradient Performance Bar */}
+                          <div className="mb-5">
+                            <div className="flex items-center justify-between mb-2.5">
+                              <span className={`text-sm font-bold px-3 py-1 rounded-full border ${tier.bgColor} ${tier.borderColor} ${tier.textColor}`}>
+                                {tier.label}
+                              </span>
+                              <span className={`text-sm font-semibold ${tier.textColor}`}>
+                                {feedback.score !== null ? `${feedback.score}/5` : ''}
+                              </span>
+                            </div>
+                            <div className="h-2.5 bg-white/10 rounded-full overflow-hidden">
+                              <motion.div
+                                className={`h-full rounded-full bg-gradient-to-r ${tier.barBgGradient}`}
+                                initial={{ width: 0 }}
+                                animate={{ width: feedback.score !== null ? `${(feedback.score / 5) * 100}%` : '0%' }}
+                                transition={{ duration: 0.8, ease: 'easeOut' }}
+                              />
+                            </div>
+                            <div className="flex justify-between mt-1 px-0.5">
+                              {[1, 2, 3, 4, 5].map(n => (
+                                <span key={n} className={`text-[10px] ${feedback.score !== null && n <= feedback.score ? tier.textColor : 'text-slate-600'}`}>
+                                  {n}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* 2. Walled Garden Warning (unchanged) */}
+                          {validationFlags?.walledGardenFlag && (
+                            <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-2 mb-3 flex items-start gap-2">
+                              <AlertCircle className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
+                              <p className="text-amber-300 text-xs">
+                                This response may contain clinical guidance. Always verify with your facility protocols.
                               </p>
                             </div>
                           )}
 
-                          {/* Framework breakdown */}
-                          {breakdownMatch && (
-                            <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-                              <p className="text-white text-xs font-semibold mb-2 flex items-center gap-1">
-                                <Target className="w-3 h-3 text-sky-400" /> {frameworkLabel} Breakdown
-                              </p>
-                              <div className="space-y-2">
-                                {breakdownMatch[1].trim().split('\n').filter(l => l.trim().startsWith('-')).map((line, i) => {
-                                  const clean = line.replace(/^-\s*/, '').trim();
-                                  const letterMatch = clean.match(/^([SBARTU])\s*\(([^)]+)\):\s*(.*)/);
-                                  const isMissing = clean.toLowerCase().includes('missing');
-                                  return (
-                                    <div key={i} className="flex items-start gap-2">
-                                      <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${isMissing ? 'bg-red-500/20 text-red-300' : 'bg-green-500/20 text-green-300'}`}>
-                                        {letterMatch ? letterMatch[1] : '•'}
-                                      </span>
-                                      <span className={`text-xs leading-relaxed ${isMissing ? 'text-red-300/80' : 'text-slate-300'}`}>
-                                        {letterMatch ? `${letterMatch[2]}: ${letterMatch[3]}` : clean}
-                                      </span>
-                                    </div>
-                                  );
-                                })}
+                          {/* 3. Coaching Notes — Left-border accent card */}
+                          {hasSections && feedbackMatch ? (
+                            <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden mb-4">
+                              <div className={`border-l-4 ${tier.borderLeftClass} p-4`}>
+                                <div className="flex items-center gap-2 mb-2">
+                                  <Stethoscope className="w-4 h-4 text-sky-400" />
+                                  <span className="text-white text-sm font-semibold">Coaching Notes</span>
+                                </div>
+                                <p className="text-slate-200 text-sm leading-relaxed whitespace-pre-wrap">
+                                  {feedbackMatch[1].trim()}
+                                </p>
+                              </div>
+                            </div>
+                          ) : !hasSections && (
+                            /* Fallback: raw text in coaching notes style */
+                            <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden mb-4">
+                              <div className="border-l-4 border-l-slate-500 p-4">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <Stethoscope className="w-4 h-4 text-sky-400" />
+                                  <span className="text-white text-sm font-semibold">Coaching Notes</span>
+                                </div>
+                                <p className="text-slate-200 text-sm leading-relaxed whitespace-pre-wrap">
+                                  {text}
+                                </p>
                               </div>
                             </div>
                           )}
 
-                          {/* Ideal answer approach */}
-                          {idealMatch && (
-                            <div className="bg-purple-500/10 border border-purple-400/20 rounded-xl p-4">
-                              <p className="text-purple-300 text-xs font-semibold mb-2">💡 Ideal Answer Approach</p>
-                              <p className="text-purple-300/80 text-xs leading-relaxed whitespace-pre-wrap">
-                                {idealMatch[1].trim()}
+                          {/* 4. Framework Step Flow — Grid of assessment nodes */}
+                          {breakdownSteps && breakdownSteps.length > 0 && (
+                            <div className="mb-4">
+                              <p className="text-white text-xs font-semibold mb-3 flex items-center gap-1.5">
+                                <Target className="w-3.5 h-3.5 text-sky-400" />
+                                {/\*\*Approach Breakdown:\*\*/i.test(text) ? 'Approach' : frameworkLabel} Assessment
                               </p>
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                {breakdownSteps.map((step, i) => (
+                                  <div key={i} className="flex flex-col items-center text-center bg-white/5 border border-white/10 rounded-xl p-3">
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 mb-1.5 ${
+                                      step.isMissing
+                                        ? 'border-red-500/50 bg-red-500/10 text-red-400'
+                                        : 'border-green-500/50 bg-green-500/10 text-green-400'
+                                    }`}>
+                                      {step.letter}
+                                    </div>
+                                    <div className="mb-1">
+                                      {step.isMissing
+                                        ? <XCircle className="w-3.5 h-3.5 text-red-400" />
+                                        : <CheckCircle className="w-3.5 h-3.5 text-green-400" />
+                                      }
+                                    </div>
+                                    {step.name && (
+                                      <p className={`text-[11px] font-medium mb-0.5 ${step.isMissing ? 'text-red-300' : 'text-slate-300'}`}>
+                                        {step.name}
+                                      </p>
+                                    )}
+                                    <p className={`text-[11px] leading-tight line-clamp-2 ${step.isMissing ? 'text-red-300/70' : 'text-slate-400'}`}>
+                                      {step.detail}
+                                    </p>
+                                  </div>
+                                ))}
+                              </div>
                             </div>
                           )}
 
-                          {/* Resource recommendation — strip markdown bold markers */}
+                          {/* 5. Collapsible: View Ideal Approach */}
+                          {idealMatch && (
+                            <div className="mb-3">
+                              <button
+                                onClick={() => toggleSection('ideal')}
+                                onTouchEnd={(e) => { e.preventDefault(); toggleSection('ideal'); }}
+                                className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl bg-purple-500/10 border border-purple-400/20 hover:bg-purple-500/20 transition-colors"
+                              >
+                                <span className="text-purple-300 text-sm font-medium flex items-center gap-2">
+                                  <BookOpen className="w-3.5 h-3.5" /> View Ideal Approach
+                                </span>
+                                <ChevronDown className={`w-4 h-4 text-purple-400 transition-transform duration-200 ${expandedSections.ideal ? 'rotate-180' : ''}`} />
+                              </button>
+                              <AnimatePresence>
+                                {expandedSections.ideal && (
+                                  <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="overflow-hidden"
+                                  >
+                                    <div className="bg-purple-500/5 border-x border-b border-purple-400/20 rounded-b-xl px-4 py-3">
+                                      <p className="text-purple-200 text-sm leading-relaxed whitespace-pre-wrap">
+                                        {idealMatch[1].trim()}
+                                      </p>
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </div>
+                          )}
+
+                          {/* 6. Collapsible: View Your Answer */}
+                          {userAnswer && (
+                            <div className="mb-3">
+                              <button
+                                onClick={() => toggleSection('userAnswer')}
+                                onTouchEnd={(e) => { e.preventDefault(); toggleSection('userAnswer'); }}
+                                className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl bg-slate-700/30 border border-white/10 hover:bg-slate-700/50 transition-colors"
+                              >
+                                <span className="text-slate-300 text-sm font-medium flex items-center gap-2">
+                                  <User className="w-3.5 h-3.5" /> View Your Answer
+                                </span>
+                                <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${expandedSections.userAnswer ? 'rotate-180' : ''}`} />
+                              </button>
+                              <AnimatePresence>
+                                {expandedSections.userAnswer && (
+                                  <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="overflow-hidden"
+                                  >
+                                    <div className="bg-slate-800/50 border-x border-b border-white/10 rounded-b-xl px-4 py-3">
+                                      <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">
+                                        {userAnswer}
+                                      </p>
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </div>
+                          )}
+
+                          {/* 7. Resources — Compact amber row */}
                           {resourceMatch && (
-                            <div className="bg-amber-500/10 border border-amber-400/20 rounded-xl p-3">
-                              <p className="text-amber-300 text-xs leading-relaxed whitespace-pre-wrap">
+                            <div className="bg-amber-500/10 border border-amber-400/20 rounded-xl px-4 py-3 mb-4">
+                              <p className="text-amber-300 text-xs font-semibold mb-1.5 flex items-center gap-1.5">
+                                <BookOpen className="w-3 h-3" /> Recommended Reading
+                              </p>
+                              <p className="text-amber-200/80 text-sm leading-relaxed whitespace-pre-wrap">
                                 {resourceMatch[1].trim().replace(/\*\*/g, '')}
                               </p>
                             </div>
                           )}
-                        </div>
-                      ) : (
-                        /* Fallback: raw text if structured parsing fails */
-                        <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-4">
-                          <p className="text-slate-200 text-sm leading-relaxed whitespace-pre-wrap">
-                            {text}
-                          </p>
-                        </div>
+                        </>
                       );
                     })()}
 
-                    {/* Key points from question library */}
+                    {/* Key points from question library (unchanged) */}
                     {currentQuestion.bullets?.length > 0 && (
                       <div className="bg-sky-500/10 border border-sky-400/20 rounded-xl p-4 mb-4">
                         <p className="text-sky-300 text-xs font-medium mb-2 flex items-center gap-1">
@@ -596,22 +784,86 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
                         </p>
                         <div className="space-y-1">
                           {currentQuestion.bullets.map((b, i) => (
-                            <p key={i} className="text-sky-300/70 text-xs">• {b}</p>
+                            <p key={i} className="text-sky-300/70 text-xs">{'\u2022'} {b}</p>
                           ))}
                         </div>
+                      </div>
+                    )}
+
+                    {/* Save as Best Answer (unchanged) */}
+                    {userData?.user?.id && currentQuestion && (
+                      <div className="mb-3">
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            if (savedAsBest || savingBest) return;
+                            setSavingBest(true);
+                            try {
+                              const result = await upsertSavedAnswer(userData.user.id, currentQuestion.id, userAnswer.trim());
+                              if (result.success) {
+                                setSavedAsBest(true);
+                                try {
+                                  const local = JSON.parse(localStorage.getItem(`nursing_saved_answers_${userData.user.id}`) || '{}');
+                                  local[currentQuestion.id] = userAnswer.trim();
+                                  localStorage.setItem(`nursing_saved_answers_${userData.user.id}`, JSON.stringify(local));
+                                } catch { /* ignore */ }
+                              }
+                            } catch (err) {
+                              console.warn('\u26a0\ufe0f Save best answer failed:', err);
+                            } finally {
+                              setSavingBest(false);
+                            }
+                          }}
+                          onTouchEnd={async (e) => {
+                            e.preventDefault();
+                            if (savedAsBest || savingBest) return;
+                            setSavingBest(true);
+                            try {
+                              const result = await upsertSavedAnswer(userData.user.id, currentQuestion.id, userAnswer.trim());
+                              if (result.success) {
+                                setSavedAsBest(true);
+                                try {
+                                  const local = JSON.parse(localStorage.getItem(`nursing_saved_answers_${userData.user.id}`) || '{}');
+                                  local[currentQuestion.id] = userAnswer.trim();
+                                  localStorage.setItem(`nursing_saved_answers_${userData.user.id}`, JSON.stringify(local));
+                                } catch { /* ignore */ }
+                              }
+                            } catch (err) {
+                              console.warn('\u26a0\ufe0f Save best answer failed:', err);
+                            } finally {
+                              setSavingBest(false);
+                            }
+                          }}
+                          disabled={savedAsBest || savingBest}
+                          className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                            savedAsBest
+                              ? 'bg-green-500/10 border border-green-500/20 text-green-300 cursor-default'
+                              : 'bg-amber-500/10 border border-amber-500/20 text-amber-300 hover:bg-amber-500/20'
+                          }`}
+                        >
+                          {savingBest ? (
+                            <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving...</>
+                          ) : savedAsBest ? (
+                            <><CheckCircle className="w-3.5 h-3.5" /> Saved as Best Answer</>
+                          ) : (
+                            <><Save className="w-3.5 h-3.5" /> Save as My Best Answer</>
+                          )}
+                        </button>
                       </div>
                     )}
 
                     {/* Actions */}
                     <div className="flex gap-3">
                       <button
-                        onClick={() => { setUserAnswer(''); setFeedback(null); setValidationFlags(null); }}
+                        onClick={() => { setUserAnswer(''); setFeedback(null); setValidationFlags(null); setSavedAsBest(false); setExpandedSections({}); }}
+                        onTouchEnd={(e) => { e.preventDefault(); setUserAnswer(''); setFeedback(null); setValidationFlags(null); setSavedAsBest(false); setExpandedSections({}); }}
                         className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-sm hover:bg-white/20 transition-all"
                       >
                         <RotateCcw className="w-4 h-4" /> Try Again
                       </button>
                       <button
                         onClick={nextQuestion}
+                        onTouchEnd={(e) => { e.preventDefault(); nextQuestion(); }}
                         className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-sky-600 to-cyan-500 text-white font-semibold text-sm shadow-lg shadow-sky-500/30 hover:-translate-y-0.5 transition-all"
                       >
                         Next Question <ChevronRight className="w-4 h-4" />

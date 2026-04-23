@@ -14,6 +14,8 @@
 //   score: number | null,          // 1-5 for mock/practice
 //   sbarScores: { situation, background, assessment, recommendation } | null,  // 1-10 each, sbar-drill only
 //   extraScores: object | null,    // negotiation 5-dimension scores + scenario metadata (offer-coach)
+//   userAnswer: string | null,     // user's submitted answer text (persisted for review)
+//   aiFeedback: string | null,     // AI coaching feedback text (persisted for review)
 //   timestamp: string (ISO),
 // }
 //
@@ -34,12 +36,14 @@ export function createMockInterviewSession(result) {
     responseFramework: result.responseFramework || 'star',
     score: result.score ?? null,
     sbarScores: null,
+    userAnswer: result.userAnswer || null,
+    aiFeedback: result.aiFeedback || null,
     timestamp: new Date().toISOString(),
   };
 }
 
 /** Create a session record from Practice Mode results */
-export function createPracticeSession(questionId, question, category, responseFramework, score) {
+export function createPracticeSession(questionId, question, category, responseFramework, score, userAnswer, aiFeedback) {
   return {
     id: `pm_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
     mode: 'practice',
@@ -49,12 +53,14 @@ export function createPracticeSession(questionId, question, category, responseFr
     responseFramework,
     score: score ?? null,
     sbarScores: null,
+    userAnswer: userAnswer || null,
+    aiFeedback: aiFeedback || null,
     timestamp: new Date().toISOString(),
   };
 }
 
 /** Create a session record from SBAR Drill results */
-export function createSBARDrillSession(questionId, question, category, sbarScores) {
+export function createSBARDrillSession(questionId, question, category, sbarScores, userAnswer, aiFeedback) {
   return {
     id: `sd_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
     mode: 'sbar-drill',
@@ -64,6 +70,8 @@ export function createSBARDrillSession(questionId, question, category, sbarScore
     responseFramework: 'sbar',
     score: null, // SBAR drill uses per-component scores instead
     sbarScores: sbarScores ?? null,
+    userAnswer: userAnswer || null,
+    aiFeedback: aiFeedback || null,
     timestamp: new Date().toISOString(),
   };
 }

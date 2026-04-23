@@ -43,6 +43,7 @@ export default function useDocumentHead({
   description,
   keywords,
   canonical,
+  robots,
   og = {},
   twitter = {},
 } = {}) {
@@ -61,6 +62,11 @@ export default function useDocumentHead({
     }
     if (keywords) {
       setMetaTag('name', 'keywords', keywords);
+    }
+
+    // Robots directive (e.g., 'noindex, nofollow')
+    if (robots) {
+      setMetaTag('name', 'robots', robots);
     }
 
     // Canonical URL
@@ -91,6 +97,9 @@ export default function useDocumentHead({
       setMetaTag('property', 'og:url', 'https://www.interviewanswers.ai');
       setMetaTag('name', 'twitter:title', DEFAULT_TITLE);
       setMetaTag('name', 'twitter:description', DEFAULT_DESCRIPTION);
+      // Remove robots tag on cleanup (default to indexable)
+      const robotsEl = document.querySelector('meta[name="robots"]');
+      if (robotsEl) robotsEl.remove();
     };
-  }, [title, description, keywords, canonical, og.title, og.description, og.url, og.type, og.image, twitter.title, twitter.description, twitter.image]);
+  }, [title, description, keywords, canonical, robots, og.title, og.description, og.url, og.type, og.image, twitter.title, twitter.description, twitter.image]);
 }
