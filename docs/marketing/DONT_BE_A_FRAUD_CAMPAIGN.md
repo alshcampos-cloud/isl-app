@@ -17,19 +17,19 @@
 ## Google Ads — Responsive Search Ads
 
 ### Headlines (max 30 chars each — pick 10-15 best)
-1. Don't Be a Fraud. Practice.
-2. Don't Fake It. Master It.
+1. Practice. Don't Fake It.
+2. Don't Borrow a Voice.
 3. The Life Skill You Earn
 4. Interview Prep, Done Right
 5. Practice, Not Cheat
 6. Change Your Life for Real
-7. Don't Borrow a Voice. Earn One.
-8. The AI That Doesn't Cheat
+7. Earn the Voice in the Room
+8. The AI Built for Practice
 9. Free Interview Practice
 10. Ethical AI Interview Coach
 11. Build the Skill. Get the Job.
 12. Interview AI That Works
-13. No Copilots. Just Practice.
+13. The AI That Stays Out
 14. Practice Out Loud With AI
 15. Get Ready. Get the Offer.
 
@@ -73,7 +73,7 @@
 **Primary text:**
 > We built an AI interview prompter. Users loved it. We were on a clear product path.
 >
-> Then we looked at the category we were drifting into — "undetectable" AI copilots for live interviews. Hiring managers calling it fraud. Candidates losing offers after being caught.
+> Then we watched the category drift toward "undetectable" AI copilots designed for live interviews. News outlets including CBS News reported that the practice was being flagged by employers; by one report, 50% of businesses had encountered AI-assisted interview fraud in 2026. Some candidates had offers rescinded.
 >
 > So we removed our live prompter. Rebuilt the product around practice, not cheat.
 >
@@ -108,15 +108,15 @@
 
 ## TikTok / Reels — 15-second script
 
-**Visual:** Split screen. Left: someone hunched at a desk, laptop propped open with AI whispering answers, text on screen reads "COPILOT". Right: someone confidently speaking to a phone, bullets flashing on screen, text reads "PRACTICE".
+**Visual:** Split screen — the SAME PERSON on both sides. Left: in the actual interview, AI device tucked under the desk, label reads "AI IN THE ROOM". Right: same person, an hour earlier, alone, practicing out loud with bullet points flashing on a phone, label reads "AI IN PRACTICE". The camera slowly pulls back to reveal the right side as the *cause* and the left as the *consequence*.
 
 **Voiceover (text overlay):**
 > "There are two ways to use AI for your interview.
 >
-> One of them gets offers rescinded.
-> The other gets you the job.
+> One of them can get the offer rescinded.
+> The other earns it.
 >
-> **Don't be a fraud. Practice.**
+> **Practice, not cheat.**
 >
 > InterviewAnswers dot AI. Free to start."
 
