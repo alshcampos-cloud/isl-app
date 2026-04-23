@@ -4,7 +4,7 @@ import { Mic, Bot, Target, Sparkles, Lightbulb, ArrowRight } from 'lucide-react'
 const features = [
   {
     icon: Mic,
-    name: 'Live Prompter',
+    name: 'Practice Prompter',
     gradient: 'from-teal-500 to-emerald-500',
     description: 'Fuzzy logic identifies the question being asked and pulls your personalized bullet points in real-time during practice. Train your brain to hit every point before the real thing.',
     highlights: ['Identifies questions automatically', 'Matches questions to your answers', 'Your answers are never recorded'],

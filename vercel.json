@@ -12,10 +12,16 @@
       "has": [{ "type": "host", "value": "interviewanswers.ai" }],
       "destination": "https://www.interviewanswers.ai/:path",
       "permanent": true
+    },
+    {
+      "source": "/stealth-prompter",
+      "destination": "/ethics",
+      "permanent": true
     }
   ],
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/:path*" },
+    { "source": "/house-hunt", "destination": "/house-hunt.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [

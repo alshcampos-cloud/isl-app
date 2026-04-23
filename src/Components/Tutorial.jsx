@@ -104,12 +104,12 @@ export default function Tutorial({ user, isActive, onClose, onOpenTemplateLibrar
       )
     },
     {
-      title: "Step 3: Customize for Live Prompter",
+      title: "Step 3: Customize for Practice Prompter",
       icon: <Target className="w-16 h-16 text-orange-600" />,
       content: (
         <div className="text-left space-y-4">
           <p className="text-gray-700 leading-relaxed">
-            To use <strong>Live Prompter</strong> during real interviews, you need to customize your questions with keywords:
+            To use <strong>Practice Prompter</strong> during real interviews, you need to customize your questions with keywords:
           </p>
           <div className="bg-orange-50 rounded-lg p-4 border-2 border-orange-200">
             <p className="font-bold text-orange-900 mb-3">🎯 How Keywords Work:</p>
@@ -117,7 +117,7 @@ export default function Tutorial({ user, isActive, onClose, onOpenTemplateLibrar
               <div>
                 <p className="font-semibold mb-1">Interviewer asks: "Tell me about a time you led a difficult project"</p>
                 <p className="text-xs text-orange-700 mb-2">Your keywords: <span className="bg-orange-200 px-2 py-1 rounded">led</span> <span className="bg-orange-200 px-2 py-1 rounded">difficult</span> <span className="bg-orange-200 px-2 py-1 rounded">project</span></p>
-                <p className="text-green-700 font-semibold">✅ Live Prompter instantly shows your bullet points!</p>
+                <p className="text-green-700 font-semibold">✅ Practice Prompter instantly shows your bullet points!</p>
               </div>
             </div>
           </div>
@@ -127,12 +127,12 @@ export default function Tutorial({ user, isActive, onClose, onOpenTemplateLibrar
               <li>• Add at least <strong>5 keywords</strong> per question</li>
               <li>• Use words the interviewer will actually say</li>
               <li>• Include variations (e.g., "conflict", "disagreement", "difficult")</li>
-              <li>• Customize at least <strong>3 questions</strong> to unlock unlimited Live Prompter</li>
+              <li>• Customize at least <strong>3 questions</strong> to unlock unlimited Practice Prompter</li>
             </ul>
           </div>
           <div className="bg-red-50 rounded-lg p-3 border-l-4 border-red-500">
             <p className="text-sm text-red-900">
-              <strong>⚠️ Legal Warning:</strong> Live Prompter is for YOUR reference only. Some companies prohibit notes during interviews. Use responsibly and check your company's policies.
+              <strong>⚠️ Legal Warning:</strong> Practice Prompter is for YOUR reference only. Some companies prohibit notes during interviews. Use responsibly and check your company's policies.
             </p>
           </div>
         </div>
@@ -151,15 +151,15 @@ export default function Tutorial({ user, isActive, onClose, onOpenTemplateLibrar
             <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 border-2 border-green-300">
               <div className="flex items-center gap-2 mb-2">
                 <Mic className="w-5 h-5 text-green-600" />
-                <p className="font-bold text-green-900">🟢 Live Prompter (Real Interviews)</p>
+                <p className="font-bold text-green-900">🟢 Practice Prompter (Rehearsal Mode)</p>
               </div>
               <p className="text-sm text-green-800 mb-2">
-                Use during actual interviews to get instant bullet point reminders
+                Rehearse your answers out loud — bullet points appear as you speak, so you build muscle memory before the real interview
               </p>
               <ul className="text-xs text-green-700 space-y-1 pl-4">
-                <li>• Hold SPACEBAR when interviewer asks question</li>
+                <li>• Hold SPACEBAR to simulate a question prompt</li>
                 <li>• Your prepared talking points appear instantly</li>
-                <li>• Works with Teams/Zoom calls</li>
+                <li>• Practice until your delivery is natural</li>
                 <li>• Your answers are NOT recorded</li>
               </ul>
             </div>
@@ -225,7 +225,7 @@ export default function Tutorial({ user, isActive, onClose, onOpenTemplateLibrar
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                <span><strong>10 Live Prompter questions</strong> per month</span>
+                <span><strong>10 Practice Prompter questions</strong> per month</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
@@ -258,7 +258,7 @@ export default function Tutorial({ user, isActive, onClose, onOpenTemplateLibrar
               </li>
               <li className="flex items-start gap-2">
                 <Sparkles className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5" />
-                <span><strong>✨ UNLIMITED Live Prompter</strong></span>
+                <span><strong>✨ UNLIMITED Practice Prompter</strong></span>
               </li>
               <li className="flex items-start gap-2">
                 <Sparkles className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5" />
@@ -310,15 +310,15 @@ export default function Tutorial({ user, isActive, onClose, onOpenTemplateLibrar
               <li className="flex items-start gap-3">
                 <span className="flex-shrink-0 w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-bold">4</span>
                 <div>
-                  <p className="font-bold mb-1">Customize for Live Prompter (15 min)</p>
+                  <p className="font-bold mb-1">Customize for Practice Prompter (15 min)</p>
                   <p className="text-green-800 text-xs">Add keywords to 3+ questions, unlock unlimited use</p>
                 </div>
               </li>
               <li className="flex items-start gap-3">
                 <span className="flex-shrink-0 w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-bold">5</span>
                 <div>
-                  <p className="font-bold mb-1">Use Live Prompter in Real Interviews</p>
-                  <p className="text-green-800 text-xs">Get instant bullet point reminders during actual interviews</p>
+                  <p className="font-bold mb-1">Rehearse With Practice Prompter</p>
+                  <p className="text-green-800 text-xs">Out-loud rehearsal with live bullet prompts — so you show up interview-ready</p>
                 </div>
               </li>
             </ol>

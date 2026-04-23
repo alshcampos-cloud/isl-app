@@ -69,7 +69,6 @@ import InterviewDayMode from './Components/Intelligence/InterviewDayMode';
 import PrepRadio from './Components/Intelligence/PrepRadio';
 import WeakPointDrill from './Components/Intelligence/WeakPointDrill';
 import FollowUpEmail from './Components/Intelligence/FollowUpEmail';
-import StealthPrompter from './Components/Intelligence/StealthPrompter';
 import LearnSection from './Components/Intelligence/LearnSection';
 // TrialBanner removed — 24-hour trial killed, free tier is the new onramp
 import { resetAllProgress } from './utils/resetProgress';
@@ -448,7 +447,7 @@ const ISL = () => {
 
   // CLEANUP 3: Stop mic when app goes to background (Safari tab switch, app switch)
   // ALSO: Refresh session token when returning to prevent 406 errors
-  // BUG 3 FIX: True pause/resume for Live Prompter - don't end session on tab switch
+  // BUG 3 FIX: True pause/resume for Practice Prompter - don't end session on tab switch
   const wasSessionPausedRef = useRef(false); // Track if we paused due to tab switch
 
   useEffect(() => {
@@ -457,7 +456,7 @@ const ISL = () => {
         // Track when user leaves for auto-refresh timing
         window._lastHiddenTime = Date.now();
 
-        // BUG 3 FIX: Only PAUSE mic, don't end session (for Live Prompter resume)
+        // BUG 3 FIX: Only PAUSE mic, don't end session (for Practice Prompter resume)
         if (recognitionRef.current && interviewSessionActiveRef.current) {
           console.log('🧹 App backgrounded - PAUSING mic session (not ending)');
           wasSessionPausedRef.current = true; // Remember we need to resume
@@ -549,7 +548,7 @@ const ISL = () => {
           console.log('Session check skipped:', err.message);
         }
 
-        // BUG 3 FIX: Auto-resume Live Prompter session if it was paused
+        // BUG 3 FIX: Auto-resume Practice Prompter session if it was paused
         if (wasSessionPausedRef.current && interviewSessionActiveRef.current) {
           console.log('🎤 Auto-resuming paused session...');
           wasSessionPausedRef.current = false;
@@ -827,7 +826,7 @@ Upgrade to Pro ($9.99/month) for 40 sessions!
 
 Your free features still work:
 ✓ Flashcards (unlimited)
-✓ Live Prompter (unlimited)
+✓ Practice Prompter (unlimited)
 ✓ Question Bank (unlimited)`);
       return false;
     }
@@ -1630,7 +1629,7 @@ Upgrade to Pro for UNLIMITED:
 • Unlimited Practice Mode
 • Unlimited Answer Assistant
 • Unlimited Question Generator
-• Unlimited Live Prompter
+• Unlimited Practice Prompter
 
 Get a 30-Day Pass for just $14.99 — no subscription!`);
       setShowPricingPage(true);
@@ -1689,7 +1688,7 @@ Upgrade to Pro for UNLIMITED:
 • Unlimited Practice Mode
 • Unlimited Answer Assistant
 • Unlimited Question Generator
-• Unlimited Live Prompter
+• Unlimited Practice Prompter
 
 Get a 30-Day Pass for just $14.99 — no subscription!`);
       setShowPricingPage(true);
@@ -1749,7 +1748,7 @@ Upgrade to Pro for UNLIMITED:
 • Unlimited Practice Mode
 • Unlimited Answer Assistant
 • Unlimited Question Generator
-• Unlimited Live Prompter
+• Unlimited Practice Prompter
 
 Get a 30-Day Pass for just $14.99 — no subscription!`);
         setShowPricingPage(true);
@@ -2406,10 +2405,10 @@ const startListening = () => {
       // LIVE PROMPTER USAGE: Track when question is matched/displayed
       // SECURITY FIX: Check limits before tracking (prevents bypass)
       if (currentModeRef.current === 'prompter') {
-        if (checkUsageLimitsSync('livePrompterQuestions', 'Live Prompter')) {
-          trackUsageInBackground('livePrompterQuestions', 'Live Prompter');
+        if (checkUsageLimitsSync('livePrompterQuestions', 'Practice Prompter')) {
+          trackUsageInBackground('livePrompterQuestions', 'Practice Prompter');
         } else {
-          console.log('🚫 Live Prompter action blocked - over limit');
+          console.log('🚫 Practice Prompter action blocked - over limit');
         }
       }
       return;
@@ -2566,10 +2565,10 @@ const startListening = () => {
       // LIVE PROMPTER USAGE: Track when question is matched/displayed
       // SECURITY FIX: Check limits before tracking (prevents bypass)
       if (currentModeRef.current === 'prompter') {
-        if (checkUsageLimitsSync('livePrompterQuestions', 'Live Prompter')) {
-          trackUsageInBackground('livePrompterQuestions', 'Live Prompter');
+        if (checkUsageLimitsSync('livePrompterQuestions', 'Practice Prompter')) {
+          trackUsageInBackground('livePrompterQuestions', 'Practice Prompter');
         } else {
-          console.log('🚫 Live Prompter action blocked - over limit');
+          console.log('🚫 Practice Prompter action blocked - over limit');
         }
       }
     } else { 
@@ -3047,9 +3046,9 @@ Respond in this exact JSON format:
       return;
     }
 
-    // USAGE LIMIT GATE: Block before starting Live Prompter
-    if (!checkUsageLimitsSync('livePrompterQuestions', 'Live Prompter')) {
-      console.log('🚫 Live Prompter blocked - usage limit reached');
+    // USAGE LIMIT GATE: Block before starting Practice Prompter
+    if (!checkUsageLimitsSync('livePrompterQuestions', 'Practice Prompter')) {
+      console.log('🚫 Practice Prompter blocked - usage limit reached');
       return;
     }
 
@@ -3060,7 +3059,7 @@ Respond in this exact JSON format:
       return;
     }
     
-    console.log('✅ Has consent - showing Live Prompter warning');
+    console.log('✅ Has consent - showing Practice Prompter warning');
     setPendingMode('prompter');
     setShowLivePrompterWarning(true);
   };
@@ -3921,7 +3920,7 @@ const startPracticeMode = async () => {
 
             <div className="bg-teal-500/20 border-2 border-teal-400/50 rounded-xl p-4 mb-6">
               <p className="text-sm text-teal-200">
-                <strong><Lightbulb className="w-4 h-4 inline" /> Tip:</strong> You need at least a few questions to use Live Prompter, AI Interviewer, and Practice modes.
+                <strong><Lightbulb className="w-4 h-4 inline" /> Tip:</strong> You need at least a few questions to use Practice Prompter, AI Interviewer, and Practice modes.
               </p>
             </div>
 
@@ -3952,7 +3951,7 @@ const startPracticeMode = async () => {
               <ul className="space-y-2 text-gray-300">
                 <li className="flex items-start gap-2">
                   <span className="text-teal-400 font-bold">✓</span>
-                  <span><strong>Live Prompter</strong> - Real-time interview assistance (works right now!)</span>
+                  <span><strong>Practice Prompter</strong> - Real-time interview assistance (works right now!)</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-teal-400 font-bold">✓</span>
@@ -3969,7 +3968,7 @@ const startPracticeMode = async () => {
               <h3 className="font-bold text-lg mb-3 text-teal-300"><Lightbulb className="w-4 h-4 inline" /> Pro Tip:</h3>
               <p className="text-gray-300 mb-3">
                 These default questions work great, but <strong>customizing them for YOUR specific role</strong> makes 
-                Live Prompter 10x more accurate.
+                Practice Prompter 10x more accurate.
               </p>
               <p className="text-sm text-gray-400">
                 You can customize anytime in Command Center → Bank
@@ -3996,7 +3995,7 @@ const startPracticeMode = async () => {
                 }}
                 className="flex-1 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 py-4 rounded-xl font-bold transition-all shadow-lg"
               >
-                Try Live Prompter Now! →
+                Try Practice Prompter Now! →
               </button>
             </div>
           </div>
@@ -4108,7 +4107,7 @@ const startPracticeMode = async () => {
               <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
                 <h3 className="font-bold text-teal-400 mb-2">Load Default Questions</h3>
                 <p className="text-sm text-gray-400">
-                  Get common interview questions to start using Live Prompter immediately
+                  Get common interview questions to start using Practice Prompter immediately
                 </p>
               </div>
               
@@ -4219,7 +4218,7 @@ const startPracticeMode = async () => {
                 </div>
                 <button
                   onClick={() => {
-                    console.log('❌ Live Prompter warning canceled via X');
+                    console.log('❌ Practice Prompter warning canceled via X');
                     setShowLivePrompterWarning(false);
                     setPendingMode(null);
                   }}
@@ -4231,11 +4230,11 @@ const startPracticeMode = async () => {
               </div>
               
               <h2 className="text-xl font-bold text-center mb-3 text-red-600">
-                Live Prompter - Legal Warning
+                Practice Prompter - Legal Warning
               </h2>
               
               <p className="text-gray-700 mb-3 text-sm text-center">
-                You're about to use Live Prompter during real interviews.
+                You're about to use Practice Prompter during real interviews.
               </p>
 
               <div className="bg-red-50 border-l-4 border-red-400 rounded p-3 mb-3">
@@ -4284,7 +4283,7 @@ const startPracticeMode = async () => {
               <div className="flex gap-2">
                 <button
                   onClick={() => {
-                    console.log('❌ Live Prompter warning canceled');
+                    console.log('❌ Practice Prompter warning canceled');
                     setShowLivePrompterWarning(false);
                     setPendingMode(null);
                   }}
@@ -4294,7 +4293,7 @@ const startPracticeMode = async () => {
                 </button>
                 <button
                   onClick={() => {
-                    console.log('✅ User accepted Live Prompter warning');
+                    console.log('✅ User accepted Practice Prompter warning');
                     setShowLivePrompterWarning(false);
                     actuallyStartPrompter();
                   }}
@@ -4679,13 +4678,13 @@ const startPracticeMode = async () => {
             <h2 className="text-lg sm:text-xl font-semibold text-navy-700 mb-1 tracking-tight font-['DM_Sans']">Practice</h2>
             <p className="text-slate-500 text-xs sm:text-sm mb-3 font-medium">Build your skills with hands-on training</p>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
-              {/* Live Prompter */}
+              {/* Practice Prompter */}
               <div className="bg-white rounded-xl shadow-sm p-4 sm:p-5 lg:p-6 transition-all duration-200 hover:shadow-md active:scale-[0.98] cursor-pointer group border border-slate-200/80 hover:border-teal-300">
                 <div className="text-center flex flex-col h-full">
                   <IconContainer color="teal" size="lg" className="mx-auto mb-3 sm:mb-4">
                     <PrompterIcon size={28} gradient="teal" />
                   </IconContainer>
-                  <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-1 sm:mb-2 text-navy-700">Live Prompter</h3>
+                  <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-1 sm:mb-2 text-navy-700">Practice Prompter</h3>
                   <p className="text-slate-500 text-xs sm:text-sm mb-3 sm:mb-4 flex-1 font-medium">Real-time bullet prompts</p>
                   <button onClick={(e) => { e.stopPropagation(); startPrompterMode(); }} onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); startPrompterMode(); }} className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-lg transition-all shadow-sm hover:shadow-md text-sm sm:text-base active:scale-[0.98]">
                     Start Practice
@@ -4797,7 +4796,6 @@ const startPracticeMode = async () => {
                 { view: 'portfolio', icon: <PortfolioIcon size={20} gradient="slate" />, label: 'Portfolio', desc: 'Your past work' },
                 { view: 'interview-day', icon: <InterviewDayIcon size={20} gradient="amber" />, label: 'Day Mode', desc: 'Interview day prep' },
                 { view: 'follow-up-email', icon: <FollowUpIcon size={20} gradient="teal" />, label: 'Follow-Up', desc: 'Thank-you email' },
-                { view: 'stealth-prompter', icon: <NotesIcon size={20} gradient="slate" />, label: 'Notes', desc: 'Stealth notes' },
                 { view: 'flashcard', icon: <FlashcardCompactIcon size={20} gradient="amber" />, label: 'Flashcards', desc: 'Quick review' },
               ].map(tool => (
                 <button
@@ -4909,8 +4907,8 @@ const startPracticeMode = async () => {
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between mb-6">
             <button onClick={() => { 
-              // CRITICAL: Comprehensive cleanup when exiting Live Prompter
-              console.log('🚪 Exiting Live Prompter - full cleanup');
+              // CRITICAL: Comprehensive cleanup when exiting Practice Prompter
+              console.log('🚪 Exiting Practice Prompter - full cleanup');
               
               // 1. End interview session if active
               if (interviewSessionActive) endInterviewSession();
@@ -5031,14 +5029,6 @@ const startPracticeMode = async () => {
                         <p className="text-sm text-gray-300">Click "Tab Audio" before starting to capture audio from the browser tab where your Teams/Zoom call is running.</p>
                       </div>
                     )}
-                    <div className="mt-4 pt-4 border-t border-teal-500/30">
-                      <button
-                        onClick={() => setCurrentView('stealth-prompter')}
-                        className="text-sm text-gray-500 hover:text-gray-300 transition-colors"
-                      >
-                        <FileText className="w-4 h-4 inline" /> Prefer a quieter view? Try Notes Mode
-                      </button>
-                    </div>
                   </div>
                 </>
               ) : (
@@ -7137,18 +7127,6 @@ const startPracticeMode = async () => {
     return <FollowUpEmail onBack={() => setCurrentView('home')} getUserContext={getUserContext} />;
   }
 
-  // Phase 4 Special: Stealth Prompter
-  if (currentView === 'stealth-prompter') {
-    return (
-      <StealthPrompter
-        questions={questions}
-        matchQuestion={matchQuestion}
-        onExit={() => setCurrentView('home')}
-        getUserContext={getUserContext}
-      />
-    );
-  }
-
   if (currentView === 'interview-coach') {
     return (
       <div className="min-h-screen" style={{ background: 'linear-gradient(to bottom right, #fafaf8, #f5f5f0, #f0f4f8)' }}>
@@ -8108,7 +8086,7 @@ const startPracticeMode = async () => {
                             <li><CheckCircle className="w-4 h-4 inline text-teal-500" /> <strong>UNLIMITED</strong> AI Interviewer</li>
                             <li><CheckCircle className="w-4 h-4 inline text-teal-500" /> <strong>UNLIMITED</strong> Practice Mode</li>
                             <li><CheckCircle className="w-4 h-4 inline text-teal-500" /> <strong>UNLIMITED</strong> Answer Assistant</li>
-                            <li><CheckCircle className="w-4 h-4 inline text-teal-500" /> <strong>UNLIMITED</strong> Live Prompter</li>
+                            <li><CheckCircle className="w-4 h-4 inline text-teal-500" /> <strong>UNLIMITED</strong> Practice Prompter</li>
                           </ul>
                         </div>
                         <button
@@ -8300,7 +8278,7 @@ const startPracticeMode = async () => {
                         </div>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-2">Keywords (for Live Prompter matching)</label>
+                        <label className="block text-sm font-medium mb-2">Keywords (for Practice Prompter matching)</label>
                         <textarea value={editingQuestion.keywords?.join(', ') || ''} onChange={(e) => setEditingQuestion({ ...editingQuestion, keywords: e.target.value.split(',').map(k => k.trim()) })} className="w-full px-4 py-2 border rounded-lg h-20" placeholder="tell me about yourself, background, introduce yourself" />
                       </div>
                       <div>
@@ -8857,8 +8835,9 @@ const startPracticeMode = async () => {
             
             <h3 className="text-xl font-semibold mt-6 mb-3">Recording Consent and Legal Compliance</h3>
             <p className="mb-4 text-gray-700">
-              <strong>Important:</strong> If you use InterviewAnswers.ai's Live Prompter feature during actual interviews with other people, 
-              you are solely responsible for obtaining consent from all parties being recorded and complying with 
+              <strong>Important:</strong> Practice Prompter is designed for rehearsal sessions, not live interviews with other people.
+              If despite our guidance you choose to use any audio feature during a live conversation with another party,
+              you are solely responsible for obtaining consent from all parties being recorded and complying with
               applicable recording laws. Many jurisdictions require all-party consent before recording conversations.
             </p>
             <p className="mb-4 text-gray-700">
@@ -8971,8 +8950,8 @@ const startPracticeMode = async () => {
               User Responsibility for Recording Consent:
             </p>
             <p className="mb-4 text-gray-700">
-              If you use InterviewAnswers.ai's Live Prompter feature or any recording functionality during actual interviews 
-              or conversations with other people, you are solely responsible for:
+              Practice Prompter is designed for rehearsal, not live interviews. If despite our guidance you use any recording
+              functionality during a live conversation with another party, you are solely responsible for:
             </p>
             <ul className="list-disc pl-6 mb-4 space-y-2 text-gray-700">
               <li>Obtaining explicit consent from all parties before recording</li>
@@ -9302,6 +9281,7 @@ import AuthPage from './Components/AuthPage';
 const LandingPage = lazy(() => import('./Components/Landing/LandingPage'));
 const TermsPage = lazy(() => import('./Components/Landing/TermsPage'));
 const PrivacyPage = lazy(() => import('./Components/Landing/PrivacyPage'));
+const EthicsPage = lazy(() => import('./Components/Landing/EthicsPage'));
 const NursingTrackApp = showNursingFeatures() ? lazy(() => import('./Components/NursingTrack/NursingTrackApp')) : () => null;
 const NursingLandingPage = showNursingFeatures() ? lazy(() => import('./Components/NursingTrack/NursingLandingPage')) : () => null;
 const ArchetypeOnboarding = lazy(() => import('./Components/Onboarding/ArchetypeOnboarding'));
@@ -9341,6 +9321,7 @@ function App() {
         <Route path="/auth/callback" element={<OAuthCallback />} />
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/ethics" element={<EthicsPage />} />
 
         {/* General app: available in 'all' and 'general' builds */}
         {showGeneralFeatures() ? (

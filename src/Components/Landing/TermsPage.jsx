@@ -43,9 +43,31 @@ export default function TermsPage() {
           <h2 className="text-xl font-bold text-gray-900 mt-8">2. Description of Service</h2>
           <p>
             InterviewAnswers.ai provides AI-powered interview preparation tools including practice sessions,
-            mock interviews, answer building, question generation, live interview prompting, and nursing-specific
-            interview coaching. The Service uses <strong>Anthropic's Claude AI</strong> to generate personalized
-            feedback and coaching. The Service is intended for educational and personal development purposes only.
+            mock interviews, answer building, question generation, and practice prompting for rehearsal. The
+            Service uses <strong>Anthropic's Claude AI</strong> to generate personalized feedback and coaching.
+            The Service is intended for educational and personal development purposes only.
+          </p>
+
+          <h2 className="text-xl font-bold text-gray-900 mt-8">2a. Intended Use — Practice Only</h2>
+          <p>
+            <strong>InterviewAnswers.ai is designed and intended exclusively for interview preparation and practice.</strong>{' '}
+            The Service is to be used BEFORE an interview, not during one. You agree that you will NOT use
+            the Service, in whole or in part, during a live interview, recorded interview, pre-recorded
+            video interview, job assessment, academic exam, or any other evaluative hiring or evaluation
+            process in which a prospective employer or evaluator has not expressly authorized the use of AI
+            assistance. Using our tools during a live interview may violate the terms of the interview
+            process and is not supported by InterviewAnswers.ai. Violation of this intended-use restriction
+            is a material breach of these Terms.
+          </p>
+
+          <h2 className="text-xl font-bold text-gray-900 mt-8">2b. Good Faith Use</h2>
+          <p>
+            By using the Service, you agree to use it in good faith for its intended purpose: preparing for
+            interviews. You will not use the Service to deceive, misrepresent, or gain an unfair advantage
+            during live evaluations. You acknowledge that many employers prohibit the use of external AI
+            tools during interviews, and that such use may violate the policies of the employer, result in
+            withdrawal of an offer, or result in termination of employment. The Company is not responsible
+            for any consequences that result from your misuse of the Service contrary to these Terms.
           </p>
 
           <h2 className="text-xl font-bold text-gray-900 mt-8">3. License to Use</h2>
@@ -72,14 +94,27 @@ export default function TermsPage() {
             <li>AI feedback does not constitute professional career counseling or advice</li>
             <li>You should exercise your own judgment and seek professional guidance for important career decisions</li>
             <li>We make no guarantees regarding interview success, job offers, or career outcomes</li>
-            <li>For nursing interview features, AI provides <strong>communication coaching only</strong> — it does not provide clinical advice, medical recommendations, or replace clinical education</li>
           </ul>
+
+          <h2 className="text-xl font-bold text-gray-900 mt-8">5a. Clinical Content Disclaimer (Nursing Track)</h2>
+          <p>
+            The nursing interview content on InterviewAnswers.ai and NurseInterviewPro.ai is communication
+            coaching content only. The AI does NOT provide clinical advice, medical guidance, diagnosis,
+            treatment recommendations, or a substitute for clinical training, NCLEX preparation,
+            continuing education, or licensed clinical judgment. Questions, scenarios, and feedback focus
+            on how you communicate clinical experiences in an interview context, not on the clinical
+            accuracy of responses. Clinical content is reviewed by qualified nurses or nurse educators
+            before publication but is not a substitute for your facility protocols, hospital policy, or
+            the judgment of a licensed clinician in patient care. For clinical questions, consult
+            UpToDate, your facility protocols, or qualified clinical educators. You agree not to rely on
+            the Service as a clinical reference.
+          </p>
 
           <h2 className="text-xl font-bold text-gray-900 mt-8">6. Recording Consent and Legal Compliance</h2>
           <p><strong>User Responsibility for Recording Consent:</strong></p>
           <p>
-            If you use InterviewAnswers.ai's Live Prompter feature or any recording functionality during actual interviews
-            or conversations with other people, you are solely responsible for:
+            Practice Prompter is designed for rehearsal, not live interviews. If despite our guidance you use any recording functionality
+            during a live conversation with another party, you are solely responsible for:
           </p>
           <ul className="list-disc pl-6 space-y-2">
             <li>Obtaining explicit consent from all parties before recording</li>

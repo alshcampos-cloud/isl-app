@@ -430,7 +430,7 @@ const UltimateCompetitiveDashboard = ({ user, supabase, userTier, onUpgrade }) =
             />
             <UnlimitedFeatureCard
               icon={<Zap className="w-6 h-6" />}
-              title="Live Prompter"
+              title="Practice Prompter"
               description="Unlimited real-time interview support"
               color="green"
             />
@@ -578,7 +578,7 @@ const UltimateCompetitiveDashboard = ({ user, supabase, userTier, onUpgrade }) =
         />
         <UsageCard 
           icon={<Zap className="w-6 h-6" />}
-          title="Live Prompter"
+          title="Practice Prompter"
           used={stats.livePrompter.used}
           limit={stats.livePrompter.limit}
           color="green"

@@ -21,12 +21,12 @@ export default function LandingPage() {
   // SEO: Dynamic meta tags for the general landing page
   useDocumentHead({
     title: 'InterviewAnswers.ai - AI Interview Practice & STAR Method Coaching',
-    description: 'Practice job interviews with AI mock interviews, real-time coaching, and STAR method feedback. Build answers from your real experiences. Free to start, no credit card required.',
-    keywords: 'interview preparation, AI interview practice, mock interview, STAR method, behavioral interview questions, job interview tips, interview coaching, AI interview coach, practice interview questions, interview answers, job interview preparation, career coaching',
+    description: 'Practice job interviews with AI mock interviews and STAR method coaching. Rehearse out loud, build answers from your real experiences. Practice, not cheat. Free to start, no credit card required.',
+    keywords: 'interview preparation, AI interview practice, mock interview, STAR method, behavioral interview questions, job interview tips, interview coaching, AI interview coach, practice interview questions, interview answers, job interview preparation, career coaching, ethical interview prep',
     canonical: 'https://www.interviewanswers.ai/',
     og: {
-      title: 'InterviewAnswers.ai - AI Interview Practice & Coaching',
-      description: 'Practice job interviews with AI. Mock interviews, STAR method coaching, real-time prompts. Build answers from your real experiences.',
+      title: 'InterviewAnswers.ai - Practice, Not Cheat',
+      description: 'The interview AI that doesn\'t go in the interview. Mock interviews, STAR method coaching, rehearsal tools. Built for preparation, not real-time assistance.',
       url: 'https://www.interviewanswers.ai/',
       type: 'website',
     },

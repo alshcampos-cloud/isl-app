@@ -25,7 +25,7 @@ export default function SpeechUnavailableWarning({ variant = 'inline', darkMode 
 
   if (variant === 'banner') {
     if (darkMode) {
-      // Dark background variant (Live Prompter, nursing views)
+      // Dark background variant (Practice Prompter, nursing views)
       return (
         <div className={`bg-amber-900/30 border border-amber-500/50 rounded-lg px-4 py-3 mb-4 flex items-start gap-3 ${className}`}>
           <span className="text-lg flex-shrink-0 mt-0.5">📱</span>

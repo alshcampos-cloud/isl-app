@@ -214,8 +214,8 @@ export default function HomePageV2({
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <PracticeModeCard
           icon={<IconContainer color="teal" size="lg"><PrompterIcon size={28} /></IconContainer>}
-          title="Live Prompter"
-          description="Real-time coaching as you speak"
+          title="Practice Prompter"
+          description="Real-time coaching as you practice"
           buttonLabel="Start Prompter"
           buttonClass="bg-gradient-to-r from-teal-500 to-emerald-500"
           onClick={onStartPrompter}
@@ -299,7 +299,6 @@ export default function HomePageV2({
         <ToolCard icon={<PortfolioIcon size={24} gradient="slate" />} label="Portfolio" onClick={() => onNavigate('portfolio')} />
         <ToolCard icon={<InterviewDayIcon size={24} gradient="amber" />} label="Day Mode" onClick={() => onNavigate('interview-day')} />
         <ToolCard icon={<FollowUpIcon size={24} gradient="teal" />} label="Follow-Up" onClick={() => onNavigate('follow-up-email')} />
-        <ToolCard icon={<NotesIcon size={24} gradient="slate" />} label="Notes" onClick={() => onNavigate('stealth-prompter')} />
         <ToolCard icon={<FlashcardCompactIcon size={24} gradient="amber" />} label="Flashcards" onClick={onStartFlashcard} />
       </div>
 
