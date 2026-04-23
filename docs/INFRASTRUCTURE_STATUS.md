@@ -16,7 +16,7 @@
 | **GitHub** | Free | ✅ | Apr 22 (pushed successfully) | $0 | ✅ Yes |
 | **Namecheap (DNS)** | Standard | ✅ | Apr 22 (site resolves, DNS live) | ~$15/yr domain | ✅ Yes |
 | **Resend (Email)** | **FREE** | ⚠️ **BOTTLENECK** | Apr 22 (founder confirmed) | $0 | ❌ **Blocks at 100 emails/day** |
-| **Supabase Custom SMTP → Resend** | Unknown | ⚠️ **UNVERIFIED** | Not yet confirmed in dashboard | — | ❌ Must verify before launch |
+| **Supabase Custom SMTP → Resend** | Enabled, routing to smtp.resend.com:465 | ✅ **VERIFIED** | Apr 22 (dashboard confirmed) | — | ✅ Yes |
 
 ### Total Current Monthly Burn: **~$45/mo base** ($25 Supabase + $20 Vercel)
 Plus pay-as-you-go on Anthropic (currently negligible) + Stripe fees (only on paid conversions).
@@ -86,27 +86,21 @@ Plus pay-as-you-go on Anthropic (currently negligible) + Stripe fees (only on pa
 
 **Upgrade before:** Any paid advertising OR any organic traffic spike OR Product Hunt launch.
 
-### ⚠️ Supabase Custom SMTP — UNVERIFIED (BLOCKER)
-**Why this matters:** Supabase's built-in mailer rate limits to ~4 emails per HOUR. If custom SMTP is not pointing at Resend, signup verification emails silently fail under any real traffic.
+### ✅ Supabase Custom SMTP → Resend — VERIFIED April 22, 2026
 
-**DNS is confirmed live:** SPF, DKIM, DMARC records verified for interviewanswers.ai via Resend.
-
-**What's unknown:** Whether the Supabase Dashboard → Auth → Settings → SMTP Settings has custom SMTP ENABLED and pointing at Resend.
-
-**Verification steps (30 seconds):**
-1. Go to https://supabase.com/dashboard/project/tzrlpwtkrtvjpdhcaayu/auth/templates
-2. Click "SMTP Settings" (or "Auth Settings" depending on UI)
-3. Look for "Custom SMTP":
-   - ✅ **Enabled** + Host shows `smtp.resend.com` → You're good
-   - ❌ **Disabled** or default Supabase settings → Must configure now
-
-**If needs setup:**
-- Host: `smtp.resend.com`
-- Port: `465` (TLS) or `587`
-- Username: `resend`
-- Password: Your Resend API key
-- Sender email: something like `noreply@interviewanswers.ai`
+**Configuration confirmed in Supabase Dashboard:**
+- Custom SMTP: **ENABLED**
+- Sender email: `support@interviewanswers.ai`
 - Sender name: `InterviewAnswers.ai`
+- Host: `smtp.resend.com`
+- Port: `465` (TLS)
+- Username: `resend`
+- Password: (Resend API key, saved and encrypted)
+- Minimum interval per user: 60 seconds
+
+**What this fixes:** Every Supabase Auth email (signup confirmation, password reset, magic link) is now routed through Resend, bypassing Supabase's built-in 4/hour rate limit. Signups will not silently fail under traffic spikes.
+
+**DNS confirmed live:** SPF, DKIM, DMARC records verified for interviewanswers.ai via Resend.
 
 ---
 
@@ -119,8 +113,8 @@ Before running ANY paid marketing (Google Ads, Reddit ads, PH launch):
 - [x] Anthropic Tier 3 ($250 prepay) — DONE
 - [x] Stripe products + webhooks — DONE
 - [x] RevenueCat products + entitlement — DONE
-- [ ] **Resend upgrade to Pro ($20/mo)** — NOT DONE
-- [ ] **Supabase Custom SMTP → Resend verified** — NEEDS VERIFICATION
+- [x] **Supabase Custom SMTP → Resend** — VERIFIED Apr 22
+- [ ] **Resend upgrade to Pro ($20/mo)** — NOT DONE (only remaining blocker)
 
 **Once the two open items are confirmed, total monthly fixed cost:** **$65/mo** ($25 + $20 + $20)
 Plus pay-as-you-go (Anthropic, Stripe fees).
