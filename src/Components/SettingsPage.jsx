@@ -2,19 +2,20 @@ import { useState } from 'react';
 import {
   ChevronLeft, ChevronRight, User, CreditCard, Shield, FileText,
   Scale, Mail, Star, RotateCcw, Trash2, LogOut, Info, ExternalLink,
-  AlertTriangle, Loader2, CheckCircle, RefreshCw,
+  AlertTriangle, Loader2, CheckCircle, RefreshCw, Tag, Download,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { isNativeApp } from '../utils/platform';
 import { restorePurchases, getManageSubscriptionURL, logoutIAP } from '../utils/nativePurchases';
 import { resetAllProgress } from '../utils/resetProgress';
+import InstallInstructionsModal from './InstallInstructionsModal';
 
 // Tier display labels
 const TIER_LABELS = {
   free: 'Free',
   beta: 'Beta Tester',
   pro: 'Pro',
-  nursing_pass: 'Nursing Pass',
+  nursing_pass: 'Specialty Pass',
   general_pass: 'General Pass',
   annual: 'Annual All-Access',
 };
@@ -44,6 +45,7 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
 
   // Sign out state
   const [loggingOut, setLoggingOut] = useState(false);
+  const [showInstallModal, setShowInstallModal] = useState(false);
 
   // Restore purchases state
   const [restoring, setRestoring] = useState(false);
@@ -58,15 +60,31 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
 
   // ── Handlers ──────────────────────────────────────────────────────
 
-  const handleSignOut = async () => {
+  const handleSignOut = () => {
+    // SIGN OUT FIX (build 30): Don't await anything that might hang on iOS.
+    // `supabase.auth.signOut()` and RevenueCat `Purchases.logOut()` can both
+    // block indefinitely inside the iOS WKWebView, leaving the button stuck on
+    // "Signing out..." forever. Same pattern already applied to the profile
+    // dropdown sign-out in App.jsx — this mirrors it for Settings.
     setLoggingOut(true);
-    // Log out of RevenueCat first (clears entitlements on shared native devices)
-    try { await logoutIAP(); } catch {}
+    console.log('🚪 Settings sign out tapped');
+
+    // Fire-and-forget — don't await. If these hang, we still redirect below.
+    try { logoutIAP()?.catch?.(() => {}); } catch {}
+    try { supabase.auth.signOut({ scope: 'global' })?.catch?.(() => {}); } catch {}
+
+    // Local cleanup: clear everything except the API key (preserves dev override).
     try {
-      await supabase.auth.signOut();
-    } catch (err) {
-      console.warn('Sign-out error:', err.message);
-    }
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key !== 'isl_api_key') keysToRemove.push(key);
+      }
+      keysToRemove.forEach((k) => localStorage.removeItem(k));
+      sessionStorage.clear();
+    } catch {}
+
+    // Redirect immediately — user never sees the hang.
     window.location.href = '/';
   };
 
@@ -185,6 +203,7 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
     User:       { bg: 'bg-teal-50',   text: 'text-teal-600' },
     CreditCard: { bg: 'bg-teal-50',   text: 'text-teal-600' },
     RefreshCw:  { bg: 'bg-teal-50',   text: 'text-teal-600' },
+    Tag:        { bg: 'bg-teal-50',   text: 'text-teal-600' },
     Shield:     { bg: 'bg-indigo-50',  text: 'text-indigo-600' },
     FileText:   { bg: 'bg-indigo-50',  text: 'text-indigo-600' },
     Scale:      { bg: 'bg-indigo-50',  text: 'text-indigo-600' },
@@ -225,6 +244,13 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
           action: handleRestorePurchases,
           loading: restoring,
         }] : []),
+        {
+          icon: Tag,
+          iconName: 'Tag',
+          label: 'View Plans',
+          subtitle: 'See pass pricing and features',
+          action: onOpenPricing || (() => {}),
+        },
       ],
     },
     {
@@ -257,6 +283,13 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
     {
       title: 'Support',
       items: [
+        ...(isNativeApp() ? [] : [{
+          icon: Download,
+          iconName: 'Download',
+          label: 'Install as App',
+          subtitle: 'Add to home screen for quick access',
+          action: () => setShowInstallModal(true),
+        }]),
         {
           icon: Mail,
           iconName: 'Mail',
@@ -290,7 +323,6 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
         <div className="flex items-center gap-3">
           <button
             onClick={onBack}
-            onTouchEnd={onBack}
             className="p-2 -ml-2 rounded-lg hover:bg-slate-100 active:scale-[0.96] transition-all duration-200"
           >
             <ChevronLeft className="w-5 h-5 text-slate-600" />
@@ -329,7 +361,6 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
                   <button
                     key={item.label}
                     onClick={item.action}
-                    onTouchEnd={item.action ? (e) => { e.preventDefault(); item.action(); } : undefined}
                     disabled={!item.action || item.loading}
                     className={`w-full flex items-center gap-3.5 px-4 min-h-[52px] py-3.5 text-left transition-all duration-200 ${
                       item.action
@@ -379,7 +410,6 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
             {/* Reset Progress */}
             <button
               onClick={() => setShowResetConfirm(true)}
-              onTouchEnd={(e) => { e.preventDefault(); setShowResetConfirm(true); }}
               className="w-full flex items-center gap-3.5 px-4 min-h-[52px] py-3.5 text-left hover:bg-slate-50/80 active:bg-slate-100 active:scale-[0.98] transition-all duration-200"
             >
               <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-amber-50 transition-all duration-200">
@@ -454,13 +484,6 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
                 </p>
                 <button
                   onClick={() => {
-                    setDeleteInput('');
-                    setDeleteError(null);
-                    setDeleteLoading(false);
-                    setShowDeleteConfirm(true);
-                  }}
-                  onTouchEnd={(e) => {
-                    e.preventDefault();
                     setDeleteInput('');
                     setDeleteError(null);
                     setDeleteLoading(false);
@@ -568,6 +591,12 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
           </p>
         </div>
       </div>
+
+      {/* Install Instructions Modal (web users) */}
+      <InstallInstructionsModal
+        open={showInstallModal}
+        onClose={() => setShowInstallModal(false)}
+      />
     </div>
   );
 }
