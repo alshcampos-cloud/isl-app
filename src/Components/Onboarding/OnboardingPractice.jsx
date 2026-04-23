@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
 import { fetchWithRetry } from '../../utils/fetchWithRetry'
 import { trackOnboardingEvent } from '../../utils/onboardingTracker'
+import { showNursingFeatures } from '../../utils/appTarget'
 
 /**
  * OnboardingPractice — Screen 3: First Practice Question
@@ -18,7 +19,9 @@ import { trackOnboardingEvent } from '../../utils/onboardingTracker'
 // hardcoded here and sent in the POST body, visible in DevTools Network tab.
 // Now: only a mode identifier is sent; the Edge Function looks up the prompt server-side.
 
-export default function OnboardingPractice({ question, anonSessionReady, onComplete, fromNursing = false }) {
+export default function OnboardingPractice({ question, anonSessionReady, onComplete, fromNursing: fromNursingProp = false }) {
+  // Belt-and-suspenders — general builds always treat users as general-track
+  const fromNursing = showNursingFeatures() && fromNursingProp
   const [userAnswer, setUserAnswer] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [feedback, setFeedback] = useState(null)
@@ -46,7 +49,7 @@ export default function OnboardingPractice({ question, anonSessionReady, onCompl
             'Authorization': `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
-            mode: fromNursing ? 'onboarding-nursing' : 'onboarding-general',
+            mode: 'onboarding-general',
             userMessage: `Question: ${question.question}\n\nAnswer: ${userAnswer.trim()}`,
           }),
         }
@@ -106,11 +109,11 @@ export default function OnboardingPractice({ question, anonSessionReady, onCompl
         </p>
       </div>
 
-      {/* Clinical trust badge for nursing users (Change 7) */}
-      {fromNursing && (
+      {/* Specialty trust badge (only rendered on nursing-enabled builds) */}
+      {showNursingFeatures() && fromNursing && (
         <div className="flex items-center justify-center gap-1.5 mb-2">
           <span className="text-xs text-teal-600 bg-teal-50 px-3 py-1 rounded-full font-medium">
-            🏥 Clinically reviewed question · SBAR framework
+            Reviewed by domain experts
           </span>
         </div>
       )}
@@ -198,11 +201,17 @@ export default function OnboardingPractice({ question, anonSessionReady, onCompl
             ))}
           </div>
 
-          {/* SBAR citation + clinical safety disclaimer for nursing users (Change 7) */}
-          {fromNursing && (
+          {/* Cognitive-psych trust line (Sprint 2, Apr 2026) — shown right after
+              the aha moment of the first AI feedback. Research cite adds credibility. */}
+          <p className="text-xs text-slate-500 italic mt-3 mb-4 text-center leading-relaxed">
+            The science: practicing retrieval under realistic conditions builds recall ~50% better than re-reading
+            <span className="block mt-0.5 text-slate-400 not-italic">— Roediger &amp; Karpicke (2006), the testing effect</span>
+          </p>
+
+          {/* Specialty disclaimer (only rendered on nursing-enabled builds) */}
+          {showNursingFeatures() && fromNursing && (
             <div className="text-xs text-slate-400 mb-4 px-1 space-y-1">
-              <p>💡 This feedback references the SBAR communication framework (Institute for Healthcare Improvement)</p>
-              <p>🛡️ AI coaches your communication delivery — clinical content reviewed by practicing nurses</p>
+              <p>💡 Feedback references domain-specific communication frameworks</p>
             </div>
           )}
 
