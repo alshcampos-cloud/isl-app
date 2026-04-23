@@ -1,34 +1,34 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { HeartPulse, Newspaper, BrainCircuit, Smartphone } from 'lucide-react';
+import { HeartPulse, Newspaper, BrainCircuit, Lock } from 'lucide-react';
 
-// APP_STORE_URL: keep in sync with LandingFooter / CTASection if those ever reference it.
-const APP_STORE_URL = 'https://apps.apple.com/app/interviewanswers-ai/id6739827847';
+// CBS News reported on AI-assisted interview fraud — we cite their reporting on /ethics.
+// Note: we are NOT "featured in" CBS News; we cite it as third-party validation of the
+// problem we built the rebrand around. Phrase carefully (defamation/accuracy posture).
 const CBS_NEWS_URL = 'https://www.cbsnews.com/news/ai-interview-cheating-job-candidates-chatgpt-employers/';
 
 const items = [
   {
     icon: HeartPulse,
-    label: 'Built with Stanford-affiliated clinical co-founder',
+    label: 'Built with a Stanford-affiliated clinical co-founder',
     href: null,
   },
   {
     icon: Newspaper,
-    label: 'Featured in CBS News',
+    label: 'Built around CBS News-reported interview-fraud research',
     href: CBS_NEWS_URL,
     external: true,
   },
   {
     icon: BrainCircuit,
-    label: 'Grounded in cognitive psychology research',
+    label: 'Grounded in cognitive-psychology research',
     href: '/ethics',
     external: false,
   },
   {
-    icon: Smartphone,
-    label: 'Live on the Apple App Store',
-    href: APP_STORE_URL,
-    external: true,
+    icon: Lock,
+    label: 'AES-256 encryption · your practice stays private',
+    href: null,
   },
 ];
 

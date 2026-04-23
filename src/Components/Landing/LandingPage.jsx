@@ -6,6 +6,7 @@ import LandingNavbar from './LandingNavbar';
 import HeroSection from './HeroSection';
 import TrustBar from './TrustBar';
 import SocialProofBar from './SocialProofBar';
+import CogPsychTrustStrip from './CogPsychTrustStrip';
 import ProblemSection from './ProblemSection';
 import FeaturesSection from './FeaturesSection';
 import HowItWorksSection from './HowItWorksSection';
@@ -98,6 +99,7 @@ export default function LandingPage() {
       <HeroSection />
       <TrustBar />
       <SocialProofBar />
+      <CogPsychTrustStrip />
       <ProblemSection />
       <FeaturesSection />
       <HowItWorksSection />
