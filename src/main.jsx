@@ -1,11 +1,18 @@
-import React from 'react'
+import React, { lazy, Suspense } from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
-import App from './App.jsx'
 import ErrorBoundary from './Components/ErrorBoundary.jsx'
 import ScrollToTop from './Components/ScrollToTop.jsx'
+import LoadingShell from './Components/LoadingShell.jsx'
 import './index.css'
 import { isNativeApp } from './utils/platform'
+
+// Sprint 1 / Coder 2 / Perf: lazy-load App at the router level so App.jsx + its
+// static-import graph (9,300-line monolith ISL + ~70 imports) is pulled into a
+// separate chunk instead of the main entry. Landing-page visitors get a branded
+// loading shell while the App chunk downloads async. Battle Scar #1-safe: no
+// App.jsx internals touched.
+const App = lazy(() => import('./App.jsx'))
 
 // Add 'capacitor' class to <html> when running as native app
 // This enables native-only CSS rules. On web, this never fires.
@@ -37,7 +44,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <ErrorBoundary>
     <BrowserRouter>
       <ScrollToTop />
-      <App />
+      <Suspense fallback={<LoadingShell />}>
+        <App />
+      </Suspense>
     </BrowserRouter>
   </ErrorBoundary>,
 )
