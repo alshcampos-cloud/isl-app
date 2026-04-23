@@ -230,16 +230,31 @@ export default function SignUpPrompt({ archetype, archetypeConfig, practiceScore
 
       {/* What you get with a free account — actual free tier features */}
       <div className="bg-teal-50 border border-teal-200 rounded-xl p-4 mb-6">
-        <p className="text-sm text-teal-700 font-medium mb-2">Your free account includes:</p>
+        <p className="text-sm text-teal-700 font-medium mb-2">Your free account includes each month:</p>
         <ul className="text-sm text-teal-600 space-y-1.5">
           <li className="flex items-start gap-2">
             <span className="mt-0.5">🎙️</span>
-            <span>3 voice mock interviews per month</span>
+            <span>3 AI Mock Interviewer sessions</span>
           </li>
           <li className="flex items-start gap-2">
             <span className="mt-0.5">📝</span>
-            <span>5 AI-coached practice sessions per month</span>
+            <span>10 Practice Mode sessions</span>
           </li>
+          <li className="flex items-start gap-2">
+            <span className="mt-0.5">💡</span>
+            <span>5 Answer Assistant sessions</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="mt-0.5">❓</span>
+            <span>5 AI-generated custom questions</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="mt-0.5">📋</span>
+            <span>10 Practice Prompter questions</span>
+          </li>
+        </ul>
+        <p className="text-sm text-teal-700 font-medium mt-4 mb-2">Always included:</p>
+        <ul className="text-sm text-teal-600 space-y-1.5">
           <li className="flex items-start gap-2">
             <span className="mt-0.5">📊</span>
             <span>STAR method coaching with detailed scoring</span>
