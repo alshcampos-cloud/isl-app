@@ -99,7 +99,8 @@ export default function PrivacyPage() {
 
           <h3 className="text-lg font-semibold text-gray-900 mt-6">Recording Consent and Legal Compliance</h3>
           <p>
-            <strong>Important:</strong> If you use InterviewAnswers.ai's Practice Prompter feature during actual interviews with other people,
+            <strong>Important:</strong> Practice Prompter is designed for rehearsal sessions, not live interviews with other people.
+            If despite our guidance you choose to use any audio feature during a live conversation with another party,
             you are solely responsible for obtaining consent from all parties being recorded and complying with
             applicable recording laws. Many jurisdictions require all-party consent before recording conversations.
           </p>

@@ -52,9 +52,10 @@ const ConsentDialog = ({
           {/* ONLY show Practice Prompter warning if using Practice Prompter */}
           {showLivePrompterWarning && (
             <div className="bg-orange-50 border-l-4 border-orange-400 rounded p-3 mb-3">
-              <p className="font-bold text-orange-900 text-sm mb-1">⚠️ Practice Prompter Use</p>
+              <p className="font-bold text-orange-900 text-sm mb-1">⚠️ Practice Prompter — Rehearsal Only</p>
               <p className="text-orange-800 text-xs">
-                If using during actual interviews, <strong>YOU must obtain consent from all parties</strong>. 
+                Practice Prompter is designed for rehearsal before your interview. If you choose to use it in a live
+                conversation with another party, <strong>YOU must obtain consent from all parties</strong>.
                 Recording without consent may be illegal.
               </p>
             </div>

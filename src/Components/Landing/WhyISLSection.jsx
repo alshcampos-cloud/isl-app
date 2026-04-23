@@ -23,8 +23,8 @@ const differentiators = [
   {
     icon: Mic,
     color: 'text-emerald-600 bg-emerald-100',
-    title: 'Real-Time Interview Assistance',
-    description: 'The only tool that helps you DURING the interview. Practice Prompter gives you bullet points while you\'re actually speaking.',
+    title: 'Rehearse Out Loud With AI',
+    description: 'Practice Prompter surfaces your bullet points as you speak — during your rehearsal sessions, not live interviews. Build muscle memory before the real thing.',
   },
   {
     icon: RefreshCcw,
@@ -137,7 +137,8 @@ export default function WhyISLSection() {
               </h2>
               <p className="text-lg text-gray-600 mb-10 leading-relaxed">
                 Most AI tools give you generic answers. InterviewAnswers.ai builds a personalized practice system
-                around YOUR experiences, tracks your progress, and is the only tool that helps you during the actual interview.
+                around YOUR experiences, tracks your progress, and is built for preparation — not real-time
+                interview assistance. Practice, not cheat.
               </p>
             </motion.div>
 

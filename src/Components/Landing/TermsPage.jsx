@@ -113,8 +113,8 @@ export default function TermsPage() {
           <h2 className="text-xl font-bold text-gray-900 mt-8">6. Recording Consent and Legal Compliance</h2>
           <p><strong>User Responsibility for Recording Consent:</strong></p>
           <p>
-            If you use InterviewAnswers.ai's Practice Prompter feature or any recording functionality during actual interviews
-            or conversations with other people, you are solely responsible for:
+            Practice Prompter is designed for rehearsal, not live interviews. If despite our guidance you use any recording functionality
+            during a live conversation with another party, you are solely responsible for:
           </p>
           <ul className="list-disc pl-6 space-y-2">
             <li>Obtaining explicit consent from all parties before recording</li>

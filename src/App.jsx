@@ -8835,8 +8835,9 @@ const startPracticeMode = async () => {
             
             <h3 className="text-xl font-semibold mt-6 mb-3">Recording Consent and Legal Compliance</h3>
             <p className="mb-4 text-gray-700">
-              <strong>Important:</strong> If you use InterviewAnswers.ai's Practice Prompter feature during actual interviews with other people, 
-              you are solely responsible for obtaining consent from all parties being recorded and complying with 
+              <strong>Important:</strong> Practice Prompter is designed for rehearsal sessions, not live interviews with other people.
+              If despite our guidance you choose to use any audio feature during a live conversation with another party,
+              you are solely responsible for obtaining consent from all parties being recorded and complying with
               applicable recording laws. Many jurisdictions require all-party consent before recording conversations.
             </p>
             <p className="mb-4 text-gray-700">
@@ -8949,8 +8950,8 @@ const startPracticeMode = async () => {
               User Responsibility for Recording Consent:
             </p>
             <p className="mb-4 text-gray-700">
-              If you use InterviewAnswers.ai's Practice Prompter feature or any recording functionality during actual interviews 
-              or conversations with other people, you are solely responsible for:
+              Practice Prompter is designed for rehearsal, not live interviews. If despite our guidance you use any recording
+              functionality during a live conversation with another party, you are solely responsible for:
             </p>
             <ul className="list-disc pl-6 mb-4 space-y-2 text-gray-700">
               <li>Obtaining explicit consent from all parties before recording</li>

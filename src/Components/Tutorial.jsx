@@ -151,15 +151,15 @@ export default function Tutorial({ user, isActive, onClose, onOpenTemplateLibrar
             <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 border-2 border-green-300">
               <div className="flex items-center gap-2 mb-2">
                 <Mic className="w-5 h-5 text-green-600" />
-                <p className="font-bold text-green-900">🟢 Practice Prompter (Real Interviews)</p>
+                <p className="font-bold text-green-900">🟢 Practice Prompter (Rehearsal Mode)</p>
               </div>
               <p className="text-sm text-green-800 mb-2">
-                Use during actual interviews to get instant bullet point reminders
+                Rehearse your answers out loud — bullet points appear as you speak, so you build muscle memory before the real interview
               </p>
               <ul className="text-xs text-green-700 space-y-1 pl-4">
-                <li>• Hold SPACEBAR when interviewer asks question</li>
+                <li>• Hold SPACEBAR to simulate a question prompt</li>
                 <li>• Your prepared talking points appear instantly</li>
-                <li>• Works with Teams/Zoom calls</li>
+                <li>• Practice until your delivery is natural</li>
                 <li>• Your answers are NOT recorded</li>
               </ul>
             </div>
@@ -317,8 +317,8 @@ export default function Tutorial({ user, isActive, onClose, onOpenTemplateLibrar
               <li className="flex items-start gap-3">
                 <span className="flex-shrink-0 w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-bold">5</span>
                 <div>
-                  <p className="font-bold mb-1">Use Practice Prompter in Real Interviews</p>
-                  <p className="text-green-800 text-xs">Get instant bullet point reminders during actual interviews</p>
+                  <p className="font-bold mb-1">Rehearse With Practice Prompter</p>
+                  <p className="text-green-800 text-xs">Out-loud rehearsal with live bullet prompts — so you show up interview-ready</p>
                 </div>
               </li>
             </ol>
