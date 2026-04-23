@@ -32,7 +32,7 @@ export default function LandingPage() {
     },
     twitter: {
       title: 'InterviewAnswers.ai - AI Interview Practice & Coaching',
-      description: 'Practice job interviews with AI. Mock interviews, STAR method coaching, real-time prompts. Free to start.',
+      description: 'Practice job interviews with AI. Mock interviews, STAR method coaching, rehearsal tools. Free to start.',
     },
   });
 
