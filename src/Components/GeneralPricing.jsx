@@ -336,6 +336,24 @@ export default function GeneralPricing({ userData, onClose }) {
             </div>
           </div>
 
+          {/* Ethics callout — practice-first commitment */}
+          <div className="mt-3 px-4 py-3 bg-teal-50 border border-teal-100 rounded-lg">
+            <ul className="space-y-1.5">
+              <li className="flex items-center gap-2 text-[11px] text-slate-700">
+                <CheckCircle className="w-3.5 h-3.5 text-teal-600 flex-shrink-0" />
+                Practice-first design
+              </li>
+              <li className="flex items-center gap-2 text-[11px] text-slate-700">
+                <CheckCircle className="w-3.5 h-3.5 text-teal-600 flex-shrink-0" />
+                Built for preparation, not cheating
+              </li>
+              <li className="flex items-center gap-2 text-[11px] text-slate-700">
+                <CheckCircle className="w-3.5 h-3.5 text-teal-600 flex-shrink-0" />
+                No interview-time tools &mdash; ever
+              </li>
+            </ul>
+          </div>
+
           {/*
             Apple-required purchase disclosure for non-consumable time-limited passes.
             Our products are NOT auto-renewing subscriptions — they are non-consumable

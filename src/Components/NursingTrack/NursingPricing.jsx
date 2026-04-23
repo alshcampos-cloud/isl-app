@@ -1,5 +1,5 @@
 // NursingPricing.jsx — In-app pricing modal for nursing track
-// Shows 30-day pass ($19.99) and Annual All-Access ($149.99/year)
+// Shows 30-day pass ($19.99) and Annual All-Access ($99.99/year)
 // Calls create-checkout-session Edge Function with passType parameter
 //
 // ⚠️ D.R.A.F.T. Protocol: NEW file. No existing code modified.
@@ -219,11 +219,11 @@ export default function NursingPricing({ userData, onClose }) {
                   <Star className="w-4 h-4 text-amber-400" />
                   <h3 className="text-white font-semibold">Annual All-Access</h3>
                 </div>
-                <p className="text-slate-400 text-xs mt-1">Nursing + General interview prep — save 38%</p>
+                <p className="text-slate-400 text-xs mt-1">Specialty + General interview prep — save over 30%</p>
               </div>
               <div className="text-right">
-                <p className="text-white font-bold text-2xl">$149<span className="text-base">.99</span></p>
-                <p className="text-slate-500 text-[10px]">/year (~$12.50/mo)</p>
+                <p className="text-white font-bold text-2xl">$99<span className="text-base">.99</span></p>
+                <p className="text-slate-500 text-[10px]">/year (~$8.33/mo)</p>
               </div>
             </div>
 
@@ -286,17 +286,37 @@ export default function NursingPricing({ userData, onClose }) {
             </div>
           </div>
 
-          {/* Apple-required subscription disclosure (Guideline 3.1.2) — VERBATIM */}
+          {/* Ethics callout — practice-first commitment */}
+          <div className="mt-3 px-4 py-3 bg-sky-500/10 border border-sky-500/20 rounded-lg">
+            <ul className="space-y-1.5">
+              <li className="flex items-center gap-2 text-[11px] text-slate-300">
+                <CheckCircle className="w-3.5 h-3.5 text-sky-400 flex-shrink-0" />
+                Practice-first design
+              </li>
+              <li className="flex items-center gap-2 text-[11px] text-slate-300">
+                <CheckCircle className="w-3.5 h-3.5 text-sky-400 flex-shrink-0" />
+                Built for preparation, not cheating
+              </li>
+              <li className="flex items-center gap-2 text-[11px] text-slate-300">
+                <CheckCircle className="w-3.5 h-3.5 text-sky-400 flex-shrink-0" />
+                No interview-time tools &mdash; ever
+              </li>
+            </ul>
+          </div>
+
+          {/* Apple-required purchase disclosure for non-consumable time-limited passes.
+              Not auto-renewing subscriptions — one-time purchases with time-bounded access. */}
           {isNativeApp() && (
             <div className="mt-4 px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg">
               <p className="text-[11px] text-slate-600 leading-relaxed">
-                Payment will be charged to your Apple ID account at confirmation of purchase.
-                Subscription automatically renews unless auto-renew is turned off at least
-                24 hours before the end of the current period. Your account will be charged
-                for renewal within 24 hours prior to the end of the current period at the
-                cost of the selected plan. You can manage and cancel your subscription by
-                going to your Apple ID Account Settings after purchase. Any unused portion
-                of a free trial, if offered, will be forfeited when you purchase a subscription.
+                Payment will be charged to your Apple ID account at confirmation of
+                purchase. These are one-time purchases with no auto-renewal. The 30-Day
+                Pass grants full access for 30 days from the date of purchase; the
+                Annual All-Access Pass grants full access for 1 year from the date of
+                purchase. Access expires automatically at the end of the purchased
+                period — nothing is billed again unless you choose to buy another pass.
+                All sales are final except where required by law. To restore a previous
+                purchase on a new device, tap "Restore Purchases" in Settings.
               </p>
               <p className="text-[11px] text-slate-600 mt-2">
                 <a href="https://www.interviewanswers.ai/privacy" target="_blank" rel="noopener noreferrer" className="underline text-teal-700 hover:text-teal-800">

@@ -9280,6 +9280,7 @@ import AuthPage from './Components/AuthPage';
 const LandingPage = lazy(() => import('./Components/Landing/LandingPage'));
 const TermsPage = lazy(() => import('./Components/Landing/TermsPage'));
 const PrivacyPage = lazy(() => import('./Components/Landing/PrivacyPage'));
+const EthicsPage = lazy(() => import('./Components/Landing/EthicsPage'));
 const NursingTrackApp = showNursingFeatures() ? lazy(() => import('./Components/NursingTrack/NursingTrackApp')) : () => null;
 const NursingLandingPage = showNursingFeatures() ? lazy(() => import('./Components/NursingTrack/NursingLandingPage')) : () => null;
 const ArchetypeOnboarding = lazy(() => import('./Components/Onboarding/ArchetypeOnboarding'));
@@ -9319,6 +9320,7 @@ function App() {
         <Route path="/auth/callback" element={<OAuthCallback />} />
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/ethics" element={<EthicsPage />} />
 
         {/* General app: available in 'all' and 'general' builds */}
         {showGeneralFeatures() ? (

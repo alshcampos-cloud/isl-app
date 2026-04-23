@@ -36,6 +36,9 @@ export default function LandingFooter() {
             <a href="mailto:support@interviewanswers.ai" className="hover:text-white transition-colors">
               Contact
             </a>
+            <Link to="/ethics" className="hover:text-white transition-colors">
+              Ethics
+            </Link>
             <Link to="/terms" className="hover:text-white transition-colors">
               Terms
             </Link>
@@ -53,6 +56,9 @@ export default function LandingFooter() {
 
         <div className="mt-8 pt-8 border-t border-gray-800 text-center text-sm">
           <p>&copy; {new Date().getFullYear()} InterviewAnswers.ai. All rights reserved.</p>
+          <p className="mt-2 text-xs text-gray-500 italic">
+            Built for practice. Never for cheating.
+          </p>
         </div>
       </div>
     </footer>

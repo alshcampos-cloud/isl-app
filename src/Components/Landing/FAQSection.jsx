@@ -12,8 +12,16 @@ const faqs = [
     a: 'InterviewAnswers.ai is purpose-built for interview prep. It uses motivational interviewing techniques to pull answers from YOUR real experiences, provides scored feedback, has a live prompter for actual interviews, and tracks your progress over time. ChatGPT gives generic advice — InterviewAnswers.ai gives you a complete practice system.',
   },
   {
-    q: 'Does the Practice Prompter work during real interviews?',
-    a: 'Yes. The Practice Prompter listens to interview questions and shows you bullet points from your prepared answers in real-time. It works alongside video calls on Teams, Zoom, etc. Note: some companies may have policies about using notes during interviews, so use responsibly.',
+    q: 'What does the Practice Prompter do?',
+    a: 'The Practice Prompter is a rehearsal tool. You read a question out loud, answer out loud, and see bullet points from your prepared answers so you can train yourself to hit your key points naturally. It\u2019s for practice sessions before the interview \u2014 not for use during an actual interview.',
+  },
+  {
+    q: 'Can I use this during a real interview?',
+    a: 'No \u2014 we don\u2019t support that. InterviewAnswers.ai is built for preparation, not cheating. It\u2019s designed to help you practice your answers before the interview so you can deliver them confidently on the day. Our Terms of Service explicitly prohibit using the product during live interviews. See our ethics page at /ethics for the full reasoning.',
+  },
+  {
+    q: 'How are you different from tools like Final Round AI?',
+    a: 'Tools like Final Round AI position themselves as real-time interview copilots \u2014 designed to help during the interview itself. Hiring managers are increasingly flagging that pattern as fraud, and candidates are losing offers over it. We believe in practice, not cheating. Our AI is the interview coach you practice with beforehand, not a tool you bring into the room.',
   },
   {
     q: 'Is my data secure?',

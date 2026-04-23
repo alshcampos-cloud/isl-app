@@ -60,7 +60,10 @@ export default function HeroSection() {
               transition={{ duration: 0.6, delay: 0.2 }}
             >
               Stop memorizing scripts. Build answers from your real experiences,
-              practice until you're ready for anything.
+              and practice until they feel natural.{' '}
+              <span className="text-white font-semibold">
+                The interview AI that doesn&rsquo;t go in the interview.
+              </span>
             </motion.p>
 
             {/* Trust indicators */}
@@ -96,6 +99,23 @@ export default function HeroSection() {
                 See How It Works
               </button>
             </motion.div>
+
+            {/* Ethics badge */}
+            <motion.div
+              className="mt-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+            >
+              <Link
+                to="/ethics"
+                className="inline-flex items-center gap-2 text-xs text-slate-400 hover:text-teal-300 transition-colors"
+              >
+                <CheckCircle className="w-3.5 h-3.5 text-teal-400" />
+                <span>Practice-first. Ethical by design.</span>
+                <span className="underline underline-offset-2">Why</span>
+              </Link>
+            </motion.div>
           </div>
 
           {/* Right: Stylized app preview */}
@@ -122,7 +142,7 @@ export default function HeroSection() {
                 {/* Feature preview cards */}
                 <div className="grid grid-cols-2 gap-3">
                   {[
-                    { icon: Mic, label: 'Practice Prompter', color: 'from-teal-500 to-emerald-500', desc: 'Practice in real-time' },
+                    { icon: Mic, label: 'Practice Prompter', color: 'from-teal-500 to-emerald-500', desc: 'Rehearse out loud' },
                     { icon: Bot, label: 'AI Interviewer', color: 'from-teal-600 to-cyan-600', desc: 'Mock practice' },
                     { icon: Target, label: 'Practice Mode', color: 'from-emerald-500 to-teal-500', desc: 'Quick drills' },
                     { icon: Sparkles, label: 'Answer Assistant', color: 'from-cyan-500 to-teal-500', desc: 'Build answers' },
