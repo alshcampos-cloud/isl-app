@@ -21,7 +21,7 @@ export function GradientDefs() {
   return (
     <svg style={{ width: 0, height: 0, position: 'absolute' }} aria-hidden="true">
       <defs>
-        {/* Teal gradient — Live Prompter, Practice, default */}
+        {/* Teal gradient — Practice Prompter, Practice, default */}
         <linearGradient id="icon-grad-teal" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#0d9488" />
           <stop offset="100%" stopColor="#14b8a6" />
@@ -67,7 +67,7 @@ export function GradientDefs() {
 }
 
 // ============================================================
-// ICON: Live Prompter — Microphone with sound waves
+// ICON: Practice Prompter — Microphone with sound waves
 // ============================================================
 export function PrompterIcon({ size = 28, gradient = 'teal', className = '' }) {
   const gradId = `icon-grad-${gradient}`;

@@ -24,7 +24,7 @@ const differentiators = [
     icon: Mic,
     color: 'text-emerald-600 bg-emerald-100',
     title: 'Real-Time Interview Assistance',
-    description: 'The only tool that helps you DURING the interview. Live Prompter gives you bullet points while you\'re actually speaking.',
+    description: 'The only tool that helps you DURING the interview. Practice Prompter gives you bullet points while you\'re actually speaking.',
   },
   {
     icon: RefreshCcw,

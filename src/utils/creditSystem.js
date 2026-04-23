@@ -532,10 +532,10 @@ export function getFeatureDisplayInfo(feature) {
       value: 'Custom questions tailored to your experience'
     },
     livePrompterQuestions: {
-      name: 'Live Prompter',
+      name: 'Practice Prompter',
       description: 'Real-time interview support',
       icon: '🎤',
-      value: 'Live bullet points during actual interviews'
+      value: 'Rehearsal prompts for practice sessions'
     },
 
     specialtyPractice: {

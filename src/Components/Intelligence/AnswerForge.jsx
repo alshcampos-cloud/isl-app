@@ -4,7 +4,7 @@
  * Takes existing answers, cross-references with portfolio projects,
  * and generates improved answers enriched with real proof-of-work.
  * Side-by-side comparison with editable new version.
- * Saves upgraded answer + bullets + keywords for the Live Prompter.
+ * Saves upgraded answer + bullets + keywords for the Practice Prompter.
  *
  * D.R.A.F.T. protocol: NEW file. No existing code modified.
  *

@@ -72,8 +72,9 @@ export default function PrivacyPage() {
           <ul className="list-disc pl-6 space-y-2">
             <li><strong>Supabase:</strong> Database and authentication services</li>
             <li><strong>Anthropic (Claude API):</strong> AI-powered interview coaching and feedback generation</li>
-            <li><strong>Stripe:</strong> Payment processing for subscriptions</li>
-            <li><strong>Web Speech API:</strong> On-device speech recognition (no audio sent to external servers)</li>
+            <li><strong>Apple StoreKit and RevenueCat:</strong> In-app purchase and subscription processing on iOS. Apple handles all payment information directly — we never see card numbers or billing details.</li>
+            <li><strong>Stripe:</strong> Payment processing for subscriptions purchased through the web version of InterviewAnswers.ai. Stripe handles all payment information directly — we never see card numbers or billing details.</li>
+            <li><strong>Web Speech API / iOS Speech Framework:</strong> On-device speech recognition (no audio sent to external servers)</li>
           </ul>
 
           <h2 className="text-xl font-bold text-gray-900 mt-8">5. AI Data Processing — Anthropic (Claude)</h2>
@@ -98,7 +99,7 @@ export default function PrivacyPage() {
 
           <h3 className="text-lg font-semibold text-gray-900 mt-6">Recording Consent and Legal Compliance</h3>
           <p>
-            <strong>Important:</strong> If you use InterviewAnswers.ai's Live Prompter feature during actual interviews with other people,
+            <strong>Important:</strong> If you use InterviewAnswers.ai's Practice Prompter feature during actual interviews with other people,
             you are solely responsible for obtaining consent from all parties being recorded and complying with
             applicable recording laws. Many jurisdictions require all-party consent before recording conversations.
           </p>

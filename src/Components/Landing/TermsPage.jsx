@@ -43,9 +43,9 @@ export default function TermsPage() {
           <h2 className="text-xl font-bold text-gray-900 mt-8">2. Description of Service</h2>
           <p>
             InterviewAnswers.ai provides AI-powered interview preparation tools including practice sessions,
-            mock interviews, answer building, question generation, live interview prompting, and nursing-specific
-            interview coaching. The Service uses <strong>Anthropic's Claude AI</strong> to generate personalized
-            feedback and coaching. The Service is intended for educational and personal development purposes only.
+            mock interviews, answer building, question generation, and live interview prompting. The Service
+            uses <strong>Anthropic's Claude AI</strong> to generate personalized feedback and coaching.
+            The Service is intended for educational and personal development purposes only.
           </p>
 
           <h2 className="text-xl font-bold text-gray-900 mt-8">3. License to Use</h2>
@@ -72,13 +72,12 @@ export default function TermsPage() {
             <li>AI feedback does not constitute professional career counseling or advice</li>
             <li>You should exercise your own judgment and seek professional guidance for important career decisions</li>
             <li>We make no guarantees regarding interview success, job offers, or career outcomes</li>
-            <li>For nursing interview features, AI provides <strong>communication coaching only</strong> — it does not provide clinical advice, medical recommendations, or replace clinical education</li>
           </ul>
 
           <h2 className="text-xl font-bold text-gray-900 mt-8">6. Recording Consent and Legal Compliance</h2>
           <p><strong>User Responsibility for Recording Consent:</strong></p>
           <p>
-            If you use InterviewAnswers.ai's Live Prompter feature or any recording functionality during actual interviews
+            If you use InterviewAnswers.ai's Practice Prompter feature or any recording functionality during actual interviews
             or conversations with other people, you are solely responsible for:
           </p>
           <ul className="list-disc pl-6 space-y-2">

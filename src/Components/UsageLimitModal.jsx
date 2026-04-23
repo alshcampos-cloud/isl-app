@@ -110,7 +110,7 @@ const UsageLimitModal = ({ user, supabase, userTier, onUpgrade, onClose, usageSt
       },
       {
         key: 'livePrompterQuestions',
-        name: 'Live Prompter',
+        name: 'Practice Prompter',
         description: 'Real-time interview support',
         icon: '🎤',
         color: 'from-orange-500 to-red-600',
@@ -326,7 +326,7 @@ const UsageLimitModal = ({ user, supabase, userTier, onUpgrade, onClose, usageSt
           <li>• Unlimited Practice Mode</li>
           <li>• Unlimited Answer Assistant</li>
           <li>• Unlimited Question Generator</li>
-          <li>• Unlimited Live Prompter</li>
+          <li>• Unlimited Practice Prompter</li>
         </ul>
         <button
           onClick={onUpgrade}

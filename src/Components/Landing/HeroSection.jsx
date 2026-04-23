@@ -60,7 +60,7 @@ export default function HeroSection() {
               transition={{ duration: 0.6, delay: 0.2 }}
             >
               Stop memorizing scripts. Build answers from your real experiences,
-              practice until they're natural, and get real-time help when it counts.
+              practice until you're ready for anything.
             </motion.p>
 
             {/* Trust indicators */}
@@ -122,7 +122,7 @@ export default function HeroSection() {
                 {/* Feature preview cards */}
                 <div className="grid grid-cols-2 gap-3">
                   {[
-                    { icon: Mic, label: 'Live Prompter', color: 'from-teal-500 to-emerald-500', desc: 'Real-time help' },
+                    { icon: Mic, label: 'Practice Prompter', color: 'from-teal-500 to-emerald-500', desc: 'Practice in real-time' },
                     { icon: Bot, label: 'AI Interviewer', color: 'from-teal-600 to-cyan-600', desc: 'Mock practice' },
                     { icon: Target, label: 'Practice Mode', color: 'from-emerald-500 to-teal-500', desc: 'Quick drills' },
                     { icon: Sparkles, label: 'Answer Assistant', color: 'from-cyan-500 to-teal-500', desc: 'Build answers' },

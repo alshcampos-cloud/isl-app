@@ -225,7 +225,7 @@ export default function FirstTimeConsent({ user, onAccepted, onAlreadyAccepted }
 
               <h4 className="font-semibold text-navy-700">Microphone Access and Recording</h4>
               <p>InterviewAnswers.ai requests microphone access to record your practice interview responses. You have complete control over when recording occurs. Audio is used solely to generate transcriptions and provide feedback.</p>
-              <p><strong>Important:</strong> If you use the Live Prompter feature during actual interviews, you are solely responsible for obtaining consent from all parties being recorded and complying with applicable recording laws.</p>
+              <p><strong>Important:</strong> If you use the Practice Prompter feature during actual interviews, you are solely responsible for obtaining consent from all parties being recorded and complying with applicable recording laws.</p>
 
               <h4 className="font-semibold text-navy-700">Your Rights and Data Control</h4>
               <ul className="list-disc pl-5 space-y-1">
@@ -275,7 +275,7 @@ export default function FirstTimeConsent({ user, onAccepted, onAlreadyAccepted }
               <p>AI-generated feedback and suggestions are provided for educational purposes only. They should not be considered professional career advice. We make no guarantees about interview outcomes based on using our service.</p>
 
               <h4 className="font-semibold text-navy-700">8. Recording Disclaimer</h4>
-              <p>You are solely responsible for compliance with all applicable recording and wiretapping laws when using audio features, especially the Live Prompter feature during actual interviews.</p>
+              <p>You are solely responsible for compliance with all applicable recording and wiretapping laws when using audio features, especially the Practice Prompter feature during actual interviews.</p>
 
               <h4 className="font-semibold text-navy-700">9. Limitation of Liability</h4>
               <p>InterviewAnswers.ai shall not be liable for any indirect, incidental, special, consequential, or punitive damages resulting from your use of the service.</p>

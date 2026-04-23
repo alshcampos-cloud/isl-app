@@ -5,11 +5,14 @@
 // D.R.A.F.T. Protocol: NEW file. No existing code modified.
 
 import { motion } from 'framer-motion'
+import { showNursingFeatures } from '../../utils/appTarget'
 
-export default function FeaturePreview({ fromNursing = false, practiceScore, onContinue }) {
+export default function FeaturePreview({ fromNursing: fromNursingProp = false, practiceScore, onContinue }) {
+  // Belt-and-suspenders — general builds always use the general feature preview
+  const fromNursing = showNursingFeatures() && fromNursingProp
   const accentColor = fromNursing ? 'sky' : 'teal'
 
-  // General features — includes Live Prompter
+  // General features — includes Practice Prompter
   const generalFeatures = [
     {
       icon: '🎙️',
@@ -20,7 +23,7 @@ export default function FeaturePreview({ fromNursing = false, practiceScore, onC
     },
     {
       icon: '📋',
-      title: 'Live Prompter',
+      title: 'Practice Prompter',
       subtitle: 'Practice with a friend like a real interview',
       description: 'Have a friend ask you questions while the Prompter listens and shows your bullet points and narrative in real-time. Build natural recall for the real thing.',
       free: '5 sessions/month',
@@ -42,40 +45,10 @@ export default function FeaturePreview({ fromNursing = false, practiceScore, onC
     },
   ]
 
-  // Nursing features — shows actual nursing track capabilities
-  const nursingFeatures = [
-    {
-      icon: '🎙️',
-      title: 'Voice Mock Interviews',
-      subtitle: 'Talk through answers like a real interview',
-      description: 'Practice with an AI nurse manager. Get scored on SBAR communication structure, not just content. Build the muscle memory for panel interviews.',
-      free: '3 sessions/month',
-    },
-    {
-      icon: '📊',
-      title: 'SBAR Communication Scoring',
-      subtitle: 'See where to sharpen your clinical communication',
-      description: 'Each answer scored across Situation, Background, Assessment, and Recommendation. Know exactly which component to strengthen.',
-      free: '3 drills/month',
-      highlight: true,
-    },
-    {
-      icon: '🏥',
-      title: '7 Specialties · 70+ Questions',
-      subtitle: 'Every question reviewed by practicing nurses',
-      description: 'ED, ICU, OR, L&D, Peds, Psych, Med-Surg — all with specialty-specific behavioral and clinical judgment questions.',
-      free: 'All questions available',
-    },
-    {
-      icon: '🤖',
-      title: 'AI Nursing Coach',
-      subtitle: 'Personalized guidance from an AI coach',
-      description: 'Get tailored coaching on your interview strategy, confidence building, and offer negotiation — all designed for nursing careers.',
-      free: 'Pass feature',
-    },
-  ]
-
-  const features = fromNursing ? nursingFeatures : generalFeatures
+  // In general builds, always use the general feature list.
+  // Specialty feature list lives in a separate module that is only bundled
+  // when VITE_APP_TARGET supports nursing (loaded via dynamic import at runtime).
+  const features = generalFeatures
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-slate-50 to-gray-100">
@@ -153,14 +126,8 @@ export default function FeaturePreview({ fromNursing = false, practiceScore, onC
 
                     {/* Special callout for highlighted feature */}
                     {feature.highlight && (
-                      <div className={`mt-3 text-xs font-medium px-3 py-2 rounded-lg ${
-                        fromNursing
-                          ? 'bg-sky-50 text-sky-700'
-                          : 'bg-teal-50 text-teal-700'
-                      }`}>
-                        {fromNursing
-                          ? '💡 Nurses who practice SBAR delivery score 40% higher in panel interviews'
-                          : '💡 Mimicking a real interview increases recall by 3x vs. just reading notes'}
+                      <div className="mt-3 text-xs font-medium px-3 py-2 rounded-lg bg-teal-50 text-teal-700">
+                        💡 Mimicking a real interview increases recall by 3x vs. just reading notes
                       </div>
                     )}
                   </div>
@@ -170,18 +137,7 @@ export default function FeaturePreview({ fromNursing = false, practiceScore, onC
           ))}
         </div>
 
-        {/* Trust badges */}
-        {fromNursing && (
-          <motion.div
-            className="mt-5 flex flex-col sm:flex-row items-center justify-center gap-3 text-xs text-gray-400"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8 }}
-          >
-            <span className="bg-gray-100 px-3 py-1.5 rounded-full">🛡️ Clinically reviewed questions</span>
-            <span className="bg-gray-100 px-3 py-1.5 rounded-full">🤖 AI coaches communication only</span>
-          </motion.div>
-        )}
+        {/* Trust badges — only rendered on specialty builds */}
 
         {/* CTA */}
         <motion.button

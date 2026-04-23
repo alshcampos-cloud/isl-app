@@ -5,15 +5,15 @@ import { ChevronDown } from 'lucide-react';
 const faqs = [
   {
     q: 'Is it really free to start?',
-    a: 'Yes! The free tier gives you 3 AI Interviewer sessions, 10 Practice sessions, 5 Answer Assistant sessions, 5 Question Generations, and 10 Live Prompter questions per month. No credit card required.',
+    a: 'Yes! The free tier gives you 3 AI Interviewer sessions, 10 Practice sessions, 5 Answer Assistant sessions, 5 Question Generations, and 10 Practice Prompter questions per month. No credit card required.',
   },
   {
     q: 'How is this different from ChatGPT?',
     a: 'InterviewAnswers.ai is purpose-built for interview prep. It uses motivational interviewing techniques to pull answers from YOUR real experiences, provides scored feedback, has a live prompter for actual interviews, and tracks your progress over time. ChatGPT gives generic advice — InterviewAnswers.ai gives you a complete practice system.',
   },
   {
-    q: 'Does the Live Prompter work during real interviews?',
-    a: 'Yes. The Live Prompter listens to interview questions and shows you bullet points from your prepared answers in real-time. It works alongside video calls on Teams, Zoom, etc. Note: some companies may have policies about using notes during interviews, so use responsibly.',
+    q: 'Does the Practice Prompter work during real interviews?',
+    a: 'Yes. The Practice Prompter listens to interview questions and shows you bullet points from your prepared answers in real-time. It works alongside video calls on Teams, Zoom, etc. Note: some companies may have policies about using notes during interviews, so use responsibly.',
   },
   {
     q: 'Is my data secure?',
@@ -21,7 +21,7 @@ const faqs = [
   },
   {
     q: 'How does pricing work?',
-    a: 'Start free with generous monthly limits. When you\'re ready for unlimited practice, grab a 30-Day Pass starting at $14.99 — no subscription, no auto-renew. Or save with the Annual All-Access at $149.99/year for the best value.',
+    a: 'Start free with generous monthly limits. When you\'re ready for unlimited practice, grab a 30-Day Pass starting at $14.99 — no subscription, no auto-renew. Or save with the Annual All-Access at $99.99/year for the best value.',
   },
 ];
 

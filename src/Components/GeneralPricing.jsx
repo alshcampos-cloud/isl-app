@@ -1,5 +1,5 @@
 // GeneralPricing.jsx — In-app pricing modal for general interview prep
-// Shows 30-day pass ($14.99) and Annual All-Access ($149.99/year)
+// Shows 30-day pass ($14.99) and Annual All-Access ($99.99/year)
 // Mirrors NursingPricing.jsx pattern — calls create-checkout-session Edge Function
 //
 // Integration: Replaces old PricingPage.jsx in App.jsx showPricingPage modal
@@ -193,7 +193,7 @@ export default function GeneralPricing({ userData, onClose }) {
                 'Unlimited practice sessions',
                 'Unlimited answer coaching (STAR method)',
                 'Unlimited question generation',
-                'Unlimited Live Prompter',
+                'Unlimited Practice Prompter',
                 'Full question bank access',
                 'Session history & analytics',
               ].map((item) => (
@@ -259,25 +259,22 @@ export default function GeneralPricing({ userData, onClose }) {
                   <h3 className="text-navy-700 font-semibold">Annual All-Access</h3>
                 </div>
                 <p className="text-slate-500 text-xs mt-1">
-                  {showNursingFeatures()
-                    ? 'General + Nursing interview prep — save over 50%'
-                    : 'Complete interview prep — save over 50%'}
+                  Complete interview prep — save over 30%
                 </p>
               </div>
               <div className="text-right">
                 <p className="font-bold">
                   <span className="text-lg align-top text-navy-700">$</span>
-                  <span className="text-4xl font-extrabold text-navy-700">149</span>
+                  <span className="text-4xl font-extrabold text-navy-700">99</span>
                   <span className="text-lg text-slate-400">.99</span>
                 </p>
-                <p className="text-slate-500 text-[10px]">/year (~$12.50/mo)</p>
+                <p className="text-slate-500 text-[10px]">/year (~$8.33/mo)</p>
               </div>
             </div>
 
             <ul className="space-y-2 mb-4 pl-1">
               {[
-                'Everything in General Pass',
-                ...(showNursingFeatures() ? ['Full Nursing Interview Track'] : []),
+                'Everything in the 30-Day Pass',
                 'Unlimited AI Coach',
                 'Year-round access',
                 'Priority support',
@@ -340,21 +337,24 @@ export default function GeneralPricing({ userData, onClose }) {
           </div>
 
           {/*
-            Apple-required subscription disclosure (Guideline 3.1.2).
-            VERBATIM text — do NOT paraphrase. This is the most commonly cited reason
-            for subscription app rejection. Only shown on iOS native builds since
+            Apple-required purchase disclosure for non-consumable time-limited passes.
+            Our products are NOT auto-renewing subscriptions — they are non-consumable
+            in-app purchases that grant time-limited access (30 days or 1 year). The
+            disclosure below reflects that: no auto-renewal, one-time payment, access
+            expires when the time window elapses. Only shown on iOS native builds since
             web builds use Stripe with its own terms.
           */}
           {isNativeApp() && (
             <div className="mt-4 px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg">
               <p className="text-[11px] text-slate-600 leading-relaxed">
-                Payment will be charged to your Apple ID account at confirmation of purchase.
-                Subscription automatically renews unless auto-renew is turned off at least
-                24 hours before the end of the current period. Your account will be charged
-                for renewal within 24 hours prior to the end of the current period at the
-                cost of the selected plan. You can manage and cancel your subscription by
-                going to your Apple ID Account Settings after purchase. Any unused portion
-                of a free trial, if offered, will be forfeited when you purchase a subscription.
+                Payment will be charged to your Apple ID account at confirmation of
+                purchase. These are one-time purchases with no auto-renewal. The 30-Day
+                Pass grants full access for 30 days from the date of purchase; the
+                Annual All-Access Pass grants full access for 1 year from the date of
+                purchase. Access expires automatically at the end of the purchased
+                period — nothing is billed again unless you choose to buy another pass.
+                All sales are final except where required by law. To restore a previous
+                purchase on a new device, tap "Restore Purchases" in Settings.
               </p>
               <p className="text-[11px] text-slate-600 mt-2">
                 <a

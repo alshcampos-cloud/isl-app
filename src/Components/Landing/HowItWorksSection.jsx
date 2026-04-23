@@ -19,7 +19,7 @@ const steps = [
     number: '03',
     icon: Trophy,
     title: 'Show Up Ready',
-    description: 'On interview day, Live Prompter shows your prepared bullet points in real-time as questions come. You\'re not memorizing scripts \u2014 you\'re speaking from experience, with backup.',
+    description: 'On interview day, Practice Prompter shows your prepared bullet points in real-time as questions come. You\'re not memorizing scripts \u2014 you\'re speaking from experience, with backup.',
   },
 ];
 

@@ -1,6 +1,6 @@
 // ISL - Default Interview Questions
 // Full question bank organized by research-backed groups
-// Auto-loaded for new users to enable instant Live Prompter functionality
+// Auto-loaded for new users to enable instant Practice Prompter functionality
 
 export const QUESTION_GROUPS = [
   { id: 'first-impressions', label: 'First Impressions', icon: '\u{1F3A4}', description: 'Opening questions that set the tone', defaultOn: true, whyItExists: "Hiring managers use opening questions to evaluate three things simultaneously: whether you can do the job, whether you will fit the team culture, and whether you communicate with clarity under pressure. Research from structured interview rubrics shows these first 2-3 minutes disproportionately shape the interviewer's overall impression, making this the highest-leverage category to practice." },
