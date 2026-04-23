@@ -3,20 +3,20 @@ import { Star } from 'lucide-react';
 
 const testimonials = [
   {
-    quote: "I used to freeze up on behavioral questions. After practicing with the AI Interviewer for a week, I got three callbacks in a row. The real-time prompter was a game-changer for my final round.",
-    name: 'Sarah M.',
+    quote: "I used to rehearse out loud in my car and still blank on the real questions. Practicing with the AI Interviewer the week before my loop meant I'd already said the hard answers five times before I ever walked in the room.",
+    name: 'Beta user',
     role: 'Product Manager candidate',
     stars: 5,
   },
   {
     quote: "The Answer Assistant helped me realize I had way better stories than I thought. It pulled out details I would have never included on my own. Landed my dream job at a top tech company.",
-    name: 'James T.',
+    name: 'Beta user',
     role: 'Software Engineer candidate',
     stars: 5,
   },
   {
     quote: "I was spending hours writing scripts that sounded robotic. InterviewAnswers.ai helped me practice speaking naturally about my real experiences. My interviewer even complimented how authentic my answers sounded.",
-    name: 'Priya K.',
+    name: 'Beta user',
     role: 'Data Analyst candidate',
     stars: 5,
   },
@@ -69,6 +69,7 @@ export default function TestimonialsSection() {
             </motion.div>
           ))}
         </div>
+        <p className="text-xs text-gray-400 text-center mt-8">Testimonials from beta users. Individual results vary.</p>
       </div>
     </section>
   );
