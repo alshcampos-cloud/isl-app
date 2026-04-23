@@ -23,7 +23,7 @@
 | 3 | Ace Your Next Interview | 23 |
 | 4 | AI-Powered Interview Prep | 25 |
 | 5 | InterviewAnswers.ai | 19 |
-| 6 | Real-Time Interview Coach | 25 |
+| 6 | Ethical Interview Prep | 22 |
 | 7 | Get Interview Confident | 23 |
 | 8 | Mock Interviews With AI | 23 |
 | 9 | Land Your Dream Job Faster | 26 |
@@ -39,9 +39,9 @@
 | # | Description | Chars |
 |---|-------------|-------|
 | 1 | Practice with an AI interviewer that adapts to you. STAR coaching built in. Try free. | 86 |
-| 2 | Real-time feedback on your answers. Build confidence before the real thing. Start now. | 86 |
-| 3 | Mock interviews, live prompting, and STAR method coaching. Free tier available today. | 85 |
-| 4 | Used by job seekers in 50+ industries. AI feedback on every answer. No credit card. | 84 |
+| 2 | Rehearse your answers out loud. Build confidence before the real thing. Start now. | 82 |
+| 3 | Mock interviews, Practice Prompter, and STAR method coaching. Free tier available today. | 89 |
+| 4 | Built for rehearsal, not real-time. AI feedback on every practice answer. No credit card. | 89 |
 
 ### Sitelink Extensions
 
@@ -81,7 +81,7 @@
 | 10 | Behavioral Prep Made Easy | 25 |
 | 11 | Get STAR Feedback Instantly | 27 |
 | 12 | Practice 100+ Questions | 23 |
-| 13 | Real-Time STAR Coaching | 23 |
+| 13 | Practice. No Shortcuts. | 23 |
 | 14 | Answer With Confidence | 22 |
 | 15 | STAR Method — Try Free | 22 |
 
@@ -103,7 +103,7 @@
 | Free Practice Session | /mock-interview | Try a mock interview now | AI adapts to your level |
 
 ### Campaign Settings
-- **Daily Budget:** $20/day
+- **Daily Budget:** $17/day (+$2/day redirected from Campaign D, originally $15/day)
 - **Target CPA:** $6-10 (higher intent keyword cluster)
 - **Bid Strategy:** Maximize Conversions (switch to Target CPA after 30 conversions)
 - **Networks:** Search only
@@ -143,7 +143,7 @@
 | 1 | 70+ nurse-specific questions with AI coaching. SBAR drills + clinical scenarios. Free. | 86 |
 | 2 | Built with healthcare professionals. Practice nursing behavioral questions with AI. | 83 |
 | 3 | New grad or experienced RN — get interview-ready with AI mock interviews for nurses. | 84 |
-| 4 | SBAR communication drills, clinical scenario practice, and real-time AI feedback. | 81 |
+| 4 | SBAR communication drills, clinical scenario practice, and AI feedback on every rep. | 85 |
 
 ### Sitelink Extensions
 
@@ -164,58 +164,25 @@
 
 ---
 
-## Campaign D: Competitor Targeting
+## Campaign D: KILLED (April 22, 2026)
 
-**Target Keywords:** final round ai alternative, interview copilot, interview prep app, yoodli alternative, pramp alternative, big interview alternative, interviewing.io alternative
-
-### Headlines (max 30 chars each)
-
-| # | Headline | Chars |
-|---|----------|-------|
-| 1 | A Better Interview Prep App | 27 |
-| 2 | Free AI Interview Practice | 26 |
-| 3 | Switch to Smarter Prep | 22 |
-| 4 | Real-Time AI Coaching | 21 |
-| 5 | No Subscriptions Required | 25 |
-| 6 | STAR + Live Prompting | 21 |
-| 7 | InterviewAnswers.ai | 19 |
-| 8 | Free Tier — No Catch | 20 |
-| 9 | Why Pay More for Less? | 22 |
-| 10 | AI Mock + Live Coach | 20 |
-| 11 | Built for Real Job Seekers | 26 |
-| 12 | Try Before You Subscribe | 24 |
-| 13 | All-in-One Interview Prep | 25 |
-| 14 | Rated by Real Job Seekers | 25 |
-| 15 | Start Practicing in 30 Sec | 26 |
-
-### Descriptions (max 90 chars each)
-
-| # | Description | Chars |
-|---|-------------|-------|
-| 1 | Mock interviews, live prompting, STAR coaching — all in one app. Free to start today. | 85 |
-| 2 | Looking for a better interview prep tool? Try our AI coach free, no credit card needed. | 87 |
-| 3 | Real-time feedback, adaptive AI, and a free tier that actually lets you practice. | 81 |
-| 4 | Tired of limited free trials? We offer a real free tier with unlimited practice mode. | 85 |
-
-### Campaign Settings
-- **Daily Budget:** $10/day
-- **Target CPA:** $10-14
-- **Bid Strategy:** Maximize Conversions
-- **Networks:** Search only
-- **Locations:** United States, Canada, United Kingdom, Australia
-- **Note:** Monitor closely for trademark policy compliance. Use generic language only.
+> **Campaign D killed Apr 22 — "interview copilot" keywords misalign with Practice-not-cheat positioning. Budget redirected to Campaign B.**
+>
+> Original Campaign D targeted keywords like "interview copilot" and cheat-adjacent competitor terms (Final Round AI "copilot" queries). Per the `REBRAND_OWNER_DIRECTIVE.md` and `REBRAND_RESEARCH_APR22.md` §5.3 "Kill immediately" list, these keywords drive traffic looking for *live in-interview assistance* — the exact use case we no longer support. Running these ads to our new landing pages would tank Quality Score AND misrepresent the product.
+>
+> **Action taken:** $60/mo ($2/day) of Campaign D's $10/day budget redirected to Campaign B (STAR / Behavioral). Remaining $8/day reserved for Product Hunt launch-week organic amplification. See `docs/REBRAND_FINANCIAL_IMPACT.md`.
 
 ---
 
-## Google Ads Budget Summary
+## Google Ads Budget Summary (post-rebrand)
 
 | Campaign | Daily | Monthly (est.) | Target CPA |
 |----------|-------|----------------|------------|
 | A: Brand + Generic | $25 | $750 | $8-12 |
-| B: STAR / Behavioral | $20 | $600 | $6-10 |
+| B: STAR / Behavioral | $17 | $510 | $6-10 |
 | C: Nursing | $15 | $450 | $10-15 |
-| D: Competitor | $10 | $300 | $10-14 |
-| **Total** | **$70** | **$2,100** | — |
+| D: (killed) | $0 | $0 | — |
+| **Total** | **$57** | **$1,710** | — |
 
 ---
 
@@ -223,7 +190,8 @@
 
 ---
 
-## Sequence A: Welcome Series (5 emails, 7 days)
+## Sequence A: Welcome Series (4 emails, 7 days)
+*Note: formerly 5 emails — A4 (Live Prompter Deep Dive) removed on Apr 22 2026 during rebrand. A5 renumbered to A4.*
 
 ### Email A1: Welcome + First Win
 - **Send:** Immediately after signup
@@ -232,7 +200,7 @@
 - **Body Outline:**
   - Welcome to InterviewAnswers.ai
   - What you can do right now: start a practice session (direct link/CTA)
-  - The 3 tools available: Mock Interviewer, Live Prompter, Practice Mode
+  - The 3 tools available: Mock Interviewer, Practice Prompter, Practice Mode
   - Social proof line: "Join thousands of job seekers preparing smarter"
 - **CTA:** Start Your First Practice Session
 
@@ -241,7 +209,7 @@
 - **Subject:** How AI interview coaching actually works
 - **Preview:** It's like having a hiring manager on your side
 - **Body Outline:**
-  - Brief explainer: the AI adapts to your answers and gives real-time feedback
+  - Brief explainer: the AI adapts to your answers and coaches you in practice until you're interview-ready
   - STAR method coaching: what it is, why interviewers love it
   - Highlight one specific feature (e.g., the AI Mock Interviewer)
   - Quick tip: "Start with 'Tell me about yourself' — everyone gets asked it"
@@ -258,18 +226,7 @@
   - Testimonial or stat if available
 - **CTA:** Practice Out Loud With AI
 
-### Email A4: Feature Deep Dive — Live Prompter
-- **Send:** Day 5
-- **Subject:** Real-time help during your practice session
-- **Preview:** Like teleprompter mode, but for interview prep
-- **Body Outline:**
-  - Explain the Live Prompter feature
-  - Use case: practice delivering answers with real-time guidance
-  - Great for building confidence before high-stakes interviews
-  - Mention it's available on free tier
-- **CTA:** Try Live Prompter Now
-
-### Email A5: Upgrade Nudge + Value Recap
+### Email A4: Upgrade Nudge + Value Recap
 - **Send:** Day 7
 - **Subject:** You've been prepping for a week — here's what's next
 - **Preview:** Unlock unlimited practice and advanced AI coaching
@@ -428,12 +385,12 @@
 ---
 
 ## Tagline (max 60 chars)
-**AI mock interviews + real-time STAR coaching**
-(49 chars)
+**The interview AI that doesn't go in the interview.**
+(53 chars)
 
 ## Description (max 260 chars)
-**Practice interviews with an AI that coaches you in real time. Mock interviews, STAR method feedback, live prompting, and a specialty nursing track. Free tier available. Built by a job seeker who was tired of winging it.**
-(224 chars)
+**Rehearse interviews with an AI that coaches you in private. Mock interviews, STAR method feedback, Practice Prompter, and a specialty nursing track. Built for rehearsal, not real-time. Free tier available.**
+(207 chars)
 
 ## First Comment (Maker's Comment, ~200 words)
 
@@ -445,9 +402,10 @@
 >
 > What makes this different:
 >
-> - AI Mock Interviewer that adapts to your responses in real time
-> - Live Prompter mode for guided practice sessions
-> - STAR method coaching built into every interaction
+> - AI Mock Interviewer that adapts to your responses during practice
+> - Practice Prompter mode for guided rehearsal sessions
+> - STAR method coaching built into every practice interaction
+> - Built for rehearsal, not real-time — we do NOT operate during live interviews
 > - A dedicated nursing interview track (built with healthcare professionals — 70+ clinical questions and SBAR drills)
 > - A real free tier that lets you actually practice, not just see a demo
 >
@@ -473,7 +431,7 @@
 ### Image 2: AI Mock Interviewer in Action
 - **Type:** App screenshot
 - **Content:** Mid-conversation with the AI interviewer showing a question and the user's response area
-- **Text Overlay:** "AI Mock Interviewer — Adapts to Your Answers in Real Time"
+- **Text Overlay:** "AI Mock Interviewer — Adapts to Your Answers in Practice"
 - **Notes:** Show the conversational UI, a sample question visible, feedback indicators
 
 ### Image 3: STAR Method Feedback
@@ -493,7 +451,7 @@
 - **Content:** 4-quadrant layout showing the key features with icons
 - **Text Overlay:**
   - Quadrant 1: "AI Mock Interviewer"
-  - Quadrant 2: "Live Prompter"
+  - Quadrant 2: "Practice Prompter"
   - Quadrant 3: "STAR Method Coach"
   - Quadrant 4: "Nursing Track"
 - **Bottom text:** "Free to start. No credit card required."
@@ -505,12 +463,13 @@
 ```
 We just launched on Product Hunt!
 
-InterviewAnswers.ai — AI mock interviews + real-time STAR coaching.
+InterviewAnswers.ai — The interview AI that doesn't go in the interview.
 
-- AI interviewer that adapts to you
-- Live prompting during practice
+- AI mock interviewer (practice, not cheat)
+- Practice Prompter mode for guided rehearsal
 - Specialty nursing track (70+ clinical questions)
 - Free tier, no credit card
+- Ethical by design — built for rehearsal, not real-time
 
 Try it: interviewanswers.ai
 
@@ -525,10 +484,11 @@ Today we launched InterviewAnswers.ai on Product Hunt.
 The idea came from a simple realization: reading interview tips doesn't prepare you for saying answers out loud under pressure.
 
 We built an AI coach that:
--- Conducts mock interviews that adapt to your responses
--- Gives real-time STAR method feedback
--- Includes a live prompting mode for guided practice
+-- Conducts mock interviews that adapt to your responses (during practice)
+-- Gives STAR method feedback on every rehearsal
+-- Includes a Practice Prompter mode for guided rehearsal
 -- Has a specialty nursing track built with healthcare professionals
+-- Is built for rehearsal, not real-time — it is NOT designed to assist you during live interviews
 
 It's free to start. No credit card. No 7-day trial.
 
@@ -543,7 +503,7 @@ Product Hunt: [link]
 Caption:
 We just launched on Product Hunt!
 
-InterviewAnswers.ai helps you practice interviews with an AI coach that gives real-time feedback.
+InterviewAnswers.ai helps you rehearse interviews with an AI coach that gives detailed feedback on every practice answer.
 
 No more winging it. No more reading sample answers and hoping for the best.
 
@@ -564,7 +524,7 @@ Hey [Name]!
 
 Quick ask — we just launched InterviewAnswers.ai on Product Hunt today (April 21).
 
-It's an AI interview coach that does mock interviews, STAR method coaching, and real-time feedback. We also built a nursing interview track with a healthcare co-founder.
+It's an AI interview coach that does mock interviews, STAR method coaching, and practice feedback — built for rehearsal, not real-time. We also built a nursing interview track with a healthcare co-founder.
 
 If you have 30 seconds, an upvote on Product Hunt would mean a lot:
 [Product Hunt link]
@@ -599,7 +559,7 @@ That's InterviewAnswers.ai.
 What it does:
 -- AI Mock Interviewer (adapts to your answers in real time)
 -- STAR Method Coaching (scores your Situation, Task, Action, Result)
--- Live Prompter (real-time guidance while you practice)
+-- Practice Prompter (guided rehearsal with live feedback during practice sessions)
 -- Nursing Track (70+ clinical questions, SBAR drills — built with a Stanford healthcare professional)
 
 Free to start. No credit card. No 7-day-then-we-charge-you trick.

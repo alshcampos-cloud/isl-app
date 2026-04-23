@@ -26,11 +26,12 @@
 **Risk:** Read subreddit rules carefully — no self-promo subs
 
 ### Thursday Apr 24 — Google Ads MVP Test (START SMALL)
-**Budget:** $15/day (NOT $70/day)
+**Budget:** $17/day (NOT $70/day — Campaign B was boosted from $15 to $17/day after Apr 22 rebrand; $2/day redirected from now-killed Campaign D)
 **Campaign:** Only Campaign B (STAR Method / Behavioral) from `GOOGLE_EMAIL_PH_CAMPAIGNS.md`
-**Why this campaign:** Highest intent keywords, lowest competition, best landing page (new `/tell-me-about-yourself` page)
-**Daily budget:** $15 = ~$450/month
+**Why this campaign:** Highest intent keywords, lowest competition, best landing page (new `/tell-me-about-yourself` page). Aligns with Practice-not-cheat positioning.
+**Daily budget:** $17 = ~$510/month
 **Success metric:** 2+ signups in 7 days = green light to expand. 0 signups = kill and rethink.
+**Copy note:** Use new Research-tested variants ("The interview AI that doesn't go in the interview.", "Practice. No Shortcuts.", "Ethical interview prep.") from `REBRAND_RESEARCH_APR22.md` §4. See `AD_COPY_AUDIT.md` for the full swap list.
 
 ### Friday Apr 25 — LinkedIn DM Outreach (20 nurses)
 **Target:** Nurses on LinkedIn who match these filters:
@@ -109,7 +110,7 @@ If Day 7 has <10 clicks → keywords are wrong OR budget too low.
 - ❌ TikTok/Instagram Reels — heavy iOS user base, delay until App Store link live
 - ❌ Email welcome sequence — only 34 users, too small cohort to test
 - ❌ Paid Reddit ads — organic first, ads after validation
-- ❌ All 4 Google Ads campaigns — start with 1, scale winners
+- ❌ All 3 Google Ads campaigns (post-rebrand; Campaign D killed Apr 22) — start with 1 (Campaign B), scale winners
 - ❌ Influencer outreach — save for PH launch week
 
 ---
