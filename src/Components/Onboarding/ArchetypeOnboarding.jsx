@@ -5,7 +5,8 @@ import { getArchetype, getArchetypeConfig, getPostOnboardingRoute, TIMELINE_OPTI
 import { showNursingFeatures } from '../../utils/appTarget'
 import { trackOnboardingEvent, startScreenTimer } from '../../utils/onboardingTracker'
 import useDocumentHead from '../../hooks/useDocumentHead'
-import BreathingExercise from './BreathingExercise'
+// BreathingExercise no longer routed in onboarding (Sprint 2, Apr 2026).
+// File preserved at ./BreathingExercise for possible reuse in settings/wellness.
 import OnboardingPractice from './OnboardingPractice'
 import IRSBaseline from './IRSBaseline'
 import FeaturePreview from './FeaturePreview'
@@ -14,15 +15,17 @@ import SignUpPrompt from './SignUpPrompt'
 /**
  * ArchetypeOnboarding — Phase 2: Value-First Onboarding
  *
- * Flow (standard):   Archetype → Breathing → Practice → IRS → Feature Preview → Sign Up (6 screens)
- * Flow (urgent):     Archetype → Practice → IRS → Feature Preview → Sign Up (5 screens, skip breathing)
+ * Flow (all archetypes): Archetype → Practice → IRS → Feature Preview → Sign Up (5 screens)
  * Uses Supabase anonymous auth so Edge Function works before real signup.
  *
  * Research basis:
- *   - Calm data: breathing exercise = #1 drop-off point (~50%), skip for urgent seekers
+ *   - Calm data: breathing exercise = #1 drop-off point (~50%), skip for ALL archetypes (Sprint 2, Apr 2026)
  *   - Feature preview before signup: 2x engagement, 1.7x signups (HowdyGo)
  *   - Loss-framed CTAs: 21% conversion lift (McKinsey)
  *   - Nielsen Norman: 60% abandon pre-value registration
+ *
+ * Note: BreathingExercise.jsx is preserved (not deleted) — may be reused as a
+ * settings/wellness feature later. This file just no longer routes into it.
  */
 export default function ArchetypeOnboarding() {
   useDocumentHead({
@@ -33,7 +36,8 @@ export default function ArchetypeOnboarding() {
 
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const fromNursing = searchParams.get('from') === 'nursing'
+  // Gate nursing URL flag by build target (Apple 4.3(a) compliance — general builds ignore ?from=nursing)
+  const fromNursing = showNursingFeatures() && searchParams.get('from') === 'nursing'
   const [screen, setScreen] = useState(1)
   const [timeline, setTimeline] = useState(null)
   const [field, setField] = useState(fromNursing ? 'nursing' : null)
@@ -105,19 +109,11 @@ export default function ArchetypeOnboarding() {
     setArchetype(detected)
     setArchetypeConfig(config)
     trackOnboardingEvent(1, 'completed', { timeline, field: field || 'general', archetype: detected })
-    // Urgent seekers skip breathing exercise — go straight to practice
-    // Research: Calm's breathing = ~50% drop-off. Urgent seekers want practice, not relaxation.
-    if (detected === 'urgent_seeker') {
-      setScreen(3)
-    } else {
-      setScreen(2)
-    }
-  }, [timeline, field])
-
-  // After breathing exercise completes
-  const handleBreathingComplete = useCallback(() => {
+    // Skip breathing exercise for ALL archetypes — go straight to practice.
+    // Research: Calm's breathing = ~50% drop-off (Sprint 2 fix, Apr 2026).
+    // BreathingExercise.jsx is preserved for possible reuse as a settings/wellness feature.
     setScreen(3)
-  }, [])
+  }, [timeline, field])
 
   // After practice completes with a score
   const handlePracticeComplete = useCallback((score, answer) => {
@@ -164,11 +160,11 @@ export default function ArchetypeOnboarding() {
     navigate(route, { replace: true })
   }, [archetype, field, navigate])
 
-  // Progress bar — urgent seekers skip breathing (5 screens), others have 6
-  const totalScreens = archetype === 'urgent_seeker' ? 5 : 6
-  // Map screen numbers to progress: for urgent seekers, screen 2 (breathing) is skipped
-  // so we compute effective step position
-  const effectiveScreen = (archetype === 'urgent_seeker' && screen >= 3) ? screen - 1 : screen
+  // Progress bar — all archetypes skip breathing now (5 screens total).
+  // Screen numbers remain 1, 3, 4, 5, 6 to avoid renumbering downstream screen constants;
+  // we map screen→effective step position so the bar fills smoothly (1/5, 2/5, ...).
+  const totalScreens = 5
+  const effectiveScreen = screen >= 3 ? screen - 1 : screen
   const progress = (effectiveScreen / totalScreens) * 100
 
   if (isInitializing) {
@@ -232,9 +228,8 @@ export default function ArchetypeOnboarding() {
           />
         )}
 
-        {screen === 2 && (
-          <BreathingExercise onComplete={handleBreathingComplete} />
-        )}
+        {/* screen === 2 (BreathingExercise) removed — Sprint 2 Apr 2026.
+            Screen number 2 is now a no-op; handleArchetypeDetection jumps 1 → 3. */}
 
         {screen === 3 && archetypeConfig && (
           <OnboardingPractice
@@ -299,9 +294,7 @@ function ScreenOne({ timeline, setTimeline, field, setField, onContinue, fromNur
           Let's personalize your experience
         </h1>
         <p className="text-slate-500">
-          {fromNursing
-            ? 'One quick question so we can tailor your nursing interview prep.'
-            : 'Two quick questions so we can help you the right way.'}
+          Two quick questions so we can help you the right way.
         </p>
       </div>
 
@@ -333,14 +326,14 @@ function ScreenOne({ timeline, setTimeline, field, setField, onContinue, fromNur
         </div>
       </div>
 
-      {/* Question 2: Field (appears after timeline selected) — skipped for nursing users */}
+      {/* Question 2: Field (appears after timeline selected) */}
       {showField && !fromNursing && (
         <div className="mb-8 animate-fadeIn">
           <p className="text-sm font-medium text-slate-600 mb-3">
             What field are you in?
           </p>
           <div className="grid grid-cols-2 gap-2">
-            {FIELD_OPTIONS.filter(opt => opt.value !== 'nursing' || showNursingFeatures()).map((opt) => (
+            {FIELD_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
                 onClick={() => { setField(opt.value); trackOnboardingEvent(1, 'field_selected', { field: opt.value }); }}
