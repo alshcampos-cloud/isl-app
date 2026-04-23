@@ -64,6 +64,9 @@ export default function PricingSection() {
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">
             Simple, Transparent Pricing
           </h2>
+          <p className="text-teal-600 font-semibold text-sm uppercase tracking-wide mt-2">
+            No autopay. Pay once, practice 30 days.
+          </p>
           <p className="mt-4 text-lg text-gray-600">
             Start free. Upgrade when you're ready. No subscription required.
           </p>
@@ -113,6 +116,11 @@ export default function PricingSection() {
                 >
                   {tier.cta}
                 </Link>
+                {!tier.highlighted && (
+                  <p className="mt-2 text-center text-xs text-gray-500">
+                    No credit card required
+                  </p>
+                )}
 
                 {/* Features */}
                 <ul className="mt-8 space-y-3">
@@ -142,6 +150,9 @@ export default function PricingSection() {
         >
           No credit card required for free tier. No auto-renew on 30-Day Pass.
         </motion.p>
+        <p className="text-center text-sm text-gray-500 mt-2">
+          30-day money-back guarantee on all paid passes. No questions asked.
+        </p>
       </div>
     </section>
   );
