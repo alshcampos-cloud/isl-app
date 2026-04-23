@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, Play, Mic, Bot, Target, Sparkles, CheckCircle } from 'lucide-react';
+import { ArrowRight, Play, Mic, Bot, Sparkles, CheckCircle, Brain, BookOpen, Layers, Flame } from 'lucide-react';
 
 export default function HeroSection() {
   return (
@@ -42,14 +42,17 @@ export default function HeroSection() {
             </motion.div>
 
             <motion.h1
-              className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight"
+              className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight mb-4"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
             >
-              AI Interview Practice{' '}
+              Practice,{' '}
               <span className="bg-gradient-to-r from-teal-400 to-emerald-300 bg-clip-text text-transparent">
-                That Gets You Hired.
+                not cheat.
+              </span>
+              <span className="block text-2xl sm:text-3xl lg:text-4xl font-semibold text-slate-200 mt-4">
+                AI interview practice that gets you hired.
               </span>
             </motion.h1>
 
@@ -140,12 +143,14 @@ export default function HeroSection() {
                 </div>
 
                 {/* Feature preview cards */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {[
-                    { icon: Mic, label: 'Practice Prompter', color: 'from-teal-500 to-emerald-500', desc: 'Rehearse out loud' },
                     { icon: Bot, label: 'AI Interviewer', color: 'from-teal-600 to-cyan-600', desc: 'Mock practice' },
-                    { icon: Target, label: 'Practice Mode', color: 'from-emerald-500 to-teal-500', desc: 'Quick drills' },
-                    { icon: Sparkles, label: 'Answer Assistant', color: 'from-cyan-500 to-teal-500', desc: 'Build answers' },
+                    { icon: Brain, label: 'AI Coach', color: 'from-teal-500 to-emerald-500', desc: 'Per-answer feedback' },
+                    { icon: BookOpen, label: 'Curated Interviews', color: 'from-emerald-500 to-teal-500', desc: 'Role-specific' },
+                    { icon: Layers, label: 'Flashcards', color: 'from-cyan-500 to-teal-500', desc: 'Spaced repetition' },
+                    { icon: Flame, label: 'Streaks', color: 'from-teal-400 to-emerald-400', desc: 'Daily consistency' },
+                    { icon: Mic, label: 'Practice Prompter', color: 'from-teal-500 to-emerald-500', desc: 'Rehearse out loud' },
                   ].map(({ icon: Icon, label, color, desc }) => (
                     <motion.div
                       key={label}
