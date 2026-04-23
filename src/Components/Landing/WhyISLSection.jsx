@@ -1,7 +1,16 @@
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { TrendingUp, BarChart3, Clock, RefreshCcw, Brain, Shield, Mic, ChevronRight } from 'lucide-react';
 
 const differentiators = [
+  {
+    icon: Shield,
+    color: 'text-teal-600 bg-teal-100',
+    title: 'Practice, not cheat',
+    description: 'We deleted our live-interview prompter. No in-ear AI. No "undetectable" mode. Just deep, private rehearsal — the kind that actually works.',
+    link: '/ethics',
+    linkText: 'Read why →',
+  },
   {
     icon: TrendingUp,
     color: 'text-green-600 bg-green-100',
@@ -31,12 +40,6 @@ const differentiators = [
     color: 'text-cyan-600 bg-cyan-100',
     title: 'Adaptive Follow-Ups',
     description: 'Our AI Interviewer doesn\'t just ask questions — it listens to your answer and asks relevant follow-ups, just like a real interviewer would.',
-  },
-  {
-    icon: Clock,
-    color: 'text-amber-600 bg-amber-100',
-    title: 'Ready in Days, Not Weeks',
-    description: 'Our 5-step workflow gets you from zero to interview-ready. Generate questions, build answers, practice, refine, and go live.',
   },
 ];
 
@@ -160,6 +163,14 @@ export default function WhyISLSection() {
                     <div>
                       <h4 className="font-bold text-gray-900 text-sm mb-1">{d.title}</h4>
                       <p className="text-gray-500 text-sm leading-relaxed">{d.description}</p>
+                      {d.link && d.linkText && (
+                        <Link
+                          to={d.link}
+                          className="inline-block mt-2 text-teal-600 hover:text-teal-700 text-sm font-semibold"
+                        >
+                          {d.linkText}
+                        </Link>
+                      )}
                     </div>
                   </motion.div>
                 );
