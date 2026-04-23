@@ -16,15 +16,15 @@ export default function SocialProofBar() {
             <div className="w-10 h-10 rounded-xl bg-teal-100 flex items-center justify-center mx-auto mb-2">
               <Zap className="w-5 h-5 text-teal-600" />
             </div>
-            <p className="text-2xl font-bold text-gray-900">5</p>
-            <p className="text-sm text-gray-500">Practice Modes</p>
+            <p className="text-2xl font-bold text-gray-900">9</p>
+            <p className="text-sm text-gray-500">Practice Tools</p>
           </div>
           <div className="text-center">
             <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center mx-auto mb-2">
               <TrendingUp className="w-5 h-5 text-green-600" />
             </div>
-            <p className="text-2xl font-bold text-gray-900">92%</p>
-            <p className="text-sm text-gray-500">Avg Score Improvement</p>
+            <p className="text-2xl font-bold text-gray-900">0</p>
+            <p className="text-sm text-gray-500">AI in your interview<br /><span className="text-xs text-gray-400">By design, always</span></p>
           </div>
           <div className="text-center">
             <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center mx-auto mb-2">
