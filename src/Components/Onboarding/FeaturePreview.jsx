@@ -25,7 +25,7 @@ export default function FeaturePreview({ fromNursing: fromNursingProp = false, p
       icon: '📋',
       title: 'Practice Prompter',
       subtitle: 'Practice with a friend like a real interview',
-      description: 'Have a friend ask you questions while the Prompter listens and shows your bullet points and narrative in real-time. Build natural recall for the real thing.',
+      description: 'Read a question out loud, answer out loud, and see your prepared bullet points appear during rehearsal — so you can train yourself to hit your key points naturally before the interview.',
       free: '5 sessions/month',
       highlight: true,
     },
