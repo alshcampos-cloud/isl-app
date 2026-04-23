@@ -256,7 +256,7 @@ export default function BehavioralInterviewQuestionsPage() {
               <CheckCircle className="w-5 h-5 text-teal-600 shrink-0 mt-0.5" />
               <div>
                 <p className="font-medium text-gray-900 text-sm">Practice out loud</p>
-                <p className="text-sm text-gray-600">Use our AI mock interviewer to practice answering with real-time feedback.</p>
+                <p className="text-sm text-gray-600">Use our AI mock interviewer to practice answering with instant feedback.</p>
               </div>
             </div>
           </div>

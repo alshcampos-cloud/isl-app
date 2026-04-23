@@ -307,7 +307,7 @@ export default function STARMethodGuidePage() {
         <section className="bg-gradient-to-r from-teal-600 to-emerald-600 rounded-2xl p-8 sm:p-12 text-center text-white">
           <h2 className="text-3xl font-bold mb-4">Practice STAR Method Answers with AI</h2>
           <p className="text-teal-100 text-lg mb-8 max-w-2xl mx-auto">
-            InterviewAnswers.ai conducts realistic mock interviews, scores your STAR structure in real-time,
+            InterviewAnswers.ai conducts realistic mock interviews, scores your STAR structure instantly,
             and coaches you to tell stronger stories from your real experience. Free to start.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">

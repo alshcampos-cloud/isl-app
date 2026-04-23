@@ -28,18 +28,18 @@ function FAQItem({ question, answer, defaultOpen = false }) {
 export default function MockInterviewPracticePage() {
   useDocumentHead({
     title: 'Free AI Mock Interview Practice Online | InterviewAnswers.ai',
-    description: 'Practice mock interviews with an AI interviewer that adapts to your answers. Get real-time feedback on STAR structure, delivery, and confidence. Free — no credit card required.',
+    description: 'Practice mock interviews with an AI interviewer that adapts to your answers. Get instant feedback on STAR structure, delivery, and confidence. Free — no credit card required.',
     keywords: 'mock interview practice, AI mock interview, online mock interview, practice interview online, free mock interview, interview simulator, interview practice tool, mock interview questions',
     canonical: 'https://www.interviewanswers.ai/mock-interview-practice',
     og: {
       title: 'Free AI Mock Interview Practice Online',
-      description: 'Practice mock interviews with an AI interviewer. Get real-time feedback on your answers. Free to start.',
+      description: 'Practice mock interviews with an AI interviewer. Get instant feedback on your answers. Free to start.',
       url: 'https://www.interviewanswers.ai/mock-interview-practice',
       type: 'article',
     },
     twitter: {
       title: 'Free AI Mock Interview Practice Online',
-      description: 'Practice mock interviews with an AI interviewer. Get real-time feedback on your answers.',
+      description: 'Practice mock interviews with an AI interviewer. Get instant feedback on your answers.',
     },
   });
 
@@ -330,7 +330,7 @@ export default function MockInterviewPracticePage() {
         <section className="bg-gradient-to-r from-teal-600 to-emerald-600 rounded-2xl p-8 sm:p-12 text-center text-white">
           <h2 className="text-3xl font-bold mb-4">Ready to Practice?</h2>
           <p className="text-teal-100 text-lg mb-8 max-w-2xl mx-auto">
-            InterviewAnswers.ai conducts realistic AI mock interviews, scores every answer in real-time,
+            InterviewAnswers.ai conducts realistic AI mock interviews, scores every answer instantly,
             and coaches you to give stronger, more specific responses. Free to start — no credit card required.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
