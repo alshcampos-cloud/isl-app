@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import useDocumentHead from '../../hooks/useDocumentHead';
 import LandingNavbar from './LandingNavbar';
 import HeroSection from './HeroSection';
+import TrustBar from './TrustBar';
 import SocialProofBar from './SocialProofBar';
 import ProblemSection from './ProblemSection';
 import FeaturesSection from './FeaturesSection';
@@ -95,6 +96,7 @@ export default function LandingPage() {
     <div className="min-h-screen">
       <LandingNavbar />
       <HeroSection />
+      <TrustBar />
       <SocialProofBar />
       <ProblemSection />
       <FeaturesSection />
