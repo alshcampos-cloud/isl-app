@@ -83,12 +83,13 @@ export default function EthicsPage() {
               call. Users asked for it. We shipped it.
             </p>
             <p>
-              Then we watched the category. Final Round AI. Cluely. Interview.chat.
-              Tools explicitly marketed as &ldquo;undetectable&rdquo; AI copilots for
-              real interviews. We listened to hiring managers quietly flag them as
-              fraud. We talked to career coaches who were warning clients that using
-              these tools can cost them the offer &mdash; sometimes after it&rsquo;s
-              already been made.
+              Then we watched the category. A wave of &ldquo;interview copilot&rdquo;
+              products emerged, some marketed explicitly as &ldquo;undetectable&rdquo;
+              AI to use live, during real interviews. News outlets including
+              CBS News began reporting on AI-assisted interview fraud &mdash; by one
+              report, 50% of businesses had encountered it in 2026. Hiring managers
+              started asking candidates directly whether they had used AI help. Some
+              candidates lost offers.
             </p>
             <p>
               We realized the market we were drifting toward was &ldquo;invisible
@@ -137,6 +138,62 @@ export default function EthicsPage() {
               Live AI in interviews is becoming a category that hurts the people
               using it. We&rsquo;re not going to build for that category &mdash; no
               matter how much demand there is.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 2.5 — The Science (Cognitive Psychology) */}
+      <section className="py-16 sm:py-20 bg-white">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <p className="text-sm font-semibold text-teal-600 uppercase tracking-wide mb-3">
+            The science
+          </p>
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">
+            Practice beats real-time help. Cognitive psychology is clear on this.
+          </h2>
+          <div className="space-y-5 text-lg text-gray-700 leading-relaxed">
+            <p>
+              There&rsquo;s a reason athletes rehearse before the game, surgeons train
+              on simulators, and pilots log hours in flight sims &mdash; and it&rsquo;s
+              not just discipline. It&rsquo;s how human memory actually works.
+            </p>
+            <p>
+              <strong className="text-gray-900">The testing effect.</strong>{' '}
+              Roediger &amp; Karpicke (2006) found that actively recalling information
+              &mdash; testing yourself on it &mdash; improved retention roughly 50%
+              more than re-reading the same material. Reading your answers in your head
+              is not practice. Speaking them out loud, with feedback, is.
+            </p>
+            <p>
+              <strong className="text-gray-900">Transfer-appropriate processing.</strong>{' '}
+              Morris, Bransford &amp; Franks (1977) showed that memory performs best
+              when the conditions at practice match the conditions at retrieval. If
+              your real interview requires speaking out loud under pressure, you
+              should practice speaking out loud under pressure. Not typing answers
+              into a chatbot.
+            </p>
+            <p>
+              <strong className="text-gray-900">Context-dependent memory.</strong>{' '}
+              Godden &amp; Baddeley (1975) demonstrated that memories are easier to
+              retrieve in the context they were formed. We build practice environments
+              that replicate the real interview as closely as possible &mdash; timed
+              questions, voice input, the exact same cognitive load you&rsquo;ll face
+              on the day.
+            </p>
+            <p>
+              <strong className="text-gray-900">Deliberate practice.</strong>{' '}
+              Anders Ericsson&rsquo;s research on expert performance found that skill
+              comes from focused, goal-oriented practice with immediate feedback &mdash;
+              not from more exposure, and definitely not from shortcuts during the
+              actual event.
+            </p>
+            <p className="font-semibold text-gray-900">
+              An AI whispering in your ear during the interview doesn&rsquo;t build
+              skill. It borrows someone else&rsquo;s voice and hopes the interviewer
+              doesn&rsquo;t notice. We built the opposite: a system that makes{' '}
+              <em>you</em> better, so you don&rsquo;t need anything in the room with
+              you except what you already know.
             </p>
           </div>
         </div>

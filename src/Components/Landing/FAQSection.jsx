@@ -9,7 +9,7 @@ const faqs = [
   },
   {
     q: 'How is this different from ChatGPT?',
-    a: 'InterviewAnswers.ai is purpose-built for interview prep. It uses motivational interviewing techniques to pull answers from YOUR real experiences, provides scored feedback, has a live prompter for actual interviews, and tracks your progress over time. ChatGPT gives generic advice — InterviewAnswers.ai gives you a complete practice system.',
+    a: 'InterviewAnswers.ai is purpose-built for interview prep. It uses motivational interviewing techniques to pull answers from YOUR real experiences, provides scored feedback based on cognitive-psychology research on retrieval practice, has a Practice Prompter for rehearsing out loud, and tracks your progress over time. ChatGPT gives generic advice — InterviewAnswers.ai gives you a complete practice system built around how people actually learn interview skills.',
   },
   {
     q: 'What does the Practice Prompter do?',
@@ -20,8 +20,8 @@ const faqs = [
     a: 'No \u2014 we don\u2019t support that. InterviewAnswers.ai is built for preparation, not cheating. It\u2019s designed to help you practice your answers before the interview so you can deliver them confidently on the day. Our Terms of Service explicitly prohibit using the product during live interviews. See our ethics page at /ethics for the full reasoning.',
   },
   {
-    q: 'How are you different from tools like Final Round AI?',
-    a: 'Tools like Final Round AI position themselves as real-time interview copilots \u2014 designed to help during the interview itself. Hiring managers are increasingly flagging that pattern as fraud, and candidates are losing offers over it. We believe in practice, not cheating. Our AI is the interview coach you practice with beforehand, not a tool you bring into the room.',
+    q: 'How are you different from "interview copilot" tools?',
+    a: 'Some AI interview products market themselves as real-time "copilots" you use during live interviews. News outlets like CBS News have reported that this pattern is raising concerns among employers, and some candidates have had offers rescinded after being detected using such tools. We made a different choice: we\u2019re the interview coach you practice with beforehand \u2014 never a tool you bring into the room. Practice, not cheat. See our ethics page at /ethics for more.',
   },
   {
     q: 'Is my data secure?',
