@@ -1,43 +1,30 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { TrendingUp, BarChart3, RefreshCcw, Brain, Shield, Mic, ChevronRight } from 'lucide-react';
 
 const differentiators = [
   {
-    icon: Shield,
-    color: 'text-teal-600 bg-teal-100',
     title: 'Practice, not cheat',
     description: 'We deleted our live-interview prompter. No in-ear AI. No "undetectable" mode. Just deep, private rehearsal — the kind that actually works.',
     link: '/ethics',
     linkText: 'Read why →',
   },
   {
-    icon: TrendingUp,
-    color: 'text-green-600 bg-green-100',
     title: 'Watch Your Scores Improve',
     description: 'Every practice session gives you a completeness score (0-100). Track your improvement over time and know exactly when you\'re ready.',
   },
   {
-    icon: BarChart3,
-    color: 'text-teal-600 bg-teal-100',
     title: 'Session History & Analytics',
     description: 'Review every practice session. See which questions you nailed and which need more work. Data-driven interview prep.',
   },
   {
-    icon: Brain,
-    color: 'text-teal-600 bg-teal-50',
     title: 'Motivational Interviewing',
     description: 'Our AI doesn\'t just quiz you — it uses proven psychological techniques to help you discover stories you didn\'t know you had.',
   },
   {
-    icon: Mic,
-    color: 'text-emerald-600 bg-emerald-100',
     title: 'Rehearse Out Loud With AI',
     description: 'Practice Prompter surfaces your bullet points as you speak — during your rehearsal sessions, not live interviews. Build muscle memory before the real thing.',
   },
   {
-    icon: RefreshCcw,
-    color: 'text-cyan-600 bg-cyan-100',
     title: 'Adaptive Follow-Ups',
     description: 'Our AI Interviewer doesn\'t just ask questions — it listens to your answer and asks relevant follow-ups, just like a real interviewer would.',
   },
@@ -150,7 +137,7 @@ export default function WhyISLSection() {
 
             <div className="grid sm:grid-cols-2 gap-5">
               {differentiators.map((d, i) => {
-                const Icon = d.icon;
+                const badge = String(i + 1).padStart(2, '0');
                 return (
                   <motion.div
                     key={d.title}
@@ -160,8 +147,10 @@ export default function WhyISLSection() {
                     viewport={{ once: true }}
                     transition={{ duration: 0.3, delay: i * 0.08 }}
                   >
-                    <div className={`w-10 h-10 rounded-xl ${d.color} flex items-center justify-center flex-shrink-0`}>
-                      <Icon className="w-5 h-5" />
+                    <div className="flex-shrink-0 w-10 flex items-start justify-start">
+                      <span className="font-serif text-3xl lg:text-4xl text-teal-600 leading-none">
+                        {badge}
+                      </span>
                     </div>
                     <div>
                       <h4 className="font-bold text-gray-900 text-sm mb-1">{d.title}</h4>
