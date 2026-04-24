@@ -62,7 +62,7 @@
 
 ### Slide 10 (CTA)
 **Headline:** Practice These Answers With AI Before the Real Thing
-**Body:** Our AI Mock Interviewer asks follow-up questions, gives real-time feedback on your STAR structure, and coaches you until your answers feel natural. Free to start. No credit card needed.
+**Body:** Our AI Mock Interviewer asks follow-up questions, scores your STAR structure after every practice answer, and coaches you until your answers feel natural. Free to start. No credit card needed.
 **CTA button text:** Try it free at interviewanswers.ai
 **Design note:** Teal gradient background, prominent URL
 
@@ -126,15 +126,15 @@
 
 ---
 
-## CAROUSEL 3: "The Nursing Interview Cheat Sheet"
+## CAROUSEL 3: "The Nursing Interview Prep Sheet"
 
 **Format:** 9 slides, 1080x1350px portrait
 **Target:** Nursing students, new grad nurses, nurses switching specialties
-**Caption:** Nursing interviews are different. You need clinical examples, SBAR structure, and the ability to show patient-first thinking under pressure. Here's your cheat sheet -- built with real nurse educators. Save this before your next panel interview.
+**Caption:** Nursing interviews are different. You need clinical examples, SBAR structure, and the ability to show patient-first thinking under pressure. Here's your prep sheet -- built with real nurse educators. Save this before your next panel interview.
 **Hashtags:** #nursinginterview #nursingschool #newgradnurse #nursingstudent #nurselife #sbar #nursingcareer #nurseinterviewpro #nclex2026
 
 ### Slide 1 (Cover)
-**Headline:** The Nursing Interview Cheat Sheet
+**Headline:** The Nursing Interview Prep Sheet
 **Subtext:** SBAR-structured answers for the questions they always ask
 **Design note:** Teal + white, stethoscope icon, clean medical aesthetic
 
@@ -350,7 +350,7 @@ If your answer doesn't demonstrate at least one of these, restructure it.
 **Script continues:** "Instead of saying 'I'm great at problem solving,' you say: 'When our biggest client threatened to leave, I was responsible for the retention plan. I analyzed their usage data, built a custom proposal, and presented it to their VP. We kept the account and they increased their contract by 20%.'"
 
 ### CTA (35-45s)
-**Script:** "The problem is most people know this but freeze in the actual interview. Link in bio -- you can practice with an AI interviewer that gives you real-time STAR feedback. It's free to start."
+**Script:** "The problem is most people know this but freeze in the actual interview. Link in bio -- you can practice with an AI interviewer that scores your STAR answers and asks the follow-ups you didn't prepare for. It's free to start."
 **On-screen text:** "Practice with AI -- link in bio"
 **End card:** interviewanswers.ai
 
@@ -528,7 +528,7 @@ If your answer doesn't demonstrate at least one of these, restructure it.
 - R: The outcome (use numbers)
 
 ### CTA (25-30s)
-**Script:** "Link in bio to practice with AI that gives you STAR feedback in real time."
+**Script:** "Link in bio to practice with AI that scores your STAR answers and asks follow-ups."
 **On-screen text:** "interviewanswers.ai -- free"
 
 **Hashtags:** #starmethod #interviewtips #careeradvice #interviewhack #jobtips #learnontiktok #interviewprep
@@ -603,7 +603,7 @@ If your answer doesn't demonstrate at least one of these, restructure it.
 **[8-15s] SOLUTION**
 *Confident version, clean background*
 **Script:** "What if you could practice every question with AI that actually coaches you -- before the real interview?"
-**On-screen text:** "AI Mock Interviewer | Real-time feedback | STAR method coaching"
+**On-screen text:** "AI Mock Interviewer | Practice feedback | STAR method coaching"
 
 **[15-20s] CTA**
 *App interface quick flash*
@@ -636,7 +636,7 @@ If your answer doesn't demonstrate at least one of these, restructure it.
 
 **[12-20s] PRODUCT**
 *Quick app walkthrough -- AI asking a question, user responding, feedback appearing*
-**Script:** "InterviewAnswers.ai gives you an AI mock interviewer that asks real questions, flags weak spots, and coaches your STAR structure in real time."
+**Script:** "InterviewAnswers.ai gives you an AI mock interviewer that asks real questions, flags weak spots, and coaches your STAR structure after every practice answer."
 
 **[20-25s] CTA**
 **On-screen text:** "Your first practice session is free"

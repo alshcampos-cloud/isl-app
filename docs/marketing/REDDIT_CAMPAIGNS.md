@@ -85,7 +85,7 @@ What behavioral questions are you all struggling with? Happy to help workshop an
 
 **Body:**
 
-I help people prepare for interviews, and we recently built out a nursing-specific track after working with an infection prevention nurse at Stanford. Wanted to share some of what we learned because nursing interviews are different from corporate ones and the generic advice does not always apply.
+I help people prepare for interviews, and we recently built out a nursing-specific track with my co-founder, a clinical nurse working in infection prevention. Wanted to share some of what we learned because nursing interviews are different from corporate ones and the generic advice does not always apply.
 
 **What nursing interviews actually focus on:**
 
@@ -200,7 +200,7 @@ Anyone else have systems that worked for them? Curious what other people's behav
 
 **Headline:** Stop rehearsing answers in your head. Practice them out loud.
 
-**Body:** Interview skills are not about memorizing scripts. They are about delivering structured, compelling stories under pressure. InterviewAnswers.ai runs AI mock interviews that ask real follow-ups, score your STAR structure, and coach you in real time. Free tier available.
+**Body:** Interview skills are not about memorizing scripts. They are about delivering structured, compelling stories under pressure. InterviewAnswers.ai runs AI mock interviews that ask real follow-ups, score your STAR structure on every answer, and coach you in practice until you're ready. Free tier available.
 
 **CTA:** Try a Free Mock Interview
 
@@ -234,7 +234,7 @@ Anyone else have systems that worked for them? Curious what other people's behav
 
 **Headline:** You cleared the coding round. Don't lose the offer on behaviorals.
 
-**Body:** Behavioral rounds carry real weight at top tech companies. InterviewAnswers.ai runs AI-driven mock interviews with follow-up questions, STAR scoring, and real-time coaching. Prep for Amazon LPs, Google googliness, and Meta culture fit. Unlimited practice on the free tier.
+**Body:** Behavioral rounds carry real weight at top tech companies. InterviewAnswers.ai runs AI-driven mock interviews with follow-up questions and STAR-structured feedback on every answer. Prep for Amazon LPs, Google googliness, and Meta culture fit. Built for rehearsal, not real-time. Free tier available.
 
 **CTA:** Practice Behavioral Interviews
 
@@ -273,7 +273,7 @@ Use these as starting points. Adapt to the specific thread. Never copy-paste ide
 
 ### Template 4 — Someone asking "Are AI interview prep tools worth it?"
 
-> Depends on the tool and what you use it for. The main advantage over practicing alone is that a good AI interviewer asks follow-up questions, which is what real interviews do. You might have a polished answer for "tell me about a time you led a team" but fall apart when the follow-up is "what would you do differently?" That said, AI tools are best for repetition and structure — building muscle memory for delivering STAR answers cleanly. They do not replace understanding the company, preparing thoughtful questions, or the human element. I have been using InterviewAnswers.ai and the thing I find most useful is the real-time feedback on answer structure — it catches when you are spending too long on setup and not enough on your actual actions. Worth trying the free tier to see if it fits your style.
+> Depends on the tool and what you use it for. The main advantage over practicing alone is that a good AI interviewer asks follow-up questions, which is what real interviews do. You might have a polished answer for "tell me about a time you led a team" but fall apart when the follow-up is "what would you do differently?" That said, AI tools are best for repetition and structure — building muscle memory for delivering STAR answers cleanly. They do not replace understanding the company, preparing thoughtful questions, or the human element. I have been using InterviewAnswers.ai and the thing I find most useful is the structured feedback on each answer — it catches when you are spending too long on setup and not enough on your actual actions. Worth trying the free tier to see if it fits your style.
 
 ---
 
