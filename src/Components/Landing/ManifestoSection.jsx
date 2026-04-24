@@ -76,11 +76,12 @@ export default function ManifestoSection() {
           </p>
 
           <p>
-            This is for the new-grad nurse who will, in eight weeks, be asked
-            to talk calmly about the first code she ran. It's for the
-            career-switcher betting the next two years on one forty-minute
-            conversation. For the engineer who knows the answer and still
-            freezes.
+            This is for the engineer who knows the answer and still freezes.
+            For the career-switcher betting the next two years on one
+            forty-minute conversation. For the PM walking into their fifth
+            interview this month. And yes — for the new-grad nurse who
+            will, in eight weeks, be asked to talk calmly about the first
+            code she ran.
           </p>
         </div>
 
