@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Mic, Bot, Target, Sparkles, Lightbulb, ArrowRight } from 'lucide-react';
+import { Mic, Bot, Target, Sparkles, Lightbulb, Brain, BookOpen, Layers, Flame, ArrowRight } from 'lucide-react';
 
 const features = [
   {
@@ -37,6 +37,34 @@ const features = [
     description: 'Paste a job description and get personalized interview questions tailored to the role. Or pick from our template library.',
     highlights: ['AI-generated from job postings', 'Template library included', 'Custom question support'],
   },
+  {
+    icon: Brain,
+    name: 'AI Coach',
+    gradient: 'from-violet-500 to-purple-600',
+    description: 'Per-answer coaching on STAR structure, specificity, and delivery. Targets the exact gap in your last response — not a generic tip list.',
+    highlights: ['Answer-level feedback', 'STAR/SBAR frameworks', 'Actionable next step'],
+  },
+  {
+    icon: BookOpen,
+    name: 'Curated Interviews',
+    gradient: 'from-sky-500 to-teal-500',
+    description: 'Hand-built interview sets for specific roles (PM, SWE, Nursing, Data) — vetted questions, not AI-generated guesses.',
+    highlights: ['Role-specific sets', 'Clinically reviewed (Nursing)', 'Updated regularly'],
+  },
+  {
+    icon: Layers,
+    name: 'Flashcards',
+    gradient: 'from-emerald-500 to-green-600',
+    description: 'Spaced-repetition cards built from your question bank. Ericsson-style deliberate practice — drill the hard ones, retire the easy ones.',
+    highlights: ['Spaced repetition', 'Bullets + narrative', 'Built from your bank'],
+  },
+  {
+    icon: Flame,
+    name: 'Streaks & IRS',
+    gradient: 'from-orange-500 to-red-500',
+    description: 'Interview Readiness Score + daily streaks. Know the number that says "you\'re ready" — not a feeling.',
+    highlights: ['0-100 readiness score', 'Daily streak tracking', 'Weekly progress ring'],
+  },
 ];
 
 const containerVariants = {
@@ -69,15 +97,15 @@ export default function FeaturesSection() {
           </p>
         </motion.div>
 
-        {/* Top row: 2 large featured cards */}
+        {/* Top row: 3 featured cards */}
         <motion.div
-          className="grid md:grid-cols-2 gap-6 mb-6"
+          className="grid md:grid-cols-3 gap-6 mb-6"
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: '-100px' }}
         >
-          {features.slice(0, 2).map((feature) => {
+          {features.slice(0, 3).map((feature) => {
             const Icon = feature.icon;
             return (
               <motion.div
@@ -103,7 +131,7 @@ export default function FeaturesSection() {
           })}
         </motion.div>
 
-        {/* Bottom row: 3 cards */}
+        {/* Bottom row: 6 cards (2 rows of 3) */}
         <motion.div
           className="grid md:grid-cols-3 gap-6"
           variants={containerVariants}
@@ -111,7 +139,7 @@ export default function FeaturesSection() {
           whileInView="visible"
           viewport={{ once: true, margin: '-100px' }}
         >
-          {features.slice(2).map((feature) => {
+          {features.slice(3).map((feature) => {
             const Icon = feature.icon;
             return (
               <motion.div
