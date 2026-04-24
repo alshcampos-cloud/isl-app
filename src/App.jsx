@@ -4205,21 +4205,21 @@ const startPracticeMode = async () => {
       {/* onAccepted sets hasAcceptedFirstTimeTerms so Tutorial waits until consent is done */}
       {currentUser && <FirstTimeConsent user={currentUser} onAccepted={() => { console.log('✅ User accepted Terms & Privacy'); setHasAcceptedFirstTimeTerms(true); }} onAlreadyAccepted={() => setHasAcceptedFirstTimeTerms(true)} />}
 
-      {/* LIVE PROMPTER WARNING - Shows before activating prompter */}
+      {/* PRACTICE PROMPTER PRE-FLIGHT - Browser check + rehearsal reminder */}
       {showLivePrompterWarning && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 overflow-y-auto">
-          <div 
+          <div
             className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-auto shadow-lg my-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-6">
-              <div className="flex items-center justify-between mb-3">
-                <div className="text-center flex-1">
-                  <span className="text-5xl">⚠️</span>
-                </div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900">
+                  Ready to rehearse?
+                </h2>
                 <button
                   onClick={() => {
-                    console.log('❌ Practice Prompter warning canceled via X');
+                    console.log('❌ Practice Prompter pre-flight canceled via X');
                     setShowLivePrompterWarning(false);
                     setPendingMode(null);
                   }}
@@ -4229,62 +4229,37 @@ const startPracticeMode = async () => {
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              
-              <h2 className="text-xl font-bold text-center mb-3 text-red-600">
-                Practice Prompter - Legal Warning
-              </h2>
-              
-              <p className="text-gray-700 mb-3 text-sm text-center">
-                You're about to use Practice Prompter during real interviews.
+
+              <p className="text-gray-700 mb-4 text-sm">
+                Practice Prompter shows your prepared bullet points as you speak, so you can
+                train yourself to hit your key points naturally. <strong>For rehearsal only</strong> —
+                not during a live interview.
               </p>
 
-              <div className="bg-red-50 border-l-4 border-red-400 rounded p-3 mb-3">
-                <p className="font-bold text-red-900 text-sm mb-2">YOU MUST:</p>
-                <ul className="space-y-1 text-xs text-red-800">
-                  <li>• <strong>Obtain consent</strong> from interviewer before recording</li>
-                  <li>• <strong>Inform them</strong> you're using assistance technology</li>
-                  <li>• <strong>Comply with laws</strong> requiring all-party consent</li>
-                </ul>
+              <div className="bg-slate-50 border-l-4 border-slate-300 rounded p-3 mb-4 text-xs text-slate-700">
+                Using any AI assistance during a live interview violates our Terms of Service
+                and can result in offers being rescinded. See <a href="/ethics" className="text-teal-600 underline">our ethics statement</a> for the full reasoning.
               </div>
 
-              <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded p-3 mb-3">
-                <p className="font-bold text-yellow-900 text-xs mb-1">Legal Consequences:</p>
-                <p className="text-yellow-800 text-xs">
-                  Recording without consent is <strong>illegal</strong> in CA, FL, IL, MA, PA, WA, etc. 
-                  You could face criminal charges or job disqualification.
-                </p>
-              </div>
-
-              <div className="bg-green-50 rounded p-3 mb-3 text-center">
-                <p className="text-xs text-green-800">
-                  <strong>Recommended:</strong> Use for practice only, not actual interviews.
-                </p>
-              </div>
-
-              {/* Browser compatibility notice */}
+              {/* Browser compatibility — the actually-useful part */}
               <div className="bg-teal-50 border-l-4 border-teal-400 rounded p-3 mb-4">
-                <p className="font-bold text-teal-900 text-xs mb-1"><Globe className="w-3 h-3 inline" /> Browser Compatibility:</p>
-                <p className="text-teal-800 text-xs mb-2">
-                  Voice recognition works in:
-                </p>
+                <p className="font-bold text-teal-900 text-xs mb-2"><Globe className="w-3 h-3 inline" /> Browser check</p>
+                <p className="text-teal-800 text-xs mb-2">Voice recognition works in:</p>
                 <div className="flex flex-wrap gap-1 mb-2">
                   <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-medium">✓ Chrome (desktop/Android)</span>
                   <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-medium">✓ Safari</span>
-                  <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-medium">✓ Samsung Internet (Android)</span>
+                  <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-medium">✓ Samsung Internet</span>
                 </div>
-                <p className="text-red-600 text-xs font-medium mb-1">
-                  <Smartphone className="w-3 h-3 inline" /> iPhone users: Use <strong>Safari</strong> only. Chrome, Edge, and Firefox on iPhone do not support voice.
-                </p>
                 <p className="text-teal-700 text-xs">
-                  <strong>Not supported for voice:</strong> Edge, Firefox, Opera, Brave.
-                  Text search and typing always work in all browsers.
+                  <Smartphone className="w-3 h-3 inline" /> On iPhone, use Safari. On unsupported browsers
+                  (Edge, Firefox, Opera, Brave), typing still works.
                 </p>
               </div>
 
               <div className="flex gap-2">
                 <button
                   onClick={() => {
-                    console.log('❌ Practice Prompter warning canceled');
+                    console.log('❌ Practice Prompter pre-flight canceled');
                     setShowLivePrompterWarning(false);
                     setPendingMode(null);
                   }}
@@ -4294,13 +4269,13 @@ const startPracticeMode = async () => {
                 </button>
                 <button
                   onClick={() => {
-                    console.log('✅ User accepted Practice Prompter warning');
+                    console.log('✅ User started Practice Prompter rehearsal');
                     setShowLivePrompterWarning(false);
                     actuallyStartPrompter();
                   }}
-                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-4 rounded-lg text-xs"
+                  className="flex-1 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-semibold py-3 px-4 rounded-lg text-sm"
                 >
-                  I Understand & Accept Responsibility
+                  Start rehearsing
                 </button>
               </div>
             </div>

@@ -49,14 +49,14 @@ const ConsentDialog = ({
             <p className="text-blue-900">✓ All data stored securely and encrypted</p>
           </div>
 
-          {/* ONLY show Practice Prompter warning if using Practice Prompter */}
+          {/* Practice Prompter — rehearsal-only framing (post-rebrand) */}
           {showLivePrompterWarning && (
-            <div className="bg-orange-50 border-l-4 border-orange-400 rounded p-3 mb-3">
-              <p className="font-bold text-orange-900 text-sm mb-1">⚠️ Practice Prompter — Rehearsal Only</p>
-              <p className="text-orange-800 text-xs">
-                Practice Prompter is designed for rehearsal before your interview. If you choose to use it in a live
-                conversation with another party, <strong>YOU must obtain consent from all parties</strong>.
-                Recording without consent may be illegal.
+            <div className="bg-teal-50 border-l-4 border-teal-500 rounded p-3 mb-3">
+              <p className="font-bold text-teal-900 text-sm mb-1">Practice Prompter — rehearsal tool</p>
+              <p className="text-teal-800 text-xs">
+                This is for practicing your answers out loud, before your interview.
+                Using any AI assistance during a live interview violates our
+                Terms of Service and can result in offers being rescinded.
               </p>
             </div>
           )}
