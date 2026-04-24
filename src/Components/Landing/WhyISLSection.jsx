@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { TrendingUp, BarChart3, Clock, RefreshCcw, Brain, Shield, Mic, ChevronRight } from 'lucide-react';
+import { TrendingUp, BarChart3, RefreshCcw, Brain, Shield, Mic, ChevronRight } from 'lucide-react';
 
 const differentiators = [
   {
