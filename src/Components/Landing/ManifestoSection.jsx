@@ -1,8 +1,13 @@
 /**
  * ManifestoSection
  *
- * Founder-voiced editorial section: "We built this because rehearsal is how
- * humans actually learn."
+ * Founder-voiced editorial section: "We built this because rehearsal is
+ * the thing interview prep products skip."
+ *
+ * Headline softened from "rehearsal is how humans actually learn" to the
+ * current positioning — more defensible (avoids the Hambrick/Macnamara
+ * deliberate-practice critique) and sharper (names the actual market gap
+ * rather than making a universal claim).
  *
  * Why this exists: this is the highest-leverage anti-template change on the
  * landing page. It breaks the feature-grid pattern with a single-column,
@@ -35,7 +40,7 @@ export default function ManifestoSection() {
           id="manifesto-headline"
           className="font-serif text-4xl lg:text-5xl font-normal text-slate-900 leading-tight tracking-tight mb-10"
         >
-          We built this because rehearsal is how humans actually learn.
+          We built this because rehearsal is the thing interview prep products skip.
         </h2>
 
         {/* Body — sans, readable, not serif (accessibility) */}
