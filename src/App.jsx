@@ -29,6 +29,7 @@ import Tutorial from './Components/Tutorial';
 import { DEFAULT_QUESTIONS, QUESTION_GROUPS, getDefaultActiveGroups, filterQuestionsByGroups, getQuestionCountsByGroup } from './default_questions';
 import QuestionGroupFilter from './Components/QuestionGroupFilter';
 import AIInterviewCoach from './Components/AIInterviewCoach';
+import EmailVerificationGate from './Components/EmailVerificationGate';
 import HomePageV2 from './Components/HomePageV2';
 import InterviewFormatModal from './Components/Intelligence/InterviewFormatModal';
 import CuratedInterviewsScreen from './Components/Intelligence/CuratedInterviewsScreen';
@@ -5244,6 +5245,7 @@ const startPracticeMode = async () => {
     // CALLBACK FIX: Handler now defined at top level with useCallback for stable reference
     
     return (
+      <EmailVerificationGate user={currentUser} onVerified={(u) => setCurrentUser(u)}>
       <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-between mb-6 text-white">
@@ -6020,6 +6022,7 @@ const startPracticeMode = async () => {
           />
         )}
       </div>
+      </EmailVerificationGate>
     );
   }
 
