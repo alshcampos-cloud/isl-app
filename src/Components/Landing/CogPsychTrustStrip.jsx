@@ -31,7 +31,7 @@ export default function CogPsychTrustStrip() {
           </span>
           <span className="hidden sm:inline text-slate-300" aria-hidden="true">·</span>
           <Link
-            to="/ethics"
+            to="/ethics#the-science"
             className="text-teal-600 hover:text-teal-700 font-semibold text-center sm:text-left"
           >
             Read the science &rarr;
