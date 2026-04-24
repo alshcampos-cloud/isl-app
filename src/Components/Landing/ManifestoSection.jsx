@@ -1,7 +1,8 @@
 /**
  * ManifestoSection
  *
- * Founder-voiced editorial section: "We deleted our best-performing feature."
+ * Founder-voiced editorial section: "We built this because rehearsal is how
+ * humans actually learn."
  *
  * Why this exists: this is the highest-leverage anti-template change on the
  * landing page. It breaks the feature-grid pattern with a single-column,
@@ -14,9 +15,12 @@
  * serif preserves the editorial feel without adding a new dependency (the
  * sprint rules prohibit new deps + touching shared config).
  *
- * Copy is Researcher-drafted + Auditor-corrected. Erin's first name is
- * intentionally omitted; co-founder is referenced by role only per binding
- * legal/consent direction.
+ * Copy is Researcher-drafted + Auditor-corrected. Positive-framed rewrite
+ * (Sprint 9) — centers the why-rehearsal-works thesis instead of the
+ * deleted-feature mea culpa. Auditor struck the "9 AM under fluorescent
+ * lights" line as too specific for the nursing audience; replaced with
+ * "on the day it counts". Co-founder is referenced by role only per
+ * binding legal/consent direction.
  */
 
 export default function ManifestoSection() {
@@ -31,59 +35,61 @@ export default function ManifestoSection() {
           id="manifesto-headline"
           className="font-serif text-4xl lg:text-5xl font-normal text-slate-900 leading-tight tracking-tight mb-10"
         >
-          We deleted our best-performing feature.
+          We built this because rehearsal is how humans actually learn.
         </h2>
 
         {/* Body — sans, readable, not serif (accessibility) */}
         <div className="space-y-6 text-lg leading-relaxed text-slate-700">
           <p>
-            The Live Prompter fed you answers in real time. It worked — users
-            closed jobs, we tracked it. And then we killed it.
+            Not reading about interviews. Not watching someone else ace one on
+            YouTube. Doing it yourself — out loud, imperfectly, then again,
+            then again until the words stop feeling like someone else's.
           </p>
 
           <p>
-            We built it because the market wanted it. We killed it because it
-            was the wrong lesson. A candidate who reads an AI's words in their
-            ear doesn't walk out of that interview any better than they walked
-            in. The job offer is a lottery ticket, not a skill.
+            There's a fifty-year-old finding from cognitive psychology called
+            the testing effect. Roediger and Karpicke, 2006. The short
+            version: pulling a memory out of your head makes it stick harder
+            than reading the same thing four more times. Deliberate practice
+            — Ericsson's name for the same idea — says the same thing with a
+            stopwatch.
           </p>
 
           <p>
-            The research on this is not ambiguous. Retrieval practice — the
-            actual cognitive-psychology term — is how humans encode anything
-            worth keeping. You rehearse under pressure. You fail small. You
-            try again. The brain rewrites itself around the attempt, not
-            around the answer.
+            Which is to say: the boring part is the part that works.
+          </p>
+
+          <p>
+            So we built a prompter that listens to you rehearse, flags the
+            vague sentences, and makes you say it better. Then a mock
+            interviewer that actually interrupts. Then a flashcard deck for
+            the parts your body already knows but your mouth can't find on
+            the day it counts. We killed a real-time coaching feature along
+            the way — it turns out live whispers aren't practice, and
+            practice is the whole point.
+          </p>
+
+          <p>
+            This is for the new-grad nurse who will, in eight weeks, be asked
+            to talk calmly about the first code she ran. It's for the
+            career-switcher betting the next two years on one forty-minute
+            conversation. For the engineer who knows the answer and still
+            freezes.
           </p>
         </div>
 
         {/* Pull quote — serif italic, teal left border, left-indented */}
         <blockquote className="my-10 border-l-[3px] border-teal-500 pl-6">
           <p className="font-serif italic text-2xl lg:text-3xl leading-snug text-slate-900">
-            You don't cheat your way into being the person who handles the 2 AM
-            page. You rehearse into it.
+            You don't want to sound prepared. You want to be prepared. Those
+            are different, and only one of them survives the follow-up
+            question.
           </p>
         </blockquote>
 
-        {/* Closing paragraphs */}
+        {/* Closing paragraph */}
         <div className="space-y-6 text-lg leading-relaxed text-slate-700">
-          <p>
-            So we rebuilt the whole product around rehearsal. The AI
-            interviewer pushes back. The coach flags vague answers. The
-            scorecard is honest when you earned a 6. It's slower. It's harder.
-            It's the thing that actually works.
-          </p>
-
-          <p>
-            We know this isn't the easier sell. "Practice more" loses to "get
-            the answer" every time in a landing-page A/B test. But the people
-            we're building for — the new grad nurse who'll hold someone's hand
-            through a code, the career-switcher betting the next two years —
-            deserve a tool that makes them better, not a tool that fakes it
-            for them.
-          </p>
-
-          <p>That's the line. Everything we ship has to sit on this side of it.</p>
+          <p>That's what we're building. Reps. Quiet ones. Yours.</p>
         </div>
 
         {/* Signature — small sans, muted, em-dash prefix */}
