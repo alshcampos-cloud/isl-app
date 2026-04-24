@@ -31,14 +31,15 @@ export default function GoogleSignInButton({ onClick, loading = false, label = '
       }}
       disabled={loading || disabled}
       className={`
-        w-full flex items-center justify-center gap-3
-        px-4 py-3 rounded-xl
-        bg-white border-2 border-slate-200
-        text-slate-700 font-medium text-sm
+        w-full h-14 flex items-center justify-center gap-3
+        px-4 rounded-xl
+        bg-white border border-[#747775]
+        text-[#1F1F1F] font-medium text-[15px]
+        shadow-md
         transition-all duration-150
         ${loading || disabled
           ? 'opacity-50 cursor-not-allowed'
-          : 'hover:bg-slate-50 hover:border-slate-300 hover:shadow-md active:scale-[0.98]'
+          : 'hover:bg-gray-50 hover:shadow-lg active:scale-[0.99]'
         }
       `}
       aria-label={label}
