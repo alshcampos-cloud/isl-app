@@ -168,15 +168,15 @@ function ProtectedRoute({ children }) {
   }
 
 
-  // Unauthenticated visitors hitting a protected route (/app, /nursing, etc.)
-  // get redirected to the marketing landing page instead of being dumped into
-  // a login form. Users who want to log in click "Sign In" in the nav → /login.
+  // Unauthenticated visitors hitting /app or /nursing get routed to the
+  // dedicated /login page. Standard SaaS pattern: auth lives at /login,
+  // not in-place on /app. This also keeps /app a clean destination for
+  // returning users (bookmark → sign in → dashboard).
   //
-  // Use <Navigate> component (React Router canonical pattern) — calling
-  // navigate() in render causes a re-render loop (got a redirecting circle
-  // report from the founder; <Navigate> is the correct fix).
+  // Use <Navigate> component — calling navigate() in render causes a
+  // re-render loop (fixed: hardboiled redirect circle).
   if (!user) {
-    return <Navigate to="/" replace />
+    return <Navigate to="/login" replace />
   }
 
   // FIX: Anonymous users (from onboarding) have no email and no email_confirmed_at.
