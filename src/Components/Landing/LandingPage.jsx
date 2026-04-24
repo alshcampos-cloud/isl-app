@@ -11,6 +11,7 @@ import InlineDemoSection from './InlineDemoSection';
 import ManifestoSection from './ManifestoSection';
 import ProblemSection from './ProblemSection';
 import FeatureCarousel from './FeatureCarousel';
+import FeatureToolbox from './FeatureToolbox';
 import HowItWorksSection from './HowItWorksSection';
 import WhyISLSection from './WhyISLSection';
 import PricingSection from './PricingSection';
@@ -112,6 +113,7 @@ export default function LandingPage() {
       <ManifestoSection />
       <ProblemSection />
       <FeatureCarousel />
+      <FeatureToolbox />
       <HowItWorksSection />
       <WhyISLSection />
       <PricingSection />
