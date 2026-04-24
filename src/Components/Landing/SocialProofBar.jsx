@@ -23,10 +23,10 @@ export default function SocialProofBar() {
             <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center mx-auto mb-2">
               <TrendingUp className="w-5 h-5 text-green-600" />
             </div>
-            <p className="text-2xl font-bold text-gray-900">0</p>
+            <p className="text-2xl font-bold text-gray-900">Free</p>
             <p className="text-sm text-gray-500 min-h-[2.75rem] flex flex-col items-center justify-start leading-tight">
-              <span>AI in your interview</span>
-              <span className="text-xs text-gray-400">By design, always</span>
+              <span>To start practicing</span>
+              <span className="text-xs text-gray-400">No credit card</span>
             </p>
           </div>
           <div className="text-center flex flex-col items-center">
