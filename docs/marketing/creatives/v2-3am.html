@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<title>3:14 AM — InterviewAnswers.ai</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    width: 1200px; height: 627px; overflow: hidden;
+    background: #0B0F14;
+    color: #E5E7EB;
+    position: relative;
+  }
+
+  /* Warm amber light source bottom-left */
+  body::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(circle at 18% 88%, rgba(245,158,11,0.35) 0%, rgba(245,158,11,0.08) 30%, transparent 60%),
+      radial-gradient(circle at 65% 15%, rgba(20,184,166,0.05) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  /* Soft grain */
+  body::after {
+    content: '';
+    position: absolute; inset: 0;
+    background-image: radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 2px 2px;
+    pointer-events: none;
+  }
+
+  .container {
+    position: relative; z-index: 2;
+    padding: 80px 90px 60px;
+    display: flex; flex-direction: column;
+    height: 100%;
+  }
+
+  .time {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #F59E0B;
+    margin-bottom: 56px;
+    opacity: 0.85;
+  }
+
+  h1 {
+    font-size: 64px;
+    font-weight: 500;
+    line-height: 1.12;
+    letter-spacing: -1.2px;
+    color: #F4F4F5;
+    max-width: 920px;
+    margin-bottom: 32px;
+  }
+  h1 em {
+    color: #F59E0B;
+    font-style: normal;
+    font-weight: 600;
+  }
+
+  .body {
+    font-size: 20px;
+    font-weight: 400;
+    color: rgba(229, 231, 235, 0.75);
+    line-height: 1.55;
+    max-width: 580px;
+    margin-bottom: 44px;
+  }
+
+  .cta-row {
+    display: flex; align-items: center; gap: 20px;
+    margin-top: auto;
+  }
+
+  .cta {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: transparent;
+    color: #F4F4F5;
+    font-size: 17px; font-weight: 600;
+    padding: 14px 28px;
+    border: 1px solid rgba(245, 158, 11, 0.6);
+    border-radius: 2px;
+    letter-spacing: -0.2px;
+  }
+  .cta::after { content: '→'; opacity: 0.8; }
+
+  .lockup {
+    margin-left: auto;
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(229, 231, 235, 0.45);
+    letter-spacing: -0.1px;
+  }
+  .lockup span { color: rgba(245,158,11,0.7); font-weight: 400; }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="time">3:14 AM</div>
+    <h1>Interview in <em>seven hours</em>.<br>You're re-reading your own resume.</h1>
+    <p class="body">You don't need another PDF of top-fifty questions. You need one rep, out loud, with something that pushes back. Ten minutes now beats two more hours of scrolling.</p>
+    <div class="cta-row">
+      <div class="cta">Do one rep</div>
+      <div class="lockup">interviewanswers.ai <span>· Practice, not cheat.</span></div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<title>The Science Of Getting Good — InterviewAnswers.ai</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=Inter:wght@400;500;700&display=swap');
+
+  body {
+    font-family: 'Source Serif 4', Georgia, serif;
+    width: 1200px; height: 627px; overflow: hidden;
+    background: #F8F5EE;
+    color: #1E293B;
+    position: relative;
+  }
+
+  /* Paper grain */
+  body::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image: radial-gradient(rgba(0,0,0,0.04) 1px, transparent 1px);
+    background-size: 3px 3px;
+    pointer-events: none;
+  }
+
+  /* Single deep-teal arc suggesting a mastery curve */
+  .arc {
+    position: absolute;
+    bottom: -200px; right: -120px;
+    width: 520px; height: 520px;
+    border: 6px solid #0F766E;
+    border-radius: 50%;
+    border-color: transparent transparent #0F766E transparent;
+    transform: rotate(-25deg);
+    opacity: 0.85;
+  }
+
+  .container {
+    position: relative; z-index: 2;
+    padding: 72px 80px 60px;
+    display: flex; flex-direction: column;
+    height: 100%;
+  }
+
+  .footnote-mark {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #0F766E;
+    margin-bottom: 40px;
+    font-family: 'Inter', sans-serif;
+  }
+
+  h1 {
+    font-size: 72px;
+    font-weight: 600;
+    line-height: 1.02;
+    letter-spacing: -1.5px;
+    color: #1E293B;
+    max-width: 980px;
+    margin-bottom: 28px;
+  }
+
+  h1 em {
+    font-style: italic;
+    font-weight: 400;
+  }
+
+  .subhead {
+    font-size: 22px;
+    font-weight: 400;
+    color: #475569;
+    max-width: 680px;
+    line-height: 1.45;
+    margin-bottom: 48px;
+    font-style: italic;
+  }
+
+  .footer {
+    margin-top: auto;
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-family: 'Inter', sans-serif;
+    border-top: 1px solid rgba(30, 41, 59, 0.15);
+    padding-top: 20px;
+  }
+
+  .lockup {
+    font-size: 17px;
+    font-weight: 700;
+    color: #0F766E;
+    letter-spacing: -0.2px;
+  }
+  .lockup span {
+    color: #475569;
+    font-weight: 400;
+  }
+
+  .source-tick {
+    font-size: 12px;
+    color: #64748B;
+    letter-spacing: 0.02em;
+  }
+</style>
+</head>
+<body>
+  <div class="arc"></div>
+  <div class="container">
+    <div class="footnote-mark">§ The Science of Getting Good</div>
+    <h1>The testing effect has <em>80 years</em> of evidence.<br>Your prep has none.</h1>
+    <p class="subhead">Retrieval practice is how humans actually learn. We built a repetitions machine — not a script generator.</p>
+    <div class="footer">
+      <div class="lockup">InterviewAnswers.ai <span>· Practice, not cheat.</span></div>
+      <div class="source-tick">¹ Roediger &amp; Karpicke, 2006</div>
+    </div>
+  </div>
+</body>
+</html>
