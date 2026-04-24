@@ -8,7 +8,7 @@ import { HeartPulse, FileText, BrainCircuit, Lock } from 'lucide-react';
 const items = [
   {
     icon: HeartPulse,
-    label: 'Built with a Stanford-affiliated clinical co-founder',
+    label: 'Built with a clinical co-founder in infection prevention',
     href: null,
   },
   {
