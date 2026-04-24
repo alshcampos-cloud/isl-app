@@ -1,5 +1,6 @@
-import React, { useState, useRef, useCallback } from 'react'
+import React, { useState, useRef, useCallback, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { CheckCircle } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { trackOnboardingEvent } from '../../utils/onboardingTracker'
 import { trackSignUp } from '../../utils/googleAdsTracking'
@@ -44,6 +45,22 @@ export default function SignUpPrompt({ archetype, archetypeConfig, practiceScore
   // Sprint 5 (Apr 2026): Email form is always visible but visually demoted.
   // Google SSO is the dominant CTA (h-14 + shadow); email inputs are h-10, muted,
   // and the submit button is gray (no gradient). Ratio = 1.4× taller SSO.
+
+  // Sprint 5 / Task B: show a commitment banner if the user tapped the 14-day
+  // commit button on IRSBaseline earlier in the onboarding flow.
+  const [isCommitted, setIsCommitted] = useState(false)
+  useEffect(() => {
+    try {
+      // Coder 2 writes 'isl_14day_commit' in IRSBaseline.jsx when user taps commit button.
+      // Key may not exist on first pass — fall through to default CTA.
+      const raw = localStorage.getItem('isl_14day_commit')
+      if (!raw) return
+      const parsed = JSON.parse(raw)
+      if (parsed?.committed === true) setIsCommitted(true)
+    } catch {
+      // Malformed JSON or localStorage unavailable (Safari private mode) — default CTA
+    }
+  }, [])
 
   const handleGoogleSignIn = useCallback(async () => {
     setGoogleLoading(true)
@@ -278,6 +295,19 @@ export default function SignUpPrompt({ archetype, archetypeConfig, practiceScore
         Rationale: SSO = 1 click, email = 3 fields. Reducing friction for the 90%
         should materially improve signup conversion.
       */}
+
+      {/* Commitment banner — shown if user tapped the 14-day commit button on IRSBaseline */}
+      {isCommitted && (
+        <div className="bg-teal-50 border border-teal-200 rounded-xl p-4 mb-5">
+          <div className="flex items-center gap-2 text-sm font-medium text-teal-900">
+            <CheckCircle className="w-4 h-4 text-teal-600" />
+            Your 14-day practice plan is ready
+          </div>
+          <p className="text-xs text-teal-700 mt-1">
+            Sign up in 10 seconds to save your progress and start Day 1.
+          </p>
+        </div>
+      )}
 
       {/* Google Sign-In — primary CTA, web only (not in native Capacitor app) */}
       {!isNativeApp() && (
