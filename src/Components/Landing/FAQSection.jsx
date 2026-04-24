@@ -5,7 +5,7 @@ import { ChevronDown } from 'lucide-react';
 const faqs = [
   {
     q: 'Is it really free to start?',
-    a: 'Yes! The free tier gives you 3 AI Interviewer sessions, 10 Practice sessions, 5 Answer Assistant sessions, 5 Question Generations, and 10 Practice Prompter questions per month. No credit card required.',
+    a: 'Yes! The free tier gives you 3 AI Interviewer sessions, 10 Practice sessions, 3 Answer Assistant sessions, 3 Question Generations, and 10 Practice Prompter questions per month. No credit card required.',
   },
   {
     q: 'How is this different from ChatGPT?',

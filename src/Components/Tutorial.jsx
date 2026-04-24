@@ -217,11 +217,11 @@ export default function Tutorial({ user, isActive, onClose, onOpenTemplateLibrar
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                <span><strong>2 Answer Assistant sessions</strong> per month</span>
+                <span><strong>3 Answer Assistant sessions</strong> per month</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                <span><strong>5 Question Generations</strong> per month</span>
+                <span><strong>3 Question Generations</strong> per month</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />

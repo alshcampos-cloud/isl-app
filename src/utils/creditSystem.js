@@ -60,8 +60,8 @@ export const TIER_LIMITS = {
     // General features stay at FREE-tier level (they didn't buy general)
     ai_interviewer: 3,
     practice_mode: 10,
-    answer_assistant: 5,
-    question_gen: 5,
+    answer_assistant: 3,
+    question_gen: 3,
     live_prompter_questions: 10,
     live_prompter_unlimited: false,
     hd_audio: true,                // HD audio via server TTS

@@ -14,8 +14,8 @@ const tiers = [
     features: [
       { text: '3 AI Interviewer sessions/month', included: true },
       { text: '10 Practice Mode sessions/month', included: true },
-      { text: '5 Answer Assistant sessions/month', included: true },
-      { text: '5 Question Generations/month', included: true },
+      { text: '3 Answer Assistant sessions/month', included: true },
+      { text: '3 Question Generations/month', included: true },
       { text: '10 Practice Prompter questions/month', included: true },
       { text: 'Unlimited question bank storage', included: true },
       { text: 'Speech recognition', included: true },
