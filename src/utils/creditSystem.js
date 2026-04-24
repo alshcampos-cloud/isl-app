@@ -24,8 +24,8 @@ export const TIER_LIMITS = {
     // General features (unchanged)
     ai_interviewer: 3,           // 3 full AI practice sessions (high value)
     practice_mode: 10,            // 10 quick practices (daily use for 2 weeks)
-    answer_assistant: 5,          // 5 STAR coaching sessions
-    question_gen: 5,              // 5 AI question generations
+    answer_assistant: 3,          // 3 STAR coaching sessions
+    question_gen: 3,              // 3 AI question generations
     live_prompter_questions: 10,  // 10 real-time prompt questions
     live_prompter_unlimited: false,
     hd_audio: false,               // HD audio is premium only
