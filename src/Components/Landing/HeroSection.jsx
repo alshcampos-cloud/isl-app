@@ -47,12 +47,12 @@ export default function HeroSection() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
             >
-              Practice,{' '}
+              Rehearse the interview{' '}
               <span className="bg-gradient-to-r from-teal-400 to-emerald-300 bg-clip-text text-transparent">
-                not cheat.
+                before it happens.
               </span>
               <span className="block text-2xl sm:text-3xl lg:text-4xl font-semibold text-slate-200 mt-4">
-                AI interview practice that gets you hired.
+                AI interview practice, grounded in cognitive science.
               </span>
             </motion.h1>
 
@@ -65,7 +65,7 @@ export default function HeroSection() {
               Stop memorizing scripts. Build answers from your real experiences,
               and practice until they feel natural.{' '}
               <span className="text-white font-semibold">
-                The interview AI that doesn&rsquo;t go in the interview.
+                Practice out loud. See your answers scored. Walk in ready.
               </span>
             </motion.p>
 
