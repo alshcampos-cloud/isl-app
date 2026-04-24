@@ -13,8 +13,8 @@
 
 import { useEffect } from 'react';
 
-const DEFAULT_TITLE = 'InterviewAnswers.ai - AI-Powered Interview Preparation';
-const DEFAULT_DESCRIPTION = 'Ace your next interview with AI-powered practice, real-time prompts, and STAR-method feedback. Prepare smarter, not harder.';
+const DEFAULT_TITLE = 'InterviewAnswers.ai - Practice, Not Cheat. AI Interview Preparation';
+const DEFAULT_DESCRIPTION = 'The interview AI that doesn\'t go in the interview. Practice mock interviews, STAR method coaching, and rehearsal tools. Built for preparation, never real-time assist.';
 
 function setMetaTag(attribute, key, content) {
   if (!content) return;

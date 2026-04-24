@@ -181,17 +181,17 @@ export default function HeroSection() {
                   <p className="text-white/40 text-xs mt-1.5">3 of 5 key points covered</p>
                 </div>
 
-                {/* Score preview */}
+                {/* Score preview — example data, not a claim */}
                 <div className="mt-3 bg-white/10 rounded-xl p-4 border border-white/10">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-white/70 text-sm">Answer Completeness</span>
-                    <span className="text-green-400 font-bold">92%</span>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-white/70 text-sm">Answer Completeness <span className="text-white/30 text-[10px] uppercase tracking-wide ml-1">example</span></span>
+                    <span className="text-green-400 font-bold">73%</span>
                   </div>
                   <div className="w-full bg-white/10 rounded-full h-2.5">
                     <motion.div
                       className="h-2.5 rounded-full bg-gradient-to-r from-green-400 to-emerald-400"
                       initial={{ width: '0%' }}
-                      animate={{ width: '92%' }}
+                      animate={{ width: '73%' }}
                       transition={{ duration: 1.5, delay: 1, ease: 'easeOut' }}
                     />
                   </div>

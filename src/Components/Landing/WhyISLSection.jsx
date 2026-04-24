@@ -57,9 +57,12 @@ export default function WhyISLSection() {
             transition={{ duration: 0.6 }}
           >
             <div className="bg-gradient-to-br from-teal-50 to-emerald-50 rounded-3xl p-8 border border-teal-100">
-              {/* Dashboard header */}
+              {/* Dashboard header — mocked example data, not a product claim */}
               <div className="flex items-center justify-between mb-6">
-                <h4 className="font-bold text-gray-900">Your Progress</h4>
+                <div>
+                  <h4 className="font-bold text-gray-900">Your Progress</h4>
+                  <p className="text-[10px] text-gray-400 uppercase tracking-wide mt-0.5">Example dashboard preview</p>
+                </div>
                 <span className="text-xs bg-green-100 text-green-700 font-medium px-2.5 py-1 rounded-full">This Week</span>
               </div>
 
