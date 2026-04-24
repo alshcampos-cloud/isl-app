@@ -91,18 +91,24 @@ export default function PracticeNetworkCanvas() {
       }
     };
 
+    // Named handler so we can remove it on unmount (memory-leak guard — was
+    // anonymous before the Reviewer fixup; anonymous listeners orphan on
+    // SPA unmount).
+    const handleResize = () => {
+      resize();
+      initParticles();
+    };
+
     resize();
     initParticles();
     if (!isMobile && !reduced) tick();
 
-    window.addEventListener('resize', () => {
-      resize();
-      initParticles();
-    });
+    window.addEventListener('resize', handleResize);
     document.addEventListener('visibilitychange', handleVisibility);
 
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      window.removeEventListener('resize', handleResize);
       document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, []);

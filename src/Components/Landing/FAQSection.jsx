@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 
-// Editorial typography — Instrument Serif for FAQ questions
-// Loaded inline so this component is self-contained.
-const fontImportStyle = `@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap');`;
+// Editorial typography uses font-serif class (Source Serif 4, already
+// bundled via src/index.css + tailwind.config.js). Matches ManifestoSection
+// for single-serif consistency across the landing page.
 
 const faqs = [
   {
@@ -44,10 +44,7 @@ function FAQItem({ faq, isOpen, onToggle }) {
         onClick={onToggle}
         className="w-full flex items-center justify-between py-5 text-left group"
       >
-        <span
-          className="text-xl text-gray-900 group-hover:text-teal-600 transition-colors pr-4"
-          style={{ fontFamily: "'Instrument Serif', Georgia, 'Times New Roman', serif", fontWeight: 400 }}
-        >
+        <span className="font-serif text-xl font-normal text-gray-900 group-hover:text-teal-600 transition-colors pr-4">
           {faq.q}
         </span>
         <ChevronDown
@@ -78,7 +75,6 @@ export default function FAQSection() {
 
   return (
     <section className="relative paper-grain py-16 sm:py-20 bg-white">
-      <style>{fontImportStyle}</style>
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           className="text-center mb-12"
