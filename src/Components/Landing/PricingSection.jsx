@@ -52,7 +52,7 @@ const tiers = [
 
 export default function PricingSection() {
   return (
-    <section id="pricing" className="py-16 sm:py-20 bg-gray-50">
+    <section id="pricing" className="relative paper-grain py-16 sm:py-20 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           className="text-center mb-12"

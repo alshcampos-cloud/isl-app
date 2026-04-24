@@ -77,7 +77,7 @@ export default function FAQSection() {
   const [openIndex, setOpenIndex] = useState(null);
 
   return (
-    <section className="py-16 sm:py-20 bg-white">
+    <section className="relative paper-grain py-16 sm:py-20 bg-white">
       <style>{fontImportStyle}</style>
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div

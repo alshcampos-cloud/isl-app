@@ -3,7 +3,7 @@ import { TrendingUp, Award, Zap, Clock } from 'lucide-react';
 
 export default function SocialProofBar() {
   return (
-    <section className="bg-white border-b border-gray-100">
+    <section className="relative paper-grain bg-white border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <motion.div
           className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8"
