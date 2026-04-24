@@ -22,20 +22,22 @@ export default function LandingPage() {
   const [loading, setLoading] = useState(true);
 
   // SEO: Dynamic meta tags for the general landing page
+  // (Above-the-fold / shared social preview copy is pure pro-Y; anti-X framing
+  //  lives only in mid-page differentiators + Ethics page + ads.)
   useDocumentHead({
-    title: 'InterviewAnswers.ai - AI Interview Practice & STAR Method Coaching',
-    description: 'Practice job interviews with AI mock interviews and STAR method coaching. Rehearse out loud, build answers from your real experiences. Practice, not cheat. Free to start, no credit card required.',
-    keywords: 'interview preparation, AI interview practice, mock interview, STAR method, behavioral interview questions, job interview tips, interview coaching, AI interview coach, practice interview questions, interview answers, job interview preparation, career coaching, ethical interview prep',
+    title: 'InterviewAnswers.ai - Rehearsal-First AI Interview Practice',
+    description: 'Rehearse your interview answers out loud, with AI practice feedback grounded in cognitive-psychology research. Free to start, no credit card required.',
+    keywords: 'interview preparation, AI interview practice, mock interview, STAR method, behavioral interview questions, job interview tips, interview coaching, AI interview coach, rehearsal interview practice, cognitive psychology interview practice',
     canonical: 'https://www.interviewanswers.ai/',
     og: {
-      title: 'InterviewAnswers.ai - Practice, Not Cheat',
-      description: 'The interview AI that doesn\'t go in the interview. Mock interviews, STAR method coaching, rehearsal tools. Built for preparation, not real-time assistance.',
+      title: 'InterviewAnswers.ai - Rehearsal-First AI Interview Practice',
+      description: 'Rehearse the interview before it happens. AI practice, grounded in cognitive-psychology research. Free to start.',
       url: 'https://www.interviewanswers.ai/',
       type: 'website',
     },
     twitter: {
-      title: 'InterviewAnswers.ai - AI Interview Practice & Coaching',
-      description: 'Practice job interviews with AI. Mock interviews, STAR method coaching, rehearsal tools. Free to start.',
+      title: 'InterviewAnswers.ai - Rehearsal-First AI Interview Practice',
+      description: 'Rehearse the interview before it happens. AI practice grounded in cognitive-psychology research. Free to start.',
     },
   });
 
