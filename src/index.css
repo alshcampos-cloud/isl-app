@@ -499,3 +499,13 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+/* Hero 3D mockup ambient sway — plays when no mouse has moved yet */
+@keyframes hero-ambient-sway {
+  0%, 100% { transform: perspective(1000px) rotateY(-2deg) rotateX(1deg); }
+  50%      { transform: perspective(1000px) rotateY(2deg)  rotateX(-1deg); }
+}
+.hero-ambient-sway {
+  animation: hero-ambient-sway 8s ease-in-out infinite;
+  transform-style: preserve-3d;
+}

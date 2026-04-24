@@ -1,10 +1,54 @@
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight, Play, Mic, Bot, Sparkles, CheckCircle, Brain, BookOpen, Layers, Flame } from 'lucide-react';
 
 export default function HeroSection() {
+  const sectionRef = useRef(null);
+  const rafId = useRef(null);
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const [userHasMoved, setUserHasMoved] = useState(false);
+
+  useEffect(() => {
+    const hero = sectionRef.current;
+    if (!hero) return;
+    // Skip listener on touch-only devices — ambient sway will carry the vibe
+    if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(hover: none)').matches) {
+      return;
+    }
+
+    const handleMove = (e) => {
+      if (rafId.current) cancelAnimationFrame(rafId.current);
+      rafId.current = requestAnimationFrame(() => {
+        const rect = hero.getBoundingClientRect();
+        if (!rect.width || !rect.height) return;
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const dx = (e.clientX - cx) / (rect.width / 2);  // -1..1
+        const dy = (e.clientY - cy) / (rect.height / 2); // -1..1
+        // Clamp to ±5deg — any more looks gimmicky
+        const clamp = (v) => Math.max(-1, Math.min(1, v));
+        setTilt({ x: clamp(dx) * 5, y: clamp(dy) * 5 });
+        setUserHasMoved(true);
+      });
+    };
+
+    hero.addEventListener('mousemove', handleMove, { passive: true });
+    return () => {
+      hero.removeEventListener('mousemove', handleMove);
+      if (rafId.current) cancelAnimationFrame(rafId.current);
+    };
+  }, []);
+
+  // Alternating checkerboard: tiles 0,2,4 pop forward; 1,3,5 sit back
+  const tileZ = (i) => (i % 2 === 0 ? 15 : 5);
+
   return (
-    <section className="relative min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center overflow-hidden">
+    <section
+      ref={sectionRef}
+      data-hero-section
+      className="relative min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center overflow-hidden"
+    >
       {/* Animated background orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
@@ -128,12 +172,31 @@ export default function HeroSection() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
           >
+            {/* 3D tilt wrapper — follows cursor once moved, ambient sway otherwise.
+                Kept separate from the framer-motion fade-in so we don't fight for `style.transform`. */}
+            <div
+              className={userHasMoved ? '' : 'hero-ambient-sway'}
+              style={
+                userHasMoved
+                  ? {
+                      transform: `perspective(1000px) rotateY(${tilt.x}deg) rotateX(${-tilt.y}deg)`,
+                      transformOrigin: 'center center',
+                      transformStyle: 'preserve-3d',
+                      transition: 'transform 150ms ease-out',
+                      willChange: 'transform',
+                    }
+                  : {
+                      transformOrigin: 'center center',
+                      willChange: 'transform',
+                    }
+              }
+            >
             <div className="relative">
               {/* Glowing border effect */}
               <div className="absolute -inset-4 bg-gradient-to-r from-teal-500/20 via-emerald-500/20 to-sky-500/20 rounded-3xl blur-xl" />
 
               {/* App mockup card */}
-              <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-2xl">
+              <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-2xl" style={{ transformStyle: 'preserve-3d' }}>
                 {/* Title bar */}
                 <div className="flex items-center gap-2 mb-6">
                   <div className="w-3 h-3 rounded-full bg-red-400" />
@@ -151,12 +214,13 @@ export default function HeroSection() {
                     { icon: Layers, label: 'Flashcards', color: 'from-cyan-500 to-teal-500', desc: 'Spaced repetition' },
                     { icon: Flame, label: 'Streaks', color: 'from-teal-400 to-emerald-400', desc: 'Daily consistency' },
                     { icon: Mic, label: 'Practice Prompter', color: 'from-teal-500 to-emerald-500', desc: 'Rehearse out loud' },
-                  ].map(({ icon: Icon, label, color, desc }) => (
+                  ].map(({ icon: Icon, label, color, desc }, i) => (
                     <motion.div
                       key={label}
                       className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10"
                       whileHover={{ scale: 1.03 }}
                       transition={{ duration: 0.2 }}
+                      style={{ transform: `translateZ(${tileZ(i)}px)` }}
                     >
                       <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${color} flex items-center justify-center mb-2`}>
                         <Icon className="w-5 h-5 text-white" />
@@ -197,6 +261,7 @@ export default function HeroSection() {
                   </div>
                 </div>
               </div>
+            </div>
             </div>
           </motion.div>
         </div>
