@@ -13,9 +13,9 @@
 // WHAT WE DON'T DO: We never reproduce copyrighted textbook content
 // (Lippincott, Elsevier, UWorld, Kaplan, Hurst).
 //
-// CLINICAL REVIEW: All questions reviewed and approved by Erin
-// (Infection Prevention, Stanford Health Care) on 2026-02-12.
-// 64 approved, 3 rewritten per her notes, 0 rejected.
+// CLINICAL REVIEW: All questions reviewed and approved by our clinical
+// co-founder (a practicing RN specializing in infection prevention)
+// on 2026-02-12. 64 approved, 3 rewritten per review notes, 0 rejected.
 // ============================================================
 
 /**
@@ -150,7 +150,7 @@ export const CLINICAL_FRAMEWORKS = {
 // ============================================================
 // CURATED NURSING INTERVIEW QUESTIONS
 // ============================================================
-// All questions reviewed by Erin (2026-02-12).
+// All questions reviewed by our clinical co-founder (2026-02-12).
 // Sources: Publicly available nursing interview concepts, NCSBN
 // competency domains, common clinical interview topics.
 // Evaluation rubrics (bullets) are original — that's our IP.
