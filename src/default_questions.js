@@ -2178,7 +2178,7 @@ export const DEFAULT_QUESTIONS = [
       "Now try the same structure with: 'We lost our biggest client last month.'",
       "How would your response change if you were already on the team?"
     ],
-    whyTheyAsk: "This drill trains you to process unexpected information with structure rather than freezing or rambling. Stanford professor Matt Abrahams identifies What-So What-Now What as one of the most versatile spontaneous speaking frameworks because it works for any new information: good news, bad news, surprises, or curveballs.",
+    whyTheyAsk: "This drill trains you to process unexpected information with structure rather than freezing or rambling. Communication expert Matt Abrahams identifies What-So What-Now What as one of the most versatile spontaneous speaking frameworks because it works for any new information: good news, bad news, surprises, or curveballs.",
     coachingTip: "This structure works for any unexpected information in an interview. What: restate what you heard to show you processed it. So What: interpret its meaning or significance. Now What: propose a forward-looking action or ask a thoughtful question. Practice until it becomes automatic; the structure itself prevents you from freezing when caught off guard.",
     recommendedStructure: "what-so-now"
   },
