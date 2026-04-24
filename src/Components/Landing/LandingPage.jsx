@@ -64,24 +64,18 @@ export default function LandingPage() {
       setLoading(false);
     }, 3000);
 
-    // If already authenticated, redirect to app or nursing based on user metadata
-    // BUT: anonymous users (from onboarding/demo) should see the landing page
+    // If already authenticated, redirect to app or nursing based on user metadata.
+    // BUT: anonymous users (from onboarding/demo) should see the landing page.
     //
-    // IMPORTANT: Use getUser() not getSession(). getSession() returns whatever's
-    // in localStorage even if expired — which causes this bug: stale session →
-    // LandingPage redirects to /app → /app revalidates with getUser() → session
-    // is actually invalid → shows login page. Net: user visits the homepage and
-    // lands on login for no good reason.
-    //
-    // getUser() validates server-side and returns null for expired sessions, so
-    // we only redirect users whose session is genuinely live.
+    // IMPORTANT: Use getUser() not getSession(). getSession() returns expired
+    // sessions from localStorage; getUser() validates server-side. Otherwise
+    // stale sessions would bounce users through /app → /login.
     supabase.auth.getUser().then(({ data: { user }, error }) => {
       clearTimeout(fallbackTimer);
       if (!error && user && !user.is_anonymous) {
         const field = user.user_metadata?.onboarding_field;
         navigate(field === 'nursing' ? '/nursing' : '/app', { replace: true });
       } else {
-        // No user, stale/expired session, or anonymous session — show landing
         setLoading(false);
       }
     }).catch((error) => {
