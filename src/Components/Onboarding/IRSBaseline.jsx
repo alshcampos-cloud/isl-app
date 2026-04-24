@@ -19,13 +19,49 @@ import { trackOnboardingEvent } from '../../utils/onboardingTracker'
  * "Maybe later" is a zero-write dismiss — advance with NO localStorage write.
  */
 
+// Sprint 6 color stops for the ring as it fills.
+// 0-40% amber, 40-70% teal, 70-100% emerald. Hex channels used for RGB lerp.
+const RING_STOPS = [
+  { at: 0.0,  r: 0xf5, g: 0x9e, b: 0x0b }, // amber-500
+  { at: 0.4,  r: 0xf5, g: 0x9e, b: 0x0b }, // hold amber until 40%
+  { at: 0.55, r: 0x14, g: 0xb8, b: 0xa6 }, // teal-500 mid
+  { at: 0.7,  r: 0x14, g: 0xb8, b: 0xa6 }, // hold teal until 70%
+  { at: 1.0,  r: 0x10, g: 0xb9, b: 0x81 }, // emerald-500
+]
+
+function ringColorForFill(fill) {
+  const f = Math.max(0, Math.min(1, fill))
+  for (let i = 1; i < RING_STOPS.length; i++) {
+    const a = RING_STOPS[i - 1]
+    const b = RING_STOPS[i]
+    if (f <= b.at) {
+      const span = b.at - a.at
+      const t = span === 0 ? 0 : (f - a.at) / span
+      const r = Math.round(a.r + (b.r - a.r) * t)
+      const g = Math.round(a.g + (b.g - a.g) * t)
+      const bl = Math.round(a.b + (b.b - a.b) * t)
+      return `rgb(${r}, ${g}, ${bl})`
+    }
+  }
+  const last = RING_STOPS[RING_STOPS.length - 1]
+  return `rgb(${last.r}, ${last.g}, ${last.b})`
+}
+
+// Particle palette — teal + emerald shades
+const BURST_COLORS = ['#14b8a6', '#2dd4bf', '#10b981', '#34d399']
+
 export default function IRSBaseline({ practiceScore, onContinue }) {
   const [view, setView] = useState('A') // 'A' | 'B'
   const [animatedScore, setAnimatedScore] = useState(0)
+  const [ringColor, setRingColor] = useState(ringColorForFill(0))
+  const [ringProgress, setRingProgress] = useState(0) // 0..1 for blur/opacity
+  const [ringDone, setRingDone] = useState(false)     // triggers bounce + breath
+  const [showBurst, setShowBurst] = useState(false)   // particle burst on landing
   const [showDetails, setShowDetails] = useState(false)
   const [committing, setCommitting] = useState(false)
   const animationRef = useRef(null)
   const commitTimerRef = useRef(null)
+  const burstTimerRef = useRef(null)
   const hasTrackedScore = useRef(false)
 
   const normalizedPracticeScore = practiceScore || 6
@@ -47,11 +83,21 @@ export default function IRSBaseline({ practiceScore, onContinue }) {
       const elapsed = Date.now() - startTime
       const progress = Math.min(elapsed / duration, 1)
       const eased = 1 - Math.pow(1 - progress, 3)
-      setAnimatedScore(Math.round(eased * normalizedPracticeScore * 10) / 10)
+      const scoreNow = eased * normalizedPracticeScore
+      setAnimatedScore(Math.round(scoreNow * 10) / 10)
+
+      // Fill fraction 0..1 relative to the target score's share of 10.
+      const fill = (scoreNow / 10)
+      setRingColor(ringColorForFill(fill))
+      setRingProgress(progress)
 
       if (progress < 1) {
         animationRef.current = requestAnimationFrame(animate)
       } else {
+        setRingDone(true)
+        setShowBurst(true)
+        // Burst lifespan ~1s, then unmount
+        burstTimerRef.current = setTimeout(() => setShowBurst(false), 1000)
         setTimeout(() => setShowDetails(true), 300)
         if (!hasTrackedScore.current) {
           hasTrackedScore.current = true
@@ -67,6 +113,10 @@ export default function IRSBaseline({ practiceScore, onContinue }) {
     return () => {
       clearTimeout(timeout)
       if (animationRef.current) cancelAnimationFrame(animationRef.current)
+      if (burstTimerRef.current) {
+        clearTimeout(burstTimerRef.current)
+        burstTimerRef.current = null
+      }
     }
   }, [normalizedPracticeScore, realIRS])
 
@@ -145,7 +195,9 @@ export default function IRSBaseline({ practiceScore, onContinue }) {
         </p>
 
         {/* Big score ring */}
-        <div className="relative w-44 h-44 mx-auto mb-8">
+        <div
+          className={`relative w-44 h-44 mx-auto mb-8 ${ringDone ? 'ring-breath' : ''}`}
+        >
           <svg className="w-44 h-44 -rotate-90" viewBox="0 0 200 200">
             <circle
               cx="100" cy="100" r="80"
@@ -156,16 +208,60 @@ export default function IRSBaseline({ practiceScore, onContinue }) {
             <circle
               cx="100" cy="100" r="80"
               fill="none"
-              stroke="#0d9488"
+              stroke={ringColor}
               strokeWidth="10"
               strokeLinecap="round"
               strokeDasharray={circumference}
               strokeDashoffset={scoreOffset}
-              style={{ transition: 'stroke-dashoffset 0.1s linear' }}
+              style={{
+                transition: 'stroke-dashoffset 0.1s linear, stroke 0.1s linear',
+              }}
             />
           </svg>
 
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
+          {/* Particle burst — overlay, center of ring. Unmounts ~1s after landing. */}
+          {showBurst && (
+            <svg
+              className="absolute inset-0 w-full h-full pointer-events-none"
+              viewBox="0 0 200 200"
+              aria-hidden="true"
+            >
+              {Array.from({ length: 18 }).map((_, i) => {
+                const angle = (i * 360) / 18
+                const color = BURST_COLORS[i % BURST_COLORS.length]
+                return (
+                  <circle
+                    key={i}
+                    cx="100"
+                    cy="100"
+                    r="3"
+                    fill={color}
+                    className="burst-particle"
+                    style={{
+                      // Expose angle via CSS var so the @keyframes can keep the
+                      // rotation while animating translate (transform is one property,
+                      // keyframes would otherwise reset the rotate).
+                      '--burst-angle': `${angle}deg`,
+                      transformOrigin: '100px 100px',
+                    }}
+                  />
+                )
+              })}
+            </svg>
+          )}
+
+          <div
+            className={`absolute inset-0 flex flex-col items-center justify-center ${
+              ringDone ? 'score-land' : ''
+            }`}
+            style={{
+              // Blur fades from 2px -> 0 over the last 400ms of the 1200ms animation.
+              filter: ringDone
+                ? 'blur(0)'
+                : `blur(${Math.max(0, 2 - Math.max(0, ringProgress - 0.66) * 6)}px)`,
+              transition: ringDone ? 'filter 200ms ease-out' : 'none',
+            }}
+          >
             <span className="text-4xl font-bold text-slate-800">
               {animatedScore.toFixed(0)}
             </span>
@@ -197,7 +293,7 @@ export default function IRSBaseline({ practiceScore, onContinue }) {
           </button>
         )}
 
-        <style>{sharedKeyframes}</style>
+        <style>{sharedKeyframes + revealKeyframes}</style>
       </div>
     )
   }
@@ -311,7 +407,33 @@ export default function IRSBaseline({ practiceScore, onContinue }) {
 
       {/* Commit button with morph microinteraction */}
       <div className="w-full max-w-sm">
-        <div className="flex justify-center">
+        <div className="flex justify-center relative">
+          {/* 14 orbiting day-particles — one per day of the commitment.
+              Rendered only while committing, unmount after ~1s. Pure CSS. */}
+          {committing && (
+            <div className="commit-particles-wrap" aria-hidden="true">
+              {Array.from({ length: 14 }).map((_, i) => {
+                const angle = (i * 360) / 14 // ~25.7deg per step
+                const delay = `${i * 30}ms`
+                return (
+                  <span
+                    key={i}
+                    className="commit-particle"
+                    style={{
+                      transform: `rotate(${angle}deg)`,
+                      // Shared var used by both wrapper (fade) and dot (orbit)
+                      // so the staggered sequence stays synchronized.
+                      '--orbit-delay': delay,
+                      animationDelay: delay,
+                    }}
+                  >
+                    <span className="commit-particle-dot" />
+                  </span>
+                )
+              })}
+            </div>
+          )}
+
           <button
             onClick={handleCommit}
             onTouchStart={(e) => { if (!committing) e.currentTarget.style.opacity = '0.92' }}
@@ -343,7 +465,7 @@ export default function IRSBaseline({ practiceScore, onContinue }) {
         </button>
       </div>
 
-      <style>{sharedKeyframes + commitKeyframes}</style>
+      <style>{sharedKeyframes + commitKeyframes + orbitKeyframes}</style>
     </div>
   )
 }
@@ -412,5 +534,95 @@ const commitKeyframes = `
   }
   .commit-check {
     animation: commitCheckIn 300ms ease-out 150ms both;
+  }
+`
+
+// Sprint 6 Task 1 — Screen A cinematic reveal.
+// - burstOut: particles travel outward on their rotated axis (translate +64px), fade to 0.
+// - scoreLand: number bounces 1 -> 1.15 -> 1 over 500ms after landing.
+// - breath: ring container scales 1 -> 1.02 -> 1 infinitely, subtle "living" feel.
+const revealKeyframes = `
+  @keyframes burstOut {
+    0%   {
+      transform: rotate(var(--burst-angle, 0deg)) translate(0, 0) scale(1);
+      opacity: 0.95;
+    }
+    60%  { opacity: 0.8; }
+    100% {
+      transform: rotate(var(--burst-angle, 0deg)) translate(0, -64px) scale(0.3);
+      opacity: 0;
+    }
+  }
+  .burst-particle {
+    /* Rotation is composed inside the keyframe from --burst-angle so the
+       keyframe's translate moves the particle along its own rotated axis —
+       a radial spray from the ring center. */
+    animation: burstOut 900ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  @keyframes scoreLand {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.15); }
+    100% { transform: scale(1); }
+  }
+  .score-land {
+    animation: scoreLand 500ms ease-out;
+  }
+  @keyframes ringBreath {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.02); }
+    100% { transform: scale(1); }
+  }
+  .ring-breath {
+    animation: ringBreath 3s ease-in-out 1s infinite alternate;
+  }
+`
+
+// Sprint 6 Task 2 — Screen B commit particles.
+// Wrap is an absolutely-positioned square centered on the button. Each .commit-particle
+// is a rotated container; the inner dot animates outward along the container's y-axis,
+// giving a 360deg staggered burst. Pointer-events: none so taps pass through.
+const orbitKeyframes = `
+  .commit-particles-wrap {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+    z-index: 5;
+  }
+  .commit-particle {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 0;
+    transform-origin: 0 0;
+  }
+  .commit-particle-dot {
+    position: absolute;
+    left: -4px;
+    top: -4px;
+    width: 8px;
+    height: 8px;
+    border-radius: 9999px;
+    background: radial-gradient(circle at 30% 30%, #5eead4 0%, #14b8a6 60%, #0d9488 100%);
+    box-shadow: 0 0 6px rgba(20,184,166,0.55);
+    opacity: 0;
+    animation: commitOrbitOut 800ms cubic-bezier(0.22, 1, 0.36, 1) var(--orbit-delay, 0ms) forwards;
+  }
+  .commit-particle {
+    animation: commitOrbitFade 800ms linear var(--orbit-delay, 0ms) forwards;
+  }
+  @keyframes commitOrbitOut {
+    0%   { transform: translate(0, 0) scale(0.6); opacity: 0; }
+    15%  { opacity: 1; }
+    100% { transform: translate(0, -80px) scale(0.5); opacity: 0; }
+  }
+  /* The rotated wrapper itself needs no movement — dot movement is what travels,
+     but we keep a tiny fade on the wrapper as a belt-and-suspenders unmount cue. */
+  @keyframes commitOrbitFade {
+    0%, 95% { opacity: 1; }
+    100%    { opacity: 0; }
   }
 `
