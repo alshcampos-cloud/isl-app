@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase'
 import { trackOnboardingEvent } from '../../utils/onboardingTracker'
 import { trackSignUp } from '../../utils/googleAdsTracking'
 import { getDeviceFingerprint, hashEmail } from '../../utils/deviceFingerprint'
+import { isDisposableEmail } from '../../utils/disposableEmail'
 import GoogleSignInButton from '../GoogleSignInButton'
 import { startGoogleOAuth } from '../../utils/googleOAuth'
 import { isNativeApp } from '../../utils/platform'
@@ -88,6 +89,13 @@ export default function SignUpPrompt({ archetype, archetypeConfig, practiceScore
 
     setIsLoading(true)
     setError(null)
+
+    // Block disposable/throwaway email domains before hitting Supabase
+    if (isDisposableEmail(email)) {
+      setError("Please use a permanent email address to save your progress.")
+      setIsLoading(false)
+      return
+    }
 
     try {
       // SECURITY FIX: Use signUp() instead of updateUser() to create the account.
