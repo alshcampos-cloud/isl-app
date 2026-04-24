@@ -172,7 +172,7 @@ Follow the channel-by-channel upload map in §2. Start with LinkedIn + Reddit r/
 
 ## 4. What Got Fixed (Audit Trail)
 
-### 5 commits on `feature/ui-polish` (all pushed to origin)
+### 8 commits on `feature/ui-polish` (all pushed to origin)
 
 | SHA | What |
 |---|---|
@@ -181,6 +181,11 @@ Follow the channel-by-channel upload map in §2. Start with LinkedIn + Reddit r/
 | `acfdd1c` | 5 new ad campaigns (NEW_AD_CAMPAIGNS_APR24.md) + brand-review fixes |
 | `5144687` | Delete 2 dead kit files, rewrite 3, rename NurseInterviewPro→NurseAnswerPro (21 refs), write C1 welcome email Edge Function + migration |
 | `3c599a4` | 5 new ad creatives (HTML + PNG) |
+| `5adca2e` | SHIP_PACKAGE_APR24 + PHONE_DISPATCH_SPEC |
+| `7ca1140` | Final sweep: 4 strategy-doc refs (OVERNIGHT_SENSATION, LAUNCH_DAY_OPS) + nursingQuestions.js header |
+| `1eefcbb` | Caught missed Stanford ref in default_questions.js Response Drills description (user-visible whyItExists string) |
+
+**Deployed to Vercel production:** 3 times (final URL: the most recent `*.vercel.app`).
 
 ### Files deleted (both were entirely Erin/Stanford-built — not salvageable)
 
