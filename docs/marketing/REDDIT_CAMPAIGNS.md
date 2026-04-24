@@ -106,7 +106,7 @@ I help people prepare for interviews, and we recently built out a nursing-specif
 - Have 3-4 clinical stories ready: one about patient advocacy, one about teamwork, one about a mistake or learning moment, one about going above and beyond.
 - Do not memorize scripts. Interviewers can tell. Know your key points and speak naturally.
 
-We built a nursing interview prep tool at InterviewAnswers.ai with questions reviewed by practicing nurses and feedback based on frameworks like SBAR and clinical judgment models. It is specifically designed for healthcare — not just generic behavioral stuff with a nurse label slapped on. If that is useful to anyone here, the nursing track is at NurseInterviewPro.ai.
+We built a nursing interview prep tool at InterviewAnswers.ai with questions reviewed by practicing nurses and feedback based on frameworks like SBAR and clinical judgment models. It is specifically designed for healthcare — not just generic behavioral stuff with a nurse label slapped on. If that is useful to anyone here, the nursing track is at NurseAnswerPro.ai.
 
 But honestly, even without any tool, the biggest thing is just practicing out loud. Grab a friend, a family member, or your phone's voice recorder and run through your stories until they feel natural.
 
@@ -217,7 +217,7 @@ Anyone else have systems that worked for them? Curious what other people's behav
 
 **Headline:** Nursing interviews are not like other interviews. Your prep should not be either.
 
-**Body:** Clinical judgment scenarios. SBAR communication. Patient advocacy stories. NurseInterviewPro.ai has interview prep built specifically for nurses, with questions reviewed by practicing clinicians and feedback based on real nursing frameworks. Not generic career advice with a stethoscope icon.
+**Body:** Clinical judgment scenarios. SBAR communication. Patient advocacy stories. NurseAnswerPro.ai has interview prep built specifically for nurses, with questions reviewed by practicing clinicians and feedback based on real nursing frameworks. Not generic career advice with a stethoscope icon.
 
 **CTA:** Start Nursing Interview Prep
 
@@ -267,7 +267,7 @@ Use these as starting points. Adapt to the specific thread. Never copy-paste ide
 
 ### Template 3 — Nurse asking about interview prep
 
-> Nursing interviews have their own flavor — a lot of the generic "behavioral interview" advice out there does not account for clinical judgment scenarios or SBAR-style communication that managers actually want to hear. A few tips: Have a strong patient advocacy story ready (almost always gets asked). Practice walking through clinical scenarios out loud using SBAR structure — Situation, Background, Assessment, Recommendation. And for "why this unit" questions, research the specific patient population and mention something concrete. There is a nursing-specific interview prep tool at NurseInterviewPro.ai if you want structured practice with questions reviewed by actual nurses. But even without tools, the main thing is practice your clinical stories out loud until they feel natural.
+> Nursing interviews have their own flavor — a lot of the generic "behavioral interview" advice out there does not account for clinical judgment scenarios or SBAR-style communication that managers actually want to hear. A few tips: Have a strong patient advocacy story ready (almost always gets asked). Practice walking through clinical scenarios out loud using SBAR structure — Situation, Background, Assessment, Recommendation. And for "why this unit" questions, research the specific patient population and mention something concrete. There is a nursing-specific interview prep tool at NurseAnswerPro.ai if you want structured practice with questions reviewed by actual nurses. But even without tools, the main thing is practice your clinical stories out loud until they feel natural.
 
 ---
 

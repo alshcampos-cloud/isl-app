@@ -123,7 +123,7 @@
 | 1 | Nursing Interview Prep | 22 |
 | 2 | AI Coach for Nurse Jobs | 23 |
 | 3 | Nail Your Nursing Interview | 27 |
-| 4 | NurseInterviewPro.ai | 20 |
+| 4 | NurseAnswerPro.ai | 20 |
 | 5 | New Grad? Practice First | 24 |
 | 6 | SBAR Interview Coaching | 23 |
 | 7 | Clinical Interview Ready | 24 |

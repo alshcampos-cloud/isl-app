@@ -7,13 +7,13 @@
 
 ## 1. NEW HEADLINE
 
-Emergency Dept Customer Navigator @ Stanford Health Care | MS Emergency Management, USC | Creator, InterviewAnswers.ai
+Founder, InterviewAnswers.ai | MS Emergency Management, USC | BA Psychology, USF
 
 ---
 
 ## 2. NEW ABOUT SECTION
 
-I work in patient experience at Stanford Health Care, with pediatric and adult Emergency Department patients. Master of Science in Emergency Management from USC, Bachelor of Arts in Psychology from USF. Bilingual, 5+ years across healthcare — case management, rehabilitation, clinical settings, and the emergency department.
+Master of Science in Emergency Management from USC, Bachelor of Arts in Psychology from USF. Bilingual, 5+ years across healthcare — case management, rehabilitation, clinical settings, and the emergency department.
 
 I created InterviewAnswers.ai because I got tired of the interview cycle. You send out hundreds of applications, hear back from a few, finally get in front of a panel, and realize you haven't practiced enough. Then you start over.
 
@@ -56,7 +56,7 @@ The result is InterviewAnswers.ai — an AI-powered interview coach. Here's what
 → Gamification to keep you engaged and progressing
 → Personalized feedback on structure, delivery, confidence, and specificity after every answer
 
-Our Chief Quality Officer is a Master's-prepared Registered Nurse. Our DevOps Engineer keeps everything running and tested.
+Our clinical co-founder is a Master's-prepared Registered Nurse. Our DevOps Engineer keeps everything running and tested.
 
 This is just the first project. Emergency management, psychology, and social sector tools are coming next.
 
@@ -71,7 +71,7 @@ If you or someone you know has an interview coming up, give it a try and let me 
 | Person | Title | Role |
 |--------|-------|------|
 | Lucas (Alshwenbear) | Creator | Product, engineering, marketing, business |
-| Erin Spink, MPH, BSN, RN | Chief Quality Officer | Clinical content review, quality standards |
+| Clinical co-founder | MPH, BSN, RN — infection prevention professional | Clinical content review, quality standards |
 | Jacob | DevOps Engineer | Infrastructure, QA, testing |
 
 ---
@@ -85,7 +85,7 @@ Before posting:
 - [ ] Decide on "Open to work" badge (keep or remove)
 
 After posting:
-- [ ] Share post link with Erin — she can like/comment for visibility
+- [ ] Share post link with clinical co-founder for her review — she can like/comment for visibility
 - [ ] Share with Jacob
 - [ ] Post in any relevant LinkedIn groups
 - [ ] Monitor comments and respond to every one (algorithm rewards engagement)
