@@ -261,11 +261,11 @@ export default function SignUpPrompt({ archetype, archetypeConfig, practiceScore
           </li>
           <li className="flex items-start gap-2">
             <span className="mt-0.5">💡</span>
-            <span>5 Answer Assistant sessions</span>
+            <span>3 Answer Assistant sessions</span>
           </li>
           <li className="flex items-start gap-2">
             <span className="mt-0.5">❓</span>
-            <span>5 AI-generated custom questions</span>
+            <span>3 AI-generated custom questions</span>
           </li>
           <li className="flex items-start gap-2">
             <span className="mt-0.5">📋</span>
