@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Navigate } from 'react-router-dom'
 import { supabase } from './lib/supabase'
 import Auth from './Auth'
 import ResetPassword from './Components/ResetPassword' // ADDED: For password recovery flow
@@ -170,21 +170,13 @@ function ProtectedRoute({ children }) {
 
   // Unauthenticated visitors hitting a protected route (/app, /nursing, etc.)
   // get redirected to the marketing landing page instead of being dumped into
-  // a login form. This means:
-  //   - /app from a stale bookmark or Chrome autocomplete → landing page (not login)
-  //   - /nursing from a stale link → landing page (not login)
-  // Users who genuinely want to log in click "Sign In" in the nav → /login.
-  // Original behavior (show Auth in place) was confusing for ad-driven traffic.
+  // a login form. Users who want to log in click "Sign In" in the nav → /login.
+  //
+  // Use <Navigate> component (React Router canonical pattern) — calling
+  // navigate() in render causes a re-render loop (got a redirecting circle
+  // report from the founder; <Navigate> is the correct fix).
   if (!user) {
-    navigate('/', { replace: true });
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-sky-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <div className="text-slate-600 text-lg">Redirecting...</div>
-        </div>
-      </div>
-    )
+    return <Navigate to="/" replace />
   }
 
   // FIX: Anonymous users (from onboarding) have no email and no email_confirmed_at.
