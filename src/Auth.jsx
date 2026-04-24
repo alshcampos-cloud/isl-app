@@ -142,14 +142,18 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
   return (
     <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(to bottom right, #fafaf8, #f5f5f0, #f0f4f8)' }}>
       <div className="bg-white rounded-2xl p-8 max-w-md w-full border border-warm-200/60" style={{ boxShadow: '0 16px 48px -8px rgba(0,0,0,0.08), 0 0 0 1px rgba(232,232,224,0.3)' }}>
-        {/* Back link */}
+        {/* Back link. Uses a plain <a href> instead of <button onClick>.
+            Why: founder reported the button click was a no-op. Anchors with
+            href do a full browser navigation (or React Router picks it up
+            via the <Link> children) — can't be stuck by stale React state
+            or synthetic event weirdness. Forces a clean page load back to /. */}
         {onBack && (
-          <button
-            onClick={onBack}
-            className="text-sm text-warm-500 hover:text-teal-600 mb-4 flex items-center gap-1 transition-colors"
+          <a
+            href="/"
+            className="text-sm text-warm-500 hover:text-teal-600 mb-4 inline-flex items-center gap-1 transition-colors cursor-pointer no-underline"
           >
             ← Back
-          </button>
+          </a>
         )}
 
         <div className="text-center mb-8">
