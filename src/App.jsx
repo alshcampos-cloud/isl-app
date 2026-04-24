@@ -3844,34 +3844,8 @@ const startPracticeMode = async () => {
             </div>
 
             <div className="space-y-4 mb-6">
-              {/* Option 1: AI Generator */}
+              {/* Option 1: Template Library (RECOMMENDED — founder pick) */}
               <div className="bg-white/10 backdrop-blur rounded-xl p-5 border-2 border-teal-400/50 hover:border-teal-400 transition cursor-pointer"
-                onClick={() => {
-                  console.log('🟣 AI Generator clicked in Add Questions Prompt');
-                  setShowAddQuestionsPrompt(false);
-                  setCurrentView('command-center');
-                  setCommandCenterTab('bank');
-                  console.log('🟣 Should navigate to Command Center (bank tab)');
-                }}
-              >
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-sky-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Sparkles className="w-6 h-6 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-bold text-lg mb-1 text-white">AI Question Generator</h3>
-                    <p className="text-sm text-slate-300 mb-2">
-                      Enter your target role, background, and job description. AI generates personalized questions.
-                    </p>
-                    <span className="inline-block px-3 py-1 bg-teal-500/20 text-teal-300 text-xs font-bold rounded-full border border-teal-500/50">
-                      <Star className="w-3 h-3 inline mr-1" /> RECOMMENDED
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Option 2: Template Library */}
-              <div className="bg-white/10 backdrop-blur rounded-xl p-5 border-2 border-teal-400/30 hover:border-teal-400 transition cursor-pointer"
                 onClick={() => {
                   console.log('🔵 Template Library clicked in Add Questions Prompt');
                   console.log('🔵 Closing Add Questions Prompt...');
@@ -3887,8 +3861,34 @@ const startPracticeMode = async () => {
                   </div>
                   <div className="flex-1">
                     <h3 className="font-bold text-lg mb-1 text-white">Template Library</h3>
-                    <p className="text-sm text-slate-300">
+                    <p className="text-sm text-slate-300 mb-2">
                       Import pre-built question sets for common roles (Product Manager, Software Engineer, etc.)
+                    </p>
+                    <span className="inline-block px-3 py-1 bg-teal-500/20 text-teal-300 text-xs font-bold rounded-full border border-teal-500/50">
+                      <Star className="w-3 h-3 inline mr-1" /> RECOMMENDED
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Option 2: AI Question Generator */}
+              <div className="bg-white/10 backdrop-blur rounded-xl p-5 border-2 border-teal-400/30 hover:border-teal-400 transition cursor-pointer"
+                onClick={() => {
+                  console.log('🟣 AI Generator clicked in Add Questions Prompt');
+                  setShowAddQuestionsPrompt(false);
+                  setCurrentView('command-center');
+                  setCommandCenterTab('bank');
+                  console.log('🟣 Should navigate to Command Center (bank tab)');
+                }}
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-sky-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Sparkles className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-lg mb-1 text-white">AI Question Generator</h3>
+                    <p className="text-sm text-slate-300">
+                      Enter your target role, background, and job description. AI generates personalized questions.
                     </p>
                   </div>
                 </div>
@@ -3951,7 +3951,7 @@ const startPracticeMode = async () => {
               <ul className="space-y-2 text-gray-300">
                 <li className="flex items-start gap-2">
                   <span className="text-teal-400 font-bold">✓</span>
-                  <span><strong>Practice Prompter</strong> - Real-time interview assistance (works right now!)</span>
+                  <span><strong>Practice Prompter</strong> - Rehearse out loud with bullet-point prompts (works right now!)</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-teal-400 font-bold">✓</span>
