@@ -150,9 +150,6 @@ export default function PricingSection() {
         >
           No credit card required for free tier. No auto-renew on 30-Day Pass.
         </motion.p>
-        <p className="text-center text-sm text-gray-500 mt-2">
-          30-day money-back guarantee on all paid passes. No questions asked.
-        </p>
       </div>
     </section>
   );
