@@ -28,7 +28,7 @@ export const TIER_LIMITS = {
     question_gen: 3,              // 3 AI question generations
     live_prompter_questions: 10,  // 10 real-time prompt questions
     live_prompter_unlimited: false,
-    hd_audio: false,               // HD audio is premium only
+    hd_audio: true,                // HD audio enabled for free tier (Sprint 10)
   },
 
   // ── Free Reduced (abuse-detected accounts) ───────────────────

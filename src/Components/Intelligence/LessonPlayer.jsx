@@ -297,10 +297,40 @@ export default function LessonPlayer({
         }
       }
     } catch {
-      // MP3 not available, fall through to speech
+      // MP3 not available, fall through to HD TTS / speech
     }
 
-    // Fall back to Web Speech API
+    // Middle tier: server-generated HD TTS (OpenAI/nova) when tier allows
+    if (hasHDAudio && content.length > 0) {
+      try {
+        console.log('[LessonPlayer] Attempting HD TTS generation for lesson:', lesson.id)
+        setIsGenerating(true)
+        const blobUrl = await generateTTSAudio(content, { voice: 'nova', speed: 1.0 })
+        setIsGenerating(false)
+        if (blobUrl && audioRef.current && !cancelledRef.current) {
+          console.log('[LessonPlayer] HD TTS generated, playing blob URL')
+          setAudioBlobUrl(blobUrl)
+          setAudioMode('mp3')
+          audioRef.current.src = blobUrl
+          audioRef.current.playsInline = true // iOS fix
+          audioRef.current.playbackRate = speed
+          cancelledRef.current = false
+          setIsPlaying(true)
+          try {
+            await audioRef.current.play()
+            return // HD TTS playing successfully
+          } catch (playErr) {
+            console.log('[LessonPlayer] HD TTS autoplay blocked, falling back to speech:', playErr.message)
+          }
+        }
+      } catch (err) {
+        console.warn('[LessonPlayer] HD TTS failed, falling back to Web Speech:', err?.message || err)
+        setIsGenerating(false)
+        // fall through to Web Speech
+      }
+    }
+
+    // Last resort: Web Speech API
     startSpeechFallback()
   }, [lesson, hasHDAudio, speed, audioBlobUrl, speakLine])
 
