@@ -7,6 +7,7 @@ import GoogleSignInButton from './Components/GoogleSignInButton'
 import { startGoogleOAuth } from './utils/googleOAuth'
 import { isNativeApp } from './utils/platform'
 import { showNursingFeatures } from './utils/appTarget'
+import { isDisposableEmail } from './utils/disposableEmail'
 
 function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing: fromNursingProp = false }) {
   // Belt-and-suspenders: ignore fromNursing on general builds (Apple 4.3(a) compliance)
@@ -53,6 +54,13 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
       }
 
       if (isSignUp) {
+        // Block disposable/throwaway emails to prevent account-hopping abuse
+        if (isDisposableEmail(email)) {
+          setError("Please use a permanent email address to save your progress.");
+          setLoading(false);
+          return;
+        }
+
         // Sign up
         const { data, error } = await supabase.auth.signUp({
           email,
