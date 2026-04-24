@@ -65,13 +65,14 @@ export default function ManifestoSection() {
           </p>
 
           <p>
-            So we built a prompter that listens to you rehearse, flags the
-            vague sentences, and makes you say it better. Then a mock
-            interviewer that actually interrupts. Then a flashcard deck for
-            the parts your body already knows but your mouth can't find on
-            the day it counts. We killed a real-time coaching feature along
-            the way — it turns out live whispers aren't practice, and
-            practice is the whole point.
+            So we built a prompter that surfaces your bullet points as you
+            rehearse out loud, so you can train yourself to hit them
+            naturally. Then a mock interviewer that asks the follow-up
+            questions you didn't prepare for. Then a flashcard deck for the
+            parts your body already knows but your mouth can't find on the
+            day it counts. We killed a real-time coaching feature along the
+            way — it turns out live whispers aren't practice, and practice
+            is the whole point.
           </p>
 
           <p>
