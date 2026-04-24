@@ -96,25 +96,13 @@ export default function InlineDemoSection() {
     }
   }, []);
 
-  // Ensure we have an anonymous session available (fire-and-forget on mount).
-  // Idempotent — no-op if a session already exists.
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session && !cancelled) {
-          // signInAnonymously is the supabase-js v2 method for creating
-          // an anonymous user without email/password.
-          await supabase.auth.signInAnonymously();
-        }
-      } catch (err) {
-        // Non-fatal — we'll retry inside submitAnswer if needed.
-        console.warn('[InlineDemo] Anonymous auth warm-up failed:', err?.message);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, []);
+  // NOTE: Anonymous auth warm-up on mount was REMOVED per Reviewer
+  // (commit review of 92d0c54). The mount-time warm-up created an
+  // anonymous Supabase auth row for every landing page visitor, inflating
+  // MAU billing whether or not they used the demo. The submit-time
+  // fallback inside `handleSubmit` below already creates the session
+  // lazily — first-submit latency is ~200-500ms higher, but MAU now
+  // tracks demo USAGE, not landing page TRAFFIC. Acceptable trade-off.
 
   // Rotate loading messages while waiting
   useEffect(() => {
