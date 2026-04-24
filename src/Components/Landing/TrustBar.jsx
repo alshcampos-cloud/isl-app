@@ -1,12 +1,10 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { HeartPulse, Award, BrainCircuit, Lock } from 'lucide-react';
+import { HeartPulse, FileText, BrainCircuit, Lock } from 'lucide-react';
 
-// CBS News reported on AI-assisted interview fraud — we cite their reporting on /ethics.
-// Note: we are NOT "featured in" CBS News; we cite it as third-party validation of the
-// problem we built the rebrand around. Phrase carefully (defamation/accuracy posture).
-const CBS_NEWS_URL = 'https://www.cbsnews.com/news/ai-interview-cheating-job-candidates-chatgpt-employers/';
-
+// TrustBar: pure pro-Y credibility signals. No anti-X framing above the fold
+// (research: 8 of 9 comparable ethical-positioning brands use 0% anti-X above
+// the fold; see docs/SPRINT_3_PLAN.md).
 const items = [
   {
     icon: HeartPulse,
@@ -20,10 +18,10 @@ const items = [
     external: false,
   },
   {
-    icon: Award,
-    label: 'As featured in CBS News coverage of AI interview practice',
-    href: CBS_NEWS_URL,
-    external: true,
+    icon: FileText,
+    label: 'Open ethics statement',
+    href: '/ethics',
+    external: false,
   },
   {
     icon: Lock,
