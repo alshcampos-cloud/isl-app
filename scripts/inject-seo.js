@@ -115,9 +115,16 @@ const ROUTES = {
   },
   '/app': {
     title: 'Interview Practice Dashboard — InterviewAnswers.ai',
-    description: 'Your AI interview practice dashboard. Access mock interviews, STAR method coaching, live prompter, and track your progress.',
+    description: 'Your AI interview practice dashboard. Access mock interviews, STAR method coaching, Practice Prompter rehearsal, and track your progress.',
     canonical: 'https://www.interviewanswers.ai/app',
     keywords: 'interview practice dashboard, AI interview coach',
+    robots: 'noindex, follow',
+  },
+  '/signup': {
+    title: 'Create Free Account — InterviewAnswers.ai',
+    description: 'Create your free InterviewAnswers.ai account. Practice, not cheat. No credit card required.',
+    canonical: 'https://www.interviewanswers.ai/signup',
+    keywords: 'interview answers signup, create account',
     robots: 'noindex, follow',
   },
 };

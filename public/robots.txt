@@ -1,3 +1,12 @@
 User-agent: *
 Allow: /
+
+# Utility pages — noindex meta is applied, but explicit disallow
+# here prevents Google from even crawling them and wasting crawl budget.
+# Note: /onboarding stays crawlable — it's a legit paid-traffic landing target.
+Disallow: /login
+Disallow: /signup
+Disallow: /auth/
+Disallow: /app
+
 Sitemap: https://www.interviewanswers.ai/sitemap.xml
