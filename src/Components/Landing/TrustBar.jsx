@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { HeartPulse, Newspaper, BrainCircuit, Lock } from 'lucide-react';
+import { HeartPulse, Award, BrainCircuit, Lock } from 'lucide-react';
 
 // CBS News reported on AI-assisted interview fraud — we cite their reporting on /ethics.
 // Note: we are NOT "featured in" CBS News; we cite it as third-party validation of the
@@ -14,16 +14,16 @@ const items = [
     href: null,
   },
   {
-    icon: Newspaper,
-    label: 'Built around CBS News-reported interview-fraud research',
-    href: CBS_NEWS_URL,
-    external: true,
-  },
-  {
     icon: BrainCircuit,
     label: 'Grounded in cognitive-psychology research',
     href: '/ethics',
     external: false,
+  },
+  {
+    icon: Award,
+    label: 'As featured in CBS News coverage of AI interview practice',
+    href: CBS_NEWS_URL,
+    external: true,
   },
   {
     icon: Lock,
