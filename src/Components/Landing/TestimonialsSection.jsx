@@ -1,6 +1,10 @@
 import { motion } from 'framer-motion';
 import { Star } from 'lucide-react';
 
+// Editorial typography — Instrument Serif italic for testimonial quotes.
+// Loaded inline so this component is self-contained.
+const fontImportStyle = `@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap');`;
+
 const testimonials = [
   {
     quote: "I used to rehearse out loud in my car and still blank on the real questions. Practicing with the AI Interviewer the week before my loop meant I'd already said the hard answers five times before I ever walked in the room.",
@@ -25,6 +29,7 @@ const testimonials = [
 export default function TestimonialsSection() {
   return (
     <section className="py-16 sm:py-20 bg-white">
+      <style>{fontImportStyle}</style>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           className="text-center mb-16"
@@ -58,7 +63,10 @@ export default function TestimonialsSection() {
                 ))}
               </div>
 
-              <p className="text-gray-700 leading-relaxed mb-6 italic">
+              <p
+                className="text-xl text-gray-700 leading-relaxed mb-6"
+                style={{ fontFamily: "'Instrument Serif', Georgia, 'Times New Roman', serif", fontStyle: 'italic', fontWeight: 400 }}
+              >
                 "{t.quote}"
               </p>
 
