@@ -10,7 +10,7 @@ import CogPsychTrustStrip from './CogPsychTrustStrip';
 import InlineDemoSection from './InlineDemoSection';
 import ManifestoSection from './ManifestoSection';
 import ProblemSection from './ProblemSection';
-import FeaturesSection from './FeaturesSection';
+import FeatureCarousel from './FeatureCarousel';
 import HowItWorksSection from './HowItWorksSection';
 import WhyISLSection from './WhyISLSection';
 import PricingSection from './PricingSection';
@@ -111,7 +111,7 @@ export default function LandingPage() {
       <InlineDemoSection />
       <ManifestoSection />
       <ProblemSection />
-      <FeaturesSection />
+      <FeatureCarousel />
       <HowItWorksSection />
       <WhyISLSection />
       <PricingSection />
