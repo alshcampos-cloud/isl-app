@@ -65,16 +65,16 @@ const A1_GENERAL_PREHEADER =
   'Here\'s how to get your first practice session done in 2 minutes'
 const A1_GENERAL_BODY = `Welcome to InterviewAnswers.ai.
 
-You just signed up for the tool that lets you practice out loud and get real feedback without wasting real opportunities.
+You just signed up for the tool that lets you practice out loud and get real feedback before the interview that matters.
 
 Three places to start:
-• AI Mock Interviewer — speaks the question, listens to your answer, asks follow-ups, gives feedback
-• Practice Prompter — real-time talking-point guidance while you rehearse
+• AI Mock Interviewer — speaks the question, listens to your answer, asks follow-ups, gives feedback on every practice rep
+• Practice Prompter — guided rehearsal with prompt-along talking points, so you can train yourself to hit them naturally
 • Practice Mode — self-paced, session-based interview prep
 
 Most people start with "Tell me about yourself" — everyone gets asked it.
 
-Jump in and start your first practice session.`
+Practice, not cheat. Jump in and start your first session.`
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
