@@ -47,3 +47,13 @@ entrypoint = "./functions/create-portal-session/index.ts"
 enabled = true
 verify_jwt = true
 entrypoint = "./functions/check-usage/index.ts"
+
+# === LIFECYCLE EMAIL TRIGGER ===
+# send-welcome-email is invoked by a pg_net trigger from user_profiles INSERT.
+# verify_jwt=false because the trigger authenticates with WEBHOOK_SECRET (shared
+# secret in x-webhook-secret header) instead of a Supabase JWT, similar to the
+# stripe-webhook pattern.
+[functions.send-welcome-email]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/send-welcome-email/index.ts"
