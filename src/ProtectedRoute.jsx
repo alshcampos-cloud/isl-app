@@ -33,12 +33,22 @@ function ProtectedRoute({ children }) {
     // Detect both implicit-flow (hash with type=recovery) and PKCE
     // (query ?code=...).
     // ─────────────────────────────────────────────────────────────────
+    // Detect recovery URL — both PKCE flow (?code=...&type=recovery) and the
+    // legacy implicit flow (#access_token=...&type=recovery). With
+    // detectSessionInUrl=false in supabase.js, the hash is now still here
+    // when this code runs (was previously stripped by SDK auto-init).
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const queryCode = new URLSearchParams(window.location.search).get('code');
+    const queryParams = new URLSearchParams(window.location.search);
+    const hashType = hashParams.get('type');
+    const queryType = queryParams.get('type');
+    const queryCode = queryParams.get('code');
+
+    // Strict matching: type must explicitly be 'recovery'. We DON'T treat a
+    // bare `?code=...` as recovery — that would false-positive on Stripe
+    // returns, OAuth callbacks, etc.
     const isRecoveryUrl =
-      hashParams.get('type') === 'recovery' ||
-      hashParams.get('access_token') !== null && hashParams.get('type') === 'recovery' ||
-      Boolean(queryCode);
+      hashType === 'recovery' ||
+      (queryType === 'recovery' && queryCode);
 
     if (isRecoveryUrl) {
       console.log('🔑 [Recovery] URL detected — entering recovery flow synchronously');
@@ -49,10 +59,7 @@ function ProtectedRoute({ children }) {
       setLoading(false);
 
       // Clear any stale session so it can't render the wrong user's content
-      // while the recovery token is being processed. We do this fire-and-
-      // forget — the recovery flow doesn't depend on it completing first;
-      // getSession() (called below) will pick up the recovery token from
-      // the URL hash regardless.
+      // while the recovery token is being processed.
       void (async () => {
         try {
           // Clear local-only — don't broadcast a SIGNED_OUT event globally
@@ -63,24 +70,45 @@ function ProtectedRoute({ children }) {
         } catch (err) {
           console.warn('[Recovery] signOut failed (non-fatal):', err?.message);
         }
+
+        // Explicitly exchange the recovery token for a session. With
+        // detectSessionInUrl=false, the SDK no longer does this on its
+        // own — we own the moment of exchange. This also means the URL
+        // hash is preserved for ProtectedRoute to read on remount.
+        try {
+          if (queryCode) {
+            // PKCE: exchange the code from the query string.
+            const { error } = await supabase.auth.exchangeCodeForSession(window.location.href);
+            if (error) console.warn('[Recovery] exchangeCodeForSession error:', error.message);
+            else console.log('🔑 [Recovery] PKCE code exchanged for session');
+          } else {
+            // Implicit: setSession from the hash tokens.
+            const accessToken = hashParams.get('access_token');
+            const refreshToken = hashParams.get('refresh_token');
+            if (accessToken) {
+              const { error } = await supabase.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken || '',
+              });
+              if (error) console.warn('[Recovery] setSession error:', error.message);
+              else console.log('🔑 [Recovery] Implicit-flow session set from hash');
+            }
+          }
+        } catch (err) {
+          console.error('[Recovery] token exchange threw:', err?.message ?? err);
+        }
       })();
 
-      // Listen ONLY for PASSWORD_RECOVERY in this branch — set the user
+      // Listen ONLY for PASSWORD_RECOVERY in this branch — populate user
       // when Supabase finishes processing the recovery token.
       const { data: { subscription: recoverySub } } = supabase.auth.onAuthStateChange(
         (event, session) => {
           console.log('[Recovery] auth event:', event, session?.user?.email);
-          if (event === 'PASSWORD_RECOVERY') {
+          if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
             setUser(session?.user ?? null);
           }
         }
       );
-
-      // Trigger the actual session establishment (Supabase parses the URL
-      // hash / exchanges the PKCE code).
-      supabase.auth.getSession().catch((err) => {
-        console.error('[Recovery] getSession() failed:', err);
-      });
 
       return () => {
         recoverySub.unsubscribe();

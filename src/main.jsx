@@ -19,6 +19,22 @@ const App = lazy(() => import('./App.jsx'))
 if (isNativeApp()) {
   document.documentElement.classList.add('capacitor')
 
+  // Defense-in-depth (Apr 25 2026): if the native app shipped with the wrong
+  // build target, the marketing landing page will leak (and possibly nursing
+  // chunks too), risking Apple 4.3(a) re-rejection. Scream loudly in the
+  // WebView console so the next regression is cheap to diagnose.
+  // To rebuild correctly: VITE_APP_TARGET=general npm run build && npx cap sync ios
+  if (import.meta.env.VITE_APP_TARGET !== 'general' &&
+      import.meta.env.VITE_APP_TARGET !== 'nursing') {
+    console.error(
+      '[FATAL BUILD CONFIG] Native app shipped with VITE_APP_TARGET="' +
+      (import.meta.env.VITE_APP_TARGET || 'undefined') +
+      '". This causes the marketing landing page to render at /, may leak ' +
+      'nursing routes/chunks, and risks Apple 4.3(a) rejection. Rebuild with ' +
+      'VITE_APP_TARGET=general npm run build (or build:ios-general).'
+    )
+  }
+
   // Initialize native platform features (status bar, splash screen, haptics)
   import('./utils/nativeInit').then(({ initializeNativePlatform }) => {
     initializeNativePlatform()
