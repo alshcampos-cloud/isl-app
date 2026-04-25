@@ -51,7 +51,7 @@ const ROUTES = {
   },
   '/mock-interview-practice': {
     title: 'Free AI Mock Interview Practice Online | InterviewAnswers.ai',
-    description: 'Practice mock interviews with an AI interviewer that adapts to your answers. Get real-time feedback on STAR structure, delivery, and confidence. Free — no credit card required.',
+    description: 'Practice mock interviews with an AI interviewer that adapts to your answers. Get structured feedback on STAR structure, delivery, and confidence after every practice rep. Free — no credit card required.',
     canonical: 'https://www.interviewanswers.ai/mock-interview-practice',
     keywords: 'mock interview practice, AI mock interview, online mock interview, practice interview online, free mock interview, interview simulator',
   },

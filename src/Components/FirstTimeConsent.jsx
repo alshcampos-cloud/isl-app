@@ -252,7 +252,7 @@ export default function FirstTimeConsent({ user, onAccepted, onAlreadyAccepted }
               <p>By accessing or using InterviewAnswers.ai, you agree to be bound by these Terms of Service and all applicable laws and regulations. If you do not agree with these terms, you may not use InterviewAnswers.ai.</p>
 
               <h4 className="font-semibold text-navy-700">2. Description of Service</h4>
-              <p>InterviewAnswers.ai is an AI-powered interview preparation platform that provides practice questions, real-time feedback, and performance tracking to help users improve their interview skills.</p>
+              <p>InterviewAnswers.ai is an AI-powered interview preparation platform that provides practice questions, structured feedback after every practice answer, and performance tracking to help users rehearse their interview skills before the real conversation.</p>
 
               <h4 className="font-semibold text-navy-700">3. User Accounts</h4>
               <ul className="list-disc pl-5 space-y-1">
