@@ -9273,6 +9273,7 @@ const InterviewPrepPodcastPage = lazy(() => import('./Components/Landing/Intervi
 const NursingInterviewQuestionsPage = showNursingFeatures() ? lazy(() => import('./Components/Landing/NursingInterviewQuestionsPage')) : () => null;
 const AuthConfirm = lazy(() => import('./Components/AuthConfirm'));
 const OAuthCallback = lazy(() => import('./Components/OAuthCallback'));
+const AuthReset = lazy(() => import('./Components/AuthReset'));
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-sky-50 flex items-center justify-center">
@@ -9297,6 +9298,7 @@ function App() {
         <Route path="/signup" element={<AuthPage mode="signup" />} />
         <Route path="/auth/confirm" element={<AuthConfirm />} />
         <Route path="/auth/callback" element={<OAuthCallback />} />
+        <Route path="/auth/reset" element={<AuthReset />} />
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/ethics" element={<EthicsPage />} />
