@@ -76,6 +76,14 @@
     <priority>0.7</priority>
   </url>
 
+  <!-- Ethics page (new — rebrand positioning, high-value) -->
+  <url>
+    <loc>https://www.interviewanswers.ai/ethics</loc>
+    <lastmod>2026-04-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
   <!-- Legal pages (needed for trust signals) -->
   <url>
     <loc>https://www.interviewanswers.ai/privacy</loc>
@@ -90,11 +98,7 @@
     <priority>0.3</priority>
   </url>
 
-  <!-- Login page -->
-  <url>
-    <loc>https://www.interviewanswers.ai/login</loc>
-    <lastmod>2026-04-15</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.4</priority>
-  </url>
+  <!-- /login and /signup are intentionally NOT in this sitemap.
+       They are utility pages, not content — they should never appear in search results.
+       noindex meta tags are applied to those pages via useDocumentHead. -->
 </urlset>

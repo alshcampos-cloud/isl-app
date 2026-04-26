@@ -7,26 +7,32 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.json" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#0d9488" />
 
     <!-- SEO Meta Tags -->
-    <title>InterviewAnswers.ai - AI-Powered Interview Preparation</title>
-    <meta name="description" content="Ace your next interview with AI-powered practice, real-time prompts, and STAR-method feedback. Prepare smarter, not harder." />
-    <meta name="keywords" content="interview preparation, job interview, STAR method, behavioral interview, interview practice, AI interview coach" />
+    <title>InterviewAnswers.ai - Rehearsal-First AI Interview Practice</title>
+    <meta name="description" content="Rehearse your interview answers out loud, with AI practice feedback grounded in cognitive-psychology research. Free to start, no credit card required." />
+    <meta name="keywords" content="interview preparation, job interview, STAR method, behavioral interview, interview practice, AI interview coach, ethical AI interview prep, practice interviewing" />
     <meta name="author" content="InterviewAnswers.ai" />
 
     <!-- Open Graph / Social -->
-    <meta property="og:title" content="InterviewAnswers.ai - AI-Powered Interview Preparation" />
-    <meta property="og:description" content="Ace your next interview with AI-powered practice, real-time prompts, and STAR-method feedback." />
+    <meta property="og:title" content="InterviewAnswers.ai - Rehearsal-First AI Interview Practice" />
+    <meta property="og:description" content="Rehearse your interview answers out loud, with AI practice feedback grounded in cognitive-psychology research. Free to start, no credit card required." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://www.interviewanswers.ai" />
     <meta property="og:site_name" content="InterviewAnswers.ai" />
+    <meta property="og:image" content="https://www.interviewanswers.ai/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="InterviewAnswers.ai — Rehearse the interview before it happens. AI interview practice grounded in cognitive science." />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="InterviewAnswers.ai - AI-Powered Interview Preparation" />
-    <meta name="twitter:description" content="Ace your next interview with AI-powered practice, real-time prompts, and STAR-method feedback." />
+    <meta name="twitter:title" content="InterviewAnswers.ai - Rehearsal-First AI Interview Practice" />
+    <meta name="twitter:description" content="Rehearse your interview answers out loud, with AI practice feedback grounded in cognitive-psychology research. Free to start, no credit card required." />
+    <meta name="twitter:image" content="https://www.interviewanswers.ai/og-image.png" />
 
     <!-- Canonical URL -->
     <link rel="canonical" href="https://www.interviewanswers.ai/" />
@@ -40,7 +46,7 @@
       "applicationCategory": "EducationalApplication",
       "operatingSystem": "Web",
       "url": "https://www.interviewanswers.ai",
-      "description": "AI-powered interview preparation platform with mock interviews, STAR method coaching, real-time prompts, and personalized feedback to help you ace any job interview.",
+      "description": "AI-powered interview preparation platform with mock interviews, STAR method coaching, and rehearsal tools. Grounded in cognitive-psychology research. Built for practice, not for live interviews.",
       "offers": [
         {
           "@type": "Offer",
@@ -54,7 +60,7 @@
           "price": "14.99",
           "priceCurrency": "USD",
           "name": "30-Day Pass",
-          "description": "Unlimited AI mock interviews, live prompter, answer assistant, and STAR method coaching for 30 days"
+          "description": "Unlimited AI mock interviews, Practice Prompter rehearsal, answer assistant, and STAR method coaching for 30 days. No autopay."
         },
         {
           "@type": "Offer",
@@ -65,18 +71,22 @@
         },
         {
           "@type": "Offer",
-          "price": "149.99",
+          "price": "99.99",
           "priceCurrency": "USD",
           "name": "Annual All-Access",
-          "description": "Full access to all features including general and nursing interview tracks for one year"
+          "description": "Full access to all interview practice features for one year"
         }
       ],
       "featureList": [
         "AI Mock Interviewer with adaptive follow-up questions",
-        "Live Prompter for real-time interview coaching",
+        "Practice Prompter — rehearsal tool that surfaces your bullet points as you speak (used BEFORE the interview, never during)",
         "STAR Method answer structuring and feedback",
         "Practice Mode with quick drills",
         "Answer Assistant to build polished responses",
+        "AI Coach with per-answer feedback grounded in cognitive-psychology research",
+        "Curated Interviews — hand-built, vetted question sets",
+        "Flashcards with spaced repetition",
+        "Streaks and Interview Readiness Score (IRS) tracking",
         "Nursing interview specialty track with SBAR coaching"
       ]
     }
@@ -101,7 +111,7 @@
           "name": "Is InterviewAnswers.ai free to use?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Yes. The free plan includes mock interview sessions, STAR method coaching, and flashcards. Upgrade to a 30-Day Pass starting at $14.99 for unlimited practice, or get the Annual All-Access for $149.99/year."
+            "text": "Yes. The free plan includes mock interview sessions, STAR method coaching, and flashcards. Upgrade to a 30-Day Pass starting at $14.99 for unlimited practice, or get the Annual All-Access for $99.99/year."
           }
         },
         {
@@ -144,7 +154,7 @@
       "@type": "WebSite",
       "name": "InterviewAnswers.ai",
       "url": "https://www.interviewanswers.ai",
-      "description": "AI-powered interview preparation with mock interviews, STAR method coaching, and real-time feedback."
+      "description": "AI-powered interview preparation with mock interviews, STAR method coaching, and instant feedback. Rehearsal-first, grounded in cognitive-psychology research."
     }
     </script>
 
@@ -191,5 +201,13 @@
     <!-- Capacitor/Cordova plugin bridge — loads native plugins on iOS/Android, silently ignored on web -->
     <script src="cordova.js"></script>
     <script type="module" src="/src/main.jsx"></script>
+    <!-- PWA Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(() => {});
+        });
+      }
+    </script>
   </body>
 </html>

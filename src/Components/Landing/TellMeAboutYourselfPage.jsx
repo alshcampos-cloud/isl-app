@@ -405,7 +405,7 @@ export default function TellMeAboutYourselfPage() {
             </Link>
             <Link to="/mock-interview-practice" className="block bg-gray-50 rounded-xl p-5 hover:bg-gray-100 transition-colors">
               <h3 className="font-bold text-gray-900 mb-1">AI Mock Interview Practice</h3>
-              <p className="text-sm text-gray-600">Full mock interviews with real-time AI feedback on every answer.</p>
+              <p className="text-sm text-gray-600">Full mock interviews with instant AI feedback on every answer.</p>
             </Link>
             <Link to="/behavioral-interview-questions" className="block bg-gray-50 rounded-xl p-5 hover:bg-gray-100 transition-colors">
               <h3 className="font-bold text-gray-900 mb-1">40 Behavioral Interview Questions</h3>

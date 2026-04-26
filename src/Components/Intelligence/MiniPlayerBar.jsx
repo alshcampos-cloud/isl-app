@@ -1,3 +1,4 @@
+import { isTap } from '../../utils/tapGuard';
 /**
  * MiniPlayerBar.jsx — Persistent mini player bar for background audio.
  * Phase 5, Sprint 10. D.R.A.F.T. protocol: NEW file.
@@ -65,7 +66,7 @@ export default function MiniPlayerBar({
         {/* Tap area to return to full player */}
         <button
           onClick={onTap}
-          onTouchEnd={(e) => { e.preventDefault(); onTap?.() }}
+          onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); onTap?.() } }}
           style={{
             flex: 1,
             display: 'flex',
@@ -118,7 +119,7 @@ export default function MiniPlayerBar({
         {/* Play/Pause */}
         <button
           onClick={onTogglePlay}
-          onTouchEnd={(e) => { e.preventDefault(); onTogglePlay?.() }}
+          onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); onTogglePlay?.() } }}
           style={{
             width: '2.25rem',
             height: '2.25rem',
@@ -139,7 +140,7 @@ export default function MiniPlayerBar({
         {/* Close */}
         <button
           onClick={onClose}
-          onTouchEnd={(e) => { e.preventDefault(); onClose?.() }}
+          onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); onClose?.() } }}
           style={{
             width: '2rem',
             height: '2rem',

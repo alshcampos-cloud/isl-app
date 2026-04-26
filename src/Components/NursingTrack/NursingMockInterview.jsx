@@ -8,6 +8,8 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { isTap } from '../../utils/tapGuard';
+
 import {
   ArrowLeft, Mic, MicOff, Send, Bot, User, Loader2,
   Stethoscope, AlertCircle, BookOpen, ChevronDown, ChevronUp,
@@ -18,7 +20,7 @@ import { getFrameworkDetails, CLINICAL_FRAMEWORKS } from './nursingQuestions';
 import useNursingQuestions from './useNursingQuestions';
 import NursingLoadingSkeleton from './NursingLoadingSkeleton';
 import { fetchWithRetry } from '../../utils/fetchWithRetry';
-import useSpeechRecognition from './useSpeechRecognition';
+import useSpeechRecognition from '../../hooks/useSpeechRecognition';
 import SpeechUnavailableWarning from '../SpeechUnavailableWarning';
 import { canUseFeature, incrementUsage } from '../../utils/creditSystem';
 import { updateStreakAfterSession } from '../../utils/streakSupabase';
@@ -975,7 +977,7 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
               <div className="flex flex-col items-center gap-2 w-full">
                 <button
                   onClick={() => setShowContinuePrompt(true)}
-                  onTouchEnd={(e) => { e.preventDefault(); setShowContinuePrompt(true); }}
+                  onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); setShowContinuePrompt(true); } }}
                   className="w-full py-3.5 text-sm font-bold text-white bg-gradient-to-r from-sky-500 to-cyan-400 rounded-xl shadow-lg shadow-sky-500/30 animate-pulse hover:shadow-sky-500/50 transition-all"
                 >
                   View Your Interview Results →
@@ -986,7 +988,7 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
               <>
                 <button
                   onClick={nextQuestion}
-                  onTouchEnd={(e) => { e.preventDefault(); nextQuestion(); }}
+                  onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); nextQuestion(); } }}
                   className={`text-xs font-medium px-4 py-2.5 rounded-full transition-all ${
                     !isLoading && messages.length > 0 && messages[messages.length - 1]?.role === 'assistant'
                       ? 'text-white bg-sky-500 shadow-lg shadow-sky-500/30 animate-pulse'
@@ -1022,7 +1024,7 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
                 {sessionResults.length > 0 && (
                   <button
                     onClick={endSessionEarly}
-                    onTouchEnd={(e) => { e.preventDefault(); endSessionEarly(); }}
+                    onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); endSessionEarly(); } }}
                     className="text-xs text-amber-400 hover:text-amber-300 bg-amber-500/10 border border-amber-500/20 px-3 py-2.5 rounded-full transition-colors"
                   >
                     End Session →
@@ -1140,7 +1142,7 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
               </p>
               <button
                 onClick={() => { setShowExitPopup(false); onBack(); }}
-                onTouchEnd={(e) => { e.preventDefault(); setShowExitPopup(false); onBack(); }}
+                onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); setShowExitPopup(false); onBack(); } }}
                 className="w-full bg-sky-600 text-white font-semibold py-3 rounded-xl hover:bg-sky-500 transition-colors"
               >
                 Got It
@@ -1184,7 +1186,7 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
                   <div className="space-y-3">
                     <button
                       onClick={handleContinue}
-                      onTouchEnd={(e) => { e.preventDefault(); handleContinue(); }}
+                      onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); handleContinue(); } }}
                       className="w-full bg-gradient-to-r from-sky-600 to-cyan-500 text-white font-semibold py-3 rounded-xl shadow-lg shadow-sky-500/30 hover:-translate-y-0.5 transition-all"
                     >
                       Continue with More Questions
@@ -1202,7 +1204,7 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
                     )}
                     <button
                       onClick={() => { setShowContinuePrompt(false); setSessionComplete(true); }}
-                      onTouchEnd={(e) => { e.preventDefault(); setShowContinuePrompt(false); setSessionComplete(true); }}
+                      onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); setShowContinuePrompt(false); setSessionComplete(true); } }}
                       className="w-full bg-white/10 border border-white/20 text-white font-semibold py-3 rounded-xl hover:bg-white/20 transition-all"
                     >
                       End Interview & View Summary
@@ -1213,7 +1215,7 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
                     <p className="text-center text-slate-400 text-sm">You've covered all available questions — impressive!</p>
                     <button
                       onClick={() => { setShowContinuePrompt(false); setSessionComplete(true); }}
-                      onTouchEnd={(e) => { e.preventDefault(); setShowContinuePrompt(false); setSessionComplete(true); }}
+                      onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); setShowContinuePrompt(false); setSessionComplete(true); } }}
                       className="w-full bg-gradient-to-r from-sky-600 to-cyan-500 text-white font-semibold py-3 rounded-xl"
                     >
                       View Interview Summary

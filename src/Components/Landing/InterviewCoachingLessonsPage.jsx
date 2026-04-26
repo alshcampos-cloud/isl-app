@@ -343,7 +343,7 @@ export default function InterviewCoachingLessonsPage() {
             </Link>
             <Link to="/mock-interview-practice" className="block p-5 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors group">
               <h3 className="font-bold text-gray-900 group-hover:text-teal-600 transition-colors">AI Mock Interview Practice</h3>
-              <p className="text-sm text-gray-500 mt-1">Practice with an AI interviewer that adapts and gives real-time feedback.</p>
+              <p className="text-sm text-gray-500 mt-1">Practice with an AI interviewer that adapts and gives instant feedback.</p>
             </Link>
             <Link to="/interview-questions-and-answers" className="block p-5 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors group">
               <h3 className="font-bold text-gray-900 group-hover:text-teal-600 transition-colors">Top 50 Interview Questions and Answers</h3>

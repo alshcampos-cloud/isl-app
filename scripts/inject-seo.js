@@ -51,7 +51,7 @@ const ROUTES = {
   },
   '/mock-interview-practice': {
     title: 'Free AI Mock Interview Practice Online | InterviewAnswers.ai',
-    description: 'Practice mock interviews with an AI interviewer that adapts to your answers. Get real-time feedback on STAR structure, delivery, and confidence. Free — no credit card required.',
+    description: 'Practice mock interviews with an AI interviewer that adapts to your answers. Get structured feedback on STAR structure, delivery, and confidence after every practice rep. Free — no credit card required.',
     canonical: 'https://www.interviewanswers.ai/mock-interview-practice',
     keywords: 'mock interview practice, AI mock interview, online mock interview, practice interview online, free mock interview, interview simulator',
   },
@@ -115,9 +115,16 @@ const ROUTES = {
   },
   '/app': {
     title: 'Interview Practice Dashboard — InterviewAnswers.ai',
-    description: 'Your AI interview practice dashboard. Access mock interviews, STAR method coaching, live prompter, and track your progress.',
+    description: 'Your AI interview practice dashboard. Access mock interviews, STAR method coaching, Practice Prompter rehearsal, and track your progress.',
     canonical: 'https://www.interviewanswers.ai/app',
     keywords: 'interview practice dashboard, AI interview coach',
+    robots: 'noindex, follow',
+  },
+  '/signup': {
+    title: 'Create Free Account — InterviewAnswers.ai',
+    description: 'Create your free InterviewAnswers.ai account. Practice, not cheat. No credit card required.',
+    canonical: 'https://www.interviewanswers.ai/signup',
+    keywords: 'interview answers signup, create account',
     robots: 'noindex, follow',
   },
 };

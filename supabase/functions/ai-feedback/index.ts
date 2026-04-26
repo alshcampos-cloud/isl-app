@@ -519,7 +519,7 @@ Return ONLY the bullets in this format:
       const approaches = [
         'LEAD WITH YOUR STRONGEST SINGLE STORY. Open with one specific experience in vivid detail, then briefly connect the dots to the rest. Most time on one story.',
         'LEAD WITH THE ACADEMIC FOUNDATION. Your capstone and coursework ARE the proof — open with what you built/analyzed in school, then show how you applied it professionally.',
-        'LEAD WITH WHAT YOU DO NOW. Start with Stanford ED today, then explain the path that got you here. Reverse chronological.',
+        'LEAD WITH WHAT YOU DO NOW. Start with "I\'m a Senior PM at a healthcare tech company" today, then explain the path that got you here. Reverse chronological.',
         'LEAD WITH A LESSON. Start with ONE thing you learned the hard way — then show the experiences that taught it.',
         'LEAD WITH THE PORTFOLIO PROJECT MOST RELEVANT TO THIS QUESTION. Go deep on that one project, then briefly mention the rest.',
       ];

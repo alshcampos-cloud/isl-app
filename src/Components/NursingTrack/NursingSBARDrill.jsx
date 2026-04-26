@@ -10,6 +10,8 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { isTap } from '../../utils/tapGuard';
+
 import {
   ArrowLeft, Send, Loader2, Stethoscope, AlertCircle,
   CheckCircle, XCircle, ChevronRight, ChevronDown, Timer, TimerOff,
@@ -24,7 +26,7 @@ import { canUseFeature, incrementUsage } from '../../utils/creditSystem';
 import { updateStreakAfterSession } from '../../utils/streakSupabase';
 import { parseSBARScores, stripSBARScoreTags, scoreColor10, scoreBg10, getCitationSource, validateNursingResponse } from './nursingUtils';
 import { createSBARDrillSession } from './nursingSessionStore';
-import useSpeechRecognition from './useSpeechRecognition';
+import useSpeechRecognition from '../../hooks/useSpeechRecognition';
 import SpeechUnavailableWarning from '../SpeechUnavailableWarning';
 
 const TIMER_SECONDS = 90;
@@ -751,7 +753,7 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
                 {userAnswer && (
                   <button
                     onClick={() => toggleSection('answer')}
-                    onTouchEnd={(e) => { e.preventDefault(); toggleSection('answer'); }}
+                    onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); toggleSection('answer'); } }}
                     className="w-full bg-white/5 border border-white/10 rounded-xl p-3 flex items-center justify-between hover:bg-white/10 transition-colors"
                   >
                     <div className="flex items-center gap-2">
@@ -788,7 +790,7 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
                   </button>
                   <button
                     onClick={nextQuestion}
-                    onTouchEnd={(e) => { e.preventDefault(); nextQuestion(); }}
+                    onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); nextQuestion(); } }}
                     className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-green-600 to-emerald-500 text-white font-semibold text-sm shadow-lg shadow-green-500/30 hover:-translate-y-0.5 transition-all"
                   >
                     {questionIndex + 1 < questions.length ? (

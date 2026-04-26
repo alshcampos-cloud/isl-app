@@ -16,6 +16,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { isTap } from '../../utils/tapGuard';
+
 import {
   X, MessageCircle, Sparkles, Save, Loader2, CheckCircle,
   AlertTriangle, HelpCircle, RefreshCw, Zap, Send, Stethoscope, Wind
@@ -606,7 +608,7 @@ export default function NursingAnswerAssistant({
               {isProUser ? (
                 <button
                   onClick={startConversation}
-                  onTouchEnd={(e) => { e.preventDefault(); if (!isLoading) startConversation(); }}
+                  onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); if (!isLoading) startConversation(); } }}
                   disabled={isLoading}
                   className="bg-gradient-to-r from-sky-600 to-cyan-500 text-white px-8 py-3 rounded-xl font-semibold text-sm shadow-lg shadow-sky-500/30 hover:-translate-y-0.5 transition-all disabled:opacity-50"
                 >
@@ -691,7 +693,7 @@ export default function NursingAnswerAssistant({
                   />
                   <button
                     onClick={sendMessage}
-                    onTouchEnd={(e) => { e.preventDefault(); if (!isLoading && userInput.trim()) sendMessage(); }}
+                    onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); if (!isLoading && userInput.trim()) sendMessage(); } }}
                     disabled={isLoading || !userInput.trim()}
                     className={`p-3 rounded-xl transition-all flex-shrink-0 ${
                       userInput.trim() && !isLoading
@@ -710,7 +712,7 @@ export default function NursingAnswerAssistant({
                     {userExchanges >= 1 && userExchanges < 3 && (
                       <button
                         onClick={() => synthesizeAnswer(true)}
-                        onTouchEnd={(e) => { e.preventDefault(); if (!isLoading) synthesizeAnswer(true); }}
+                        onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); if (!isLoading) synthesizeAnswer(true); } }}
                         disabled={isLoading}
                         className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 font-medium text-sm hover:bg-amber-500/20 transition-all disabled:opacity-50"
                       >
@@ -722,7 +724,7 @@ export default function NursingAnswerAssistant({
                     {userExchanges >= 3 && (
                       <button
                         onClick={() => synthesizeAnswer(false)}
-                        onTouchEnd={(e) => { e.preventDefault(); if (!isLoading) synthesizeAnswer(false); }}
+                        onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); if (!isLoading) synthesizeAnswer(false); } }}
                         disabled={isLoading}
                         className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-sky-600 to-cyan-500 text-white font-semibold text-sm shadow-lg shadow-sky-500/30 hover:-translate-y-0.5 transition-all disabled:opacity-50"
                       >
@@ -786,14 +788,14 @@ export default function NursingAnswerAssistant({
               <div className="flex gap-3 mb-3">
                 <button
                   onClick={keepWorking}
-                  onTouchEnd={(e) => { e.preventDefault(); keepWorking(); }}
+                  onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); keepWorking(); } }}
                   className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-sm hover:bg-white/20 transition-all"
                 >
                   <RefreshCw className="w-4 h-4" /> Keep Working
                 </button>
                 <button
                   onClick={saveAnswer}
-                  onTouchEnd={(e) => { e.preventDefault(); if (!isLoading && !saved) saveAnswer(); }}
+                  onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); if (!isLoading && !saved) saveAnswer(); } }}
                   disabled={isLoading || saved}
                   className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all ${
                     saved

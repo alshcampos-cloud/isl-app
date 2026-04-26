@@ -2,7 +2,11 @@
 // Inserted between IRS (Screen 4) and Signup (Screen 6) in onboarding
 // Shows users what the full platform offers beyond the single practice question
 //
-// D.R.A.F.T. Protocol: NEW file. No existing code modified.
+// Sprint 2 (Apr 2026): Shrunk from 4 feature cards to 2 (AI Mock Interviewer +
+// Practice Prompter). Dropped the framer-motion stagger animation in favor of
+// a single simple fade-in. Rationale: users already did Practice + IRS by this
+// point, and SignUpPrompt already lists the full free-tier features — a 4-card
+// brochure is redundant friction.
 
 import { motion } from 'framer-motion'
 import { showNursingFeatures } from '../../utils/appTarget'
@@ -10,10 +14,10 @@ import { showNursingFeatures } from '../../utils/appTarget'
 export default function FeaturePreview({ fromNursing: fromNursingProp = false, practiceScore, onContinue }) {
   // Belt-and-suspenders — general builds always use the general feature preview
   const fromNursing = showNursingFeatures() && fromNursingProp
-  const accentColor = fromNursing ? 'sky' : 'teal'
 
-  // General features — includes Practice Prompter
-  const generalFeatures = [
+  // Two features only: the highest-leverage hooks for the value prop.
+  // (Full free-tier list is shown on SignUpPrompt to avoid duplication.)
+  const features = [
     {
       icon: '🎙️',
       title: 'AI Mock Interviews',
@@ -24,50 +28,24 @@ export default function FeaturePreview({ fromNursing: fromNursingProp = false, p
     {
       icon: '📋',
       title: 'Practice Prompter',
-      subtitle: 'Practice with a friend like a real interview',
-      description: 'Have a friend ask you questions while the Prompter listens and shows your bullet points and narrative in real-time. Build natural recall for the real thing.',
+      subtitle: 'Rehearse out loud with your own bullet points',
+      description: 'Read a question out loud, answer out loud, and see your prepared bullet points appear during rehearsal — train yourself to hit your key points naturally.',
       free: '5 sessions/month',
       highlight: true,
     },
-    {
-      icon: '📊',
-      title: 'STAR Method Coaching',
-      subtitle: 'See exactly where to improve',
-      description: 'Every answer is scored on Situation, Task, Action, and Result. Track your progress across all four components.',
-      free: '10 practice/month',
-    },
-    {
-      icon: '💡',
-      title: 'AI Answer Assistant',
-      subtitle: "Stuck? AI helps you structure YOUR experience",
-      description: "You provide the real experience — AI helps you organize it into a clear, compelling STAR answer. Your story, better told.",
-      free: '5 assists/month',
-    },
   ]
-
-  // In general builds, always use the general feature list.
-  // Specialty feature list lives in a separate module that is only bundled
-  // when VITE_APP_TARGET supports nursing (loaded via dynamic import at runtime).
-  const features = generalFeatures
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-slate-50 to-gray-100">
       <motion.div
         className="max-w-xl w-full"
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.4 }}
       >
         {/* Header */}
         <div className="text-center mb-8">
-          <motion.div
-            className="text-4xl mb-3"
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.4 }}
-          >
-            🚀
-          </motion.div>
+          <div className="text-4xl mb-3">🚀</div>
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
             You just practiced your first question
           </h2>
@@ -76,10 +54,10 @@ export default function FeaturePreview({ fromNursing: fromNursingProp = false, p
           </p>
         </div>
 
-        {/* Feature cards */}
+        {/* Feature cards — no stagger, just render both in the parent fade-in */}
         <div className="space-y-4">
-          {features.map((feature, index) => (
-            <motion.div
+          {features.map((feature) => (
+            <div
               key={feature.title}
               className={`bg-white rounded-2xl border shadow-sm overflow-hidden ${
                 feature.highlight
@@ -88,9 +66,6 @@ export default function FeaturePreview({ fromNursing: fromNursingProp = false, p
                     : 'border-teal-300 shadow-teal-100'
                   : 'border-gray-200'
               }`}
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.15 + index * 0.12 }}
             >
               <div className="p-5 sm:p-6">
                 <div className="flex items-start gap-4">
@@ -133,35 +108,25 @@ export default function FeaturePreview({ fromNursing: fromNursingProp = false, p
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
 
-        {/* Trust badges — only rendered on specialty builds */}
-
         {/* CTA */}
-        <motion.button
+        <button
           onClick={onContinue}
           className={`mt-8 w-full py-4 rounded-xl font-bold text-lg text-white shadow-lg transition-all hover:-translate-y-0.5 ${
             fromNursing
               ? 'bg-gradient-to-r from-sky-500 to-blue-600 shadow-sky-500/25'
               : 'bg-gradient-to-r from-teal-500 to-emerald-500 shadow-teal-500/25'
           }`}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
         >
           Create free account — keep your progress →
-        </motion.button>
+        </button>
 
-        <motion.p
-          className="text-center text-xs text-gray-400 mt-3"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
-        >
-          Free tier includes all features above. Upgrade anytime for unlimited.
-        </motion.p>
+        <p className="text-center text-xs text-gray-400 mt-3">
+          Free tier includes more than what's shown — full list on the next screen.
+        </p>
       </motion.div>
     </div>
   )

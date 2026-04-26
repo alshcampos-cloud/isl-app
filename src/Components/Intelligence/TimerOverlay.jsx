@@ -2,7 +2,7 @@
  * TimerOverlay.jsx — Countdown timer for timed practice mode.
  *
  * Phase 4J: Visual countdown bar with color transitions for time pressure practice.
- * Stanford panels are 30-minute slots with 5-8 questions = ~3-4 min per answer.
+ * Typical interview panels are 30-minute slots with 5-8 questions = ~3-4 min per answer.
  *
  * Props:
  *   isActive — whether the timer is running

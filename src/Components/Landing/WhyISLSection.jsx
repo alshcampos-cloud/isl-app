@@ -1,48 +1,38 @@
 import { motion } from 'framer-motion';
-import { TrendingUp, BarChart3, Clock, RefreshCcw, Brain, Shield, Mic, ChevronRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const differentiators = [
   {
-    icon: TrendingUp,
-    color: 'text-green-600 bg-green-100',
+    title: 'Practice, not cheat',
+    description: 'We deleted our live-interview prompter. No in-ear AI. No "undetectable" mode. Just deep, private rehearsal — the kind that actually works.',
+    link: '/ethics',
+    linkText: 'Read why →',
+  },
+  {
     title: 'Watch Your Scores Improve',
     description: 'Every practice session gives you a completeness score (0-100). Track your improvement over time and know exactly when you\'re ready.',
   },
   {
-    icon: BarChart3,
-    color: 'text-teal-600 bg-teal-100',
     title: 'Session History & Analytics',
     description: 'Review every practice session. See which questions you nailed and which need more work. Data-driven interview prep.',
   },
   {
-    icon: Brain,
-    color: 'text-teal-600 bg-teal-50',
     title: 'Motivational Interviewing',
     description: 'Our AI doesn\'t just quiz you — it uses proven psychological techniques to help you discover stories you didn\'t know you had.',
   },
   {
-    icon: Mic,
-    color: 'text-emerald-600 bg-emerald-100',
     title: 'Rehearse Out Loud With AI',
     description: 'Practice Prompter surfaces your bullet points as you speak — during your rehearsal sessions, not live interviews. Build muscle memory before the real thing.',
   },
   {
-    icon: RefreshCcw,
-    color: 'text-cyan-600 bg-cyan-100',
     title: 'Adaptive Follow-Ups',
     description: 'Our AI Interviewer doesn\'t just ask questions — it listens to your answer and asks relevant follow-ups, just like a real interviewer would.',
-  },
-  {
-    icon: Clock,
-    color: 'text-amber-600 bg-amber-100',
-    title: 'Ready in Days, Not Weeks',
-    description: 'Our 5-step workflow gets you from zero to interview-ready. Generate questions, build answers, practice, refine, and go live.',
   },
 ];
 
 export default function WhyISLSection() {
   return (
-    <section className="py-16 sm:py-20 bg-white overflow-hidden">
+    <section className="relative paper-grain py-16 sm:py-20 bg-white overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           {/* Left: Visual — Progress mockup */}
@@ -54,9 +44,12 @@ export default function WhyISLSection() {
             transition={{ duration: 0.6 }}
           >
             <div className="bg-gradient-to-br from-teal-50 to-emerald-50 rounded-3xl p-8 border border-teal-100">
-              {/* Dashboard header */}
+              {/* Dashboard header — mocked example data, not a product claim */}
               <div className="flex items-center justify-between mb-6">
-                <h4 className="font-bold text-gray-900">Your Progress</h4>
+                <div>
+                  <h4 className="font-bold text-gray-900">Your Progress</h4>
+                  <p className="text-[10px] text-gray-400 uppercase tracking-wide mt-0.5">Example dashboard preview</p>
+                </div>
                 <span className="text-xs bg-green-100 text-green-700 font-medium px-2.5 py-1 rounded-full">This Week</span>
               </div>
 
@@ -144,7 +137,7 @@ export default function WhyISLSection() {
 
             <div className="grid sm:grid-cols-2 gap-5">
               {differentiators.map((d, i) => {
-                const Icon = d.icon;
+                const badge = String(i + 1).padStart(2, '0');
                 return (
                   <motion.div
                     key={d.title}
@@ -154,12 +147,22 @@ export default function WhyISLSection() {
                     viewport={{ once: true }}
                     transition={{ duration: 0.3, delay: i * 0.08 }}
                   >
-                    <div className={`w-10 h-10 rounded-xl ${d.color} flex items-center justify-center flex-shrink-0`}>
-                      <Icon className="w-5 h-5" />
+                    <div className="flex-shrink-0 w-10 flex items-start justify-start">
+                      <span className="font-serif text-3xl lg:text-4xl text-teal-600 leading-none">
+                        {badge}
+                      </span>
                     </div>
                     <div>
                       <h4 className="font-bold text-gray-900 text-sm mb-1">{d.title}</h4>
                       <p className="text-gray-500 text-sm leading-relaxed">{d.description}</p>
+                      {d.link && d.linkText && (
+                        <Link
+                          to={d.link}
+                          className="inline-block mt-2 text-teal-600 hover:text-teal-700 text-sm font-semibold"
+                        >
+                          {d.linkText}
+                        </Link>
+                      )}
                     </div>
                   </motion.div>
                 );

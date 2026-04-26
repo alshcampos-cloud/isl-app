@@ -1,3 +1,4 @@
+import { isTap } from '../../utils/tapGuard';
 /**
  * TrialBanner.jsx — Shows premium trial status across the app.
  *
@@ -69,7 +70,7 @@ function TrialBanner({ trialInfo, onUpgrade, onDismiss }) {
         </div>
         <button
           onClick={onUpgrade}
-          onTouchEnd={(e) => { e.preventDefault(); onUpgrade(); }}
+          onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); onUpgrade(); } }}
           className="px-3 py-1 bg-white text-orange-600 rounded-full text-xs font-bold hover:bg-orange-50 transition-colors flex-shrink-0"
         >
           Keep Premium
@@ -89,7 +90,7 @@ function TrialBanner({ trialInfo, onUpgrade, onDismiss }) {
         <div className="flex items-center gap-2 flex-shrink-0">
           <button
             onClick={onUpgrade}
-            onTouchEnd={(e) => { e.preventDefault(); onUpgrade(); }}
+            onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); onUpgrade(); } }}
             className="px-3 py-1 bg-teal-500 text-white rounded-full text-xs font-bold hover:bg-teal-600 transition-colors"
           >
             Upgrade
@@ -97,7 +98,7 @@ function TrialBanner({ trialInfo, onUpgrade, onDismiss }) {
           {onDismiss && (
             <button
               onClick={() => { setDismissed(true); onDismiss(); }}
-              onTouchEnd={(e) => { e.preventDefault(); setDismissed(true); onDismiss(); }}
+              onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); setDismissed(true); onDismiss(); } }}
               aria-label="Dismiss"
               className="p-1 hover:bg-gray-200 rounded"
             >

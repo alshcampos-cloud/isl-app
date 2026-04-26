@@ -431,7 +431,7 @@ const UltimateCompetitiveDashboard = ({ user, supabase, userTier, onUpgrade }) =
             <UnlimitedFeatureCard
               icon={<Zap className="w-6 h-6" />}
               title="Practice Prompter"
-              description="Unlimited real-time interview support"
+              description="Unlimited guided rehearsal with prompt-along talking points"
               color="green"
             />
             <UnlimitedFeatureCard

@@ -1,3 +1,4 @@
+import { isTap } from '../../utils/tapGuard';
 /**
  * LearnSection.jsx — Duolingo-style course map for interview learning path.
  * Phase 5, Sprint 5. D.R.A.F.T. protocol: NEW file.
@@ -122,7 +123,7 @@ export default function LearnSection({
       }}>
         <button
           onClick={onBack}
-          onTouchEnd={(e) => { e.preventDefault(); onBack?.() }}
+          onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); onBack?.() } }}
           style={{ padding: '0.5rem', background: '#f1f5f9', border: 'none', borderRadius: '0.75rem', color: '#475569', cursor: 'pointer' }}
         >
           <ArrowLeft size={20} />
@@ -163,14 +164,14 @@ export default function LearnSection({
           }}>
             <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🎓</div>
             <p style={{ fontSize: '1.2rem', fontWeight: 800, margin: '0 0 0.4rem' }}>
-              Your Interview Masterclass
+              The Interview Academy
             </p>
             <p style={{ fontSize: '0.85rem', opacity: 0.85, margin: '0 0 1rem', lineHeight: 1.5 }}>
               25 bite-sized audio lessons with quizzes and daily goals. Learn the STAR method, handle curveballs, negotiate salary, and nail your interview.
             </p>
             <button
               onClick={() => setActiveLessonId('1-1')}
-              onTouchEnd={(e) => { e.preventDefault(); setActiveLessonId('1-1') }}
+              onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); setActiveLessonId('1-1') } }}
               style={{
                 padding: '0.7rem 1.5rem', borderRadius: '0.75rem',
                 background: '#fff', border: 'none', color: '#6366f1',
@@ -276,7 +277,7 @@ export default function LearnSection({
             {onUpgrade && (
               <button
                 onClick={onUpgrade}
-                onTouchEnd={(e) => { e.preventDefault(); onUpgrade?.() }}
+                onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); onUpgrade?.() } }}
                 style={{
                   padding: '0.5rem 1rem', borderRadius: '0.6rem',
                   background: '#f59e0b', border: 'none', color: '#fff',
@@ -293,7 +294,7 @@ export default function LearnSection({
         {nextLesson && lessonLimit.canAccess && (
           <button
             onClick={() => setActiveLessonId(nextLesson.lessonId)}
-            onTouchEnd={(e) => { e.preventDefault(); setActiveLessonId(nextLesson.lessonId) }}
+            onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); setActiveLessonId(nextLesson.lessonId) } }}
             style={{
               width: '100%', padding: '0.85rem 1rem', borderRadius: '0.75rem',
               background: '#fff', border: '2px solid #6366f1',
@@ -345,7 +346,7 @@ export default function LearnSection({
               {/* Module header */}
               <button
                 onClick={() => unlocked && setExpandedModule(isExpanded ? null : mod.id)}
-                onTouchEnd={(e) => { e.preventDefault(); unlocked && setExpandedModule(isExpanded ? null : mod.id) }}
+                onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); unlocked && setExpandedModule(isExpanded ? null : mod.id) } }}
                 style={{
                   width: '100%', padding: '1rem', border: 'none',
                   background: 'transparent', cursor: unlocked ? 'pointer' : 'default',
@@ -427,7 +428,7 @@ export default function LearnSection({
                       <button
                         key={lesson.id}
                         onClick={() => canStart && setActiveLessonId(lesson.id)}
-                        onTouchEnd={(e) => { e.preventDefault(); canStart && setActiveLessonId(lesson.id) }}
+                        onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); canStart && setActiveLessonId(lesson.id) } }}
                         disabled={!canStart && !completed}
                         style={{
                           width: '100%', padding: '0.75rem',
@@ -518,11 +519,9 @@ export default function LearnSection({
                   const firstCompleted = Object.keys(progress.lessonsCompleted)[0]
                   if (firstCompleted) setActiveLessonId(firstCompleted)
                 }}
-                onTouchEnd={(e) => {
-                  e.preventDefault()
+                onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault()
                   const firstCompleted = Object.keys(progress.lessonsCompleted)[0]
-                  if (firstCompleted) setActiveLessonId(firstCompleted)
-                }}
+                  if (firstCompleted) setActiveLessonId(firstCompleted) } }}
                 style={{
                   width: '100%', padding: '0.6rem 0.8rem', borderRadius: '0.5rem',
                   background: '#f8fafc', border: '1px solid #e2e8f0',

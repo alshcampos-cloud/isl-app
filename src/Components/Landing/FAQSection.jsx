@@ -2,10 +2,14 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 
+// Editorial typography uses font-serif class (Source Serif 4, already
+// bundled via src/index.css + tailwind.config.js). Matches ManifestoSection
+// for single-serif consistency across the landing page.
+
 const faqs = [
   {
     q: 'Is it really free to start?',
-    a: 'Yes! The free tier gives you 3 AI Interviewer sessions, 10 Practice sessions, 5 Answer Assistant sessions, 5 Question Generations, and 10 Practice Prompter questions per month. No credit card required.',
+    a: 'Yes! The free tier gives you 3 AI Interviewer sessions, 10 Practice sessions, 3 Answer Assistant sessions, 3 Question Generations, and 10 Practice Prompter questions per month. No credit card required.',
   },
   {
     q: 'How is this different from ChatGPT?',
@@ -40,7 +44,7 @@ function FAQItem({ faq, isOpen, onToggle }) {
         onClick={onToggle}
         className="w-full flex items-center justify-between py-5 text-left group"
       >
-        <span className="text-lg font-medium text-gray-900 group-hover:text-teal-600 transition-colors pr-4">
+        <span className="font-serif text-xl font-normal text-gray-900 group-hover:text-teal-600 transition-colors pr-4">
           {faq.q}
         </span>
         <ChevronDown
@@ -70,7 +74,7 @@ export default function FAQSection() {
   const [openIndex, setOpenIndex] = useState(null);
 
   return (
-    <section className="py-16 sm:py-20 bg-white">
+    <section className="relative paper-grain py-16 sm:py-20 bg-white">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           className="text-center mb-12"

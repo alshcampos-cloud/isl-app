@@ -1,3 +1,4 @@
+import { isTap } from '../../utils/tapGuard';
 /**
  * ActiveRecallQuiz.jsx — Active recall quiz component for Learn section.
  * Phase 5, Sprint 3. D.R.A.F.T. protocol: NEW file.
@@ -76,7 +77,7 @@ function MCQQuestion({ question, options, correctIndex, explanation, onAnswer })
             <button
               key={idx}
               onClick={() => handleSelect(idx)}
-              onTouchEnd={(e) => { e.preventDefault(); handleSelect(idx) }}
+              onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); handleSelect(idx) } }}
               style={{
                 display: 'flex', alignItems: 'center', gap: '0.75rem',
                 padding: '0.85rem 1rem', borderRadius: '0.75rem',
@@ -162,7 +163,7 @@ function TFQuestion({ question, correctAnswer, explanation, onAnswer }) {
             <button
               key={String(val)}
               onClick={() => handleSelect(val)}
-              onTouchEnd={(e) => { e.preventDefault(); handleSelect(val) }}
+              onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); handleSelect(val) } }}
               style={{
                 flex: 1, padding: '1.1rem', borderRadius: '0.75rem',
                 background: bg, border, cursor: revealed ? 'default' : 'pointer',
@@ -240,7 +241,7 @@ function RecallQuestion({ question, expectedAnswer, explanation, onAnswer }) {
           />
           <button
             onClick={handleReveal}
-            onTouchEnd={(e) => { e.preventDefault(); handleReveal() }}
+            onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); handleReveal() } }}
             style={{
               marginTop: '0.75rem', width: '100%', padding: '0.85rem',
               borderRadius: '0.75rem', border: 'none',
@@ -305,7 +306,7 @@ function RecallQuestion({ question, expectedAnswer, explanation, onAnswer }) {
                   <button
                     key={opt.label}
                     onClick={() => handleGrade(opt.score)}
-                    onTouchEnd={(e) => { e.preventDefault(); handleGrade(opt.score) }}
+                    onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); handleGrade(opt.score) } }}
                     style={{
                       flex: 1, padding: '0.7rem 0.5rem', borderRadius: '0.6rem',
                       background: opt.bg, border: `2px solid ${opt.border}`,
@@ -365,7 +366,7 @@ function ApplyQuestion({ question, explanation, onAnswer }) {
       {!reflected ? (
         <button
           onClick={handleContinue}
-          onTouchEnd={(e) => { e.preventDefault(); handleContinue() }}
+          onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); handleContinue() } }}
           style={{
             width: '100%', padding: '0.85rem', borderRadius: '0.75rem',
             border: 'none', background: 'linear-gradient(135deg, #10b981, #059669)',

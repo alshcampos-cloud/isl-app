@@ -44,7 +44,7 @@
 ### Saturday Apr 26 — Reddit Organic #2 (r/nursing)
 **Source:** `REDDIT_CAMPAIGNS.md` → Organic Post #3 (new grad nursing interview guide)
 **Action:** Weekend post — r/nursing is active 7 days/week
-**Goal:** Value-first post; NurseInterviewPro.ai mentioned as one of 7 tips
+**Goal:** Value-first post; NurseAnswerPro.ai mentioned as one of 7 tips
 **Risk:** r/nursing has STRICT self-promo rules — make sure post is 90%+ value, 10% tool mention
 
 ---
@@ -64,7 +64,7 @@ Interested? If yes, I'll send the access code.
 
 Either way, good luck with the interview prep!
 — Alsh
-Founder, NurseInterviewPro.ai
+Founder, NurseAnswerPro.ai
 ```
 
 **How to find 20 nurses:**

@@ -1,32 +1,67 @@
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, Play, Mic, Bot, Target, Sparkles, CheckCircle } from 'lucide-react';
+import { ArrowRight, Play, Mic, Bot, Sparkles, CheckCircle, Brain, BookOpen, Layers, Flame } from 'lucide-react';
+import PracticeNetworkCanvas from './PracticeNetworkCanvas';
 
 export default function HeroSection() {
+  const sectionRef = useRef(null);
+  const rafId = useRef(null);
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const [userHasMoved, setUserHasMoved] = useState(false);
+
+  useEffect(() => {
+    const hero = sectionRef.current;
+    if (!hero) return;
+    // Skip listener on touch-only devices — ambient sway will carry the vibe
+    if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(hover: none)').matches) {
+      return;
+    }
+
+    const handleMove = (e) => {
+      if (rafId.current) cancelAnimationFrame(rafId.current);
+      rafId.current = requestAnimationFrame(() => {
+        const rect = hero.getBoundingClientRect();
+        if (!rect.width || !rect.height) return;
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const dx = (e.clientX - cx) / (rect.width / 2);  // -1..1
+        const dy = (e.clientY - cy) / (rect.height / 2); // -1..1
+        // Clamp to ±5deg — any more looks gimmicky
+        const clamp = (v) => Math.max(-1, Math.min(1, v));
+        setTilt({ x: clamp(dx) * 5, y: clamp(dy) * 5 });
+        setUserHasMoved(true);
+      });
+    };
+
+    hero.addEventListener('mousemove', handleMove, { passive: true });
+    return () => {
+      hero.removeEventListener('mousemove', handleMove);
+      if (rafId.current) cancelAnimationFrame(rafId.current);
+    };
+  }, []);
+
+  // Alternating checkerboard: tiles 0,2,4 pop forward; 1,3,5 sit back
+  const tileZ = (i) => (i % 2 === 0 ? 15 : 5);
+
   return (
-    <section className="relative min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center overflow-hidden">
-      {/* Animated background orbs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <motion.div
-          className="absolute -top-40 -right-40 w-96 h-96 bg-teal-500/15 rounded-full blur-3xl"
-          animate={{ x: [0, 30, 0], y: [0, -20, 0] }}
-          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-        />
-        <motion.div
-          className="absolute -bottom-40 -left-40 w-96 h-96 bg-emerald-500/15 rounded-full blur-3xl"
-          animate={{ x: [0, -20, 0], y: [0, 30, 0] }}
-          transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
-        />
-        <motion.div
-          className="absolute top-1/3 left-1/2 w-64 h-64 bg-sky-500/10 rounded-full blur-3xl"
-          animate={{ x: [0, 40, 0], y: [0, -30, 0] }}
-          transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
-        />
-        {/* Subtle grid pattern */}
+    <section
+      ref={sectionRef}
+      data-hero-section
+      className="relative min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center overflow-hidden"
+    >
+      {/* Practice network particle canvas — replaces old orb divs.
+          Decorative only (pointer-events: none, aria-hidden). Static on
+          mobile and prefers-reduced-motion. */}
+      <PracticeNetworkCanvas />
+
+      {/* Subtle grid pattern — kept from original hero, sits between
+          canvas (zIndex 1) and content (zIndex 10). */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ zIndex: 2 }}>
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:60px_60px]" />
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16 w-full">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16 w-full">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Left: Copy */}
           <div>
@@ -42,14 +77,17 @@ export default function HeroSection() {
             </motion.div>
 
             <motion.h1
-              className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight"
+              className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight mb-4"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
             >
-              AI Interview Practice{' '}
+              Rehearse the interview{' '}
               <span className="bg-gradient-to-r from-teal-400 to-emerald-300 bg-clip-text text-transparent">
-                That Gets You Hired.
+                before it happens.
+              </span>
+              <span className="block text-2xl sm:text-3xl lg:text-4xl font-semibold text-slate-200 mt-4">
+                AI interview practice, grounded in cognitive science.
               </span>
             </motion.h1>
 
@@ -62,7 +100,7 @@ export default function HeroSection() {
               Stop memorizing scripts. Build answers from your real experiences,
               and practice until they feel natural.{' '}
               <span className="text-white font-semibold">
-                The interview AI that doesn&rsquo;t go in the interview.
+                Practice out loud. See your answers scored. Walk in ready.
               </span>
             </motion.p>
 
@@ -125,12 +163,31 @@ export default function HeroSection() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
           >
+            {/* 3D tilt wrapper — follows cursor once moved, ambient sway otherwise.
+                Kept separate from the framer-motion fade-in so we don't fight for `style.transform`. */}
+            <div
+              className={userHasMoved ? '' : 'hero-ambient-sway'}
+              style={
+                userHasMoved
+                  ? {
+                      transform: `perspective(1000px) rotateY(${tilt.x}deg) rotateX(${-tilt.y}deg)`,
+                      transformOrigin: 'center center',
+                      transformStyle: 'preserve-3d',
+                      transition: 'transform 150ms ease-out',
+                      willChange: 'transform',
+                    }
+                  : {
+                      transformOrigin: 'center center',
+                      willChange: 'transform',
+                    }
+              }
+            >
             <div className="relative">
               {/* Glowing border effect */}
               <div className="absolute -inset-4 bg-gradient-to-r from-teal-500/20 via-emerald-500/20 to-sky-500/20 rounded-3xl blur-xl" />
 
               {/* App mockup card */}
-              <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-2xl">
+              <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-2xl" style={{ transformStyle: 'preserve-3d' }}>
                 {/* Title bar */}
                 <div className="flex items-center gap-2 mb-6">
                   <div className="w-3 h-3 rounded-full bg-red-400" />
@@ -140,18 +197,21 @@ export default function HeroSection() {
                 </div>
 
                 {/* Feature preview cards */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {[
-                    { icon: Mic, label: 'Practice Prompter', color: 'from-teal-500 to-emerald-500', desc: 'Rehearse out loud' },
                     { icon: Bot, label: 'AI Interviewer', color: 'from-teal-600 to-cyan-600', desc: 'Mock practice' },
-                    { icon: Target, label: 'Practice Mode', color: 'from-emerald-500 to-teal-500', desc: 'Quick drills' },
-                    { icon: Sparkles, label: 'Answer Assistant', color: 'from-cyan-500 to-teal-500', desc: 'Build answers' },
-                  ].map(({ icon: Icon, label, color, desc }) => (
+                    { icon: Brain, label: 'AI Coach', color: 'from-teal-500 to-emerald-500', desc: 'Per-answer feedback' },
+                    { icon: BookOpen, label: 'Curated Interviews', color: 'from-emerald-500 to-teal-500', desc: 'Role-specific' },
+                    { icon: Layers, label: 'Flashcards', color: 'from-cyan-500 to-teal-500', desc: 'Spaced repetition' },
+                    { icon: Flame, label: 'Streaks', color: 'from-teal-400 to-emerald-400', desc: 'Daily consistency' },
+                    { icon: Mic, label: 'Practice Prompter', color: 'from-teal-500 to-emerald-500', desc: 'Rehearse out loud' },
+                  ].map(({ icon: Icon, label, color, desc }, i) => (
                     <motion.div
                       key={label}
                       className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10"
                       whileHover={{ scale: 1.03 }}
                       transition={{ duration: 0.2 }}
+                      style={{ transform: `translateZ(${tileZ(i)}px)` }}
                     >
                       <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${color} flex items-center justify-center mb-2`}>
                         <Icon className="w-5 h-5 text-white" />
@@ -176,22 +236,23 @@ export default function HeroSection() {
                   <p className="text-white/40 text-xs mt-1.5">3 of 5 key points covered</p>
                 </div>
 
-                {/* Score preview */}
+                {/* Score preview — example data, not a claim */}
                 <div className="mt-3 bg-white/10 rounded-xl p-4 border border-white/10">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-white/70 text-sm">Answer Completeness</span>
-                    <span className="text-green-400 font-bold">92%</span>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-white/70 text-sm">Answer Completeness <span className="text-white/30 text-[10px] uppercase tracking-wide ml-1">example</span></span>
+                    <span className="text-green-400 font-bold">73%</span>
                   </div>
                   <div className="w-full bg-white/10 rounded-full h-2.5">
                     <motion.div
                       className="h-2.5 rounded-full bg-gradient-to-r from-green-400 to-emerald-400"
                       initial={{ width: '0%' }}
-                      animate={{ width: '92%' }}
+                      animate={{ width: '73%' }}
                       transition={{ duration: 1.5, delay: 1, ease: 'easeOut' }}
                     />
                   </div>
                 </div>
               </div>
+            </div>
             </div>
           </motion.div>
         </div>
@@ -199,7 +260,7 @@ export default function HeroSection() {
 
       {/* Scroll indicator */}
       <motion.div
-        className="absolute bottom-8 left-1/2 -translate-x-1/2"
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10"
         animate={{ y: [0, 8, 0] }}
         transition={{ duration: 2, repeat: Infinity }}
       >

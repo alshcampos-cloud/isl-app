@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { isTap } from '../utils/tapGuard';
+
 import {
   ChevronLeft, ChevronRight, User, CreditCard, Shield, FileText,
   Scale, Mail, Star, RotateCcw, Trash2, LogOut, Info, ExternalLink,
@@ -573,7 +575,7 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
         {/* Sign Out */}
         <button
           onClick={handleSignOut}
-          onTouchEnd={(e) => { e.preventDefault(); handleSignOut(); }}
+          onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); handleSignOut(); } }}
           disabled={loggingOut}
           className="w-full flex items-center justify-center gap-2.5 py-4 min-h-[52px] rounded-xl border border-red-200 bg-white text-red-500 font-medium hover:bg-red-50 active:bg-red-100 active:scale-[0.98] transition-all duration-200 shadow-sm"
         >

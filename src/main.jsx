@@ -1,16 +1,39 @@
-import React from 'react'
+import React, { lazy, Suspense } from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
-import App from './App.jsx'
 import ErrorBoundary from './Components/ErrorBoundary.jsx'
 import ScrollToTop from './Components/ScrollToTop.jsx'
+import LoadingShell from './Components/LoadingShell.jsx'
 import './index.css'
 import { isNativeApp } from './utils/platform'
+
+// Sprint 1 / Coder 2 / Perf: lazy-load App at the router level so App.jsx + its
+// static-import graph (9,300-line monolith ISL + ~70 imports) is pulled into a
+// separate chunk instead of the main entry. Landing-page visitors get a branded
+// loading shell while the App chunk downloads async. Battle Scar #1-safe: no
+// App.jsx internals touched.
+const App = lazy(() => import('./App.jsx'))
 
 // Add 'capacitor' class to <html> when running as native app
 // This enables native-only CSS rules. On web, this never fires.
 if (isNativeApp()) {
   document.documentElement.classList.add('capacitor')
+
+  // Defense-in-depth (Apr 25 2026): if the native app shipped with the wrong
+  // build target, the marketing landing page will leak (and possibly nursing
+  // chunks too), risking Apple 4.3(a) re-rejection. Scream loudly in the
+  // WebView console so the next regression is cheap to diagnose.
+  // To rebuild correctly: VITE_APP_TARGET=general npm run build && npx cap sync ios
+  if (import.meta.env.VITE_APP_TARGET !== 'general' &&
+      import.meta.env.VITE_APP_TARGET !== 'nursing') {
+    console.error(
+      '[FATAL BUILD CONFIG] Native app shipped with VITE_APP_TARGET="' +
+      (import.meta.env.VITE_APP_TARGET || 'undefined') +
+      '". This causes the marketing landing page to render at /, may leak ' +
+      'nursing routes/chunks, and risks Apple 4.3(a) rejection. Rebuild with ' +
+      'VITE_APP_TARGET=general npm run build (or build:ios-general).'
+    )
+  }
 
   // Initialize native platform features (status bar, splash screen, haptics)
   import('./utils/nativeInit').then(({ initializeNativePlatform }) => {
@@ -37,7 +60,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <ErrorBoundary>
     <BrowserRouter>
       <ScrollToTop />
-      <App />
+      <Suspense fallback={<LoadingShell />}>
+        <App />
+      </Suspense>
     </BrowserRouter>
   </ErrorBoundary>,
 )

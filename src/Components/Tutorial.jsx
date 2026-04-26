@@ -109,15 +109,15 @@ export default function Tutorial({ user, isActive, onClose, onOpenTemplateLibrar
       content: (
         <div className="text-left space-y-4">
           <p className="text-gray-700 leading-relaxed">
-            To use <strong>Practice Prompter</strong> during real interviews, you need to customize your questions with keywords:
+            To get the most out of <strong>Practice Prompter</strong> during your rehearsal sessions, customize your questions with keywords:
           </p>
-          <div className="bg-orange-50 rounded-lg p-4 border-2 border-orange-200">
-            <p className="font-bold text-orange-900 mb-3">🎯 How Keywords Work:</p>
-            <div className="space-y-3 text-sm text-orange-800">
+          <div className="bg-teal-50 rounded-lg p-4 border-2 border-teal-200">
+            <p className="font-bold text-teal-900 mb-3">🎯 How Keywords Work:</p>
+            <div className="space-y-3 text-sm text-teal-800">
               <div>
-                <p className="font-semibold mb-1">Interviewer asks: "Tell me about a time you led a difficult project"</p>
-                <p className="text-xs text-orange-700 mb-2">Your keywords: <span className="bg-orange-200 px-2 py-1 rounded">led</span> <span className="bg-orange-200 px-2 py-1 rounded">difficult</span> <span className="bg-orange-200 px-2 py-1 rounded">project</span></p>
-                <p className="text-green-700 font-semibold">✅ Practice Prompter instantly shows your bullet points!</p>
+                <p className="font-semibold mb-1">You read the question aloud: "Tell me about a time you led a difficult project"</p>
+                <p className="text-xs text-teal-700 mb-2">Your keywords: <span className="bg-teal-200 px-2 py-1 rounded">led</span> <span className="bg-teal-200 px-2 py-1 rounded">difficult</span> <span className="bg-teal-200 px-2 py-1 rounded">project</span></p>
+                <p className="text-green-700 font-semibold">✅ Practice Prompter instantly shows your bullet points — so you can train yourself to hit them naturally!</p>
               </div>
             </div>
           </div>
@@ -130,9 +130,12 @@ export default function Tutorial({ user, isActive, onClose, onOpenTemplateLibrar
               <li>• Customize at least <strong>3 questions</strong> to unlock unlimited Practice Prompter</li>
             </ul>
           </div>
-          <div className="bg-red-50 rounded-lg p-3 border-l-4 border-red-500">
-            <p className="text-sm text-red-900">
-              <strong>⚠️ Legal Warning:</strong> Practice Prompter is for YOUR reference only. Some companies prohibit notes during interviews. Use responsibly and check your company's policies.
+          <div className="bg-teal-50 rounded-lg p-3 border-l-4 border-teal-500">
+            <p className="text-sm text-teal-900">
+              <strong>Rehearsal only:</strong> Practice Prompter is designed for
+              rehearsing out loud <em>before</em> your interview — not during.
+              Using any AI assistance during a live interview violates our
+              Terms of Service.
             </p>
           </div>
         </div>
@@ -217,11 +220,11 @@ export default function Tutorial({ user, isActive, onClose, onOpenTemplateLibrar
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                <span><strong>2 Answer Assistant sessions</strong> per month</span>
+                <span><strong>3 Answer Assistant sessions</strong> per month</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                <span><strong>5 Question Generations</strong> per month</span>
+                <span><strong>3 Question Generations</strong> per month</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />

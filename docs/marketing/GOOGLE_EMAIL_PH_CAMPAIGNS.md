@@ -89,7 +89,7 @@
 
 | # | Description | Chars |
 |---|-------------|-------|
-| 1 | AI coach scores your STAR answers in real time. Fix weak spots before the interview. | 84 |
+| 1 | AI coach scores your STAR answers after every rep. Fix weak spots before the interview. | 87 |
 | 2 | Practice behavioral questions with instant feedback. Build a library of STAR answers. | 85 |
 | 3 | Struggling with "tell me about a time"? Our AI walks you through STAR step by step. | 84 |
 | 4 | Situation, Task, Action, Result — master the framework interviewers actually want. | 82 |
@@ -123,7 +123,7 @@
 | 1 | Nursing Interview Prep | 22 |
 | 2 | AI Coach for Nurse Jobs | 23 |
 | 3 | Nail Your Nursing Interview | 27 |
-| 4 | NurseInterviewPro.ai | 20 |
+| 4 | NurseAnswerPro.ai | 20 |
 | 5 | New Grad? Practice First | 24 |
 | 6 | SBAR Interview Coaching | 23 |
 | 7 | Clinical Interview Ready | 24 |
@@ -409,7 +409,7 @@
 > - A dedicated nursing interview track (built with healthcare professionals — 70+ clinical questions and SBAR drills)
 > - A real free tier that lets you actually practice, not just see a demo
 >
-> The nursing track exists because my co-founder Erin (infection prevention at Stanford Health Care) kept telling me nurses need this and nobody's building it for them.
+> The nursing track exists because my co-founder — a clinical nurse working in infection prevention — kept telling me nurses need this and nobody's building it for them.
 >
 > Would love your feedback. Try it free at interviewanswers.ai — and if you're prepping for an interview this week, I hope it helps you land the job.
 
@@ -557,16 +557,14 @@ So I built what I wished existed: an AI that conducts a realistic mock interview
 That's InterviewAnswers.ai.
 
 What it does:
--- AI Mock Interviewer (adapts to your answers in real time)
+-- AI Mock Interviewer (adapts to your answers during practice)
 -- STAR Method Coaching (scores your Situation, Task, Action, Result)
--- Practice Prompter (guided rehearsal with live feedback during practice sessions)
--- Nursing Track (70+ clinical questions, SBAR drills — built with a Stanford healthcare professional)
+-- Practice Prompter (guided rehearsal with prompt-along feedback during practice)
+-- Nursing Track (70+ clinical questions, SBAR drills — built with a clinical nurse co-founder)
 
 Free to start. No credit card. No 7-day-then-we-charge-you trick.
 
-We also launched on Product Hunt today. If you've got 30 seconds, an upvote would help us reach more job seekers: [link]
-
-And if you know someone prepping for an interview this week — send them to interviewanswers.ai.
+If you know someone prepping for an interview this week — send them to interviewanswers.ai.
 
 The best interview prep isn't reading answers. It's saying them out loud and getting feedback. That's all this is.
 ```
@@ -628,7 +626,7 @@ They ask you to describe clinical scenarios using communication frameworks like 
 
 But there's no standardized way to practice this. New grad nurses are applying for their first RN role with zero interview prep tools built for them. Experienced nurses switching from ICU to OR are Googling "nursing interview questions" and getting the same ten generic questions recycled across every blog.
 
-My co-founder Erin works in infection prevention at Stanford Health Care. She told me this gap exists. At first I thought it was a niche thing.
+My co-founder is a clinical nurse working in infection prevention. She told me this gap exists. At first I thought it was a niche thing.
 
 Then we looked at the numbers. "Nursing interview questions" gets searched tens of thousands of times per month. And the resources available are blog posts with sample answers that weren't written by nurses.
 

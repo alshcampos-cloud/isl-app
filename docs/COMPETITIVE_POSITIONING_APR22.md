@@ -13,7 +13,7 @@ The AI interview market has bifurcated in the last 6 months:
 1. **"Copilots"** (Final Round, Sensei, Interview.chat, LockedIn, Verve, Cluely) — live, "undetectable," in-interview assistants. Growing fast, but the category is being openly labeled as **cheating** by hiring managers, ATS vendors, and the press (CBS, dev.to coverage in Q1 2026). Prices are high ($25–$149/mo) and churn is almost certainly brutal (one-and-done usage after the interview).
 2. **"Prep platforms"** (Big Interview, Yoodli, Interview Warmup, Rehearsy, us) — practice-before-the-interview, ethical, resume-supporting. Smaller category, more durable.
 
-**IA.ai sits in category 2.** That is an asset, not a liability. Our entire brand can be built on **"the ethical alternative that actually prepares you,"** with a premium nursing wedge (NurseInterviewPro.ai) that no copilot touches.
+**IA.ai sits in category 2.** That is an asset, not a liability. Our entire brand can be built on **"the ethical alternative that actually prepares you,"** with a premium nursing wedge (NurseAnswerPro.ai) that no copilot touches.
 
 **Do not chase the copilot category.** We will lose on features, burn cash, and inherit their legal/ethical overhang when the backlash peaks (it will).
 
@@ -103,7 +103,7 @@ The AI interview market has bifurcated in the last 6 months:
 ### 2.1 Nursing (HIGHEST-CONFIDENCE WEDGE)
 - Big Interview Medical exists but is **residency-only** ($299, one-time, medical students).
 - **Nurses have nothing dedicated** except generic NCLEX apps (Nursing.com, Nurse Plus, NCLEX Mastery) which are *exam* prep, not *interview* prep.
-- NurseInterviewPro.ai as a funnel brand is a defensible position. Erin's clinical credibility + SBAR-specific content is not replicable by Final Round in 90 days.
+- NurseAnswerPro.ai as a funnel brand is a defensible position. Our clinical co-founder's credibility + SBAR-specific content is not replicable by Final Round in 90 days.
 - **SEO gap:** "nursing interview questions," "new grad RN interview," "charge nurse interview," "SBAR interview example" — all under-competed vs. generic "interview prep."
 
 ### 2.2 Behavioral / STAR (GOOD, but crowded)
@@ -142,8 +142,8 @@ The AI interview market has bifurcated in the last 6 months:
 Short form (ad headline):
 > **Stop freezing. Start answering. $14.99 gets you 30 days of private AI interview practice.**
 
-### Nursing Audience (NurseInterviewPro.ai)
-> **For nurses preparing for their next role — new grad, float pool, charge, specialty transfer — NurseInterviewPro.ai is the only AI interview prep built *with* nurses, using real SBAR scenarios and behavioral questions reviewed by practicing clinicians. We don't generate fake clinical content. We coach how you communicate real experiences you already have.**
+### Nursing Audience (NurseAnswerPro.ai)
+> **For nurses preparing for their next role — new grad, float pool, charge, specialty transfer — NurseAnswerPro.ai is the only AI interview prep built *with* nurses, using real SBAR scenarios and behavioral questions reviewed by practicing clinicians. We don't generate fake clinical content. We coach how you communicate real experiences you already have. We built it with a practicing RN clinical co-founder, and every clinical question is reviewed by a qualified nurse.**
 
 Short form (ad headline):
 > **Built by nurses. Practice interviews with SBAR, behavioral, and real hiring manager questions. $19.99 / 30 days.**
@@ -169,7 +169,7 @@ These 5 pillars should appear — verbatim or close — in every ad, landing pag
 - A/B test $9.99 intro as a Meta hook `[SPECULATION]`.
 
 ### Pillar 4: **Built By Experts in Your Field** (Nursing)
-- Erin at Stanford Health Care. Clinical co-founder.
+- Practicing RN clinical co-founder (MPH, BSN, RN — infection prevention professional).
 - Human-validated questions. No AI-hallucinated clinical content.
 - This is the **trust pillar** — the only claim we make that competitors literally cannot copy in under 12 months.
 
@@ -177,11 +177,11 @@ These 5 pillars should appear — verbatim or close — in every ad, landing pag
 - iOS native app (once approved). 30-day pass travels with you.
 - Commute, lunch break, night-shift break, 10 minutes before the interview.
 
-### What to NEVER claim (per Erin, per CLAUDE.md):
+### What to NEVER claim (per clinical co-founder, per CLAUDE.md):
 - ❌ "We make you clinically correct."
 - ❌ "We replace NCLEX / CE / clinical education."
 - ❌ "We evaluate clinical accuracy."
-- ❌ "Specialty matching" (rejected by Erin).
+- ❌ "Specialty matching" (rejected by clinical co-founder).
 - ❌ "Guaranteed offer." / "Land any job."
 
 ---
@@ -191,12 +191,12 @@ These 5 pillars should appear — verbatim or close — in every ad, landing pag
 ### Scenario A: Final Round drops price to $9.99/mo intro or runs Google Ads against our brand term
 - **Don't price-match.** Their unit economics require $25+/mo. A price war bleeds us faster.
 - **Counter-frame:** "$9.99/mo × 12 = $120. Our $99 annual gets you 365 days + 2 free passes. Do the math."
-- Buy defensive Google Ads on `interviewanswers.ai`, `nurseinterviewpro`, our founders' names.
+- Buy defensive Google Ads on `interviewanswers.ai`, `nurseanswerpro`, our founders' names.
 
 ### Scenario B: A copilot launches a "nursing mode"
 - `[SPECULATION]` Probability in next 6 months: **medium.** Very possible Final Round or Sensei adds a nursing tag.
 - **Counter-moat:**
-  - Erin's published review credentials on every nursing question (author, reviewer, framework source, review date).
+  - Our clinical co-founder's published review credentials on every nursing question (author, reviewer, framework source, review date).
   - An advisory board of named, practicing nurses (social proof they can't fake).
   - "Built by nurses, not by GPT" — verifiable claim via our `docs/erin-question-drafts-v2.md` provenance.
 - This is why we invested in the walled garden. Defend it publicly.
@@ -214,7 +214,7 @@ These 5 pillars should appear — verbatim or close — in every ad, landing pag
 - If it happens, we reposition as the *specialist* (nursing, STAR, mobile) vs. Google as the *generalist*.
 
 ### Our durable moats (what they can't copy in 90 days):
-1. **Erin + clinical advisory credibility.** Reputation, not code.
+1. **Clinical co-founder + clinical advisory credibility.** Reputation, not code.
 2. **30-day one-time pass pricing unit economics** — they're SaaS-dependent, we're not.
 3. **Mobile-native iOS app** (once approved) — takes months to match.
 4. **SEO head-start on nursing-specific queries** — 10+ indexed pages, compounding.
@@ -277,7 +277,7 @@ These 5 pillars should appear — verbatim or close — in every ad, landing pag
 
 ### Threat 1: Final Round adds a nursing vertical (MEDIUM probability, HIGH impact)
 - **Indicator:** Watch their blog for "nurse" / "RN" content. Set a Google Alert.
-- **Response:** Double down on Erin's public credentials and advisory board. Their version will be AI-hallucinated clinical content — make that visible.
+- **Response:** Double down on our clinical co-founder's public credentials and advisory board. Their version will be AI-hallucinated clinical content — make that visible.
 
 ### Threat 2: Copilot category gets regulated or legally challenged (LOW probability NEAR-TERM, HIGH impact LONG-TERM)
 - **Indicator:** EEOC guidance, a major employer lawsuit, or a state law against "undetectable interview aids."
@@ -295,7 +295,7 @@ These 5 pillars should appear — verbatim or close — in every ad, landing pag
 - **Indicator:** Another rejection on build 30+.
 - **Response:** Web-only push until resolved. Don't start iOS ads until approval.
 
-### Threat 6: Erin steps back from the project (LOW probability, CATASTROPHIC impact)
+### Threat 6: Clinical co-founder steps back from the project (LOW probability, CATASTROPHIC impact)
 - **Indicator:** Personal/professional.
 - **Response:** Build redundancy NOW. Recruit 2+ additional named clinical advisors. Our entire nursing moat is one-person-deep.
 
@@ -326,7 +326,7 @@ These 5 pillars should appear — verbatim or close — in every ad, landing pag
 4. Ship **5 nursing SEO landing pages** in the next 2 weeks — lowest-competition, highest-ROI content we can produce.
 5. Ship **2 comparison pages** (vs. Final Round, vs. Interview.chat) — high-intent search capture.
 6. Pre-draft the **"Why we will never build a copilot"** blog post. Hold it for the right press moment.
-7. Recruit **2 additional named clinical advisors** to reduce the Erin-single-point-of-failure risk.
+7. Recruit **2 additional named clinical advisors** to reduce the single-clinician-point-of-failure risk.
 8. **Ship Edge Function retry wrapper** before scaling ads (infrastructure P0).
 
 ---

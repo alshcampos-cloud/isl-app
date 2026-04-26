@@ -10,16 +10,19 @@
 // 5. Set VITE_REVENUECAT_APPLE_KEY in .env
 
 import { isNativeApp, isIOS, isAndroid, getPaymentProvider } from './platform';
+import { showNursingFeatures } from './appTarget';
 
-// Product IDs — must match App Store Connect
+// Product IDs — must match App Store Connect.
+// Nursing-specific products are only exposed on builds where nursing is enabled
+// (Apple 4.3(a) compliance — general builds must not surface nursing SKUs).
 const PRODUCTS = {
   MONTHLY: 'monthly',
   YEARLY: 'yearly',
   LIFETIME: 'lifetime',
   // Legacy IDs (App Store Connect non-consumables)
   GENERAL_30DAY: 'ai.interviewanswers.general.30day',
-  NURSING_30DAY: 'ai.interviewanswers.nursing.30day',
   ANNUAL_ALL_ACCESS: 'ai.interviewanswers.annual.allaccess',
+  ...(showNursingFeatures() ? { NURSING_30DAY: 'ai.interviewanswers.nursing.30day' } : {}),
 };
 
 // Entitlement ID — must match RevenueCat dashboard
@@ -67,21 +70,46 @@ export async function initializePurchases(userId = null) {
       await Purchases.logIn({ appUserID: userId });
     }
 
-    // Prefetch offerings
+    // Prefetch offerings (the preferred path — packages with pricing display info)
+    let offeringPackageCount = 0;
     try {
       const offerings = await Purchases.getOfferings();
       currentOffering = offerings.current;
+      offeringPackageCount = currentOffering?.availablePackages?.length || 0;
       if (currentOffering) {
-        console.log(`[IAP] Offering loaded: ${currentOffering.identifier}, ${currentOffering.availablePackages?.length || 0} packages`);
+        console.log(`[IAP] Offering loaded: ${currentOffering.identifier}, ${offeringPackageCount} packages`);
+      } else {
+        console.warn('[IAP] No current offering — RevenueCat dashboard may not have a default offering set.');
       }
     } catch (err) {
       console.warn('[IAP] Could not fetch offerings:', err.message);
     }
 
+    // Verify at least our known products are reachable. If the offering came
+    // back empty AND getProducts can't find any of them, the store is not
+    // actually ready — flag it loudly so the UI can show a clear error
+    // instead of letting the user tap a Buy button that throws.
+    let productFetchOk = offeringPackageCount > 0;
+    if (!productFetchOk) {
+      try {
+        const knownIds = Object.values(PRODUCTS);
+        const probe = await Purchases.getProducts({ productIdentifiers: knownIds });
+        const found = probe?.products?.length || 0;
+        if (found > 0) {
+          productFetchOk = true;
+          console.log(`[IAP] Offering empty but getProducts found ${found}/${knownIds.length} product(s).`);
+        } else {
+          console.error(`[IAP] storeReady=false: no offering and getProducts returned 0 of ${knownIds.length} known IDs. Check RevenueCat → default offering → packages.`);
+        }
+      } catch (err) {
+        console.error('[IAP] storeReady=false: getProducts probe threw:', err?.message ?? err);
+      }
+    }
+
     isInitialized = true;
-    storeReady = true;
-    console.log(`[IAP] RevenueCat initialized for ${platform}`);
-    return true;
+    storeReady = productFetchOk;
+    console.log(`[IAP] RevenueCat initialized for ${platform} — storeReady=${storeReady}`);
+    return storeReady;
   } catch (err) {
     console.error('[IAP] Init error:', err);
     return false;
@@ -129,29 +157,64 @@ export async function purchaseProduct(productId, userId) {
   }
 
   try {
-    // Find the package matching this product ID
+    // Preferred path: find the package in the current offering. Packages
+    // carry pricing/intro-offer metadata configured in RevenueCat.
     const pkg = currentOffering?.availablePackages?.find(
       p => p.storeProduct?.productIdentifier === productId
     );
 
-    if (!pkg) {
-      // Try purchasing by product ID directly
-      const result = await Purchases.purchaseStoreProduct({
-        product: { productIdentifier: productId }
-      });
+    if (pkg) {
+      const result = await Purchases.purchasePackage({ aPackage: pkg });
       return checkEntitlement(result);
     }
 
-    // Purchase the package
-    const result = await Purchases.purchasePackage({ aPackage: pkg });
+    // Fallback: package not attached to current offering. Fetch the
+    // StoreProduct directly via getProducts (returns a real StoreProduct
+    // object) and purchase that. Critical: purchaseStoreProduct requires
+    // the FULL StoreProduct, not a stub — passing { productIdentifier: x }
+    // is what was breaking IAP and triggering the App Store rejection.
+    console.warn(
+      `[IAP] Product "${productId}" not in offering "${currentOffering?.identifier ?? 'none'}". Falling back to getProducts.`
+    );
+    const productsResult = await Purchases.getProducts({
+      productIdentifiers: [productId],
+    });
+    const storeProduct = productsResult?.products?.[0];
+    if (!storeProduct) {
+      console.error(
+        `[IAP] getProducts returned 0 products for ID "${productId}". Verify product is in App Store Connect AND attached to RevenueCat default offering.`
+      );
+      return {
+        success: false,
+        error:
+          'This purchase is temporarily unavailable. Please restart the app or contact support if it persists.',
+      };
+    }
+
+    const result = await Purchases.purchaseStoreProduct({ product: storeProduct });
     return checkEntitlement(result);
   } catch (err) {
-    // User cancelled
-    if (err.code === 1 || err.message?.includes('cancel') || err.message?.includes('Cancel')) {
+    // User cancelled — explicit handling so the UI doesn't show an error toast
+    if (err.code === 1 || err.code === '1' || /cancel/i.test(err.message ?? '')) {
       return { success: false, error: 'cancelled' };
     }
+    // User-facing error: replace native bridge error messages with something
+    // a panicking user can act on.
     console.error('[IAP] Purchase error:', err);
-    return { success: false, error: err.message || 'Purchase failed' };
+    const friendly = (() => {
+      const msg = (err.message ?? '').toLowerCase();
+      if (msg.includes('payment') || msg.includes('card')) {
+        return 'Payment failed. Please check your payment method and try again.';
+      }
+      if (msg.includes('network') || msg.includes('connection')) {
+        return 'Network issue. Please check your connection and try again.';
+      }
+      if (msg.includes('not allowed') || msg.includes('not permitted')) {
+        return 'Purchases are restricted on this device. Please check Screen Time or Family Sharing settings.';
+      }
+      return 'Purchase failed. Please try again or contact support.';
+    })();
+    return { success: false, error: friendly };
   }
 }
 

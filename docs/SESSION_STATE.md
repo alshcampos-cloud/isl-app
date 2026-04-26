@@ -1,4 +1,61 @@
-# Session State — Last Updated: April 15, 2026 (Evening — IAP fix + SEO + features + marketing)
+# Session State — Last Updated: April 23, 2026 (Late afternoon — full agent-team Sprint 1 + Sprint 2 + Sprint 3)
+
+---
+
+## COMPLETED SESSION: April 23, 2026 — Pre-Launch Polish (Agent-Team Mode)
+
+### Sprint 1 (16:34 → 16:49 PDT, 15 min wall-clock, 9 commits)
+**Goal:** stop the bleeding before paid ad launch — site shipped a fake testimonial that admitted to using AI during a real interview, and was 1.4 MB of JS on landing.
+
+**Agent flow:** PM + Researcher + Finance + Owner brief in parallel → Auditor gate (BLOCKED Coder 2 from touching App.jsx internals, ruled lazy-load App at router level instead) → Coder 1/2/3 in parallel → Reviewer found 1 bug (duplicate React keys) → Supervisor patched → deploy → verify.
+
+**Shipped:**
+- Cheat-adjacent testimonial replaced ("Beta user" + FTC disclaimer)
+- Twitter OG meta cleaned ("real-time prompts" → "rehearsal tools")
+- Free-tier numbers reconciled across PricingSection ↔ SignUpPrompt (PricingSection was source of truth — Auditor verified against `creditSystem.js`)
+- FeaturePreview Practice Prompter copy rewritten (no "real-time", no "narrative")
+- `vercel.json` immutable cache headers for `/assets/*`
+- Deleted `public/ASC-A-1242x2208.png` (549 KB unused)
+- App component lazy-loaded at `src/main.jsx` router level + new `src/Components/LoadingShell.jsx`
+- V1/V3/V5 ad PNGs got `interviewanswers.ai/ethics` URL
+- Reviewer fix: TestimonialsSection key collision (all 3 names = "Beta user")
+
+**Perf measured on prod:** initial blocking JS **1.4 MB → 51 KB raw / 18.72 KB gz (-95%)**. Cache headers verified: `max-age=31536000, immutable`.
+
+### Sprint 2 (16:50 → 17:03 PDT, 13 min wall-clock, 13 commits)
+**Goal:** make the landing tell the rebrand story (post-Sprint 1's bleeding-stopped baseline).
+
+**Agent flow:** 3 deep Researchers (competitive landscape, onboarding flow audit, landing page improvement spec) ran in parallel during Sprint 1's coder execution → Auditor sequenced 11 candidate tasks down to a tight ~90-min plan, cut 7 oversized items → Coder 1/2/3 parallel → Supervisor catches factual bug in TrustBar copy ("Featured in CBS News" was untrue + "Live on App Store" couldn't be verified) → Reviewer GO 8.5/10 with 2 minor nits → Supervisor patches → deploy → verify.
+
+**Shipped:**
+- **Onboarding (Coder 1):** Skipped BreathingExercise for ALL archetypes (was the #1 drop-off, ~50% loss). Removed confirmPassword field. Promoted Google SSO above email form. FeaturePreview shrunk 4 → 2 cards. Cog-psych trust line under practice feedback ("Roediger & Karpicke 2006, the testing effect").
+- **Landing (Coder 2):** Hero rewrite with "Practice, not cheat" leading + 6-tile mockup expansion (was 4). SocialProofBar fixed (5 → 9 modes; dropped fake "92% Avg Score Improvement" → "0 AI in your interview"). NEW `TrustBar.jsx` component under hero. Pricing copy: "No autopay. Pay once, practice 30 days." + 30-day money-back guarantee.
+- **SEO + components (Coder 3):** Bulk-fixed "real-time feedback" → "instant feedback" on 6 SEO blog pages. Added "Practice, not cheat" as first differentiator card in WhyISLSection (dropped weakest "Ready in Days" card). NEW `CogPsychTrustStrip.jsx` standalone component.
+- **Supervisor accuracy fixes:**
+  - TrustBar: "Featured in CBS News" → "Built around CBS News-reported interview-fraud research" (we cite, we are not featured)
+  - TrustBar: "Live on the Apple App Store" → "AES-256 encryption · your practice stays private" (Build 30 status uncertain; AES-256 is defensibly true per FAQ)
+  - Integrated `CogPsychTrustStrip` between SocialProofBar and ProblemSection
+  - Added `id="the-science"` anchor to EthicsPage Section 2.5 + `scroll-mt-20` so the strip's deep-link works
+- **Reviewer follow-ups:** CogPsychTrustStrip link target → `/ethics#the-science`. SocialProofBar tile heights normalized (`min-h-[2.75rem]` on all subtitles).
+
+**Verified live on prod (LandingPage chunk):** "Practice, not cheat", "Built around CBS News", "AES-256 encryption", "Built on cognitive-psychology", "Read the science", "Pay once, practice 30 days". Zero hits for "Live Prompter", "game-changer", "real-time prompter".
+
+### Sprint 3 (17:05 PDT → in progress at time of writing)
+**Goal:** add the 4 features that exist but aren't on the landing (AI Coach, Curated Interviews, Flashcards, Streaks/IRS) + clean up dead Clock import in WhyISLSection. Single coder.
+
+### Battle Scars added this session
+None to add — all the existing battle scars held. The Auditor's ruling on App.jsx (Battle Scar #1) was the key save: if we'd refactored 60 imports inside App.jsx as the PM/Researcher originally proposed, the regression surface would have been enormous. The router-level lazy-load was simpler AND lower risk AND achieved the same perf goal.
+
+### Where to start the next session
+1. Check Apple App Store Connect for Build 30 status (was Waiting for Review since April 15 — 8 days now, possibly stuck)
+2. If Apple approves, change TrustBar from "AES-256 encryption" back to "Live on the Apple App Store" with the verified URL
+3. Erin sign-off needed for: NurseAnswerPro callout section, Us vs Copilots comparison table — both deferred to Sprint 4 per `docs/SPRINT_3_PLAN.md`
+4. Inline interactive demo on landing page (3 hours) is the biggest remaining unclaimed conversion lever per Researcher Doc 1
+
+### Outstanding issues to flag
+- TrustBar's CBS News link points to a generic article ("AI interview cheating, job candidates, ChatGPT, employers"). If a different article is more specific, swap it.
+- "34+ users" social proof line was removed from the landing page audit list but not actually changed in the code (per Coder 1 from earlier). Verify in next session.
+- Phase 2 agent code (~12,500 lines) still uncommitted in working tree. Out of scope for today's sprints but eventually needs a home.
 
 ---
 

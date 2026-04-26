@@ -132,7 +132,7 @@ function InterviewContextHub({
               type="text"
               value={company}
               onChange={(e) => setCompany(e.target.value)}
-              placeholder="e.g., Google, Stanford Health Care"
+              placeholder="e.g., Google, Northwell Health"
               className="w-full px-3.5 py-2.5 border border-warm-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-300/50 focus:border-teal-300 transition-all"
             />
           </div>

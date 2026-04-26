@@ -14,8 +14,8 @@ const tiers = [
     features: [
       { text: '3 AI Interviewer sessions/month', included: true },
       { text: '10 Practice Mode sessions/month', included: true },
-      { text: '5 Answer Assistant sessions/month', included: true },
-      { text: '5 Question Generations/month', included: true },
+      { text: '3 Answer Assistant sessions/month', included: true },
+      { text: '3 Question Generations/month', included: true },
       { text: '10 Practice Prompter questions/month', included: true },
       { text: 'Unlimited question bank storage', included: true },
       { text: 'Speech recognition', included: true },
@@ -52,7 +52,7 @@ const tiers = [
 
 export default function PricingSection() {
   return (
-    <section id="pricing" className="py-16 sm:py-20 bg-gray-50">
+    <section id="pricing" className="relative paper-grain py-16 sm:py-20 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           className="text-center mb-12"
@@ -64,6 +64,9 @@ export default function PricingSection() {
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">
             Simple, Transparent Pricing
           </h2>
+          <p className="text-teal-600 font-semibold text-sm uppercase tracking-wide mt-2">
+            No autopay. Pay once, practice 30 days.
+          </p>
           <p className="mt-4 text-lg text-gray-600">
             Start free. Upgrade when you're ready. No subscription required.
           </p>
@@ -113,6 +116,11 @@ export default function PricingSection() {
                 >
                   {tier.cta}
                 </Link>
+                {!tier.highlighted && (
+                  <p className="mt-2 text-center text-xs text-gray-500">
+                    No credit card required
+                  </p>
+                )}
 
                 {/* Features */}
                 <ul className="mt-8 space-y-3">

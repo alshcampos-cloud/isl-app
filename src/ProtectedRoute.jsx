@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Navigate } from 'react-router-dom'
 import { supabase } from './lib/supabase'
 import Auth from './Auth'
 import ResetPassword from './Components/ResetPassword' // ADDED: For password recovery flow
@@ -13,14 +13,122 @@ function ProtectedRoute({ children }) {
   const [isRecovery, setIsRecovery] = useState(false) // ADDED: Flag recovery flow
 
   useEffect(() => {
-    // Listen for auth changes - Supabase fires PASSWORD_RECOVERY when processing reset link
+    // ─────────────────────────────────────────────────────────────────
+    // CRITICAL FIRST CHECK — recovery detection runs SYNCHRONOUSLY at the
+    // top of useEffect, before getSession(). Why:
+    //
+    // The previous flow had a race where getSession() resolved with a
+    // STALE cached session (e.g., user previously signed in as Account A
+    // in this browser) BEFORE Supabase processed the recovery token in
+    // the URL hash and fired PASSWORD_RECOVERY for Account B. Result: the
+    // app briefly rendered Account A's content, OR the recovery flow got
+    // confused about which user it was resetting. Founder symptom: "the
+    // reset brought me to my new account."
+    //
+    // Fix: synchronously detect the recovery URL, clear any stale local
+    // session FIRST, show the reset modal IMMEDIATELY, and skip the rest
+    // of the normal session-loading path. The PASSWORD_RECOVERY event
+    // (which fires AFTER Supabase parses the token) populates the user.
+    //
+    // Detect both implicit-flow (hash with type=recovery) and PKCE
+    // (query ?code=...).
+    // ─────────────────────────────────────────────────────────────────
+    // Detect recovery URL — both PKCE flow (?code=...&type=recovery) and the
+    // legacy implicit flow (#access_token=...&type=recovery). With
+    // detectSessionInUrl=false in supabase.js, the hash is now still here
+    // when this code runs (was previously stripped by SDK auto-init).
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const queryParams = new URLSearchParams(window.location.search);
+    const hashType = hashParams.get('type');
+    const queryType = queryParams.get('type');
+    const queryCode = queryParams.get('code');
+
+    // Strict matching: type must explicitly be 'recovery'. We DON'T treat a
+    // bare `?code=...` as recovery — that would false-positive on Stripe
+    // returns, OAuth callbacks, etc.
+    const isRecoveryUrl =
+      hashType === 'recovery' ||
+      (queryType === 'recovery' && queryCode);
+
+    if (isRecoveryUrl) {
+      console.log('🔑 [Recovery] URL detected — entering recovery flow synchronously');
+
+      // Show the modal immediately. Don't wait for events.
+      setShowResetPassword(true);
+      setIsRecovery(true);
+      setLoading(false);
+
+      // Clear any stale session so it can't render the wrong user's content
+      // while the recovery token is being processed.
+      void (async () => {
+        try {
+          // Clear local-only — don't broadcast a SIGNED_OUT event globally
+          // because the recovery flow needs to establish a fresh session
+          // for the recovering user without our SIGNED_OUT handler racing.
+          await supabase.auth.signOut({ scope: 'local' });
+          console.log('🔑 [Recovery] Cleared stale local session');
+        } catch (err) {
+          console.warn('[Recovery] signOut failed (non-fatal):', err?.message);
+        }
+
+        // Explicitly exchange the recovery token for a session. With
+        // detectSessionInUrl=false, the SDK no longer does this on its
+        // own — we own the moment of exchange. This also means the URL
+        // hash is preserved for ProtectedRoute to read on remount.
+        try {
+          if (queryCode) {
+            // PKCE: exchange the code from the query string.
+            const { error } = await supabase.auth.exchangeCodeForSession(window.location.href);
+            if (error) console.warn('[Recovery] exchangeCodeForSession error:', error.message);
+            else console.log('🔑 [Recovery] PKCE code exchanged for session');
+          } else {
+            // Implicit: setSession from the hash tokens.
+            const accessToken = hashParams.get('access_token');
+            const refreshToken = hashParams.get('refresh_token');
+            if (accessToken) {
+              const { error } = await supabase.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken || '',
+              });
+              if (error) console.warn('[Recovery] setSession error:', error.message);
+              else console.log('🔑 [Recovery] Implicit-flow session set from hash');
+            }
+          }
+        } catch (err) {
+          console.error('[Recovery] token exchange threw:', err?.message ?? err);
+        }
+      })();
+
+      // Listen ONLY for PASSWORD_RECOVERY in this branch — populate user
+      // when Supabase finishes processing the recovery token.
+      const { data: { subscription: recoverySub } } = supabase.auth.onAuthStateChange(
+        (event, session) => {
+          console.log('[Recovery] auth event:', event, session?.user?.email);
+          if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
+            setUser(session?.user ?? null);
+          }
+        }
+      );
+
+      return () => {
+        recoverySub.unsubscribe();
+      };
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // Normal (non-recovery) flow below — listen for sign-in / sign-out,
+    // then fetch the current session.
+    // ─────────────────────────────────────────────────────────────────
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('Auth event:', event, session?.user?.email);
 
       if (event === 'PASSWORD_RECOVERY') {
-        console.log('🔑 PASSWORD_RECOVERY event - session established, showing reset modal');
+        // Defensive: if for some reason recovery fires here (e.g., user
+        // clicks a recovery link while already on this page), enter the
+        // recovery flow immediately.
+        console.log('🔑 PASSWORD_RECOVERY event — showing reset modal');
         setUser(session?.user ?? null);
         setShowResetPassword(true);
         setIsRecovery(true);
@@ -49,7 +157,6 @@ function ProtectedRoute({ children }) {
     });
 
     // getSession() automatically processes any tokens in the URL hash
-    // This will trigger PASSWORD_RECOVERY event if there's a recovery token
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       console.log('Initial session check:', session?.user?.email ?? 'no session');
 
@@ -66,11 +173,7 @@ function ProtectedRoute({ children }) {
         setUser(null);
       }
 
-      // Only set loading false if we're NOT in recovery flow
-      // (recovery flow sets it in the event handler)
-      if (!window.location.hash.includes('type=recovery')) {
-        setLoading(false);
-      }
+      setLoading(false);
     }).catch((error) => {
       console.error('ProtectedRoute: getSession() failed:', error);
       setLoading(false); // Show auth screen even if session check fails
@@ -86,28 +189,6 @@ function ProtectedRoute({ children }) {
         return false;
       });
     }, 5000);
-
-    // Fallback: If getSession doesn't trigger PASSWORD_RECOVERY within 3 seconds
-    // but we have a recovery token, show the modal anyway
-    // Check both hash (implicit flow) and query params (PKCE flow)
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const queryCode = new URLSearchParams(window.location.search).get('code');
-    if (hashParams.get('type') === 'recovery' || queryCode) {
-      console.log('🔑 Recovery token detected in URL (hash or PKCE code)');
-      const fallbackTimer = setTimeout(() => {
-        if (loading) {
-          console.log('⚠️ Fallback: showing reset modal after timeout');
-          setShowResetPassword(true);
-          setIsRecovery(true);
-          setLoading(false);
-        }
-      }, 3000);
-      return () => {
-        clearTimeout(fallbackTimer);
-        clearTimeout(safetyTimer);
-        subscription.unsubscribe();
-      };
-    }
 
     return () => {
       clearTimeout(safetyTimer);
@@ -168,8 +249,15 @@ function ProtectedRoute({ children }) {
   }
 
 
+  // Unauthenticated visitors hitting /app or /nursing get routed to the
+  // dedicated /login page. Standard SaaS pattern: auth lives at /login,
+  // not in-place on /app. This also keeps /app a clean destination for
+  // returning users (bookmark → sign in → dashboard).
+  //
+  // Use <Navigate> component — calling navigate() in render causes a
+  // re-render loop (fixed: hardboiled redirect circle).
   if (!user) {
-    return <Auth onAuthSuccess={setUser} />
+    return <Navigate to="/login" replace />
   }
 
   // FIX: Anonymous users (from onboarding) have no email and no email_confirmed_at.

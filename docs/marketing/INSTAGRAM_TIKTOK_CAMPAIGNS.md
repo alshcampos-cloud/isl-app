@@ -1,7 +1,7 @@
 # Instagram & TikTok Marketing Campaigns
 ## InterviewAnswers.ai | Koda Labs LLC
 **Created:** April 15, 2026
-**Brand:** InterviewAnswers.ai + NurseInterviewPro.ai (nursing track)
+**Brand:** InterviewAnswers.ai + NurseAnswerPro.ai (nursing track)
 **Voice:** Confident, empathetic, relatable. "Your smart friend who coaches you before the interview."
 
 ---
@@ -62,7 +62,7 @@
 
 ### Slide 10 (CTA)
 **Headline:** Practice These Answers With AI Before the Real Thing
-**Body:** Our AI Mock Interviewer asks follow-up questions, gives real-time feedback on your STAR structure, and coaches you until your answers feel natural. Free to start. No credit card needed.
+**Body:** Our AI Mock Interviewer asks follow-up questions, scores your STAR structure after every practice answer, and coaches you until your answers feel natural. Free to start. No credit card needed.
 **CTA button text:** Try it free at interviewanswers.ai
 **Design note:** Teal gradient background, prominent URL
 
@@ -126,15 +126,15 @@
 
 ---
 
-## CAROUSEL 3: "The Nursing Interview Cheat Sheet"
+## CAROUSEL 3: "The Nursing Interview Prep Sheet"
 
 **Format:** 9 slides, 1080x1350px portrait
 **Target:** Nursing students, new grad nurses, nurses switching specialties
-**Caption:** Nursing interviews are different. You need clinical examples, SBAR structure, and the ability to show patient-first thinking under pressure. Here's your cheat sheet -- built with real nurse educators. Save this before your next panel interview.
-**Hashtags:** #nursinginterview #nursingschool #newgradnurse #nursingstudent #nurselife #sbar #nursingcareer #nurseinterviewpro #nclex2026
+**Caption:** Nursing interviews are different. You need clinical examples, SBAR structure, and the ability to show patient-first thinking under pressure. Here's your prep sheet -- built with real nurse educators. Save this before your next panel interview.
+**Hashtags:** #nursinginterview #nursingschool #newgradnurse #nursingstudent #nurselife #sbar #nursingcareer #nurseanswerpro #nclex2026
 
 ### Slide 1 (Cover)
-**Headline:** The Nursing Interview Cheat Sheet
+**Headline:** The Nursing Interview Prep Sheet
 **Subtext:** SBAR-structured answers for the questions they always ask
 **Design note:** Teal + white, stethoscope icon, clean medical aesthetic
 
@@ -183,8 +183,8 @@ If your answer doesn't demonstrate at least one of these, restructure it.
 
 ### Slide 9 (CTA)
 **Headline:** Practice Nursing Interviews With AI Built By Nurses
-**Body:** NurseInterviewPro uses questions written by real nurse educators, SBAR-structured feedback, and AI coaching designed specifically for clinical interviews. Your first practice session is free.
-**CTA:** Start free at NurseInterviewPro.ai
+**Body:** NurseAnswerPro uses questions written by real nurse educators, SBAR-structured feedback, and AI coaching designed specifically for clinical interviews. Your first practice session is free.
+**CTA:** Start free at NurseAnswerPro.ai
 **Design note:** Teal gradient, nursing-specific imagery
 
 ---
@@ -250,7 +250,7 @@ If your answer doesn't demonstrate at least one of these, restructure it.
 ## STORY SEQUENCE 3: "Nursing Edition -- SBAR for Interviews"
 
 **Target:** Nursing students and new grads
-**Goal:** Niche authority + NurseInterviewPro awareness
+**Goal:** Niche authority + NurseAnswerPro awareness
 
 ### Frame 1
 **Text overlay:** "Nursing interviews are built different"
@@ -268,7 +268,7 @@ If your answer doesn't demonstrate at least one of these, restructure it.
 ### Frame 4
 **Text overlay:** "We built an AI interview coach specifically for nurses. Questions written by nurse educators. SBAR-structured feedback."
 **Background:** App screenshot of nursing practice mode
-**Sticker:** Link sticker to NurseInterviewPro.ai
+**Sticker:** Link sticker to NurseAnswerPro.ai
 
 ---
 
@@ -350,7 +350,7 @@ If your answer doesn't demonstrate at least one of these, restructure it.
 **Script continues:** "Instead of saying 'I'm great at problem solving,' you say: 'When our biggest client threatened to leave, I was responsible for the retention plan. I analyzed their usage data, built a custom proposal, and presented it to their VP. We kept the account and they increased their contract by 20%.'"
 
 ### CTA (35-45s)
-**Script:** "The problem is most people know this but freeze in the actual interview. Link in bio -- you can practice with an AI interviewer that gives you real-time STAR feedback. It's free to start."
+**Script:** "The problem is most people know this but freeze in the actual interview. Link in bio -- you can practice with an AI interviewer that scores your STAR answers and asks the follow-ups you didn't prepare for. It's free to start."
 **On-screen text:** "Practice with AI -- link in bio"
 **End card:** interviewanswers.ai
 
@@ -404,7 +404,7 @@ If your answer doesn't demonstrate at least one of these, restructure it.
 
 ### CTA (30-40s)
 **Script:** "We built an interview coach specifically for nurses. Questions from actual nurse educators. SBAR-structured feedback. Link in bio."
-**On-screen text:** "NurseInterviewPro.ai -- built by nurses, for nurses"
+**On-screen text:** "NurseAnswerPro.ai -- built by nurses, for nurses"
 
 **Audio suggestion:** Trending nursing/medical community audio or clean upbeat track. Avoid anything too corporate.
 
@@ -499,9 +499,9 @@ If your answer doesn't demonstrate at least one of these, restructure it.
 
 ### CTA (32-40s)
 **Script:** "We built an interview coach just for nurses. Real questions from nurse educators. SBAR feedback. Link in bio."
-**On-screen text:** "NurseInterviewPro.ai"
+**On-screen text:** "NurseAnswerPro.ai"
 
-**Hashtags:** #nursinginterview #nursetok #nursingschool #newgradnurse #sbar #nursinglife #nursejobs #nurseinterviewpro
+**Hashtags:** #nursinginterview #nursetok #nursingschool #newgradnurse #sbar #nursinglife #nursejobs #nurseanswerpro
 **Sound suggestion:** Trending nursing community audio or confident/educational beat
 
 ---
@@ -528,7 +528,7 @@ If your answer doesn't demonstrate at least one of these, restructure it.
 - R: The outcome (use numbers)
 
 ### CTA (25-30s)
-**Script:** "Link in bio to practice with AI that gives you STAR feedback in real time."
+**Script:** "Link in bio to practice with AI that scores your STAR answers and asks follow-ups."
 **On-screen text:** "interviewanswers.ai -- free"
 
 **Hashtags:** #starmethod #interviewtips #careeradvice #interviewhack #jobtips #learnontiktok #interviewprep
@@ -603,7 +603,7 @@ If your answer doesn't demonstrate at least one of these, restructure it.
 **[8-15s] SOLUTION**
 *Confident version, clean background*
 **Script:** "What if you could practice every question with AI that actually coaches you -- before the real interview?"
-**On-screen text:** "AI Mock Interviewer | Real-time feedback | STAR method coaching"
+**On-screen text:** "AI Mock Interviewer | Practice feedback | STAR method coaching"
 
 **[15-20s] CTA**
 *App interface quick flash*
@@ -636,7 +636,7 @@ If your answer doesn't demonstrate at least one of these, restructure it.
 
 **[12-20s] PRODUCT**
 *Quick app walkthrough -- AI asking a question, user responding, feedback appearing*
-**Script:** "InterviewAnswers.ai gives you an AI mock interviewer that asks real questions, flags weak spots, and coaches your STAR structure in real time."
+**Script:** "InterviewAnswers.ai gives you an AI mock interviewer that asks real questions, flags weak spots, and coaches your STAR structure after every practice answer."
 
 **[20-25s] CTA**
 **On-screen text:** "Your first practice session is free"
@@ -651,7 +651,7 @@ If your answer doesn't demonstrate at least one of these, restructure it.
 
 **Duration:** 20 seconds
 **Target audience:** Nursing students, new grad nurses, nurses changing specialties (25-40, female-skewed, healthcare interest signals)
-**Objective:** NurseInterviewPro awareness, sign-ups
+**Objective:** NurseAnswerPro awareness, sign-ups
 
 ### Script with timing:
 
@@ -660,7 +660,7 @@ If your answer doesn't demonstrate at least one of these, restructure it.
 *Direct camera, scrubs or medical-adjacent setting*
 
 **[3-10s] PROBLEM + SOLUTION**
-**Script:** "You survived clinicals. You passed the NCLEX. But nursing interviews ask questions that regular interview prep doesn't cover. That's why we built NurseInterviewPro -- an AI coach designed specifically for nursing interviews."
+**Script:** "You survived clinicals. You passed the NCLEX. But nursing interviews ask questions that regular interview prep doesn't cover. That's why we built NurseAnswerPro -- an AI coach designed specifically for nursing interviews."
 **On-screen text sequence:**
 - "Clinical scenario questions"
 - "SBAR-structured feedback"
@@ -672,7 +672,7 @@ If your answer doesn't demonstrate at least one of these, restructure it.
 
 **[17-20s] CTA**
 **On-screen text:** "First session free. No credit card."
-**CTA overlay:** "Try NurseInterviewPro.ai"
+**CTA overlay:** "Try NurseAnswerPro.ai"
 **Script:** "Link below. Your first panel interview just got a lot less scary."
 
 **Visual direction:** Medical-adjacent but not clinical. Teal brand colors throughout. Warm, supportive energy. Avoid stock-photo-nurse vibes -- keep it authentic.
@@ -706,7 +706,7 @@ If your answer doesn't demonstrate at least one of these, restructure it.
 #starmethod #jobsearch2026 #interviewanswers #careerchange #jobtips #interviewcoach
 
 ### Nursing-specific:
-#nursinginterview #nursetok #newgradnurse #nursingschool #sbar #nurselife #nurseinterviewpro
+#nursinginterview #nursetok #newgradnurse #nursingschool #sbar #nurselife #nurseanswerpro
 
 ### Engagement:
 #learnontiktok #careertok #worktok

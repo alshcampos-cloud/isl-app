@@ -1,3 +1,4 @@
+import { isTap } from '../../utils/tapGuard';
 /**
  * SessionReport.jsx — Post-practice session summary report card.
  * Phase 4G: Shows stats, progress, weak points, and next step recommendation.
@@ -115,7 +116,7 @@ function SessionReport({ sessions = [], allHistory = [], questions = [], onClose
   if (!stats) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Session Report">
-        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} onTouchEnd={(e) => { e.preventDefault(); onClose(); }} />
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); onClose(); } }} />
         <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden">
           <div className="bg-gradient-to-r from-teal-600 to-emerald-600 px-6 py-5 text-white">
             <div className="flex items-center justify-between">
@@ -140,7 +141,7 @@ function SessionReport({ sessions = [], allHistory = [], questions = [], onClose
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Session Report">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} onTouchEnd={(e) => { e.preventDefault(); onClose(); }} />
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); onClose(); } }} />
       <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r from-teal-600 to-emerald-600 px-6 py-5 text-white">

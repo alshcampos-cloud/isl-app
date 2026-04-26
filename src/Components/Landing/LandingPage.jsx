@@ -4,9 +4,14 @@ import { supabase } from '../../lib/supabase';
 import useDocumentHead from '../../hooks/useDocumentHead';
 import LandingNavbar from './LandingNavbar';
 import HeroSection from './HeroSection';
+import TrustBar from './TrustBar';
 import SocialProofBar from './SocialProofBar';
+import CogPsychTrustStrip from './CogPsychTrustStrip';
+import InlineDemoSection from './InlineDemoSection';
+import ManifestoSection from './ManifestoSection';
 import ProblemSection from './ProblemSection';
-import FeaturesSection from './FeaturesSection';
+import FeatureCarousel from './FeatureCarousel';
+import FeatureToolbox from './FeatureToolbox';
 import HowItWorksSection from './HowItWorksSection';
 import WhyISLSection from './WhyISLSection';
 import PricingSection from './PricingSection';
@@ -19,20 +24,22 @@ export default function LandingPage() {
   const [loading, setLoading] = useState(true);
 
   // SEO: Dynamic meta tags for the general landing page
+  // (Above-the-fold / shared social preview copy is pure pro-Y; anti-X framing
+  //  lives only in mid-page differentiators + Ethics page + ads.)
   useDocumentHead({
-    title: 'InterviewAnswers.ai - AI Interview Practice & STAR Method Coaching',
-    description: 'Practice job interviews with AI mock interviews and STAR method coaching. Rehearse out loud, build answers from your real experiences. Practice, not cheat. Free to start, no credit card required.',
-    keywords: 'interview preparation, AI interview practice, mock interview, STAR method, behavioral interview questions, job interview tips, interview coaching, AI interview coach, practice interview questions, interview answers, job interview preparation, career coaching, ethical interview prep',
+    title: 'InterviewAnswers.ai - Rehearsal-First AI Interview Practice',
+    description: 'Rehearse your interview answers out loud, with AI practice feedback grounded in cognitive-psychology research. Free to start, no credit card required.',
+    keywords: 'interview preparation, AI interview practice, mock interview, STAR method, behavioral interview questions, job interview tips, interview coaching, AI interview coach, rehearsal interview practice, cognitive psychology interview practice',
     canonical: 'https://www.interviewanswers.ai/',
     og: {
-      title: 'InterviewAnswers.ai - Practice, Not Cheat',
-      description: 'The interview AI that doesn\'t go in the interview. Mock interviews, STAR method coaching, rehearsal tools. Built for preparation, not real-time assistance.',
+      title: 'InterviewAnswers.ai - Rehearsal-First AI Interview Practice',
+      description: 'Rehearse the interview before it happens. AI practice, grounded in cognitive-psychology research. Free to start.',
       url: 'https://www.interviewanswers.ai/',
       type: 'website',
     },
     twitter: {
-      title: 'InterviewAnswers.ai - AI Interview Practice & Coaching',
-      description: 'Practice job interviews with AI. Mock interviews, STAR method coaching, real-time prompts. Free to start.',
+      title: 'InterviewAnswers.ai - Rehearsal-First AI Interview Practice',
+      description: 'Rehearse the interview before it happens. AI practice grounded in cognitive-psychology research. Free to start.',
     },
   });
 
@@ -61,19 +68,23 @@ export default function LandingPage() {
       setLoading(false);
     }, 3000);
 
-    // If already authenticated, redirect to app or nursing based on user metadata
-    // BUT: anonymous users (from onboarding) should see the landing page, not get trapped
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // If already authenticated, redirect to app or nursing based on user metadata.
+    // BUT: anonymous users (from onboarding/demo) should see the landing page.
+    //
+    // IMPORTANT: Use getUser() not getSession(). getSession() returns expired
+    // sessions from localStorage; getUser() validates server-side. Otherwise
+    // stale sessions would bounce users through /app → /login.
+    supabase.auth.getUser().then(({ data: { user }, error }) => {
       clearTimeout(fallbackTimer);
-      if (session && !session.user.is_anonymous) {
-        const field = session.user.user_metadata?.onboarding_field;
+      if (!error && user && !user.is_anonymous) {
+        const field = user.user_metadata?.onboarding_field;
         navigate(field === 'nursing' ? '/nursing' : '/app', { replace: true });
       } else {
         setLoading(false);
       }
     }).catch((error) => {
       clearTimeout(fallbackTimer);
-      console.error('LandingPage: getSession() failed:', error);
+      console.error('LandingPage: getUser() failed:', error);
       setLoading(false); // Show landing page even if auth check fails
     });
 
@@ -95,9 +106,14 @@ export default function LandingPage() {
     <div className="min-h-screen">
       <LandingNavbar />
       <HeroSection />
+      <TrustBar />
       <SocialProofBar />
+      <CogPsychTrustStrip />
+      <InlineDemoSection />
+      <ManifestoSection />
       <ProblemSection />
-      <FeaturesSection />
+      <FeatureCarousel />
+      <FeatureToolbox />
       <HowItWorksSection />
       <WhyISLSection />
       <PricingSection />

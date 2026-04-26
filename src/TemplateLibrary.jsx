@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { X, ChevronDown, ChevronRight, Check, Plus, Sparkles } from 'lucide-react';
 import { DEFAULT_QUESTIONS, QUESTION_GROUPS } from './default_questions';
+import { isTap } from './utils/tapGuard';
 
 // Convert DEFAULT_QUESTIONS format to what App.jsx expects
 const convertQuestion = (dq) => ({
@@ -124,7 +125,7 @@ export default function TemplateLibrary({ onImport, onClose, onOpenAICoach, chec
                 {/* Group header */}
                 <button
                   onClick={() => toggleGroup(group.id)}
-                  onTouchEnd={(e) => { e.preventDefault(); toggleGroup(group.id); }}
+                  onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); toggleGroup(group.id); } }}
                   className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-slate-50 min-h-[56px] ${
                     isExpanded ? 'border-l-4 border-l-teal-500' : 'border-l-4 border-l-transparent'
                   }`}
@@ -180,7 +181,7 @@ export default function TemplateLibrary({ onImport, onClose, onOpenAICoach, chec
                             {/* Question row */}
                             <div
                               onClick={() => toggleQuestion(dq.id)}
-                              onTouchEnd={(e) => { e.preventDefault(); toggleQuestion(dq.id); }}
+                              onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); toggleQuestion(dq.id); } }}
                               className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50 transition-colors min-h-[48px]"
                               role="button"
                               tabIndex={0}
@@ -192,7 +193,7 @@ export default function TemplateLibrary({ onImport, onClose, onOpenAICoach, chec
                               ) : (
                                 <button
                                   onClick={(e) => { e.stopPropagation(); handleAddOne(dq); }}
-                                  onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); handleAddOne(dq); }}
+                                  onTouchEnd={(e) => { if (isTap(e)) { e.stopPropagation(); e.preventDefault(); handleAddOne(dq); } }}
                                   className="flex-shrink-0 w-8 h-8 rounded-full bg-teal-600 flex items-center justify-center hover:bg-teal-700 active:bg-teal-800 transition-colors"
                                   aria-label="Add to bank"
                                 >
@@ -284,7 +285,7 @@ export default function TemplateLibrary({ onImport, onClose, onOpenAICoach, chec
                                   {!added && (
                                     <button
                                       onClick={(e) => { e.stopPropagation(); handleAddOne(dq); }}
-                                      onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); handleAddOne(dq); }}
+                                      onTouchEnd={(e) => { if (isTap(e)) { e.stopPropagation(); e.preventDefault(); handleAddOne(dq); } }}
                                       className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 active:bg-teal-800 transition-colors"
                                     >
                                       <Plus className="w-4 h-4" />
@@ -294,7 +295,7 @@ export default function TemplateLibrary({ onImport, onClose, onOpenAICoach, chec
                                   {onOpenAICoach && (
                                     <button
                                       onClick={(e) => { e.stopPropagation(); handlePracticeWithCoach(dq); }}
-                                      onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); handlePracticeWithCoach(dq); }}
+                                      onTouchEnd={(e) => { if (isTap(e)) { e.stopPropagation(); e.preventDefault(); handlePracticeWithCoach(dq); } }}
                                       className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 active:bg-teal-800 transition-colors"
                                     >
                                       <Sparkles className="w-4 h-4" />

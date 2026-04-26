@@ -85,7 +85,7 @@ What behavioral questions are you all struggling with? Happy to help workshop an
 
 **Body:**
 
-I help people prepare for interviews, and we recently built out a nursing-specific track after working with an infection prevention nurse at Stanford. Wanted to share some of what we learned because nursing interviews are different from corporate ones and the generic advice does not always apply.
+I help people prepare for interviews, and we recently built out a nursing-specific track with my co-founder, a clinical nurse working in infection prevention. Wanted to share some of what we learned because nursing interviews are different from corporate ones and the generic advice does not always apply.
 
 **What nursing interviews actually focus on:**
 
@@ -106,7 +106,7 @@ I help people prepare for interviews, and we recently built out a nursing-specif
 - Have 3-4 clinical stories ready: one about patient advocacy, one about teamwork, one about a mistake or learning moment, one about going above and beyond.
 - Do not memorize scripts. Interviewers can tell. Know your key points and speak naturally.
 
-We built a nursing interview prep tool at InterviewAnswers.ai with questions reviewed by practicing nurses and feedback based on frameworks like SBAR and clinical judgment models. It is specifically designed for healthcare — not just generic behavioral stuff with a nurse label slapped on. If that is useful to anyone here, the nursing track is at NurseInterviewPro.ai.
+We built a nursing interview prep tool at InterviewAnswers.ai with questions reviewed by practicing nurses and feedback based on frameworks like SBAR and clinical judgment models. It is specifically designed for healthcare — not just generic behavioral stuff with a nurse label slapped on. If that is useful to anyone here, the nursing track is at NurseAnswerPro.ai.
 
 But honestly, even without any tool, the biggest thing is just practicing out loud. Grab a friend, a family member, or your phone's voice recorder and run through your stories until they feel natural.
 
@@ -200,7 +200,7 @@ Anyone else have systems that worked for them? Curious what other people's behav
 
 **Headline:** Stop rehearsing answers in your head. Practice them out loud.
 
-**Body:** Interview skills are not about memorizing scripts. They are about delivering structured, compelling stories under pressure. InterviewAnswers.ai runs AI mock interviews that ask real follow-ups, score your STAR structure, and coach you in real time. Free tier available.
+**Body:** Interview skills are not about memorizing scripts. They are about delivering structured, compelling stories under pressure. InterviewAnswers.ai runs AI mock interviews that ask real follow-ups, score your STAR structure on every answer, and coach you in practice until you're ready. Free tier available.
 
 **CTA:** Try a Free Mock Interview
 
@@ -217,7 +217,7 @@ Anyone else have systems that worked for them? Curious what other people's behav
 
 **Headline:** Nursing interviews are not like other interviews. Your prep should not be either.
 
-**Body:** Clinical judgment scenarios. SBAR communication. Patient advocacy stories. NurseInterviewPro.ai has interview prep built specifically for nurses, with questions reviewed by practicing clinicians and feedback based on real nursing frameworks. Not generic career advice with a stethoscope icon.
+**Body:** Clinical judgment scenarios. SBAR communication. Patient advocacy stories. NurseAnswerPro.ai has interview prep built specifically for nurses, with questions reviewed by practicing clinicians and feedback based on real nursing frameworks. Not generic career advice with a stethoscope icon.
 
 **CTA:** Start Nursing Interview Prep
 
@@ -234,7 +234,7 @@ Anyone else have systems that worked for them? Curious what other people's behav
 
 **Headline:** You cleared the coding round. Don't lose the offer on behaviorals.
 
-**Body:** Behavioral rounds carry real weight at top tech companies. InterviewAnswers.ai runs AI-driven mock interviews with follow-up questions, STAR scoring, and real-time coaching. Prep for Amazon LPs, Google googliness, and Meta culture fit. Unlimited practice on the free tier.
+**Body:** Behavioral rounds carry real weight at top tech companies. InterviewAnswers.ai runs AI-driven mock interviews with follow-up questions and STAR-structured feedback on every answer. Prep for Amazon LPs, Google googliness, and Meta culture fit. Built for rehearsal, not real-time. Free tier available.
 
 **CTA:** Practice Behavioral Interviews
 
@@ -267,13 +267,13 @@ Use these as starting points. Adapt to the specific thread. Never copy-paste ide
 
 ### Template 3 — Nurse asking about interview prep
 
-> Nursing interviews have their own flavor — a lot of the generic "behavioral interview" advice out there does not account for clinical judgment scenarios or SBAR-style communication that managers actually want to hear. A few tips: Have a strong patient advocacy story ready (almost always gets asked). Practice walking through clinical scenarios out loud using SBAR structure — Situation, Background, Assessment, Recommendation. And for "why this unit" questions, research the specific patient population and mention something concrete. There is a nursing-specific interview prep tool at NurseInterviewPro.ai if you want structured practice with questions reviewed by actual nurses. But even without tools, the main thing is practice your clinical stories out loud until they feel natural.
+> Nursing interviews have their own flavor — a lot of the generic "behavioral interview" advice out there does not account for clinical judgment scenarios or SBAR-style communication that managers actually want to hear. A few tips: Have a strong patient advocacy story ready (almost always gets asked). Practice walking through clinical scenarios out loud using SBAR structure — Situation, Background, Assessment, Recommendation. And for "why this unit" questions, research the specific patient population and mention something concrete. There is a nursing-specific interview prep tool at NurseAnswerPro.ai if you want structured practice with questions reviewed by actual nurses. But even without tools, the main thing is practice your clinical stories out loud until they feel natural.
 
 ---
 
 ### Template 4 — Someone asking "Are AI interview prep tools worth it?"
 
-> Depends on the tool and what you use it for. The main advantage over practicing alone is that a good AI interviewer asks follow-up questions, which is what real interviews do. You might have a polished answer for "tell me about a time you led a team" but fall apart when the follow-up is "what would you do differently?" That said, AI tools are best for repetition and structure — building muscle memory for delivering STAR answers cleanly. They do not replace understanding the company, preparing thoughtful questions, or the human element. I have been using InterviewAnswers.ai and the thing I find most useful is the real-time feedback on answer structure — it catches when you are spending too long on setup and not enough on your actual actions. Worth trying the free tier to see if it fits your style.
+> Depends on the tool and what you use it for. The main advantage over practicing alone is that a good AI interviewer asks follow-up questions, which is what real interviews do. You might have a polished answer for "tell me about a time you led a team" but fall apart when the follow-up is "what would you do differently?" That said, AI tools are best for repetition and structure — building muscle memory for delivering STAR answers cleanly. They do not replace understanding the company, preparing thoughtful questions, or the human element. I have been using InterviewAnswers.ai and the thing I find most useful is the structured feedback on each answer — it catches when you are spending too long on setup and not enough on your actual actions. Worth trying the free tier to see if it fits your style.
 
 ---
 

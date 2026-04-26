@@ -208,7 +208,7 @@ export default function NursingLandingPage() {
               },
               {
                 problem: 'Your STAR answers sound vague',
-                solution: 'Real-time coaching draws out the specific clinical details that make answers compelling',
+                solution: 'Guided rehearsal draws out the specific clinical details that make answers compelling — during practice, never during a live interview',
                 icon: Target,
               },
               {
@@ -284,7 +284,7 @@ export default function NursingLandingPage() {
               {
                 icon: Target,
                 title: 'STAR Method Coaching',
-                desc: 'Real-time guidance to structure behavioral answers: Situation, Task, Action, Result. Make your clinical stories compelling.',
+                desc: 'In-the-moment practice guidance to structure behavioral answers: Situation, Task, Action, Result. Rehearse your clinical stories until they feel natural.',
                 color: 'bg-amber-50 text-amber-600',
               },
               {

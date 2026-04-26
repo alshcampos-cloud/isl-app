@@ -24,11 +24,11 @@ export const TIER_LIMITS = {
     // General features (unchanged)
     ai_interviewer: 3,           // 3 full AI practice sessions (high value)
     practice_mode: 10,            // 10 quick practices (daily use for 2 weeks)
-    answer_assistant: 5,          // 5 STAR coaching sessions
-    question_gen: 5,              // 5 AI question generations
+    answer_assistant: 3,          // 3 STAR coaching sessions
+    question_gen: 3,              // 3 AI question generations
     live_prompter_questions: 10,  // 10 real-time prompt questions
     live_prompter_unlimited: false,
-    hd_audio: false,               // HD audio is premium only
+    hd_audio: true,                // HD audio enabled for free tier (Sprint 10)
   },
 
   // ── Free Reduced (abuse-detected accounts) ───────────────────
@@ -60,8 +60,8 @@ export const TIER_LIMITS = {
     // General features stay at FREE-tier level (they didn't buy general)
     ai_interviewer: 3,
     practice_mode: 10,
-    answer_assistant: 5,
-    question_gen: 5,
+    answer_assistant: 3,
+    question_gen: 3,
     live_prompter_questions: 10,
     live_prompter_unlimited: false,
     hd_audio: true,                // HD audio via server TTS

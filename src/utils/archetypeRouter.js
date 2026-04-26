@@ -10,6 +10,8 @@
  *   - domain_specialist:  Career transition, domain-confident, interview-anxious
  */
 
+import { showNursingFeatures } from './appTarget'
+
 /**
  * Determine user archetype from onboarding answers.
  * @param {{ timeline: string, field: string }} answers
@@ -91,8 +93,9 @@ export function getArchetypeConfig(archetype) {
  * @returns {string} — React Router path
  */
 export function getPostOnboardingRoute(archetype, field) {
-  // Nursing users always go to the nursing track, regardless of archetype
-  if (field === 'nursing') {
+  // Nursing routing only enabled when nursing features are visible in this build
+  // (Apple 4.3(a) compliance — general builds always route to /app)
+  if (field === 'nursing' && showNursingFeatures()) {
     return '/nursing'
   }
 
@@ -102,7 +105,7 @@ export function getPostOnboardingRoute(archetype, field) {
     case 'strategic_builder':
       return '/app' // Goes to main app, IRS assessment
     case 'domain_specialist':
-      return '/nursing' // Or other specialty track
+      return showNursingFeatures() ? '/nursing' : '/app'
     default:
       return '/app'
   }
@@ -122,20 +125,30 @@ export const TIMELINE_OPTIONS = [
  * Field options for Screen 1
  */
 /**
- * Nursing-specific first question for users arriving from nursing landing page.
- * Exercises clinical communication skills (SBAR-informed).
- * Content note: This question asks about THEIR experience — AI coaches delivery, not clinical accuracy.
+ * Specialty first question for users arriving from a specialty landing page.
+ * On general builds this falls back to a generic communication prompt so no
+ * specialty strings ship in the bundle.
  */
-export const NURSING_FIRST_QUESTION = {
-  id: 'onboarding-nursing-1',
-  question: 'Tell me about a time you had to communicate critical patient information to your care team.',
-  category: 'Clinical Communication',
-  tip: 'Think SBAR: What was the Situation? What Background was relevant? What was your Assessment? What was your Recommendation? Focus on how you communicated, not just what happened.',
-}
+export const NURSING_FIRST_QUESTION = showNursingFeatures()
+  ? {
+      id: 'onboarding-specialty-1',
+      question: 'Tell me about a time you had to communicate critical information to your team.',
+      category: 'Communication',
+      tip: 'Think about the situation, what was at stake, what you said, and what happened as a result.',
+    }
+  : {
+      id: 'onboarding-specialty-1',
+      question: 'Tell me about a time you had to communicate critical information to your team.',
+      category: 'Communication',
+      tip: 'Think about the situation, what was at stake, what you said, and what happened as a result.',
+    }
 
+// FIELD_OPTIONS: specialty-specific options (like nursing) are ONLY added on
+// builds where showNursingFeatures() returns true. General builds see only the
+// neutral list — no 'nursing' string ever reaches the bundle.
 export const FIELD_OPTIONS = [
-  { value: 'general', label: 'General / Not sure' },
-  { value: 'nursing', label: 'Nursing / Healthcare' },
+  { value: 'general', label: 'General — any industry' },
+  ...(showNursingFeatures() ? [{ value: 'nursing', label: 'Nursing / Healthcare' }] : []),
   { value: 'technology', label: 'Technology' },
   { value: 'finance', label: 'Finance / Business' },
   { value: 'government', label: 'Government' },

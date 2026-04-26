@@ -1,3 +1,4 @@
+import { isTap } from '../../utils/tapGuard';
 /**
  * PrepRadio.jsx — Passive listen mode for interview prep.
  * Phase 4K v2: Dual-engine audio — server-generated MP3 (Google Cloud TTS)
@@ -64,7 +65,7 @@ function PrepRadioUnsupported({ onBack }) {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white">
       <div className="px-4 py-4 flex items-center gap-3">
-        <button onClick={onBack} onTouchEnd={(e) => { e.preventDefault(); onBack(); }} aria-label="Go back" className="p-2 hover:bg-white/10 rounded-xl">
+        <button onClick={onBack} onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); onBack(); } }} aria-label="Go back" className="p-2 hover:bg-white/10 rounded-xl">
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div>
@@ -80,7 +81,7 @@ function PrepRadioUnsupported({ onBack }) {
         <p className="text-sm text-white/60 mb-4">
           Your browser doesn&apos;t support text-to-speech. Try opening this in Safari, Chrome, or Firefox.
         </p>
-        <button onClick={onBack} onTouchEnd={(e) => { e.preventDefault(); onBack(); }} className="px-6 py-2.5 bg-white/20 hover:bg-white/30 rounded-xl font-semibold transition-all">
+        <button onClick={onBack} onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); onBack(); } }} className="px-6 py-2.5 bg-white/20 hover:bg-white/30 rounded-xl font-semibold transition-all">
           ← Go Back
         </button>
       </div>
@@ -482,7 +483,7 @@ function PrepRadioInner({ onBack, questions = [], practiceHistory = [], getUserC
 
       {/* Header */}
       <div className="px-4 py-4 flex items-center gap-3">
-        <button onClick={handleBack} onTouchEnd={(e) => { e.preventDefault(); handleBack(); }} aria-label="Go back" className="p-2 hover:bg-white/10 rounded-xl">
+        <button onClick={handleBack} onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); handleBack(); } }} aria-label="Go back" className="p-2 hover:bg-white/10 rounded-xl">
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div>
@@ -517,7 +518,7 @@ function PrepRadioInner({ onBack, questions = [], practiceHistory = [], getUserC
               <div className="mb-4">
                 <button
                   onClick={() => setShowVoicePicker(!showVoicePicker)}
-                  onTouchEnd={(e) => { e.preventDefault(); setShowVoicePicker(!showVoicePicker); }}
+                  onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); setShowVoicePicker(!showVoicePicker); } }}
                   className="w-full flex items-center justify-between px-4 py-2.5 bg-white/5 rounded-xl hover:bg-white/10 transition-colors"
                 >
                   <span className="text-sm text-white/60">
@@ -532,7 +533,7 @@ function PrepRadioInner({ onBack, questions = [], practiceHistory = [], getUserC
                       <button
                         key={v.id}
                         onClick={() => { setVoice(v.id); setShowVoicePicker(false); }}
-                        onTouchEnd={(e) => { e.preventDefault(); setVoice(v.id); setShowVoicePicker(false); }}
+                        onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); setVoice(v.id); setShowVoicePicker(false); } }}
                         className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center justify-between ${
                           voice === v.id ? 'bg-teal-500/20 text-teal-300' : 'hover:bg-white/10 text-white/70'
                         }`}
@@ -618,7 +619,7 @@ function PrepRadioInner({ onBack, questions = [], practiceHistory = [], getUserC
             <p className="text-sm text-white/40">Creating your personalized episode with HD voice</p>
             <button
               onClick={stopAndReset}
-              onTouchEnd={(e) => { e.preventDefault(); stopAndReset(); }}
+              onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); stopAndReset(); } }}
               className="mt-6 text-xs text-white/30 hover:text-white/50 underline"
             >
               Cancel
@@ -680,18 +681,18 @@ function PrepRadioInner({ onBack, questions = [], practiceHistory = [], getUserC
 
             {/* Controls */}
             <div className="flex items-center justify-center gap-6">
-              <button onClick={() => skip(-3)} onTouchEnd={(e) => { e.preventDefault(); skip(-3); }} aria-label="Skip back" className="p-3 hover:bg-white/10 rounded-full">
+              <button onClick={() => skip(-3)} onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); skip(-3); } }} aria-label="Skip back" className="p-3 hover:bg-white/10 rounded-full">
                 <SkipBack className="w-6 h-6" />
               </button>
               <button
                 onClick={togglePlayPause}
-                onTouchEnd={(e) => { e.preventDefault(); togglePlayPause(); }}
+                onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); togglePlayPause(); } }}
                 aria-label={isPlaying ? 'Pause' : 'Play'}
                 className="p-4 bg-teal-500 hover:bg-teal-600 rounded-full shadow-lg transition-all"
               >
                 {isPlaying ? <Pause className="w-8 h-8" /> : <Play className="w-8 h-8 ml-0.5" />}
               </button>
-              <button onClick={() => skip(3)} onTouchEnd={(e) => { e.preventDefault(); skip(3); }} aria-label="Skip forward" className="p-3 hover:bg-white/10 rounded-full">
+              <button onClick={() => skip(3)} onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); skip(3); } }} aria-label="Skip forward" className="p-3 hover:bg-white/10 rounded-full">
                 <SkipForward className="w-6 h-6" />
               </button>
             </div>
@@ -702,7 +703,7 @@ function PrepRadioInner({ onBack, questions = [], practiceHistory = [], getUserC
                 <button
                   key={s}
                   onClick={() => changeSpeed(s)}
-                  onTouchEnd={(e) => { e.preventDefault(); changeSpeed(s); }}
+                  onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); changeSpeed(s); } }}
                   className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
                     speed === s ? 'bg-teal-500 text-white' : 'bg-white/10 text-white/60 hover:bg-white/20'
                   }`}
@@ -716,7 +717,7 @@ function PrepRadioInner({ onBack, questions = [], practiceHistory = [], getUserC
             <div className="flex items-center justify-center">
               <button
                 onClick={() => setShowSleepPicker(!showSleepPicker)}
-                onTouchEnd={(e) => { e.preventDefault(); setShowSleepPicker(!showSleepPicker); }}
+                onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); setShowSleepPicker(!showSleepPicker); } }}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-xs text-white/50 transition-colors"
               >
                 🌙 Sleep: {sleepTimer > 0 ? `${sleepTimer} min` : 'Off'}
@@ -728,7 +729,7 @@ function PrepRadioInner({ onBack, questions = [], practiceHistory = [], getUserC
                   <button
                     key={t.minutes}
                     onClick={() => { setSleepTimer(t.minutes); setShowSleepPicker(false); }}
-                    onTouchEnd={(e) => { e.preventDefault(); setSleepTimer(t.minutes); setShowSleepPicker(false); }}
+                    onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); setSleepTimer(t.minutes); setShowSleepPicker(false); } }}
                     className={`px-2.5 py-1 rounded-full text-[11px] transition-all ${
                       sleepTimer === t.minutes ? 'bg-violet-500 text-white' : 'bg-white/10 text-white/50 hover:bg-white/20'
                     }`}
@@ -742,7 +743,7 @@ function PrepRadioInner({ onBack, questions = [], practiceHistory = [], getUserC
             {/* Back to playlists */}
             <button
               onClick={stopAndReset}
-              onTouchEnd={(e) => { e.preventDefault(); stopAndReset(); }}
+              onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); stopAndReset(); } }}
               className="w-full text-center text-sm text-white/40 hover:text-white/60 py-2"
             >
               ← Choose Different Playlist

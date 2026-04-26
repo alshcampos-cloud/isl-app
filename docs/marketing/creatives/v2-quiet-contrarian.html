@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<title>The Quiet Contrarian — InterviewAnswers.ai</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    width: 1200px; height: 627px; overflow: hidden;
+    color: #fff;
+    position: relative;
+    display: flex;
+  }
+
+  /* Left 60% — cluttered anxious cyan with overlapping UI fragments */
+  .left {
+    width: 60%;
+    background: linear-gradient(135deg, #164E63 0%, #155E75 50%, #0E7490 100%);
+    position: relative;
+    overflow: hidden;
+    padding: 70px 60px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  /* Fake UI windows overlapping */
+  .left::before {
+    content: '';
+    position: absolute;
+    top: 40px; right: -40px; width: 280px; height: 180px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 6px;
+    transform: rotate(-3deg);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+  }
+  .left::after {
+    content: '';
+    position: absolute;
+    bottom: 40px; right: 50px; width: 220px; height: 140px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 6px;
+    transform: rotate(2deg);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.2);
+  }
+
+  .fake-cursor {
+    position: absolute;
+    top: 220px; right: 80px;
+    font-size: 11px; color: rgba(255,255,255,0.5);
+    font-family: monospace;
+    background: rgba(0,0,0,0.3);
+    padding: 4px 8px;
+    border-radius: 3px;
+    transform: rotate(-3deg);
+    z-index: 1;
+  }
+
+  h1 {
+    font-size: 54px;
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -1.4px;
+    color: #F4F4F5;
+    margin-bottom: 24px;
+    position: relative; z-index: 2;
+    max-width: 520px;
+  }
+
+  .body {
+    font-size: 17px;
+    color: rgba(244, 244, 245, 0.78);
+    line-height: 1.55;
+    max-width: 480px;
+    position: relative; z-index: 2;
+    margin-bottom: 28px;
+  }
+
+  /* Right 40% — clean empty teal room */
+  .right {
+    width: 40%;
+    background: #0F766E;
+    position: relative;
+    padding: 70px 50px 60px;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  /* Subtle chair silhouette */
+  .chair {
+    position: absolute;
+    bottom: 120px; left: 50%; transform: translateX(-50%);
+    width: 80px; height: 100px;
+    opacity: 0.2;
+  }
+  .chair::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 20px; width: 40px; height: 40px;
+    background: rgba(255,255,255,0.6);
+    border-radius: 4px 4px 0 0;
+  }
+  .chair::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 25px; width: 30px; height: 60px;
+    background: rgba(255,255,255,0.6);
+  }
+
+  .right-top {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.7);
+  }
+  .right-middle {
+    position: relative; z-index: 2;
+    font-size: 22px; font-weight: 600;
+    line-height: 1.3;
+    color: #fff;
+    max-width: 320px;
+    margin-top: auto;
+  }
+  .right-middle em {
+    font-style: normal;
+    color: rgba(255,255,255,0.8);
+    font-weight: 400;
+  }
+  .cta {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #fff;
+    color: #0F766E;
+    font-size: 15px; font-weight: 700;
+    padding: 12px 20px;
+    border-radius: 4px;
+    margin-top: 20px;
+    width: fit-content;
+  }
+  .cta::after { content: '→'; }
+
+  .lockup {
+    margin-top: 20px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.7);
+    letter-spacing: -0.1px;
+    font-weight: 400;
+  }
+  .lockup strong { color: #fff; font-weight: 700; margin-right: 4px; }
+</style>
+</head>
+<body>
+  <div class="left">
+    <div class="fake-cursor">// prompt: write me an answer for...</div>
+    <h1>Everyone in your pipeline is using an AI copilot.</h1>
+    <p class="body">Assessment-fraud attempts more than doubled last year. Publicly reported cases of offer rescissions are emerging. The room is the only room you want to be in.</p>
+  </div>
+  <div class="right">
+    <div class="right-top">You Won't Need One.</div>
+    <div class="chair"></div>
+    <div class="right-middle">
+      <em>We built the tool that gets you ready for the room —</em> not the one that whispers during it.
+      <div class="cta">See the work</div>
+      <div class="lockup"><strong>InterviewAnswers.ai</strong> Practice, not cheat.</div>
+    </div>
+  </div>
+</body>
+</html>

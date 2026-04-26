@@ -1,6 +1,8 @@
  import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { flushSync } from 'react-dom';
 
+import { isTap } from './utils/tapGuard';
+
 import {
   Brain, Database, Play, Plus, Edit2, Trash2, TrendingUp, Download, Upload,
   Mic, MicOff, Volume2, VolumeX, Eye, EyeOff, Settings, Sparkles, ChevronRight, ChevronDown, X,
@@ -29,6 +31,7 @@ import Tutorial from './Components/Tutorial';
 import { DEFAULT_QUESTIONS, QUESTION_GROUPS, getDefaultActiveGroups, filterQuestionsByGroups, getQuestionCountsByGroup } from './default_questions';
 import QuestionGroupFilter from './Components/QuestionGroupFilter';
 import AIInterviewCoach from './Components/AIInterviewCoach';
+import EmailVerificationGate from './Components/EmailVerificationGate';
 import HomePageV2 from './Components/HomePageV2';
 import InterviewFormatModal from './Components/Intelligence/InterviewFormatModal';
 import CuratedInterviewsScreen from './Components/Intelligence/CuratedInterviewsScreen';
@@ -3844,34 +3847,8 @@ const startPracticeMode = async () => {
             </div>
 
             <div className="space-y-4 mb-6">
-              {/* Option 1: AI Generator */}
+              {/* Option 1: Template Library (RECOMMENDED — founder pick) */}
               <div className="bg-white/10 backdrop-blur rounded-xl p-5 border-2 border-teal-400/50 hover:border-teal-400 transition cursor-pointer"
-                onClick={() => {
-                  console.log('🟣 AI Generator clicked in Add Questions Prompt');
-                  setShowAddQuestionsPrompt(false);
-                  setCurrentView('command-center');
-                  setCommandCenterTab('bank');
-                  console.log('🟣 Should navigate to Command Center (bank tab)');
-                }}
-              >
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-sky-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Sparkles className="w-6 h-6 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-bold text-lg mb-1 text-white">AI Question Generator</h3>
-                    <p className="text-sm text-slate-300 mb-2">
-                      Enter your target role, background, and job description. AI generates personalized questions.
-                    </p>
-                    <span className="inline-block px-3 py-1 bg-teal-500/20 text-teal-300 text-xs font-bold rounded-full border border-teal-500/50">
-                      <Star className="w-3 h-3 inline mr-1" /> RECOMMENDED
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Option 2: Template Library */}
-              <div className="bg-white/10 backdrop-blur rounded-xl p-5 border-2 border-teal-400/30 hover:border-teal-400 transition cursor-pointer"
                 onClick={() => {
                   console.log('🔵 Template Library clicked in Add Questions Prompt');
                   console.log('🔵 Closing Add Questions Prompt...');
@@ -3887,8 +3864,34 @@ const startPracticeMode = async () => {
                   </div>
                   <div className="flex-1">
                     <h3 className="font-bold text-lg mb-1 text-white">Template Library</h3>
-                    <p className="text-sm text-slate-300">
+                    <p className="text-sm text-slate-300 mb-2">
                       Import pre-built question sets for common roles (Product Manager, Software Engineer, etc.)
+                    </p>
+                    <span className="inline-block px-3 py-1 bg-teal-500/20 text-teal-300 text-xs font-bold rounded-full border border-teal-500/50">
+                      <Star className="w-3 h-3 inline mr-1" /> RECOMMENDED
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Option 2: AI Question Generator */}
+              <div className="bg-white/10 backdrop-blur rounded-xl p-5 border-2 border-teal-400/30 hover:border-teal-400 transition cursor-pointer"
+                onClick={() => {
+                  console.log('🟣 AI Generator clicked in Add Questions Prompt');
+                  setShowAddQuestionsPrompt(false);
+                  setCurrentView('command-center');
+                  setCommandCenterTab('bank');
+                  console.log('🟣 Should navigate to Command Center (bank tab)');
+                }}
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-sky-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Sparkles className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-lg mb-1 text-white">AI Question Generator</h3>
+                    <p className="text-sm text-slate-300">
+                      Enter your target role, background, and job description. AI generates personalized questions.
                     </p>
                   </div>
                 </div>
@@ -3951,7 +3954,7 @@ const startPracticeMode = async () => {
               <ul className="space-y-2 text-gray-300">
                 <li className="flex items-start gap-2">
                   <span className="text-teal-400 font-bold">✓</span>
-                  <span><strong>Practice Prompter</strong> - Real-time interview assistance (works right now!)</span>
+                  <span><strong>Practice Prompter</strong> - Rehearse out loud with bullet-point prompts (works right now!)</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-teal-400 font-bold">✓</span>
@@ -4204,21 +4207,21 @@ const startPracticeMode = async () => {
       {/* onAccepted sets hasAcceptedFirstTimeTerms so Tutorial waits until consent is done */}
       {currentUser && <FirstTimeConsent user={currentUser} onAccepted={() => { console.log('✅ User accepted Terms & Privacy'); setHasAcceptedFirstTimeTerms(true); }} onAlreadyAccepted={() => setHasAcceptedFirstTimeTerms(true)} />}
 
-      {/* LIVE PROMPTER WARNING - Shows before activating prompter */}
+      {/* PRACTICE PROMPTER PRE-FLIGHT - Browser check + rehearsal reminder */}
       {showLivePrompterWarning && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 overflow-y-auto">
-          <div 
+          <div
             className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-auto shadow-lg my-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-6">
-              <div className="flex items-center justify-between mb-3">
-                <div className="text-center flex-1">
-                  <span className="text-5xl">⚠️</span>
-                </div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900">
+                  Ready to rehearse?
+                </h2>
                 <button
                   onClick={() => {
-                    console.log('❌ Practice Prompter warning canceled via X');
+                    console.log('❌ Practice Prompter pre-flight canceled via X');
                     setShowLivePrompterWarning(false);
                     setPendingMode(null);
                   }}
@@ -4228,62 +4231,37 @@ const startPracticeMode = async () => {
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              
-              <h2 className="text-xl font-bold text-center mb-3 text-red-600">
-                Practice Prompter - Legal Warning
-              </h2>
-              
-              <p className="text-gray-700 mb-3 text-sm text-center">
-                You're about to use Practice Prompter during real interviews.
+
+              <p className="text-gray-700 mb-4 text-sm">
+                Practice Prompter shows your prepared bullet points as you speak, so you can
+                train yourself to hit your key points naturally. <strong>For rehearsal only</strong> —
+                not during a live interview.
               </p>
 
-              <div className="bg-red-50 border-l-4 border-red-400 rounded p-3 mb-3">
-                <p className="font-bold text-red-900 text-sm mb-2">YOU MUST:</p>
-                <ul className="space-y-1 text-xs text-red-800">
-                  <li>• <strong>Obtain consent</strong> from interviewer before recording</li>
-                  <li>• <strong>Inform them</strong> you're using assistance technology</li>
-                  <li>• <strong>Comply with laws</strong> requiring all-party consent</li>
-                </ul>
+              <div className="bg-slate-50 border-l-4 border-slate-300 rounded p-3 mb-4 text-xs text-slate-700">
+                Using any AI assistance during a live interview violates our Terms of Service
+                and can result in offers being rescinded. See <a href="/ethics" className="text-teal-600 underline">our ethics statement</a> for the full reasoning.
               </div>
 
-              <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded p-3 mb-3">
-                <p className="font-bold text-yellow-900 text-xs mb-1">Legal Consequences:</p>
-                <p className="text-yellow-800 text-xs">
-                  Recording without consent is <strong>illegal</strong> in CA, FL, IL, MA, PA, WA, etc. 
-                  You could face criminal charges or job disqualification.
-                </p>
-              </div>
-
-              <div className="bg-green-50 rounded p-3 mb-3 text-center">
-                <p className="text-xs text-green-800">
-                  <strong>Recommended:</strong> Use for practice only, not actual interviews.
-                </p>
-              </div>
-
-              {/* Browser compatibility notice */}
+              {/* Browser compatibility — the actually-useful part */}
               <div className="bg-teal-50 border-l-4 border-teal-400 rounded p-3 mb-4">
-                <p className="font-bold text-teal-900 text-xs mb-1"><Globe className="w-3 h-3 inline" /> Browser Compatibility:</p>
-                <p className="text-teal-800 text-xs mb-2">
-                  Voice recognition works in:
-                </p>
+                <p className="font-bold text-teal-900 text-xs mb-2"><Globe className="w-3 h-3 inline" /> Browser check</p>
+                <p className="text-teal-800 text-xs mb-2">Voice recognition works in:</p>
                 <div className="flex flex-wrap gap-1 mb-2">
                   <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-medium">✓ Chrome (desktop/Android)</span>
                   <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-medium">✓ Safari</span>
-                  <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-medium">✓ Samsung Internet (Android)</span>
+                  <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-medium">✓ Samsung Internet</span>
                 </div>
-                <p className="text-red-600 text-xs font-medium mb-1">
-                  <Smartphone className="w-3 h-3 inline" /> iPhone users: Use <strong>Safari</strong> only. Chrome, Edge, and Firefox on iPhone do not support voice.
-                </p>
                 <p className="text-teal-700 text-xs">
-                  <strong>Not supported for voice:</strong> Edge, Firefox, Opera, Brave.
-                  Text search and typing always work in all browsers.
+                  <Smartphone className="w-3 h-3 inline" /> On iPhone, use Safari. On unsupported browsers
+                  (Edge, Firefox, Opera, Brave), typing still works.
                 </p>
               </div>
 
               <div className="flex gap-2">
                 <button
                   onClick={() => {
-                    console.log('❌ Practice Prompter warning canceled');
+                    console.log('❌ Practice Prompter pre-flight canceled');
                     setShowLivePrompterWarning(false);
                     setPendingMode(null);
                   }}
@@ -4293,13 +4271,13 @@ const startPracticeMode = async () => {
                 </button>
                 <button
                   onClick={() => {
-                    console.log('✅ User accepted Practice Prompter warning');
+                    console.log('✅ User started Practice Prompter rehearsal');
                     setShowLivePrompterWarning(false);
                     actuallyStartPrompter();
                   }}
-                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-4 rounded-lg text-xs"
+                  className="flex-1 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-semibold py-3 px-4 rounded-lg text-sm"
                 >
-                  I Understand & Accept Responsibility
+                  Start rehearsing
                 </button>
               </div>
             </div>
@@ -4686,7 +4664,7 @@ const startPracticeMode = async () => {
                   </IconContainer>
                   <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-1 sm:mb-2 text-navy-700">Practice Prompter</h3>
                   <p className="text-slate-500 text-xs sm:text-sm mb-3 sm:mb-4 flex-1 font-medium">Real-time bullet prompts</p>
-                  <button onClick={(e) => { e.stopPropagation(); startPrompterMode(); }} onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); startPrompterMode(); }} className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-lg transition-all shadow-sm hover:shadow-md text-sm sm:text-base active:scale-[0.98]">
+                  <button onClick={(e) => { e.stopPropagation(); startPrompterMode(); }} onTouchEnd={(e) => { if (isTap(e)) { e.stopPropagation(); e.preventDefault(); startPrompterMode(); } }} className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-lg transition-all shadow-sm hover:shadow-md text-sm sm:text-base active:scale-[0.98]">
                     Start Practice
                   </button>
                 </div>
@@ -4700,7 +4678,7 @@ const startPracticeMode = async () => {
                   </IconContainer>
                   <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-1 sm:mb-2 text-navy-700">AI Interviewer</h3>
                   <p className="text-slate-500 text-xs sm:text-sm mb-3 sm:mb-4 flex-1 font-medium">Realistic interview practice</p>
-                  <button onClick={(e) => { e.stopPropagation(); startAIInterviewer(); }} onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); startAIInterviewer(); }} className="w-full bg-gradient-to-r from-slate-700 to-slate-900 hover:from-slate-800 hover:to-slate-950 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-lg transition-all shadow-sm hover:shadow-md text-sm sm:text-base active:scale-[0.98]">
+                  <button onClick={(e) => { e.stopPropagation(); startAIInterviewer(); }} onTouchEnd={(e) => { if (isTap(e)) { e.stopPropagation(); e.preventDefault(); startAIInterviewer(); } }} className="w-full bg-gradient-to-r from-slate-700 to-slate-900 hover:from-slate-800 hover:to-slate-950 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-lg transition-all shadow-sm hover:shadow-md text-sm sm:text-base active:scale-[0.98]">
                     Start Interview
                   </button>
                 </div>
@@ -4714,7 +4692,7 @@ const startPracticeMode = async () => {
                   </IconContainer>
                   <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-1 sm:mb-2 text-navy-700">Practice</h3>
                   <p className="text-slate-500 text-xs sm:text-sm mb-3 sm:mb-4 flex-1 font-medium">AI-powered feedback</p>
-                  <button onClick={(e) => { e.stopPropagation(); startPracticeMode(); }} onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); startPracticeMode(); }} className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-lg transition-all shadow-sm hover:shadow-md text-sm sm:text-base active:scale-[0.98]">
+                  <button onClick={(e) => { e.stopPropagation(); startPracticeMode(); }} onTouchEnd={(e) => { if (isTap(e)) { e.stopPropagation(); e.preventDefault(); startPracticeMode(); } }} className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-lg transition-all shadow-sm hover:shadow-md text-sm sm:text-base active:scale-[0.98]">
                     Start Session
                   </button>
                 </div>
@@ -4728,7 +4706,7 @@ const startPracticeMode = async () => {
                   </IconContainer>
                   <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-1 sm:mb-2 text-navy-700">Flashcards</h3>
                   <p className="text-slate-500 text-xs sm:text-sm mb-3 sm:mb-4 flex-1 font-medium">Quick memory drill</p>
-                  <button onClick={(e) => { e.stopPropagation(); startFlashcardMode(); }} onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); startFlashcardMode(); }} className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-lg transition-all shadow-sm hover:shadow-md text-sm sm:text-base active:scale-[0.98]">
+                  <button onClick={(e) => { e.stopPropagation(); startFlashcardMode(); }} onTouchEnd={(e) => { if (isTap(e)) { e.stopPropagation(); e.preventDefault(); startFlashcardMode(); } }} className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-lg transition-all shadow-sm hover:shadow-md text-sm sm:text-base active:scale-[0.98]">
                     Start Review
                   </button>
                 </div>
@@ -4743,7 +4721,7 @@ const startPracticeMode = async () => {
             <div className="grid grid-cols-2 gap-3 sm:gap-4">
               <button
                 onClick={() => setCurrentView('learn')}
-                onTouchEnd={(e) => { e.preventDefault(); setCurrentView('learn'); }}
+                onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); setCurrentView('learn'); } }}
                 className="bg-gradient-to-br from-teal-600 to-emerald-600 rounded-xl p-4 sm:p-5 text-left text-white hover:shadow-lg hover:shadow-teal-500/20 hover:scale-[1.02] transition-all active:scale-[0.98] relative overflow-hidden group"
               >
                 <span className="absolute top-2.5 right-2.5 px-1.5 py-0.5 bg-white/20 text-white rounded text-[9px] font-bold">NEW</span>
@@ -4753,7 +4731,7 @@ const startPracticeMode = async () => {
               </button>
               <button
                 onClick={() => setCurrentView('prep-radio')}
-                onTouchEnd={(e) => { e.preventDefault(); setCurrentView('prep-radio'); }}
+                onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); setCurrentView('prep-radio'); } }}
                 className="bg-gradient-to-br from-slate-700 to-slate-900 rounded-xl p-4 sm:p-5 text-left text-white hover:shadow-lg hover:shadow-slate-500/20 hover:scale-[1.02] transition-all active:scale-[0.98] overflow-hidden group"
               >
                 <RadioIcon size={28} gradient="navy" className="mb-2" />
@@ -4777,7 +4755,7 @@ const startPracticeMode = async () => {
                 <button
                   key={tool.view}
                   onClick={() => tool.view === 'interview-coach' ? setShowCoachPanel(true) : setCurrentView(tool.view)}
-                  onTouchEnd={(e) => { e.preventDefault(); tool.view === 'interview-coach' ? setShowCoachPanel(true) : setCurrentView(tool.view); }}
+                  onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); tool.view === 'interview-coach' ? setShowCoachPanel(true) : setCurrentView(tool.view); } }}
                   className="bg-white rounded-xl p-2.5 sm:p-3 border border-slate-200/80 hover:border-slate-300 hover:shadow-md transition-all text-center group relative"
                 >
                   {tool.badge && (
@@ -4801,7 +4779,7 @@ const startPracticeMode = async () => {
                 <button
                   key={tool.view}
                   onClick={() => tool.view === 'flashcard' ? startFlashcardMode() : setCurrentView(tool.view)}
-                  onTouchEnd={(e) => { e.preventDefault(); tool.view === 'flashcard' ? startFlashcardMode() : setCurrentView(tool.view); }}
+                  onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); tool.view === 'flashcard' ? startFlashcardMode() : setCurrentView(tool.view); } }}
                   className="bg-white rounded-xl p-2.5 sm:p-3 border border-slate-200/80 hover:border-slate-300 hover:shadow-md transition-all text-center group"
                 >
                   <div className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center mx-auto mb-1 sm:mb-1.5">
@@ -4815,7 +4793,7 @@ const startPracticeMode = async () => {
           </div>
 
           {/* Command Center */}
-          <div data-tutorial="command-center" className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-xl hover:shadow-lg p-4 sm:p-5 lg:p-6 transition-all duration-200 cursor-pointer group" onClick={() => setCurrentView('command-center')} onTouchEnd={(e) => { e.preventDefault(); setCurrentView('command-center'); }}>
+          <div data-tutorial="command-center" className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-xl hover:shadow-lg p-4 sm:p-5 lg:p-6 transition-all duration-200 cursor-pointer group" onClick={() => setCurrentView('command-center')} onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); setCurrentView('command-center'); } }}>
             <div className="flex items-center justify-between gap-3 sm:gap-4">
               <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
                 <div className="flex-shrink-0"><CommandCenterIcon size={32} gradient="teal" /></div>
@@ -5201,10 +5179,8 @@ const startPracticeMode = async () => {
                   e.preventDefault();
                   if (interviewSessionActive) handleSpacebarDown('touch');
                 }}
-                onTouchEnd={(e) => {
-                  e.preventDefault();
-                  if (interviewSessionActive) handleSpacebarUp('touch');
-                }}
+                onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault();
+                  if (interviewSessionActive) handleSpacebarUp('touch'); } }}
                 className={`relative w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg ${
                   isCapturing
                     ? 'bg-red-500 hover:bg-red-600 animate-pulse'
@@ -5244,6 +5220,7 @@ const startPracticeMode = async () => {
     // CALLBACK FIX: Handler now defined at top level with useCallback for stable reference
     
     return (
+      <EmailVerificationGate user={currentUser} onVerified={(u) => setCurrentUser(u)}>
       <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-between mb-6 text-white">
@@ -5258,7 +5235,7 @@ const startPracticeMode = async () => {
               {interviewSequence.length > 0 && (
                 <button
                   onClick={handleSwapQuestion}
-                  onTouchEnd={(e) => { e.preventDefault(); handleSwapQuestion(); }}
+                  onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); handleSwapQuestion(); } }}
                   className="bg-white/10 hover:bg-white/20 px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-1.5"
                   title="Try a different question of the same type"
                 >
@@ -6020,6 +5997,7 @@ const startPracticeMode = async () => {
           />
         )}
       </div>
+      </EmailVerificationGate>
     );
   }
 
@@ -9236,7 +9214,7 @@ const startPracticeMode = async () => {
           {!showCoachPanel && (
             <button
               onClick={() => setShowCoachPanel(true)}
-              onTouchEnd={(e) => { e.preventDefault(); setShowCoachPanel(true); }}
+              onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); setShowCoachPanel(true); } }}
               className="fixed bottom-6 right-6 z-40 w-12 h-12 bg-slate-800 hover:bg-slate-900 rounded-full shadow-md flex items-center justify-center active:scale-95 transition-all duration-200"
               aria-label="Open Interview Coach"
             >
@@ -9251,7 +9229,7 @@ const startPracticeMode = async () => {
               <div
                 className="absolute inset-0 bg-black/30"
                 onClick={() => setShowCoachPanel(false)}
-                onTouchEnd={(e) => { e.preventDefault(); setShowCoachPanel(false); }}
+                onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); setShowCoachPanel(false); } }}
               />
               {/* Panel */}
               <div className="relative bg-white rounded-t-2xl shadow-2xl flex flex-col" style={{ height: 'min(85vh, 680px)', maxHeight: '85vh' }}>

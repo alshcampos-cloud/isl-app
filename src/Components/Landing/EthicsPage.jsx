@@ -144,7 +144,7 @@ export default function EthicsPage() {
       </section>
 
       {/* Section 2.5 — The Science (Cognitive Psychology) */}
-      <section className="py-16 sm:py-20 bg-white">
+      <section id="the-science" className="py-16 sm:py-20 bg-white scroll-mt-20">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <p className="text-sm font-semibold text-teal-600 uppercase tracking-wide mb-3">
             The science

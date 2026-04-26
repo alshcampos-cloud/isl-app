@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, X, ChevronRight, BookOpen } from 'lucide-react';
 import { getCuratedInterviewsByFormat } from '../../utils/curatedInterviews';
+import { isTap } from '../../utils/tapGuard';
 
 const difficultyColors = {
   easy: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
@@ -46,7 +47,7 @@ const CuratedInterviewsScreen = ({ isOpen, format, onBack, onStart, sessionSeed 
         <div className="flex items-center justify-between mb-4">
           <button
             onClick={handleBack}
-            onTouchEnd={(e) => { e.preventDefault(); handleBack(); }}
+            onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); handleBack(); } }}
             className="flex items-center gap-1 text-slate-500 hover:text-slate-800 transition-colors"
             aria-label="Back"
           >
@@ -59,7 +60,7 @@ const CuratedInterviewsScreen = ({ isOpen, format, onBack, onStart, sessionSeed 
           </h2>
           <button
             onClick={handleBack}
-            onTouchEnd={(e) => { e.preventDefault(); handleBack(); }}
+            onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); handleBack(); } }}
             className="text-slate-400 hover:text-slate-700 transition-colors"
             aria-label="Close"
           >
@@ -73,7 +74,7 @@ const CuratedInterviewsScreen = ({ isOpen, format, onBack, onStart, sessionSeed 
             <p className="text-slate-600 mb-4">No curated interviews for this format yet.</p>
             <button
               onClick={handleBack}
-              onTouchEnd={(e) => { e.preventDefault(); handleBack(); }}
+              onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); handleBack(); } }}
               className="bg-teal-500 hover:bg-teal-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
             >
               <ArrowLeft className="w-4 h-4 inline mr-1" />
@@ -127,7 +128,7 @@ const CuratedInterviewsScreen = ({ isOpen, format, onBack, onStart, sessionSeed 
                   {/* Show Questions toggle */}
                   <button
                     onClick={() => toggleShowQuestions(interview.id)}
-                    onTouchEnd={(e) => { e.preventDefault(); toggleShowQuestions(interview.id); }}
+                    onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); toggleShowQuestions(interview.id); } }}
                     className="text-xs text-slate-500 hover:text-teal-700 underline"
                   >
                     {shownIds.has(interview.id)
@@ -158,7 +159,7 @@ const CuratedInterviewsScreen = ({ isOpen, format, onBack, onStart, sessionSeed 
                   {/* Begin button */}
                   <button
                     onClick={() => handleStart(interview)}
-                    onTouchEnd={(e) => { e.preventDefault(); handleStart(interview); }}
+                    onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); handleStart(interview); } }}
                     className="mt-4 w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-semibold py-2.5 px-4 rounded-lg transition-all shadow-sm hover:shadow-md active:scale-[0.98] flex items-center justify-center gap-1"
                   >
                     Begin Interview <ChevronRight className="w-4 h-4" />

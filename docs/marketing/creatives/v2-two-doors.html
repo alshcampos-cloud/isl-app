@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<title>Two Doors — InterviewAnswers.ai</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    width: 1200px; height: 627px; overflow: hidden;
+    background: #F8FAFC;
+    color: #0F172A;
+    position: relative;
+    padding: 60px 80px;
+    display: flex; flex-direction: column;
+  }
+
+  h1 {
+    font-size: 52px;
+    font-weight: 900;
+    line-height: 1.03;
+    letter-spacing: -1.5px;
+    color: #0F172A;
+    margin-bottom: 12px;
+    max-width: 780px;
+  }
+  .subhead {
+    font-size: 18px;
+    font-weight: 500;
+    color: #64748B;
+    margin-bottom: 36px;
+    letter-spacing: -0.2px;
+  }
+
+  .doors {
+    display: flex; gap: 24px;
+    flex: 1;
+    margin-bottom: 28px;
+  }
+
+  .door {
+    flex: 1;
+    padding: 36px 32px;
+    border-radius: 6px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    position: relative;
+  }
+
+  .door-left {
+    background: #FEF2F2;
+    border: 2px solid #7F1D1D;
+    color: #7F1D1D;
+  }
+  .door-right {
+    background: #0F766E;
+    color: #fff;
+    position: relative;
+  }
+  /* Subtle open-door effect on right */
+  .door-right::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0; bottom: 0;
+    width: 8px;
+    background: #134E4A;
+    opacity: 0.3;
+  }
+
+  .door-num {
+    font-size: 14px; font-weight: 800;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    opacity: 0.8;
+  }
+  .door-headline {
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.8px;
+    margin-top: 8px;
+  }
+  .door-body {
+    font-size: 16px;
+    line-height: 1.55;
+    opacity: 0.85;
+    margin-top: 16px;
+  }
+  .door-tag {
+    font-size: 14px;
+    font-weight: 700;
+    padding: 8px 14px;
+    border-radius: 3px;
+    align-self: flex-start;
+    margin-top: 16px;
+  }
+  .door-left .door-tag {
+    background: #7F1D1D;
+    color: #FEF2F2;
+  }
+  .door-right .door-tag {
+    background: #fff;
+    color: #0F766E;
+  }
+
+  .footer {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 14px;
+    color: #475569;
+    font-weight: 500;
+    letter-spacing: -0.1px;
+    border-top: 1px solid rgba(15, 23, 42, 0.1);
+    padding-top: 18px;
+  }
+  .footer strong { color: #0F766E; font-weight: 800; margin-right: 6px; }
+  .footer-cta {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #0F172A;
+    color: #fff;
+    font-size: 15px; font-weight: 700;
+    padding: 12px 24px;
+    border-radius: 4px;
+  }
+  .footer-cta::after { content: '→'; }
+</style>
+</head>
+<body>
+  <h1>In the next 48 hours you'll pick one of two things.</h1>
+  <p class="subhead">Choose carefully.</p>
+
+  <div class="doors">
+    <div class="door door-left">
+      <div>
+        <div class="door-num">Door One</div>
+        <div class="door-headline">A prompt that writes your answers.</div>
+        <div class="door-body">Fast. Hollow. Yours only until the follow-up question.</div>
+      </div>
+      <div class="door-tag">Falls apart at the follow-up</div>
+    </div>
+
+    <div class="door door-right">
+      <div>
+        <div class="door-num">Door Two</div>
+        <div class="door-headline">An hour of real practice.</div>
+        <div class="door-body">Slower. Yours forever. Holds up past the follow-up, and the one after that.</div>
+      </div>
+      <div class="door-tag">We only built this one</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div><strong>InterviewAnswers.ai</strong> · Practice, not cheat.</div>
+    <div class="footer-cta">Walk through door two</div>
+  </div>
+</body>
+</html>

@@ -6,11 +6,15 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build && node scripts/inject-seo.js",
+    "build:web": "VITE_APP_TARGET=all vite build && node scripts/inject-seo.js",
+    "build:ios-general": "VITE_APP_TARGET=general vite build && node scripts/inject-seo.js",
+    "build:ios-nursing": "VITE_APP_TARGET=nursing vite build && node scripts/inject-seo.js",
     "preview": "vite preview",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
-    "cap:sync": "vite build && npx cap sync",
-    "cap:ios": "vite build && npx cap sync ios && npx cap open ios",
-    "cap:android": "vite build && npx cap sync android && npx cap open android"
+    "cap:sync": "VITE_APP_TARGET=general vite build && npx cap sync",
+    "cap:ios": "VITE_APP_TARGET=general vite build && npx cap sync ios && npx cap open ios",
+    "cap:ios-nursing": "VITE_APP_TARGET=nursing vite build && npx cap sync ios && npx cap open ios",
+    "cap:android": "VITE_APP_TARGET=general vite build && npx cap sync android && npx cap open android"
   },
   "dependencies": {
     "@capacitor/android": "^8.0.2",
