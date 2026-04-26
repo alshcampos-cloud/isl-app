@@ -44,12 +44,35 @@ export default function AuthReset() {
 
     const run = async () => {
       const params = new URLSearchParams(window.location.search);
+
+      // Accept BOTH URL patterns (Apr 26, 2026 — cross-device fix):
+      //
+      //   1. NEW (preferred): ?token_hash=XXX&type=recovery
+      //      Used when the Supabase email template is configured with
+      //      {{ .TokenHash }}. The token is verified via verifyOtp() which
+      //      does NOT require a code-verifier on the originating device.
+      //      → Cross-device safe: user can request reset on laptop, click
+      //        the link on phone, and it works.
+      //
+      //   2. OLD (fallback): ?code=XXX
+      //      Used when the email template still has {{ .ConfirmationURL }}
+      //      (PKCE flow). Requires the code-verifier in localStorage of the
+      //      same browser that initiated the reset. BREAKS cross-device.
+      //      Kept for backwards compatibility while in-flight emails drain.
+      //
+      // We try (1) first. If absent, fall back to (2). If neither is present,
+      // the link is malformed.
+      const tokenHash = params.get('token_hash');
+      const type = params.get('type');
       const code = params.get('code');
 
-      if (!code) {
+      const hasTokenHash = tokenHash && type === 'recovery';
+      const hasCode = !!code;
+
+      if (!hasTokenHash && !hasCode) {
         if (!cancelled) {
           setErrorMessage(
-            'This reset link is missing the verification code. Please request a new password reset email.'
+            'This reset link is missing required parameters. Please request a new password reset email.'
           );
           setPhase('error');
         }
@@ -58,46 +81,84 @@ export default function AuthReset() {
 
       // Clear ANY stale local session first. Why: a logged-in user clicking
       // the reset email shouldn't have their existing session interfere with
-      // the recovery code exchange. We only clear local — broadcasting a
-      // SIGNED_OUT could race with the SIGNED_IN that exchangeCodeForSession
-      // is about to fire.
+      // recovery. We only clear local — broadcasting a SIGNED_OUT could race
+      // with the SIGNED_IN that verifyOtp/exchangeCodeForSession is about to
+      // fire.
       try {
         await supabase.auth.signOut({ scope: 'local' });
       } catch (err) {
-        // Non-fatal — user might not have had a session anyway
         console.warn('[AuthReset] local signOut warning:', err?.message);
       }
 
-      // Exchange the PKCE code for a session. With detectSessionInUrl=false
-      // in src/lib/supabase.js, the SDK does NOT do this automatically — we
-      // own the moment of exchange.
       try {
-        const { error } = await supabase.auth.exchangeCodeForSession(window.location.href);
+        let error;
+
+        // Reviewer follow-up #2 (Apr 26, 2026): wrap verification in a 15s
+        // timeout race so a hung Supabase call doesn't leave the user
+        // staring at a spinner forever (matches ResetPassword.jsx's own
+        // 15s timeout on updateUser).
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(
+            () => reject(new Error('Verification timed out. Please check your connection and try again.')),
+            15000
+          )
+        );
+
+        if (hasTokenHash) {
+          // PATH 1: token_hash flow (cross-device safe).
+          // verifyOtp validates the hash server-side and establishes a
+          // session for the recovering user. No client-side verifier needed.
+          console.log('[AuthReset] using token_hash flow (cross-device safe)');
+          const result = await Promise.race([
+            supabase.auth.verifyOtp({
+              type: 'recovery',
+              token_hash: tokenHash,
+            }),
+            timeoutPromise,
+          ]);
+          error = result.error;
+        } else {
+          // PATH 2: PKCE code flow (legacy fallback).
+          // Requires code-verifier in localStorage. Will fail with a
+          // helpful error on cross-device clicks.
+          console.log('[AuthReset] using PKCE code flow (legacy)');
+          const result = await Promise.race([
+            supabase.auth.exchangeCodeForSession(window.location.href),
+            timeoutPromise,
+          ]);
+          error = result.error;
+        }
+
         if (cancelled) return;
 
         if (error) {
           // Common failure modes:
-          //   - "Auth code is invalid or expired" — code was already used or
-          //     timed out (Supabase default: 1h)
-          //   - "Auth code and code verifier should be non-empty" — user
-          //     opened email on a different device than they requested from
-          //     (PKCE verifier lives in localStorage of the originating device)
-          console.error('[AuthReset] exchangeCodeForSession error:', error);
-          setErrorMessage(
-            error.message?.includes('verifier')
-              ? 'Reset links must be opened on the same device you requested them from. Please request a new link from the device where you want to reset your password.'
-              : (error.message || 'Reset link is invalid or expired. Please request a new one.')
-          );
+          //   - "Token has expired or is invalid" — link aged out (1h default)
+          //   - "Auth code and code verifier should be non-empty" — old PKCE
+          //     flow, user clicked email on a different device
+          //   - "Email link is invalid or has expired" — already used
+          console.error('[AuthReset] verification error:', error);
+          const msg = error.message || '';
+          let userMessage;
+          if (msg.includes('verifier')) {
+            // Should be rare now that token_hash is the preferred path,
+            // but if a stale PKCE-flow email is clicked cross-device, this fires.
+            userMessage = 'This older reset link cannot be used on a different device than where you requested it. Please request a fresh reset email — the new flow works across devices.';
+          } else if (msg.toLowerCase().includes('expired') || msg.toLowerCase().includes('invalid')) {
+            userMessage = 'This reset link has expired or already been used. Please request a new password reset email.';
+          } else {
+            userMessage = msg || 'Reset link could not be verified. Please request a new one.';
+          }
+          setErrorMessage(userMessage);
           setPhase('error');
           return;
         }
 
-        // Success — Supabase has populated the session. ResetPassword's
-        // updateUser call will use it to set the new password.
+        // Success — session established for the recovering user.
         setPhase('ready');
       } catch (err) {
         if (cancelled) return;
-        console.error('[AuthReset] exchangeCodeForSession threw:', err);
+        console.error('[AuthReset] verification threw:', err);
         setErrorMessage(err?.message || 'Something went wrong verifying the reset link.');
         setPhase('error');
       }
@@ -111,14 +172,16 @@ export default function AuthReset() {
   }, []);
 
   const handleSuccess = async () => {
-    // Full sign-out so the user starts fresh, then send them to /login
+    // Full sign-out so the user starts fresh, then send them to /login.
+    // Reviewer follow-up #1 (Apr 26, 2026): removed redundant alert() —
+    // ResetPassword.jsx already shows a styled "Password updated successfully"
+    // success modal for 1s before calling onSuccess, so the alert was
+    // duplicate noise that fired AFTER the modal disappeared.
     try {
       await supabase.auth.signOut();
     } catch {
       /* non-fatal */
     }
-    // Use alert pattern consistent with ProtectedRoute's onSuccess
-    alert('Password reset successful! Please sign in with your new password.');
     navigate('/login', { replace: true });
   };
 
