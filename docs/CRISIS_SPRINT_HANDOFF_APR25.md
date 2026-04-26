@@ -1,8 +1,8 @@
-# Crisis Sprint Handoff — April 25, 2026
+# Crisis Sprint Handoff — April 25–26, 2026
 
-**Sprint window:** 3:19 PM → ~7:19 PM (autonomous, founder offline)
+**Sprint window:** 3:19 PM Apr 25 → morning Apr 26 (autonomous, founder offline)
 **Branch:** `feature/ui-polish`
-**Final commits this sprint:** 4 (`ca7182e` is the latest)
+**Final commits this sprint:** 5 (`767df9d` is the latest — iOS tap-fix)
 
 ---
 
@@ -13,11 +13,26 @@
 | iOS app shows landing page on launch | **FIXED in code** | Need Xcode Archive Build 32 |
 | iOS general build leaked nursing chunks | **FIXED in code** | Same — Xcode archive |
 | Apple IAP fix (malformed `purchaseStoreProduct` fallback) | **VERIFIED working** earlier today | Carries into Build 32 |
+| **iOS scroll-fires-tap (founder report Apr 26)** | **FIXED in code** | In Build 32 bundle — Xcode archive |
 | RevenueCat "credential issue" on Restore Purchases | **DIAGNOSED** | Needs you: upload ASC API Key to RC |
 | Password reset race condition (round 1) | Fixed earlier (commit `13b9c5c`) | Deployed |
 | Password reset (round 2 — `detectSessionInUrl` race) | **FIXED in code** | Deployed |
 | AOL flagging Supabase auth email "dangerous" | Diagnosed, not fixed | Needs you: configure Supabase Auth custom SMTP via Resend |
 | Build 32 ready to ship | **YES** | Needs you: Xcode archive |
+
+---
+
+## NEW THIS MORNING (Apr 26) — iOS scroll-fires-tap fix (`767df9d`)
+
+**Founder report:** "all the buttons on the phone version are super delicate... they will be clicked on when i scroll. especially the 'just beginning' interview readiness score function..."
+
+**Root cause:** 121 `onTouchEnd={(e) => { e.preventDefault(); doSomething(); }}` handlers across 25 files. This pattern fires on every touchend — including the touchend that ends a scroll gesture. iOS WKWebView users couldn't scroll past the IRS card without it opening the modal. `src/utils/tapGuard.js` existed but ZERO files imported it.
+
+**Fix:** Codemod wrapped 109 handlers with `if (isTap(e)) { ... }` — only fires when finger moved <10px AND touch lasted <300ms. Real taps work, scroll gestures don't trigger actions.
+
+**Files touched:** App.jsx (13), AIInterviewCoach (7), Intelligence/* (49 across 12 files), NursingTrack/* (21 across 8 files), IRSDisplay (1, the specific founder-reported card), SettingsPage (1), TemplateLibrary (5).
+
+**Status:** Committed (`767df9d`), pushed to origin, iOS bundle rebuilt + cap-synced. The fix is in the iOS bundle that Build 32 will ship — no extra rebuild needed before Xcode archive.
 
 ---
 

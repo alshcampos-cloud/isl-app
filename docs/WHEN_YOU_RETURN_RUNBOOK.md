@@ -156,6 +156,8 @@ Expected: `CURRENT_PROJECT_VERSION = 32;` (×2 — Debug + Release configs)
 ## What's been pushed (sprint commits)
 
 ```
+767df9d Fix iOS scroll-fires-tap bug — 109 onTouchEnd guards across 25 files (Apr 26)
+95fee1d Add WHEN_YOU_RETURN_RUNBOOK.md
 0bd060c Refine verify-general-scrub.sh: allowlist known false positives
 0d3c2f2 Add Build 32-specific App Store review notes
 d03561d Add CRISIS_SPRINT_HANDOFF_APR25.md
@@ -164,6 +166,8 @@ ca7182e Fix: iOS landing page leak + password reset race + build target guard
 ```
 
 All on `feature/ui-polish`, all pushed to origin.
+
+**Note on Build 32:** the iOS bundle was rebuilt + cap-synced AFTER `767df9d`, so the scroll-fires-tap fix is already in `ios/App/App/public/`. When you Xcode-archive, the tap-fix ships in Build 32. No extra rebuild needed.
 
 ---
 
