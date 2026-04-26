@@ -9,6 +9,8 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { isTap } from '../../utils/tapGuard';
+
 import {
   ArrowLeft, Send, Loader2, Stethoscope, AlertCircle,
   CheckCircle, XCircle, Shuffle, ChevronRight, ChevronDown, Target,
@@ -25,7 +27,7 @@ import { parseScoreFromResponse, stripScoreTag, scoreColor5, getCitationSource, 
 import { trackBeginPractice } from '../../utils/googleAdsTracking';
 import { createPracticeSession } from './nursingSessionStore';
 import { upsertSavedAnswer } from './nursingSupabase';
-import useSpeechRecognition from './useSpeechRecognition';
+import useSpeechRecognition from '../../hooks/useSpeechRecognition';
 import SpeechUnavailableWarning from '../SpeechUnavailableWarning';
 import { buildSelfEfficacyPrompt } from '../../utils/selfEfficacyFeedback';
 
@@ -700,7 +702,7 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
                             <div className="mb-3">
                               <button
                                 onClick={() => toggleSection('ideal')}
-                                onTouchEnd={(e) => { e.preventDefault(); toggleSection('ideal'); }}
+                                onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); toggleSection('ideal'); } }}
                                 className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl bg-purple-500/10 border border-purple-400/20 hover:bg-purple-500/20 transition-colors"
                               >
                                 <span className="text-purple-300 text-sm font-medium flex items-center gap-2">
@@ -733,7 +735,7 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
                             <div className="mb-3">
                               <button
                                 onClick={() => toggleSection('userAnswer')}
-                                onTouchEnd={(e) => { e.preventDefault(); toggleSection('userAnswer'); }}
+                                onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); toggleSection('userAnswer'); } }}
                                 className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl bg-slate-700/30 border border-white/10 hover:bg-slate-700/50 transition-colors"
                               >
                                 <span className="text-slate-300 text-sm font-medium flex items-center gap-2">
@@ -863,7 +865,7 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
                       </button>
                       <button
                         onClick={nextQuestion}
-                        onTouchEnd={(e) => { e.preventDefault(); nextQuestion(); }}
+                        onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); nextQuestion(); } }}
                         className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-sky-600 to-cyan-500 text-white font-semibold text-sm shadow-lg shadow-sky-500/30 hover:-translate-y-0.5 transition-all"
                       >
                         Next Question <ChevronRight className="w-4 h-4" />

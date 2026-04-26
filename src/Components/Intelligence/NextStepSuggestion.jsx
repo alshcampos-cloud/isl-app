@@ -1,3 +1,4 @@
+import { isTap } from '../../utils/tapGuard';
 /**
  * NextStepSuggestion.jsx — Contextual "What's Next?" suggestions
  * shown at the end of feature workflows to reconnect features.
@@ -77,7 +78,7 @@ export default function NextStepSuggestion({ context, onNavigate }) {
           <button
             key={i}
             onClick={() => onNavigate?.(s.view)}
-            onTouchEnd={(e) => { e.preventDefault(); onNavigate?.(s.view); }}
+            onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); onNavigate?.(s.view); } }}
             className="w-full flex items-center gap-3 p-2.5 bg-slate-50 hover:bg-slate-100 rounded-xl transition-all group text-left"
           >
             <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${s.color} flex items-center justify-center flex-shrink-0`}>

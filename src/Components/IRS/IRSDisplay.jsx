@@ -13,6 +13,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { X, TrendingUp, Target, BookOpen, Flame, PenTool } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { fetchIRSData } from './irsSupabase';
+import { trackTouch, isTap } from '../../utils/tapGuard';
 import {
   calculateConsistency,
   calculateStarAdherence,
@@ -131,8 +132,19 @@ export default function IRSDisplay({ refreshTrigger }) {
       {/* IRS Hero Card — full-width, above stats grid */}
       <div
         className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 text-slate-800 border border-slate-200 cursor-pointer hover:shadow-xl shadow-lg shadow-slate-200/50 transition-all duration-200 h-full"
+        style={{ touchAction: 'manipulation' }}
         onClick={() => setShowDetail(true)}
-        onTouchEnd={(e) => { e.preventDefault(); setShowDetail(true); }}
+        onTouchStart={trackTouch}
+        onTouchEnd={(e) => {
+          // Only fire if it was actually a tap (not a scroll). Without
+          // this guard the modal opened on every touch — even scroll
+          // gestures that happened to start on the card. Founder-reported
+          // bug, Apr 26 2026.
+          if (isTap(e)) {
+            e.preventDefault();
+            setShowDetail(true);
+          }
+        }}
       >
         <div className="flex items-center gap-4 sm:gap-6">
           {/* Left: Animated SVG Progress Ring */}

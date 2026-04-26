@@ -1,3 +1,4 @@
+import { isTap } from '../../utils/tapGuard';
 /**
  * JobFocusManager.jsx — AI-powered question bank curation for job-specific focus.
  *
@@ -242,7 +243,7 @@ Select the most relevant questions for this role. Return JSON only.`;
           </p>
           <button
             onClick={analyzeQuestions}
-            onTouchEnd={(e) => { e.preventDefault(); analyzeQuestions(); }}
+            onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); analyzeQuestions(); } }}
             disabled={isAnalyzing}
             className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg flex items-center justify-center gap-2 transition-all disabled:opacity-50"
           >
@@ -276,7 +277,7 @@ Select the most relevant questions for this role. Return JSON only.`;
           <div className="flex gap-2">
             <button
               onClick={analyzeQuestions}
-              onTouchEnd={(e) => { e.preventDefault(); analyzeQuestions(); }}
+              onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); analyzeQuestions(); } }}
               disabled={isAnalyzing}
               className="flex-1 px-3 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg text-sm font-medium flex items-center justify-center gap-1 transition-all"
             >
@@ -285,7 +286,7 @@ Select the most relevant questions for this role. Return JSON only.`;
             </button>
             <button
               onClick={handleClear}
-              onTouchEnd={(e) => { e.preventDefault(); handleClear(); }}
+              onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); handleClear(); } }}
               className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm font-medium flex items-center justify-center gap-1 transition-all"
             >
               <X className="w-3.5 h-3.5" />

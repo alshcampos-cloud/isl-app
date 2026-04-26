@@ -1,3 +1,4 @@
+import { isTap } from '../../utils/tapGuard';
 /**
  * JourneyProgress.jsx — Visual 5-step progress bar for the home screen.
  *
@@ -122,7 +123,7 @@ export default function JourneyProgress({ practiceHistory = [], questions = [], 
             <button
               key={step.id}
               onClick={() => onNavigate?.(step.view)}
-              onTouchEnd={(e) => { e.preventDefault(); onNavigate?.(step.view); }}
+              onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); onNavigate?.(step.view); } }}
               className="flex flex-col items-center relative z-10 group"
               style={{ flex: 1, minWidth: 0 }}
             >

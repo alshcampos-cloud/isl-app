@@ -1,3 +1,4 @@
+import { isTap } from '../utils/tapGuard';
 /**
  * AIInterviewCoach.jsx — Chat-based AI Interview Coach (Walled Garden Chat)
  *
@@ -446,7 +447,7 @@ export default function AIInterviewCoach({ user, userData, questions = [], pract
             'Authorization': `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
-            mode: 'confidence-brief',
+            mode: 'interview-coach',
             systemPrompt,
             userMessage: payload,
           }),
@@ -586,7 +587,7 @@ export default function AIInterviewCoach({ user, userData, questions = [], pract
             {!isPanel && (
               <button
                 onClick={onClose}
-                onTouchEnd={(e) => { e.preventDefault(); onClose(); }}
+                onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); onClose(); } }}
                 className="flex items-center gap-2 px-2 py-1.5 rounded-md transition-colors text-slate-500 hover:text-slate-700 hover:bg-slate-100"
               >
                 <ArrowLeft className="w-4 h-4" />
@@ -602,7 +603,7 @@ export default function AIInterviewCoach({ user, userData, questions = [], pract
             {isPanel ? (
               <button
                 onClick={onClose}
-                onTouchEnd={(e) => { e.preventDefault(); onClose(); }}
+                onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); onClose(); } }}
                 className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
                 aria-label="Close"
               >
@@ -705,7 +706,7 @@ export default function AIInterviewCoach({ user, userData, questions = [], pract
                 </div>
                 <button
                   onClick={() => sendMessage()}
-                  onTouchEnd={(e) => { e.preventDefault(); sendMessage(); }}
+                  onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); sendMessage(); } }}
                   disabled={!currentInput.trim() || isLoading}
                   className={`p-3 rounded-lg transition-colors duration-150 flex-shrink-0 ${
                     currentInput.trim() && !isLoading
@@ -739,7 +740,7 @@ export default function AIInterviewCoach({ user, userData, questions = [], pract
           {!isPanel && (
             <button
               onClick={onClose}
-              onTouchEnd={(e) => { e.preventDefault(); onClose(); }}
+              onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); onClose(); } }}
               className="flex items-center gap-2 px-2 py-1.5 rounded-md transition-colors text-slate-500 hover:text-slate-700 hover:bg-slate-100"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -761,7 +762,7 @@ export default function AIInterviewCoach({ user, userData, questions = [], pract
             {/* New Chat button */}
             <button
               onClick={handleNewChat}
-              onTouchEnd={(e) => { e.preventDefault(); handleNewChat(); }}
+              onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); handleNewChat(); } }}
               className="p-2 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors duration-150"
               title="New conversation"
           >
@@ -770,7 +771,7 @@ export default function AIInterviewCoach({ user, userData, questions = [], pract
             {isPanel && (
               <button
                 onClick={onClose}
-                onTouchEnd={(e) => { e.preventDefault(); onClose(); }}
+                onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); onClose(); } }}
                 className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
                 aria-label="Close"
               >
@@ -924,7 +925,7 @@ export default function AIInterviewCoach({ user, userData, questions = [], pract
             </div>
             <button
               onClick={() => sendMessage()}
-              onTouchEnd={(e) => { e.preventDefault(); sendMessage(); }}
+              onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); sendMessage(); } }}
               disabled={!currentInput.trim() || isLoading}
               className="p-2.5 bg-teal-600 text-white rounded-lg disabled:opacity-40 hover:bg-teal-700 transition-colors duration-150 flex-shrink-0"
             >

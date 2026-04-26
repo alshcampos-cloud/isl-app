@@ -8,6 +8,7 @@ import { ArrowRight, ArrowLeft, Stethoscope, CheckCircle, LogOut } from 'lucide-
 import { NURSING_SPECIALTIES } from './nursingQuestions';
 import { supabase } from '../../lib/supabase';
 import { showGeneralFeatures } from '../../utils/appTarget';
+import { isTap } from '../../utils/tapGuard';
 
 export default function SpecialtySelection({ onSelectSpecialty, onBack }) {
   const [selected, setSelected] = useState(null);

@@ -1,3 +1,4 @@
+import { isTap } from '../../utils/tapGuard';
 /**
  * QuestionSparkNotes.jsx — "Teach Me" study guide panel for any interview question.
  *
@@ -142,7 +143,7 @@ function QuestionSparkNotes({ question, isOpen, onClose, getUserContext }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" role="dialog" aria-modal="true" aria-label="Study Guide">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} onTouchEnd={(e) => { e.preventDefault(); onClose(); }} />
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); onClose(); } }} />
 
       {/* Panel */}
       <div className="relative w-full max-w-2xl max-h-[90vh] bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col transition-all duration-300">

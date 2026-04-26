@@ -4,6 +4,8 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { isTap } from '../../utils/tapGuard';
+
 import {
   ArrowLeft, Bot, Target, BookOpen, Award,
   ChevronRight, Stethoscope, MessageSquare, Clock,
@@ -51,7 +53,7 @@ function AccountMenu({ userData }) {
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setOpen(!open)}
-        onTouchEnd={(e) => { e.preventDefault(); setOpen(!open); }}
+        onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); setOpen(!open); } }}
         className="flex items-center gap-1.5 text-slate-300 hover:text-white transition-colors"
       >
         <User className="w-4 h-4" />

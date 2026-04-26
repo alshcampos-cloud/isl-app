@@ -1,3 +1,4 @@
+import { isTap } from '../../utils/tapGuard';
 /**
  * PortfolioIntake.jsx — Guided project intake with 2 paths:
  *   1. "Help me build it" — AI-guided conversation (promoted as recommended)
@@ -331,7 +332,7 @@ export default function PortfolioIntake({
             {/* Help me build it — promoted as recommended */}
             <button
               onClick={() => { setPath('chat'); setStep(1); }}
-              onTouchEnd={(e) => { e.preventDefault(); setPath('chat'); setStep(1); }}
+              onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); setPath('chat'); setStep(1); } }}
               className="w-full bg-white rounded-2xl shadow-sm border-2 border-purple-200 p-5 text-left hover:border-purple-400 hover:shadow-md transition-all group relative"
             >
               <div className="absolute -top-2.5 right-4">
@@ -354,7 +355,7 @@ export default function PortfolioIntake({
             {/* I already have content */}
             <button
               onClick={() => { setPath('content'); setStep(1); }}
-              onTouchEnd={(e) => { e.preventDefault(); setPath('content'); setStep(1); }}
+              onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); setPath('content'); setStep(1); } }}
               className="w-full bg-white rounded-2xl shadow-sm border border-slate-200 p-5 text-left hover:border-indigo-300 hover:shadow-md transition-all group"
             >
               <div className="flex items-center gap-4">
@@ -409,7 +410,7 @@ export default function PortfolioIntake({
                   <button
                     key={i}
                     onClick={() => sendChatMessage(starter)}
-                    onTouchEnd={(e) => { e.preventDefault(); sendChatMessage(starter); }}
+                    onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); sendChatMessage(starter); } }}
                     className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm text-slate-600 hover:border-purple-300 hover:text-purple-600 transition-all"
                   >
                     {starter}
@@ -466,7 +467,7 @@ export default function PortfolioIntake({
               <div className="flex gap-2 pt-1">
                 <button
                   onClick={acceptGeneratedProject}
-                  onTouchEnd={(e) => { e.preventDefault(); acceptGeneratedProject(); }}
+                  onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); acceptGeneratedProject(); } }}
                   className="flex-1 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-semibold text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
                 >
                   <Sparkles className="w-4 h-4" /> Save & Analyze
@@ -499,7 +500,7 @@ export default function PortfolioIntake({
             />
             <button
               onClick={() => sendChatMessage()}
-              onTouchEnd={(e) => { e.preventDefault(); sendChatMessage(); }}
+              onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); sendChatMessage(); } }}
               disabled={!chatInput.trim() || isChatLoading}
               className="p-2.5 bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-xl shadow-md disabled:opacity-40 transition-all hover:shadow-lg"
             >
@@ -526,7 +527,7 @@ export default function PortfolioIntake({
           {/* Chat escape hatch */}
           <button
             onClick={() => { setPath('chat'); setChatMessages([]); setGeneratedProject(null); }}
-            onTouchEnd={(e) => { e.preventDefault(); setPath('chat'); setChatMessages([]); setGeneratedProject(null); }}
+            onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); setPath('chat'); setChatMessages([]); setGeneratedProject(null); } }}
             className="w-full flex items-center gap-3 p-3 bg-purple-50 border border-purple-200 rounded-xl hover:bg-purple-100 transition-all group"
           >
             <MessageSquare className="w-4 h-4 text-purple-500" />
@@ -644,7 +645,7 @@ export default function PortfolioIntake({
               {guidedFieldCount >= 2 && (
                 <button
                   onClick={handleFleshOut}
-                  onTouchEnd={(e) => { e.preventDefault(); handleFleshOut(); }}
+                  onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); handleFleshOut(); } }}
                   disabled={isFleshingOut}
                   className="w-full py-3 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 text-purple-700 rounded-xl font-semibold text-sm hover:from-purple-100 hover:to-indigo-100 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
@@ -683,7 +684,7 @@ export default function PortfolioIntake({
                   <div className="flex gap-2">
                     <button
                       onClick={acceptFleshedOut}
-                      onTouchEnd={(e) => { e.preventDefault(); acceptFleshedOut(); }}
+                      onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); acceptFleshedOut(); } }}
                       className="flex-1 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-semibold text-sm shadow-md hover:shadow-lg transition-all"
                     >
                       Use this version
@@ -789,7 +790,7 @@ export default function PortfolioIntake({
                       onDragOver={handleDragOver}
                       onDragLeave={handleDragLeave}
                       onClick={() => fileInputRef.current?.click()}
-                      onTouchEnd={(e) => { e.preventDefault(); fileInputRef.current?.click(); }}
+                      onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); fileInputRef.current?.click(); } }}
                       className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
                         isDragging
                           ? 'border-indigo-400 bg-indigo-50'

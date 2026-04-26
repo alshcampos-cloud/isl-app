@@ -9,6 +9,8 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { isTap } from '../../utils/tapGuard';
+
 import {
   ArrowLeft, RotateCcw, BarChart3, CheckCircle, AlertCircle,
   BookOpen, Stethoscope, Target, TrendingUp, Save, Loader2, Award
@@ -421,7 +423,7 @@ RULES:
                   <div className="mt-2 pl-8">
                     <button
                       onClick={() => handleSaveBestAnswer(result.questionId, result.userAnswer)}
-                      onTouchEnd={(e) => { e.preventDefault(); handleSaveBestAnswer(result.questionId, result.userAnswer); }}
+                      onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); handleSaveBestAnswer(result.questionId, result.userAnswer); } }}
                       disabled={!!savedQuestions[result.questionId] || savingQuestion === result.questionId}
                       className={`flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-lg transition-all ${
                         savedQuestions[result.questionId]

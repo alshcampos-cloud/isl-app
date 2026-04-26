@@ -12,6 +12,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { X, TrendingUp, Target, BookOpen, Flame, PenTool } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { fetchNursingIRSData } from './nursingIRSData';
+import { isTap } from '../../utils/tapGuard';
+
 import {
   calculateConsistency,
   calculateStarAdherence,
@@ -135,7 +137,7 @@ export default function NursingIRSDisplay({ userId, specialtyId, refreshTrigger 
       <div
         className="mb-4 sm:mb-6 bg-white/10 backdrop-blur-lg rounded-xl sm:rounded-2xl p-4 sm:p-5 text-white border border-white/20 cursor-pointer hover:bg-white/15 transition-all duration-200"
         onClick={() => setShowDetail(true)}
-        onTouchEnd={(e) => { e.preventDefault(); setShowDetail(true); }}
+        onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); setShowDetail(true); } }}
       >
         <div className="flex items-center gap-4 sm:gap-6">
           {/* Left: Animated SVG Progress Ring */}

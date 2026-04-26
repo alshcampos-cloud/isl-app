@@ -1,6 +1,8 @@
  import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { flushSync } from 'react-dom';
 
+import { isTap } from './utils/tapGuard';
+
 import {
   Brain, Database, Play, Plus, Edit2, Trash2, TrendingUp, Download, Upload,
   Mic, MicOff, Volume2, VolumeX, Eye, EyeOff, Settings, Sparkles, ChevronRight, ChevronDown, X,
@@ -4662,7 +4664,7 @@ const startPracticeMode = async () => {
                   </IconContainer>
                   <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-1 sm:mb-2 text-navy-700">Practice Prompter</h3>
                   <p className="text-slate-500 text-xs sm:text-sm mb-3 sm:mb-4 flex-1 font-medium">Real-time bullet prompts</p>
-                  <button onClick={(e) => { e.stopPropagation(); startPrompterMode(); }} onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); startPrompterMode(); }} className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-lg transition-all shadow-sm hover:shadow-md text-sm sm:text-base active:scale-[0.98]">
+                  <button onClick={(e) => { e.stopPropagation(); startPrompterMode(); }} onTouchEnd={(e) => { if (isTap(e)) { e.stopPropagation(); e.preventDefault(); startPrompterMode(); } }} className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-lg transition-all shadow-sm hover:shadow-md text-sm sm:text-base active:scale-[0.98]">
                     Start Practice
                   </button>
                 </div>
@@ -4676,7 +4678,7 @@ const startPracticeMode = async () => {
                   </IconContainer>
                   <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-1 sm:mb-2 text-navy-700">AI Interviewer</h3>
                   <p className="text-slate-500 text-xs sm:text-sm mb-3 sm:mb-4 flex-1 font-medium">Realistic interview practice</p>
-                  <button onClick={(e) => { e.stopPropagation(); startAIInterviewer(); }} onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); startAIInterviewer(); }} className="w-full bg-gradient-to-r from-slate-700 to-slate-900 hover:from-slate-800 hover:to-slate-950 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-lg transition-all shadow-sm hover:shadow-md text-sm sm:text-base active:scale-[0.98]">
+                  <button onClick={(e) => { e.stopPropagation(); startAIInterviewer(); }} onTouchEnd={(e) => { if (isTap(e)) { e.stopPropagation(); e.preventDefault(); startAIInterviewer(); } }} className="w-full bg-gradient-to-r from-slate-700 to-slate-900 hover:from-slate-800 hover:to-slate-950 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-lg transition-all shadow-sm hover:shadow-md text-sm sm:text-base active:scale-[0.98]">
                     Start Interview
                   </button>
                 </div>
@@ -4690,7 +4692,7 @@ const startPracticeMode = async () => {
                   </IconContainer>
                   <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-1 sm:mb-2 text-navy-700">Practice</h3>
                   <p className="text-slate-500 text-xs sm:text-sm mb-3 sm:mb-4 flex-1 font-medium">AI-powered feedback</p>
-                  <button onClick={(e) => { e.stopPropagation(); startPracticeMode(); }} onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); startPracticeMode(); }} className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-lg transition-all shadow-sm hover:shadow-md text-sm sm:text-base active:scale-[0.98]">
+                  <button onClick={(e) => { e.stopPropagation(); startPracticeMode(); }} onTouchEnd={(e) => { if (isTap(e)) { e.stopPropagation(); e.preventDefault(); startPracticeMode(); } }} className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-lg transition-all shadow-sm hover:shadow-md text-sm sm:text-base active:scale-[0.98]">
                     Start Session
                   </button>
                 </div>
@@ -4704,7 +4706,7 @@ const startPracticeMode = async () => {
                   </IconContainer>
                   <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-1 sm:mb-2 text-navy-700">Flashcards</h3>
                   <p className="text-slate-500 text-xs sm:text-sm mb-3 sm:mb-4 flex-1 font-medium">Quick memory drill</p>
-                  <button onClick={(e) => { e.stopPropagation(); startFlashcardMode(); }} onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); startFlashcardMode(); }} className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-lg transition-all shadow-sm hover:shadow-md text-sm sm:text-base active:scale-[0.98]">
+                  <button onClick={(e) => { e.stopPropagation(); startFlashcardMode(); }} onTouchEnd={(e) => { if (isTap(e)) { e.stopPropagation(); e.preventDefault(); startFlashcardMode(); } }} className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-lg transition-all shadow-sm hover:shadow-md text-sm sm:text-base active:scale-[0.98]">
                     Start Review
                   </button>
                 </div>
@@ -4719,7 +4721,7 @@ const startPracticeMode = async () => {
             <div className="grid grid-cols-2 gap-3 sm:gap-4">
               <button
                 onClick={() => setCurrentView('learn')}
-                onTouchEnd={(e) => { e.preventDefault(); setCurrentView('learn'); }}
+                onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); setCurrentView('learn'); } }}
                 className="bg-gradient-to-br from-teal-600 to-emerald-600 rounded-xl p-4 sm:p-5 text-left text-white hover:shadow-lg hover:shadow-teal-500/20 hover:scale-[1.02] transition-all active:scale-[0.98] relative overflow-hidden group"
               >
                 <span className="absolute top-2.5 right-2.5 px-1.5 py-0.5 bg-white/20 text-white rounded text-[9px] font-bold">NEW</span>
@@ -4729,7 +4731,7 @@ const startPracticeMode = async () => {
               </button>
               <button
                 onClick={() => setCurrentView('prep-radio')}
-                onTouchEnd={(e) => { e.preventDefault(); setCurrentView('prep-radio'); }}
+                onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); setCurrentView('prep-radio'); } }}
                 className="bg-gradient-to-br from-slate-700 to-slate-900 rounded-xl p-4 sm:p-5 text-left text-white hover:shadow-lg hover:shadow-slate-500/20 hover:scale-[1.02] transition-all active:scale-[0.98] overflow-hidden group"
               >
                 <RadioIcon size={28} gradient="navy" className="mb-2" />
@@ -4753,7 +4755,7 @@ const startPracticeMode = async () => {
                 <button
                   key={tool.view}
                   onClick={() => tool.view === 'interview-coach' ? setShowCoachPanel(true) : setCurrentView(tool.view)}
-                  onTouchEnd={(e) => { e.preventDefault(); tool.view === 'interview-coach' ? setShowCoachPanel(true) : setCurrentView(tool.view); }}
+                  onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); tool.view === 'interview-coach' ? setShowCoachPanel(true) : setCurrentView(tool.view); } }}
                   className="bg-white rounded-xl p-2.5 sm:p-3 border border-slate-200/80 hover:border-slate-300 hover:shadow-md transition-all text-center group relative"
                 >
                   {tool.badge && (
@@ -4777,7 +4779,7 @@ const startPracticeMode = async () => {
                 <button
                   key={tool.view}
                   onClick={() => tool.view === 'flashcard' ? startFlashcardMode() : setCurrentView(tool.view)}
-                  onTouchEnd={(e) => { e.preventDefault(); tool.view === 'flashcard' ? startFlashcardMode() : setCurrentView(tool.view); }}
+                  onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); tool.view === 'flashcard' ? startFlashcardMode() : setCurrentView(tool.view); } }}
                   className="bg-white rounded-xl p-2.5 sm:p-3 border border-slate-200/80 hover:border-slate-300 hover:shadow-md transition-all text-center group"
                 >
                   <div className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center mx-auto mb-1 sm:mb-1.5">
@@ -4791,7 +4793,7 @@ const startPracticeMode = async () => {
           </div>
 
           {/* Command Center */}
-          <div data-tutorial="command-center" className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-xl hover:shadow-lg p-4 sm:p-5 lg:p-6 transition-all duration-200 cursor-pointer group" onClick={() => setCurrentView('command-center')} onTouchEnd={(e) => { e.preventDefault(); setCurrentView('command-center'); }}>
+          <div data-tutorial="command-center" className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-xl hover:shadow-lg p-4 sm:p-5 lg:p-6 transition-all duration-200 cursor-pointer group" onClick={() => setCurrentView('command-center')} onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); setCurrentView('command-center'); } }}>
             <div className="flex items-center justify-between gap-3 sm:gap-4">
               <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
                 <div className="flex-shrink-0"><CommandCenterIcon size={32} gradient="teal" /></div>
@@ -5177,10 +5179,8 @@ const startPracticeMode = async () => {
                   e.preventDefault();
                   if (interviewSessionActive) handleSpacebarDown('touch');
                 }}
-                onTouchEnd={(e) => {
-                  e.preventDefault();
-                  if (interviewSessionActive) handleSpacebarUp('touch');
-                }}
+                onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault();
+                  if (interviewSessionActive) handleSpacebarUp('touch'); } }}
                 className={`relative w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg ${
                   isCapturing
                     ? 'bg-red-500 hover:bg-red-600 animate-pulse'
@@ -5235,7 +5235,7 @@ const startPracticeMode = async () => {
               {interviewSequence.length > 0 && (
                 <button
                   onClick={handleSwapQuestion}
-                  onTouchEnd={(e) => { e.preventDefault(); handleSwapQuestion(); }}
+                  onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); handleSwapQuestion(); } }}
                   className="bg-white/10 hover:bg-white/20 px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-1.5"
                   title="Try a different question of the same type"
                 >
@@ -9214,7 +9214,7 @@ const startPracticeMode = async () => {
           {!showCoachPanel && (
             <button
               onClick={() => setShowCoachPanel(true)}
-              onTouchEnd={(e) => { e.preventDefault(); setShowCoachPanel(true); }}
+              onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); setShowCoachPanel(true); } }}
               className="fixed bottom-6 right-6 z-40 w-12 h-12 bg-slate-800 hover:bg-slate-900 rounded-full shadow-md flex items-center justify-center active:scale-95 transition-all duration-200"
               aria-label="Open Interview Coach"
             >
@@ -9229,7 +9229,7 @@ const startPracticeMode = async () => {
               <div
                 className="absolute inset-0 bg-black/30"
                 onClick={() => setShowCoachPanel(false)}
-                onTouchEnd={(e) => { e.preventDefault(); setShowCoachPanel(false); }}
+                onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); setShowCoachPanel(false); } }}
               />
               {/* Panel */}
               <div className="relative bg-white rounded-t-2xl shadow-2xl flex flex-col" style={{ height: 'min(85vh, 680px)', maxHeight: '85vh' }}>

@@ -1,3 +1,4 @@
+import { isTap } from '../../utils/tapGuard';
 /**
  * LessonPlayer.jsx — Audio lesson player with quiz flow for Learn section.
  * Phase 5, Sprint 4. D.R.A.F.T. protocol: NEW file.
@@ -51,7 +52,7 @@ export default function LessonPlayer({
         <p>Lesson not found.</p>
         <button
           onClick={onBack}
-          onTouchEnd={(e) => { e.preventDefault(); onBack?.() }}
+          onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); onBack?.() } }}
           style={{ marginTop: '1rem', padding: '0.6rem 1.5rem', borderRadius: '0.75rem', background: '#f1f5f9', border: 'none', color: '#475569', cursor: 'pointer' }}
         >
           ← Back
@@ -432,7 +433,7 @@ export default function LessonPlayer({
           <div style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <button
               onClick={handleBack}
-              onTouchEnd={(e) => { e.preventDefault(); handleBack() }}
+              onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); handleBack() } }}
               style={{ padding: '0.5rem', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '0.75rem', color: '#fff', cursor: 'pointer' }}
             >
               <ArrowLeft size={20} />
@@ -535,7 +536,7 @@ export default function LessonPlayer({
             {/* Speed button */}
             <button
               onClick={cycleSpeed}
-              onTouchEnd={(e) => { e.preventDefault(); cycleSpeed() }}
+              onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); cycleSpeed() } }}
               style={{
                 padding: '0.5rem 0.8rem', borderRadius: '0.6rem',
                 background: 'rgba(255,255,255,0.1)', border: 'none',
@@ -558,7 +559,7 @@ export default function LessonPlayer({
             ) : (
               <button
                 onClick={togglePlayPause}
-                onTouchEnd={(e) => { e.preventDefault(); togglePlayPause() }}
+                onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); togglePlayPause() } }}
                 style={{
                   width: '4rem', height: '4rem', borderRadius: '50%',
                   background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
@@ -574,7 +575,7 @@ export default function LessonPlayer({
             {/* Skip to quiz */}
             <button
               onClick={skipToQuiz}
-              onTouchEnd={(e) => { e.preventDefault(); skipToQuiz() }}
+              onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); skipToQuiz() } }}
               style={{
                 padding: '0.5rem 0.8rem', borderRadius: '0.6rem',
                 background: 'rgba(255,255,255,0.1)', border: 'none',
@@ -672,7 +673,7 @@ export default function LessonPlayer({
           <div style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', borderBottom: '1px solid #e2e8f0' }}>
             <button
               onClick={handleBack}
-              onTouchEnd={(e) => { e.preventDefault(); handleBack() }}
+              onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); handleBack() } }}
               style={{ padding: '0.5rem', background: '#f1f5f9', border: 'none', borderRadius: '0.75rem', color: '#475569', cursor: 'pointer' }}
             >
               <ArrowLeft size={20} />
@@ -704,7 +705,7 @@ export default function LessonPlayer({
           <div style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', borderBottom: '1px solid #e2e8f0' }}>
             <button
               onClick={handleBack}
-              onTouchEnd={(e) => { e.preventDefault(); handleBack() }}
+              onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); handleBack() } }}
               style={{ padding: '0.5rem', background: '#f1f5f9', border: 'none', borderRadius: '0.75rem', color: '#475569', cursor: 'pointer' }}
             >
               <ArrowLeft size={20} />
@@ -771,7 +772,7 @@ export default function LessonPlayer({
               {/* Complete & continue */}
               <button
                 onClick={() => onComplete?.(quizScore)}
-                onTouchEnd={(e) => { e.preventDefault(); onComplete?.(quizScore) }}
+                onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); onComplete?.(quizScore) } }}
                 style={{
                   width: '100%', padding: '0.9rem', borderRadius: '0.75rem',
                   background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
@@ -792,13 +793,11 @@ export default function LessonPlayer({
                   setAudioProgress(0)
                   setCurrentLine(0)
                 }}
-                onTouchEnd={(e) => {
-                  e.preventDefault()
+                onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault()
                   setPhase(PHASE.LISTEN)
                   setAudioCompleted(false)
                   setAudioProgress(0)
-                  setCurrentLine(0)
-                }}
+                  setCurrentLine(0) } }}
                 style={{
                   width: '100%', padding: '0.75rem', borderRadius: '0.75rem',
                   background: '#f8fafc', border: '1px solid #e2e8f0',
