@@ -132,8 +132,14 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
     setMessage(null)
 
     try {
+      // IMPORTANT (Apr 26, 2026): redirect to /auth/reset, NOT /app or /nursing.
+      // Supabase's PKCE flow strips type=recovery from the final landing URL
+      // and only forwards ?code=<auth_code>. A dedicated /auth/reset route
+      // means any ?code= arriving there is unambiguously a recovery code
+      // (no Stripe/OAuth false positives). See src/Components/AuthReset.jsx
+      // for the full explanation.
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}${fromNursing ? '/nursing' : '/app'}`,
+        redirectTo: `${window.location.origin}/auth/reset`,
       })
 
       if (error) throw error
