@@ -159,11 +159,22 @@ export async function purchaseProduct(productId, userId) {
   try {
     // Preferred path: find the package in the current offering. Packages
     // carry pricing/intro-offer metadata configured in RevenueCat.
+    //
+    // BUG FIX (Apr 26, 2026): RC Capacitor SDK v12 PurchasesStoreProduct
+    // exposes the product ID via `identifier`, NOT `productIdentifier`.
+    // The old comparison against `productIdentifier` always returned
+    // undefined → package never found → forced into fallback path that
+    // hit "Product parameter did not have identifier key" error from
+    // RevenueCat's iOS Swift bridge.
+    // Source: node_modules/@revenuecat/purchases-typescript-internal-esm/
+    //         dist/offerings.d.ts → interface PurchasesStoreProduct
+    //         { readonly identifier: string; ... }
     const pkg = currentOffering?.availablePackages?.find(
-      p => p.storeProduct?.productIdentifier === productId
+      p => p.storeProduct?.identifier === productId
     );
 
     if (pkg) {
+      console.log(`[IAP] Purchasing via offering package: ${pkg.identifier}`);
       const result = await Purchases.purchasePackage({ aPackage: pkg });
       return checkEntitlement(result);
     }
@@ -171,10 +182,11 @@ export async function purchaseProduct(productId, userId) {
     // Fallback: package not attached to current offering. Fetch the
     // StoreProduct directly via getProducts (returns a real StoreProduct
     // object) and purchase that. Critical: purchaseStoreProduct requires
-    // the FULL StoreProduct, not a stub — passing { productIdentifier: x }
-    // is what was breaking IAP and triggering the App Store rejection.
+    // the FULL StoreProduct, not a stub. Passing { productIdentifier: x }
+    // (legacy key name) is what was breaking IAP and triggering the
+    // App Store rejection.
     console.warn(
-      `[IAP] Product "${productId}" not in offering "${currentOffering?.identifier ?? 'none'}". Falling back to getProducts.`
+      `[IAP] Product "${productId}" not in offering "${currentOffering?.identifier ?? 'none'}" (offering had ${currentOffering?.availablePackages?.length ?? 0} packages). Falling back to getProducts.`
     );
     const productsResult = await Purchases.getProducts({
       productIdentifiers: [productId],
@@ -188,6 +200,19 @@ export async function purchaseProduct(productId, userId) {
         success: false,
         error:
           'This purchase is temporarily unavailable. Please restart the app or contact support if it persists.',
+      };
+    }
+
+    // Defensive: log the storeProduct shape so a future failure surfaces
+    // the actual key set, not a generic "did not have identifier" error.
+    console.log('[IAP] Fallback storeProduct keys:', Object.keys(storeProduct ?? {}));
+    if (!storeProduct.identifier) {
+      console.error(
+        `[IAP] storeProduct missing 'identifier' key. Got keys: ${Object.keys(storeProduct).join(', ')}. SDK version mismatch?`
+      );
+      return {
+        success: false,
+        error: 'Purchase configuration error. Please restart the app and try again.',
       };
     }
 
