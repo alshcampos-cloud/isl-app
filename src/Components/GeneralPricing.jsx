@@ -22,6 +22,16 @@ export default function GeneralPricing({ userData, onClose }) {
   // Detect if running inside iOS native app
   const isIOSNative = isIOS() && isNativeApp();
 
+  // Normalize userData — App.jsx passes { user, tier } structure.
+  // Build 42 hotfix: these declarations MUST come before the useEffect
+  // below; otherwise the dep array references `userId` in the temporal
+  // dead zone of the const, throwing "Cannot access 'userId' before
+  // initialization" on every render.
+  const user = userData?.user || userData;
+  const userId = user?.id;
+  const userEmail = user?.email;
+  const tier = userData?.tier || 'free';
+
   // Initialize native purchase system when component mounts on iOS native.
   // Build 41 (Apr 27): pass userId so RC identity is set BEFORE the user
   // taps a purchase button. Otherwise RC may still be on a previous user's
@@ -31,12 +41,6 @@ export default function GeneralPricing({ userData, onClose }) {
       initializePurchases(userId);
     }
   }, [isIOSNative, userId]);
-
-  // Normalize userData — App.jsx passes { user, tier } structure
-  const user = userData?.user || userData;
-  const userId = user?.id;
-  const userEmail = user?.email;
-  const tier = userData?.tier || 'free';
 
   // iOS native: use Apple In-App Purchase
   const handleIOSPurchase = async (passType) => {
