@@ -378,6 +378,16 @@ async function finalizePurchase(result, productId, userId, hadEntitlementBefore)
   console.log('[IAP] finalizePurchase — active:', Object.keys(activeEnts));
   console.log('[IAP] finalizePurchase — all:', Object.keys(allEnts));
 
+  // Build 41 (Apr 27): Family Sharing detection (log-only).
+  // Apple Family Sharing lets the buyer's family see the entitlement on
+  // their devices too. RC exposes this via `ownershipType === 'FAMILY_SHARED'`.
+  // For now we just log — future hardening can change policy (refuse?
+  // tag with pass_source='family_shared'?).
+  const koda = activeEnts[ENTITLEMENT_ID];
+  if (koda?.ownershipType === 'FAMILY_SHARED') {
+    console.warn(`[IAP] FAMILY_SHARED entitlement for user ${userId} — pass was purchased by another family member.`);
+  }
+
   const isPro = activeEnts[ENTITLEMENT_ID] !== undefined;
   if (!isPro) {
     const activeKeys = Object.keys(activeEnts);
@@ -505,12 +515,15 @@ export async function syncExistingEntitlement(userId) {
 
     const info = await Purchases.getCustomerInfo();
 
-    // Defensive cross-check: confirm RC reports the same appUserID we
-    // just set. If not, abort — something is racy and we should NOT sync.
+    // Build 41 (Apr 27): RC's identity model has alias chains.
+    // `originalAppUserId` is the FIRST ID this RC entity was ever known as
+    // (often an anonymous `$RCAnonymousID:...`). The CURRENT identity is
+    // `userId` after `setRcUser` ran. Both legitimately point to the same
+    // RC entity. The previous version aborted on mismatch which broke
+    // legitimate alias chains. Log it for diagnostics, continue.
     const rcAppUserId = info?.customerInfo?.originalAppUserId;
     if (rcAppUserId && rcAppUserId !== userId) {
-      console.warn(`[IAP] syncExistingEntitlement aborted: RC appUserID (${rcAppUserId}) != IA.ai userId (${userId})`);
-      return { synced: false, reason: 'identity-mismatch' };
+      console.log(`[IAP] syncExistingEntitlement — RC alias chain detected (original=${rcAppUserId}, current=${userId}). Continuing.`);
     }
 
     const active = info?.customerInfo?.entitlements?.active?.[ENTITLEMENT_ID];

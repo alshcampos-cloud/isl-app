@@ -22,12 +22,15 @@ export default function GeneralPricing({ userData, onClose }) {
   // Detect if running inside iOS native app
   const isIOSNative = isIOS() && isNativeApp();
 
-  // Initialize native purchase system when component mounts on iOS native
+  // Initialize native purchase system when component mounts on iOS native.
+  // Build 41 (Apr 27): pass userId so RC identity is set BEFORE the user
+  // taps a purchase button. Otherwise RC may still be on a previous user's
+  // identity (or anonymous) when the purchase fires.
   useEffect(() => {
-    if (isIOSNative) {
-      initializePurchases();
+    if (isIOSNative && userId) {
+      initializePurchases(userId);
     }
-  }, [isIOSNative]);
+  }, [isIOSNative, userId]);
 
   // Normalize userData — App.jsx passes { user, tier } structure
   const user = userData?.user || userData;
