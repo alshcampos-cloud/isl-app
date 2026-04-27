@@ -9333,10 +9333,17 @@ function App() {
   return (
     <Suspense fallback={<LoadingFallback />}>
       <Routes>
-        {/* Root route: web → landing page, general iOS → /app, nursing iOS → /nursing */}
+        {/* Root route: web → landing page, general iOS → /login, nursing iOS → /nursing.
+            Build 42 (Apr 27, 2026): on ANY iOS native build, bypass the marketing
+            hero and route to /login. AuthPage forwards an authenticated user to
+            /app (or /nursing on the nursing target build). This closes the Apple
+            4.3 risk where the iOS general build was surfacing the same marketing
+            content as the public website + a "Start Practicing Free" CTA — a
+            duplicate-of-website signal Apple reviewers flag.
+            Web is unaffected: isNativeApp() is false → falls through to LandingPage. */}
         <Route path="/" element={
           getAppTarget() === 'nursing' ? <Navigate to="/nursing" replace /> :
-          isTargetedBuild() ? <Navigate to="/app" replace /> :
+          (isNativeApp() || isTargetedBuild()) ? <Navigate to="/login" replace /> :
           <LandingPage />
         } />
         <Route path="/login" element={<AuthPage mode="login" />} />
