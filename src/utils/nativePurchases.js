@@ -29,7 +29,7 @@ const PRODUCTS = {
 const ENTITLEMENT_ID = 'Koda Labs Pro';
 
 // RevenueCat API keys
-const RC_APPLE_KEY = import.meta.env.VITE_REVENUECAT_APPLE_KEY || 'appl_EVayWIHevmksvikfi0FXvbzGpxd';
+const RC_APPLE_KEY = import.meta.env.VITE_REVENUECAT_APPLE_KEY || 'appl_EVayWIHevmksvikfiOFXvbzGpxd';
 const RC_GOOGLE_KEY = import.meta.env.VITE_REVENUECAT_GOOGLE_KEY || '';
 
 let Purchases = null;
