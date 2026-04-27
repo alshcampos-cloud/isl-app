@@ -37,13 +37,75 @@ let Purchases = null;
 let isInitialized = false;
 let storeReady = false;
 let currentOffering = null;
+// Apr 26 (Build 39): track which appUserID RC is currently logged in as.
+// Without this, signing out of one IA.ai account and into another leaves
+// RC pointing at the OLD user — getCustomerInfo() then returns the OLD
+// user's entitlements, which our backend sync would then incorrectly push
+// onto the NEW user's user_profiles row. This is the bug that gave a fresh
+// signup automatic Pass Holder.
+let currentRcUserId = null;
+
+/**
+ * Identify (or re-identify) the current RC user.
+ *
+ * SAFE TO CALL on every auth state change. RC SDK handles repeat-logins
+ * idempotently — if userId is the same as the current one, this no-ops.
+ * If different, it switches RC's identity, which means subsequent
+ * getCustomerInfo() / purchasePackage() calls operate on the new user.
+ *
+ * Build 39 fix: previously we only called Purchases.logIn() inside
+ * initializePurchases (which short-circuits after the first run), so
+ * a sign-out → sign-in to a different IA.ai account left RC pointing
+ * at the old user → the old user's entitlements bled into the new
+ * user's backend row.
+ */
+export async function setRcUser(userId) {
+  if (!isNativeApp() || !Purchases) return false;
+  if (!userId) return false;
+  if (currentRcUserId === userId) return true;
+
+  try {
+    console.log(`[IAP] Switching RC identity: ${currentRcUserId || '(none)'} → ${userId}`);
+    await Purchases.logIn({ appUserID: userId });
+    currentRcUserId = userId;
+    return true;
+  } catch (err) {
+    console.error('[IAP] setRcUser failed:', err?.message);
+    return false;
+  }
+}
+
+/**
+ * Log out of RC (returns to anonymous user). Call on Supabase sign-out so
+ * the next login starts fresh and we don't leak entitlements across users.
+ */
+export async function logOutRcUser() {
+  if (!isNativeApp() || !Purchases) return;
+  try {
+    await Purchases.logOut();
+    currentRcUserId = null;
+    console.log('[IAP] RC logged out (anonymous)');
+  } catch (err) {
+    // logOut throws if already anonymous — harmless
+    console.log('[IAP] RC logOut warning:', err?.message);
+  }
+}
 
 /**
  * Initialize RevenueCat SDK.
  * Call once on app startup (only activates on native platforms).
+ *
+ * Apr 26 (Build 39): if already initialized but a different userId is
+ * passed, we now call setRcUser to switch identity instead of returning
+ * early. The old early-return was the source of the cross-account
+ * entitlement leak.
  */
 export async function initializePurchases(userId = null) {
-  if (isInitialized) return true;
+  if (isInitialized) {
+    // Already configured — just make sure we're identified as the right user.
+    if (userId) await setRcUser(userId);
+    return storeReady;
+  }
   if (!isNativeApp()) return false;
 
   try {
@@ -69,6 +131,7 @@ export async function initializePurchases(userId = null) {
     // Identify user for cross-platform sync
     if (userId) {
       await Purchases.logIn({ appUserID: userId });
+      currentRcUserId = userId;
     }
 
     // Prefetch offerings (the preferred path — packages with pricing display info)
@@ -434,7 +497,22 @@ export async function syncExistingEntitlement(userId) {
   if (!isNativeApp() || !Purchases || !userId) return { synced: false, reason: 'no-op' };
 
   try {
+    // Build 39 safety: ensure RC's identity matches the IA.ai user we're
+    // syncing for. If not, switch first. Without this, getCustomerInfo()
+    // can return entitlements from a previously-signed-in IA.ai user and
+    // we'd push them onto the wrong user_profiles row.
+    await setRcUser(userId);
+
     const info = await Purchases.getCustomerInfo();
+
+    // Defensive cross-check: confirm RC reports the same appUserID we
+    // just set. If not, abort — something is racy and we should NOT sync.
+    const rcAppUserId = info?.customerInfo?.originalAppUserId;
+    if (rcAppUserId && rcAppUserId !== userId) {
+      console.warn(`[IAP] syncExistingEntitlement aborted: RC appUserID (${rcAppUserId}) != IA.ai userId (${userId})`);
+      return { synced: false, reason: 'identity-mismatch' };
+    }
+
     const active = info?.customerInfo?.entitlements?.active?.[ENTITLEMENT_ID];
     if (!active) {
       console.log('[IAP] syncExistingEntitlement — no active entitlement, nothing to sync');
@@ -489,6 +567,10 @@ export async function restorePurchases(userId) {
   if (!Purchases || !storeReady) {
     await initializePurchases(userId);
     if (!Purchases) return { restored: false, error: 'Store not initialized' };
+  } else if (userId) {
+    // Build 39 fix: even when store was already initialized, ensure RC's
+    // identity matches the IA.ai user before reading entitlements.
+    await setRcUser(userId);
   }
 
   try {
@@ -507,26 +589,25 @@ export async function restorePurchases(userId) {
 
 /**
  * Identify user in RevenueCat (call after login).
+ *
+ * Build 39: routed through setRcUser so the module-level currentRcUserId
+ * stays in sync. Older callers that imported this function keep working.
  */
 export async function identifyUser(userId) {
-  if (!isNativeApp() || !Purchases || !userId) return;
-  try {
-    await Purchases.logIn({ appUserID: userId });
-  } catch (err) {
-    console.error('[IAP] identifyUser error:', err);
-  }
+  return setRcUser(userId);
 }
 
 /**
  * Log out from RevenueCat (call on sign out).
+ *
+ * Build 39: routed through logOutRcUser so currentRcUserId gets cleared.
+ * Without this, a sign-out that called the legacy function would leave
+ * currentRcUserId set to the old user — the next sign-in's setRcUser
+ * guard `if (currentRcUserId === userId) return true` would short-circuit
+ * incorrectly, leaving RC pointing at an even older identity.
  */
 export async function logoutIAP() {
-  if (!isNativeApp() || !Purchases) return;
-  try {
-    await Purchases.logOut();
-  } catch (err) {
-    console.error('[IAP] logoutIAP error:', err);
-  }
+  return logOutRcUser();
 }
 
 /**

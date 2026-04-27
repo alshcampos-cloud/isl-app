@@ -1199,11 +1199,26 @@ loadPracticeHistory();
       const user = session?.user ?? null;
       setCurrentUser(user);
 
+      // Build 39 (Apr 26, 2026): on SIGNED_OUT, log RC out too so the next
+      // sign-in starts clean. Without this, RC kept the previous IA.ai
+      // user's identity and that user's entitlements bled across accounts.
+      if (event === 'SIGNED_OUT' && isNativeApp()) {
+        try {
+          const { logOutRcUser } = await import('./utils/nativePurchases');
+          await logOutRcUser();
+        } catch (e) {
+          console.warn('[App] RC logOut skipped:', e?.message);
+        }
+      }
+
       // Load user tier on auth change
       if (user) {
         console.log('🔐 Auth change - user found, loading tier...');
         await loadUserTierAndStats(user);
         // Build 38: same RC→backend sync as the initial getSession path.
+        // Build 39: setRcUser is called inside syncExistingEntitlement now,
+        // ensuring RC identity matches the new IA.ai user before reading
+        // entitlements (prevents cross-account entitlement leak).
         if (isNativeApp()) {
           try {
             const { syncExistingEntitlement } = await import('./utils/nativePurchases');

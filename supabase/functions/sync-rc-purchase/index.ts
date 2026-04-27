@@ -116,6 +116,26 @@ serve(async (req: Request) => {
       return jsonResponse({ error: 'User ID mismatch' }, 403);
     }
 
+    // Build 40 v4 (Apr 26, 2026): the previous strict
+    //   if (rcAppUserId !== userId) return 403
+    // check was wrong. RC's identity model allows alias chains: when
+    // Purchases.logIn(B) is called after being identified as A, A becomes
+    // the `originalAppUserId` and B is the current `appUserId` — both
+    // legitimately point to the same RC identity. The client passes
+    // `originalAppUserId` (= A) but the JWT-authenticated user is B.
+    // That's not an attack; it's normal RC behavior.
+    //
+    // Security model now:
+    //   - JWT auth establishes this request is for userId (auth.uid()).
+    //   - We look up RC by userId (NOT rcAppUserId) below — RC's REST API
+    //     follows alias chains, so the correct entitlement is returned
+    //     regardless of which leg of the chain we query.
+    //   - rcAppUserId from the client is informational only; we log it
+    //     for diagnostics but do NOT trust it for security decisions.
+    if (rcAppUserId && rcAppUserId !== userId) {
+      console.log(`[sync-rc-purchase] rcAppUserId differs from userId — likely RC alias chain (original=${rcAppUserId}, current=${userId}). Continuing — userId from JWT is the source of truth.`);
+    }
+
     // Build 38 hotfix: be lenient about productId. RC's entitlement object
     // may surface legacy product identifiers ('monthly', 'yearly', etc.) or
     // the newer namespaced IDs. If we don't recognize the productId exactly,
@@ -133,7 +153,10 @@ serve(async (req: Request) => {
     // If RC_REST_API_KEY is set, we ask RC's REST API for the truth.
     // If not set, we log a warning and trust the client (auth-only mode).
     const rcKey = Deno.env.get('RC_REST_API_KEY');
-    const rcUserToCheck = rcAppUserId || userId;
+    // Always look up via userId (JWT-validated). RC's REST API follows
+    // alias chains, so this returns the correct entitlement even if RC
+    // internally has multiple appUserIDs aliased together.
+    const rcUserToCheck = userId;
     let rcVerified = false;
 
     if (rcKey) {
