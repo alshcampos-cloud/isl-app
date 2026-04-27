@@ -1170,6 +1170,23 @@ loadPracticeHistory();
       if (user) {
         console.log('🔐 User found, loading tier and stats...');
         await loadUserTierAndStats(user);
+        // Build 38 (Apr 26, 2026): iOS RC entitlement → backend sync.
+        // If a sandbox tester or returning user already has "Koda Labs Pro"
+        // active in RevenueCat but our user_profiles row is still showing
+        // free, push the entitlement into the backend then reload tier.
+        // No-ops on web. No-ops if RC has nothing to sync.
+        if (isNativeApp()) {
+          try {
+            const { syncExistingEntitlement } = await import('./utils/nativePurchases');
+            const syncResult = await syncExistingEntitlement(user.id);
+            if (syncResult?.synced) {
+              console.log('[App] RC entitlement synced to backend, reloading tier');
+              await loadUserTierAndStats(user);
+            }
+          } catch (e) {
+            console.warn('[App] entitlement sync skipped:', e?.message);
+          }
+        }
       } else {
         console.log('🔐 No user session');
       }
@@ -1186,6 +1203,19 @@ loadPracticeHistory();
       if (user) {
         console.log('🔐 Auth change - user found, loading tier...');
         await loadUserTierAndStats(user);
+        // Build 38: same RC→backend sync as the initial getSession path.
+        if (isNativeApp()) {
+          try {
+            const { syncExistingEntitlement } = await import('./utils/nativePurchases');
+            const syncResult = await syncExistingEntitlement(user.id);
+            if (syncResult?.synced) {
+              console.log('[App] RC entitlement synced to backend, reloading tier');
+              await loadUserTierAndStats(user);
+            }
+          } catch (e) {
+            console.warn('[App] entitlement sync skipped:', e?.message);
+          }
+        }
       }
     });
 

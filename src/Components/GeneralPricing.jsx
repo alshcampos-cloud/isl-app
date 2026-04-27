@@ -15,6 +15,9 @@ import { purchaseProduct, restorePurchases, initializePurchases, PRODUCTS } from
 export default function GeneralPricing({ userData, onClose }) {
   const [isLoading, setIsLoading] = useState(null); // 'general_30day' | 'annual_all_access' | null
   const [error, setError] = useState(null);
+  const [purchaseSuccess, setPurchaseSuccess] = useState(false);
+  const [successKind, setSuccessKind] = useState('purchased'); // 'purchased' | 'restored'
+  const [successWarning, setSuccessWarning] = useState(null);
 
   // Detect if running inside iOS native app
   const isIOSNative = isIOS() && isNativeApp();
@@ -47,12 +50,30 @@ export default function GeneralPricing({ userData, onClose }) {
         setIsLoading(null);
         return;
       }
-      if (!result.success && result.error) {
-        throw new Error(result.error);
+      if (!result.success) {
+        // finalizePurchase returns success:false when the entitlement isn't
+        // active in customerInfo — that means the purchase did NOT actually
+        // complete (sandbox tester not signed in, dialog dismissed, etc.).
+        // Surface the error and DO NOT close the modal or reload.
+        throw new Error(result.error || 'Purchase did not complete. Please try again.');
       }
-      // Purchase successful — close modal and refresh user data
-      onClose?.();
-      window.location.reload();
+
+      // Build 38 (Apr 26, 2026): differentiate "fresh purchase" from "already
+      // owned + restored." When the user already had "Koda Labs Pro" active
+      // (e.g. sandbox carryover or non-consumable they purchased before),
+      // Apple skips the payment dialog and RC returns the existing entitlement.
+      // Saying "Welcome aboard!" in that case is misleading — say "Welcome
+      // back, you already have access" instead.
+      setSuccessKind(result.alreadyOwned ? 'restored' : 'purchased');
+      // If RC succeeded but our backend sync failed, show a softer note.
+      // The user IS entitled in RC, but their user_profiles row didn't update,
+      // so the in-app tier may still show free until support fixes it.
+      setSuccessWarning(result.backendSyncFailed ? result.warning : null);
+      setPurchaseSuccess(true);
+      // Slightly longer if there's a warning to read
+      setTimeout(() => {
+        onClose?.();
+      }, result.backendSyncFailed ? 4000 : 1800);
     } catch (err) {
       setError(err.message || 'Purchase failed. Please try again.');
     } finally {
@@ -140,6 +161,34 @@ export default function GeneralPricing({ userData, onClose }) {
   // Check if user already has an active general pass
   const hasActivePass = tier === 'general_pass' || tier === 'annual' || tier === 'pro';
   const isAnnual = tier === 'annual';
+
+  // Brief success state shown after a real purchase completes (entitlement
+  // confirmed active in customerInfo + backend sync attempted).
+  if (purchaseSuccess) {
+    const isRestored = successKind === 'restored';
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
+        <div className="relative bg-white border border-slate-200 rounded-xl max-w-sm w-full p-8 text-center shadow-lg">
+          <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle className="w-8 h-8 text-teal-600" />
+          </div>
+          <h2 className="text-navy-700 font-bold text-xl mb-2">
+            {isRestored ? 'Welcome back.' : "You're in."}
+          </h2>
+          <p className="text-slate-600 text-sm">
+            {isRestored
+              ? 'You already have access. Restoring your Pro features now.'
+              : 'Pro features unlocked. Welcome aboard.'}
+          </p>
+          {successWarning && (
+            <p className="text-amber-600 text-xs mt-3 px-2">
+              {successWarning}
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
