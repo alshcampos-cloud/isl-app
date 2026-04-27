@@ -225,9 +225,23 @@ export async function purchaseProduct(productId, userId) {
     }
     // User-facing error: replace native bridge error messages with something
     // a panicking user can act on.
+    //
+    // DIAGNOSTIC MODE (Apr 26 evening, Build 34): we're hunting a generic
+    // "Purchase failed" error and need the underlying RC/StoreKit signal
+    // to surface in the toast instead of being swallowed. Includes:
+    //   - err.code (RC error code: 0=unknown, 2=storeProblem, 7=ineligibleError, etc.)
+    //   - err.underlyingErrorMessage (the raw StoreKit / Apple error)
+    //   - err.message (RC's own description)
+    // This is verbose but actionable. Once IAP is verified working, we'll
+    // shorten the user-facing message back to a friendly one.
     console.error('[IAP] Purchase error:', err);
+    console.error('[IAP] err.code:', err.code, 'err.message:', err.message);
+    console.error('[IAP] err.underlyingErrorMessage:', err.underlyingErrorMessage);
+    console.error('[IAP] full err keys:', Object.keys(err ?? {}));
+
     const friendly = (() => {
       const msg = (err.message ?? '').toLowerCase();
+      const underlying = err.underlyingErrorMessage ?? '';
       if (msg.includes('payment') || msg.includes('card')) {
         return 'Payment failed. Please check your payment method and try again.';
       }
@@ -237,7 +251,17 @@ export async function purchaseProduct(productId, userId) {
       if (msg.includes('not allowed') || msg.includes('not permitted')) {
         return 'Purchases are restricted on this device. Please check Screen Time or Family Sharing settings.';
       }
-      return 'Purchase failed. Please try again or contact support.';
+      if (msg.includes('agreement') || underlying.includes('agreement') || msg.includes('paid apps')) {
+        return 'Apple Paid Apps Agreement requires action. App owner must check App Store Connect → Agreements.';
+      }
+      if (msg.includes('sandbox') || underlying.includes('sandbox')) {
+        return 'Sandbox issue: ensure a sandbox tester is signed in via Settings → App Store → Sandbox Account.';
+      }
+      // DIAGNOSTIC: surface the raw error in the user toast so the founder
+      // can see what's actually wrong instead of staring at "Purchase failed."
+      const codeStr = err.code !== undefined ? `code ${err.code}` : 'unknown code';
+      const detail = err.message || err.underlyingErrorMessage || 'no message';
+      return `Purchase failed (${codeStr}): ${detail}. Tell support if this persists.`;
     })();
     return { success: false, error: friendly };
   }
