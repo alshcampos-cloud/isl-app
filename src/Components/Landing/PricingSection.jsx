@@ -50,7 +50,7 @@ const tiers = [
   },
   {
     name: 'Annual Pass',
-    price: '129',
+    price: '149',
     period: '/ year',
     description: 'Best value for an entire year of practice.',
     cta: 'Get Annual Pass',

@@ -1,6 +1,6 @@
 // GeneralPricing.jsx — In-app pricing modal for general interview prep
 // Display prices are platform-branched (Apr 30, 2026 pricing update):
-//   • Web (Stripe): 30-day $39, Annual $129/year
+//   • Web (Stripe): 30-day $39, Annual $149/year
 //   • iOS native (Apple IAP): 30-day $14.99, Annual $99.99/year — until ASC updated
 // The branch keeps web ↔ Stripe in sync after Vercel env-var swap to new
 // VITE_STRIPE_GENERAL_PASS_PRICE_ID and VITE_STRIPE_ANNUAL_PRICE_ID, while iOS
@@ -320,16 +320,16 @@ export default function GeneralPricing({ userData, onClose }) {
                   <h3 className="text-navy-700 font-semibold">Annual All-Access</h3>
                 </div>
                 <p className="text-slate-500 text-xs mt-1">
-                  Complete interview prep — {isNativeApp() ? 'save over 30%' : 'save over 70%'}
+                  Complete interview prep — {isNativeApp() ? 'save over 30%' : 'save over 65%'}
                 </p>
               </div>
               <div className="text-right">
                 <p className="font-bold">
                   <span className="text-lg align-top text-navy-700">$</span>
-                  <span className="text-4xl font-extrabold text-navy-700">{isNativeApp() ? '99' : '129'}</span>
+                  <span className="text-4xl font-extrabold text-navy-700">{isNativeApp() ? '99' : '149'}</span>
                   {isNativeApp() && <span className="text-lg text-slate-400">.99</span>}
                 </p>
-                <p className="text-slate-500 text-[10px]">/year ({isNativeApp() ? '~$8.33/mo' : '~$10.75/mo'})</p>
+                <p className="text-slate-500 text-[10px]">/year ({isNativeApp() ? '~$8.33/mo' : '~$12.42/mo'})</p>
               </div>
             </div>
 

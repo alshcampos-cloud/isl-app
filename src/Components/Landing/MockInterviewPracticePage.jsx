@@ -69,7 +69,7 @@ export default function MockInterviewPracticePage() {
         name: 'Is it really free?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Yes. The free tier includes 3 full AI mock interview sessions per month. No credit card is required to sign up. Upgrade to a 30-Day Pass for $39 — no subscription, no auto-renew. Or get the Annual Pass for $129/year.',
+          text: 'Yes. The free tier includes 3 full AI mock interview sessions per month. No credit card is required to sign up. Upgrade to a 30-Day Pass for $39 — no subscription, no auto-renew. Or get the Annual Pass for $149/year.',
         },
       },
       {
@@ -290,7 +290,7 @@ export default function MockInterviewPracticePage() {
             />
             <FAQItem
               question="Is it really free?"
-              answer="Yes. The free tier includes 3 full AI mock interview sessions per month. No credit card is required to sign up. Upgrade to a 30-Day Pass for $39 — no subscription, no auto-renew. Or get the Annual Pass for $129/year."
+              answer="Yes. The free tier includes 3 full AI mock interview sessions per month. No credit card is required to sign up. Upgrade to a 30-Day Pass for $39 — no subscription, no auto-renew. Or get the Annual Pass for $149/year."
             />
             <FAQItem
               question="Can I practice specific types of interview questions?"
