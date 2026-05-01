@@ -4708,7 +4708,7 @@ const startPracticeMode = async () => {
                     <PrompterIcon size={28} gradient="teal" />
                   </IconContainer>
                   <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-1 sm:mb-2 text-navy-700">Practice Prompter</h3>
-                  <p className="text-slate-500 text-xs sm:text-sm mb-3 sm:mb-4 flex-1 font-medium">Real-time bullet prompts</p>
+                  <p className="text-slate-500 text-xs sm:text-sm mb-3 sm:mb-4 flex-1 font-medium">Bullets as you rehearse</p>
                   <button onClick={(e) => { e.stopPropagation(); startPrompterMode(); }} onTouchEnd={(e) => { if (isTap(e)) { e.stopPropagation(); e.preventDefault(); startPrompterMode(); } }} className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-semibold py-2.5 sm:py-3 lg:py-3.5 px-4 rounded-lg transition-all shadow-sm hover:shadow-md text-sm sm:text-base active:scale-[0.98]">
                     Start Practice
                   </button>
