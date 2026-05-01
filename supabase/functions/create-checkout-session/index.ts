@@ -28,8 +28,8 @@ const corsHeaders = {
 const PASS_TYPES: Record<string, 'payment' | 'subscription'> = {
   'nursing_30day': 'payment',
   'general_30day': 'payment',
-  'annual_all_access': 'payment', // Apr 30, 2026: flipped from 'subscription' — $129 one-time-payment product
-  'legacy_pro': 'subscription',   // grandfathered Pro users only — no new signups
+  'annual_all_access': 'subscription', // ⚠️ HOTFIX 2026-04-30 22:46 PT: reverted from 'payment' because VITE_STRIPE_ANNUAL_PRICE_ID still points at old recurring $99.99 price. Will flip back to 'payment' in same commit as Vercel env var swap to new $129 one-time price ID.
+  'legacy_pro': 'subscription',
 };
 
 serve(async (req: Request) => {
