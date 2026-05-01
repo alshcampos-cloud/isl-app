@@ -4,35 +4,74 @@
 //
 // ⚠️ D.R.A.F.T. Protocol: NEW file. No existing code modified.
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { X, Shield, Zap, Clock, Star, CheckCircle, Loader2, ExternalLink } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { isIOS, isNativeApp } from '../../utils/platform';
-import { restorePurchases } from '../../utils/nativePurchases';
-import { Browser } from '@capacitor/browser';
+import { purchaseProduct, restorePurchases, initializePurchases, PRODUCTS } from '../../utils/nativePurchases';
 
 export default function NursingPricing({ userData, onClose }) {
   const [isLoading, setIsLoading] = useState(null); // 'nursing_30day' | 'annual_all_access' | null
   const [error, setError] = useState(null);
+  const [purchaseSuccess, setPurchaseSuccess] = useState(false);
+  const [successKind, setSuccessKind] = useState('purchased');
+  const [successWarning, setSuccessWarning] = useState(null);
 
   // Detect if running inside iOS native app
   const isIOSNative = isIOS() && isNativeApp();
+  const userId = userData?.user?.id;
 
-  // iOS native: open the website in Safari for purchases
-  // (Epic v. Apple ruling allows external purchase links in US iOS apps)
-  const handleIOSPurchase = async () => {
+  // Initialize RC purchases when modal mounts on iOS native
+  useEffect(() => {
+    if (isIOSNative && userId) {
+      initializePurchases(userId);
+    }
+  }, [isIOSNative, userId]);
+
+  // iOS native: use Apple In-App Purchase via RevenueCat
+  // Apr 27, 2026 (Build 41): wired NursingPricing iOS path to RC IAP. Was
+  // bouncing to Safari which (a) violated Apple 3.1.1 (steering off-platform
+  // for digital content) and (b) made nursing 30-day SKU unpurchasable through
+  // native StoreKit even though it's defined in App Store Connect.
+  const handleIOSPurchase = async (passType) => {
+    if (!userId) {
+      setError('You must be logged in to purchase.');
+      return;
+    }
+    setIsLoading(passType);
+    setError(null);
     try {
-      await Browser.open({ url: 'https://www.interviewanswers.ai/nursing' });
-    } catch {
-      // Fallback: tell user to visit website
-      setError('Please visit interviewanswers.ai/nursing in Safari to purchase.');
+      const productId = passType === 'annual_all_access'
+        ? PRODUCTS.ANNUAL_ALL_ACCESS
+        : PRODUCTS.NURSING_30DAY;
+      if (!productId) {
+        throw new Error('This purchase is not available on this build.');
+      }
+      const result = await purchaseProduct(productId, userId);
+      if (result.error === 'cancelled') {
+        setIsLoading(null);
+        return;
+      }
+      if (!result.success) {
+        throw new Error(result.error || 'Purchase did not complete. Please try again.');
+      }
+      setSuccessKind(result.alreadyOwned ? 'restored' : 'purchased');
+      setSuccessWarning(result.backendSyncFailed ? result.warning : null);
+      setPurchaseSuccess(true);
+      setTimeout(() => {
+        onClose?.();
+      }, result.backendSyncFailed ? 4000 : 1800);
+    } catch (err) {
+      setError(err.message || 'Purchase failed. Please try again.');
+    } finally {
+      setIsLoading(null);
     }
   };
 
   const handleCheckout = async (passType) => {
-    // On iOS native, redirect to website in Safari instead of in-app Stripe
+    // On iOS native, use RevenueCat IAP (NOT Safari redirect — Apple 3.1.1)
     if (isIOSNative) {
-      handleIOSPurchase();
+      handleIOSPurchase(passType);
       return;
     }
 
@@ -110,6 +149,33 @@ export default function NursingPricing({ userData, onClose }) {
   // Check if user already has an active nursing pass
   const hasActivePass = userData?.tier === 'nursing_pass' || userData?.tier === 'annual' || userData?.tier === 'pro';
   const isAnnual = userData?.tier === 'annual';
+
+  // Build 41 (Apr 27): success modal — same pattern as GeneralPricing.
+  if (purchaseSuccess) {
+    const isRestored = successKind === 'restored';
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div className="relative bg-slate-900 border border-sky-500/30 rounded-2xl max-w-sm w-full p-8 text-center shadow-2xl">
+          <div className="w-16 h-16 bg-sky-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle className="w-8 h-8 text-sky-400" />
+          </div>
+          <h2 className="text-white font-bold text-xl mb-2">
+            {isRestored ? 'Welcome back.' : "You're in."}
+          </h2>
+          <p className="text-slate-300 text-sm">
+            {isRestored
+              ? 'You already have access. Restoring your Nursing Pro features now.'
+              : 'Nursing Pro features unlocked. Welcome aboard.'}
+          </p>
+          {successWarning && (
+            <p className="text-amber-400 text-xs mt-3 px-2">
+              {successWarning}
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">

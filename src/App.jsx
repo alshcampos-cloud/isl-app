@@ -1170,6 +1170,23 @@ loadPracticeHistory();
       if (user) {
         console.log('🔐 User found, loading tier and stats...');
         await loadUserTierAndStats(user);
+        // Build 38 (Apr 26, 2026): iOS RC entitlement → backend sync.
+        // If a sandbox tester or returning user already has "Koda Labs Pro"
+        // active in RevenueCat but our user_profiles row is still showing
+        // free, push the entitlement into the backend then reload tier.
+        // No-ops on web. No-ops if RC has nothing to sync.
+        if (isNativeApp()) {
+          try {
+            const { syncExistingEntitlement } = await import('./utils/nativePurchases');
+            const syncResult = await syncExistingEntitlement(user.id);
+            if (syncResult?.synced) {
+              console.log('[App] RC entitlement synced to backend, reloading tier');
+              await loadUserTierAndStats(user);
+            }
+          } catch (e) {
+            console.warn('[App] entitlement sync skipped:', e?.message);
+          }
+        }
       } else {
         console.log('🔐 No user session');
       }
@@ -1182,10 +1199,38 @@ loadPracticeHistory();
       const user = session?.user ?? null;
       setCurrentUser(user);
 
+      // Build 39 (Apr 26, 2026): on SIGNED_OUT, log RC out too so the next
+      // sign-in starts clean. Without this, RC kept the previous IA.ai
+      // user's identity and that user's entitlements bled across accounts.
+      if (event === 'SIGNED_OUT' && isNativeApp()) {
+        try {
+          const { logOutRcUser } = await import('./utils/nativePurchases');
+          await logOutRcUser();
+        } catch (e) {
+          console.warn('[App] RC logOut skipped:', e?.message);
+        }
+      }
+
       // Load user tier on auth change
       if (user) {
         console.log('🔐 Auth change - user found, loading tier...');
         await loadUserTierAndStats(user);
+        // Build 38: same RC→backend sync as the initial getSession path.
+        // Build 39: setRcUser is called inside syncExistingEntitlement now,
+        // ensuring RC identity matches the new IA.ai user before reading
+        // entitlements (prevents cross-account entitlement leak).
+        if (isNativeApp()) {
+          try {
+            const { syncExistingEntitlement } = await import('./utils/nativePurchases');
+            const syncResult = await syncExistingEntitlement(user.id);
+            if (syncResult?.synced) {
+              console.log('[App] RC entitlement synced to backend, reloading tier');
+              await loadUserTierAndStats(user);
+            }
+          } catch (e) {
+            console.warn('[App] entitlement sync skipped:', e?.message);
+          }
+        }
       }
     });
 
@@ -9288,10 +9333,17 @@ function App() {
   return (
     <Suspense fallback={<LoadingFallback />}>
       <Routes>
-        {/* Root route: web → landing page, general iOS → /app, nursing iOS → /nursing */}
+        {/* Root route: web → landing page, general iOS → /login, nursing iOS → /nursing.
+            Build 42 (Apr 27, 2026): on ANY iOS native build, bypass the marketing
+            hero and route to /login. AuthPage forwards an authenticated user to
+            /app (or /nursing on the nursing target build). This closes the Apple
+            4.3 risk where the iOS general build was surfacing the same marketing
+            content as the public website + a "Start Practicing Free" CTA — a
+            duplicate-of-website signal Apple reviewers flag.
+            Web is unaffected: isNativeApp() is false → falls through to LandingPage. */}
         <Route path="/" element={
           getAppTarget() === 'nursing' ? <Navigate to="/nursing" replace /> :
-          isTargetedBuild() ? <Navigate to="/app" replace /> :
+          (isNativeApp() || isTargetedBuild()) ? <Navigate to="/login" replace /> :
           <LandingPage />
         } />
         <Route path="/login" element={<AuthPage mode="login" />} />

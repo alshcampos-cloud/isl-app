@@ -33,7 +33,7 @@ const faqs = [
   },
   {
     q: 'How does pricing work?',
-    a: 'Start free with generous monthly limits. When you\'re ready for unlimited practice, grab a 30-Day Pass starting at $14.99 — no subscription, no auto-renew. Or save with the Annual All-Access at $99.99/year for the best value.',
+    a: 'Start free with generous monthly limits. When you\'re ready for unlimited practice, grab a 30-Day Pass for $39 — no subscription, no auto-renew. Or save with the Annual Pass at $149/year for the best value.',
   },
 ];
 

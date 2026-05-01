@@ -27,7 +27,7 @@ const tiers = [
   },
   {
     name: '30-Day Pass',
-    price: '14.99',
+    price: '39',
     period: '/ 30 days',
     description: 'Unlimited everything. No limits. No worries.',
     cta: 'Get 30-Day Pass',
@@ -44,6 +44,28 @@ const tiers = [
       { text: 'Speech recognition', included: true },
       { text: 'Session history & analytics', included: true },
       { text: 'Template library access', included: true },
+      { text: 'Export practice sessions', included: true },
+      { text: 'Priority feature updates', included: true },
+    ],
+  },
+  {
+    name: 'Annual Pass',
+    price: '149',
+    period: '/ year',
+    description: 'Best value for an entire year of practice.',
+    cta: 'Get Annual Pass',
+    ctaLink: '/onboarding',
+    highlighted: false,
+    badge: 'BEST VALUE',
+    features: [
+      { text: 'Everything in 30-Day Pass', included: true },
+      { text: 'Full year of unlimited access', included: true },
+      { text: 'UNLIMITED AI Interviewer sessions', included: true },
+      { text: 'UNLIMITED Practice Mode', included: true },
+      { text: 'UNLIMITED Answer Assistant', included: true },
+      { text: 'UNLIMITED Question Generator', included: true },
+      { text: 'UNLIMITED Practice Prompter', included: true },
+      { text: 'Session history & analytics', included: true },
       { text: 'Export practice sessions', included: true },
       { text: 'Priority feature updates', included: true },
     ],
@@ -72,7 +94,7 @@ export default function PricingSection() {
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {tiers.map((tier, i) => (
             <motion.div
               key={tier.name}
@@ -116,7 +138,7 @@ export default function PricingSection() {
                 >
                   {tier.cta}
                 </Link>
-                {!tier.highlighted && (
+                {tier.price === '0' && (
                   <p className="mt-2 text-center text-xs text-gray-500">
                     No credit card required
                   </p>
@@ -148,7 +170,7 @@ export default function PricingSection() {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
         >
-          No credit card required for free tier. No auto-renew on 30-Day Pass.
+          No credit card required for free tier. No auto-renew on any pass.
         </motion.p>
       </div>
     </section>

@@ -1,5 +1,10 @@
 // GeneralPricing.jsx — In-app pricing modal for general interview prep
-// Shows 30-day pass ($14.99) and Annual All-Access ($99.99/year)
+// Display prices are platform-branched (Apr 30, 2026 pricing update):
+//   • Web (Stripe): 30-day $39, Annual $149/year
+//   • iOS native (Apple IAP): 30-day $14.99, Annual $99.99/year — until ASC updated
+// The branch keeps web ↔ Stripe in sync after Vercel env-var swap to new
+// VITE_STRIPE_GENERAL_PASS_PRICE_ID and VITE_STRIPE_ANNUAL_PRICE_ID, while iOS
+// users continue to see Apple's existing IAP prices (App Store Connect untouched).
 // Mirrors NursingPricing.jsx pattern — calls create-checkout-session Edge Function
 //
 // Integration: Replaces old PricingPage.jsx in App.jsx showPricingPage modal
@@ -15,22 +20,32 @@ import { purchaseProduct, restorePurchases, initializePurchases, PRODUCTS } from
 export default function GeneralPricing({ userData, onClose }) {
   const [isLoading, setIsLoading] = useState(null); // 'general_30day' | 'annual_all_access' | null
   const [error, setError] = useState(null);
+  const [purchaseSuccess, setPurchaseSuccess] = useState(false);
+  const [successKind, setSuccessKind] = useState('purchased'); // 'purchased' | 'restored'
+  const [successWarning, setSuccessWarning] = useState(null);
 
   // Detect if running inside iOS native app
   const isIOSNative = isIOS() && isNativeApp();
 
-  // Initialize native purchase system when component mounts on iOS native
-  useEffect(() => {
-    if (isIOSNative) {
-      initializePurchases();
-    }
-  }, [isIOSNative]);
-
-  // Normalize userData — App.jsx passes { user, tier } structure
+  // Normalize userData — App.jsx passes { user, tier } structure.
+  // Build 42 hotfix: these declarations MUST come before the useEffect
+  // below; otherwise the dep array references `userId` in the temporal
+  // dead zone of the const, throwing "Cannot access 'userId' before
+  // initialization" on every render.
   const user = userData?.user || userData;
   const userId = user?.id;
   const userEmail = user?.email;
   const tier = userData?.tier || 'free';
+
+  // Initialize native purchase system when component mounts on iOS native.
+  // Build 41 (Apr 27): pass userId so RC identity is set BEFORE the user
+  // taps a purchase button. Otherwise RC may still be on a previous user's
+  // identity (or anonymous) when the purchase fires.
+  useEffect(() => {
+    if (isIOSNative && userId) {
+      initializePurchases(userId);
+    }
+  }, [isIOSNative, userId]);
 
   // iOS native: use Apple In-App Purchase
   const handleIOSPurchase = async (passType) => {
@@ -47,12 +62,30 @@ export default function GeneralPricing({ userData, onClose }) {
         setIsLoading(null);
         return;
       }
-      if (!result.success && result.error) {
-        throw new Error(result.error);
+      if (!result.success) {
+        // finalizePurchase returns success:false when the entitlement isn't
+        // active in customerInfo — that means the purchase did NOT actually
+        // complete (sandbox tester not signed in, dialog dismissed, etc.).
+        // Surface the error and DO NOT close the modal or reload.
+        throw new Error(result.error || 'Purchase did not complete. Please try again.');
       }
-      // Purchase successful — close modal and refresh user data
-      onClose?.();
-      window.location.reload();
+
+      // Build 38 (Apr 26, 2026): differentiate "fresh purchase" from "already
+      // owned + restored." When the user already had "Koda Labs Pro" active
+      // (e.g. sandbox carryover or non-consumable they purchased before),
+      // Apple skips the payment dialog and RC returns the existing entitlement.
+      // Saying "Welcome aboard!" in that case is misleading — say "Welcome
+      // back, you already have access" instead.
+      setSuccessKind(result.alreadyOwned ? 'restored' : 'purchased');
+      // If RC succeeded but our backend sync failed, show a softer note.
+      // The user IS entitled in RC, but their user_profiles row didn't update,
+      // so the in-app tier may still show free until support fixes it.
+      setSuccessWarning(result.backendSyncFailed ? result.warning : null);
+      setPurchaseSuccess(true);
+      // Slightly longer if there's a warning to read
+      setTimeout(() => {
+        onClose?.();
+      }, result.backendSyncFailed ? 4000 : 1800);
     } catch (err) {
       setError(err.message || 'Purchase failed. Please try again.');
     } finally {
@@ -141,6 +174,34 @@ export default function GeneralPricing({ userData, onClose }) {
   const hasActivePass = tier === 'general_pass' || tier === 'annual' || tier === 'pro';
   const isAnnual = tier === 'annual';
 
+  // Brief success state shown after a real purchase completes (entitlement
+  // confirmed active in customerInfo + backend sync attempted).
+  if (purchaseSuccess) {
+    const isRestored = successKind === 'restored';
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
+        <div className="relative bg-white border border-slate-200 rounded-xl max-w-sm w-full p-8 text-center shadow-lg">
+          <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle className="w-8 h-8 text-teal-600" />
+          </div>
+          <h2 className="text-navy-700 font-bold text-xl mb-2">
+            {isRestored ? 'Welcome back.' : "You're in."}
+          </h2>
+          <p className="text-slate-600 text-sm">
+            {isRestored
+              ? 'You already have access. Restoring your Pro features now.'
+              : 'Pro features unlocked. Welcome aboard.'}
+          </p>
+          {successWarning && (
+            <p className="text-amber-600 text-xs mt-3 px-2">
+              {successWarning}
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
       <div className="relative bg-white border border-slate-200 rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-lg">
@@ -180,8 +241,8 @@ export default function GeneralPricing({ userData, onClose }) {
               <div className="text-right">
                 <p className="font-bold">
                   <span className="text-lg align-top text-navy-700">$</span>
-                  <span className="text-4xl font-extrabold text-navy-700">14</span>
-                  <span className="text-lg text-slate-400">.99</span>
+                  <span className="text-4xl font-extrabold text-navy-700">{isNativeApp() ? '14' : '39'}</span>
+                  {isNativeApp() && <span className="text-lg text-slate-400">.99</span>}
                 </p>
                 <p className="text-slate-500 text-[10px]">one-time</p>
               </div>
@@ -259,16 +320,16 @@ export default function GeneralPricing({ userData, onClose }) {
                   <h3 className="text-navy-700 font-semibold">Annual All-Access</h3>
                 </div>
                 <p className="text-slate-500 text-xs mt-1">
-                  Complete interview prep — save over 30%
+                  Complete interview prep — {isNativeApp() ? 'save over 30%' : 'save over 65%'}
                 </p>
               </div>
               <div className="text-right">
                 <p className="font-bold">
                   <span className="text-lg align-top text-navy-700">$</span>
-                  <span className="text-4xl font-extrabold text-navy-700">99</span>
-                  <span className="text-lg text-slate-400">.99</span>
+                  <span className="text-4xl font-extrabold text-navy-700">{isNativeApp() ? '99' : '149'}</span>
+                  {isNativeApp() && <span className="text-lg text-slate-400">.99</span>}
                 </p>
-                <p className="text-slate-500 text-[10px]">/year (~$8.33/mo)</p>
+                <p className="text-slate-500 text-[10px]">/year ({isNativeApp() ? '~$8.33/mo' : '~$12.42/mo'})</p>
               </div>
             </div>
 

@@ -11,6 +11,7 @@
 
 import { isNativeApp, isIOS, isAndroid, getPaymentProvider } from './platform';
 import { showNursingFeatures } from './appTarget';
+import { supabase } from '../lib/supabase';
 
 // Product IDs — must match App Store Connect.
 // Nursing-specific products are only exposed on builds where nursing is enabled
@@ -36,13 +37,75 @@ let Purchases = null;
 let isInitialized = false;
 let storeReady = false;
 let currentOffering = null;
+// Apr 26 (Build 39): track which appUserID RC is currently logged in as.
+// Without this, signing out of one IA.ai account and into another leaves
+// RC pointing at the OLD user — getCustomerInfo() then returns the OLD
+// user's entitlements, which our backend sync would then incorrectly push
+// onto the NEW user's user_profiles row. This is the bug that gave a fresh
+// signup automatic Pass Holder.
+let currentRcUserId = null;
+
+/**
+ * Identify (or re-identify) the current RC user.
+ *
+ * SAFE TO CALL on every auth state change. RC SDK handles repeat-logins
+ * idempotently — if userId is the same as the current one, this no-ops.
+ * If different, it switches RC's identity, which means subsequent
+ * getCustomerInfo() / purchasePackage() calls operate on the new user.
+ *
+ * Build 39 fix: previously we only called Purchases.logIn() inside
+ * initializePurchases (which short-circuits after the first run), so
+ * a sign-out → sign-in to a different IA.ai account left RC pointing
+ * at the old user → the old user's entitlements bled into the new
+ * user's backend row.
+ */
+export async function setRcUser(userId) {
+  if (!isNativeApp() || !Purchases) return false;
+  if (!userId) return false;
+  if (currentRcUserId === userId) return true;
+
+  try {
+    console.log(`[IAP] Switching RC identity: ${currentRcUserId || '(none)'} → ${userId}`);
+    await Purchases.logIn({ appUserID: userId });
+    currentRcUserId = userId;
+    return true;
+  } catch (err) {
+    console.error('[IAP] setRcUser failed:', err?.message);
+    return false;
+  }
+}
+
+/**
+ * Log out of RC (returns to anonymous user). Call on Supabase sign-out so
+ * the next login starts fresh and we don't leak entitlements across users.
+ */
+export async function logOutRcUser() {
+  if (!isNativeApp() || !Purchases) return;
+  try {
+    await Purchases.logOut();
+    currentRcUserId = null;
+    console.log('[IAP] RC logged out (anonymous)');
+  } catch (err) {
+    // logOut throws if already anonymous — harmless
+    console.log('[IAP] RC logOut warning:', err?.message);
+  }
+}
 
 /**
  * Initialize RevenueCat SDK.
  * Call once on app startup (only activates on native platforms).
+ *
+ * Apr 26 (Build 39): if already initialized but a different userId is
+ * passed, we now call setRcUser to switch identity instead of returning
+ * early. The old early-return was the source of the cross-account
+ * entitlement leak.
  */
 export async function initializePurchases(userId = null) {
-  if (isInitialized) return true;
+  if (isInitialized) {
+    // Already configured — just make sure we're identified as the right user.
+    if (userId) await setRcUser(userId);
+    return storeReady;
+  }
   if (!isNativeApp()) return false;
 
   try {
@@ -68,6 +131,7 @@ export async function initializePurchases(userId = null) {
     // Identify user for cross-platform sync
     if (userId) {
       await Purchases.logIn({ appUserID: userId });
+      currentRcUserId = userId;
     }
 
     // Prefetch offerings (the preferred path — packages with pricing display info)
@@ -143,6 +207,17 @@ export function getProduct(productId) {
 /**
  * Purchase a package by product ID.
  * RevenueCat handles receipt validation automatically.
+ *
+ * Apr 26, 2026 (Build 38): added pre-purchase snapshot + backend sync.
+ *   - We snapshot customerInfo BEFORE calling Apple. If "Koda Labs Pro" was
+ *     already active, Apple won't show a payment dialog (sandbox already owns
+ *     it; production already-purchased non-consumable returns immediately).
+ *     We surface that as `alreadyOwned: true` so the UI can say "you already
+ *     have access" instead of showing a fresh "purchased!" celebration.
+ *   - On any success path we POST to `sync-rc-purchase` Edge Function which
+ *     updates `user_profiles.general_pass_expires` (the same column
+ *     stripe-webhook writes for web purchases). Without this, the entitlement
+ *     lives only in RC and the app keeps showing the user as `free`.
  */
 export async function purchaseProduct(productId, userId) {
   if (!isNativeApp()) {
@@ -154,6 +229,17 @@ export async function purchaseProduct(productId, userId) {
     if (!Purchases || !storeReady) {
       return { success: false, error: 'Store not initialized. Please close and reopen the app.' };
     }
+  }
+
+  // Snapshot pre-purchase entitlement state. Compare after to detect the
+  // "Apple skipped the dialog because user already owns it" case.
+  let hadEntitlementBefore = false;
+  try {
+    const before = await Purchases.getCustomerInfo();
+    hadEntitlementBefore = before?.customerInfo?.entitlements?.active?.[ENTITLEMENT_ID] !== undefined;
+    console.log(`[IAP] Pre-purchase entitlement active: ${hadEntitlementBefore}`);
+  } catch (err) {
+    console.warn('[IAP] Could not snapshot pre-purchase customerInfo:', err.message);
   }
 
   try {
@@ -176,7 +262,7 @@ export async function purchaseProduct(productId, userId) {
     if (pkg) {
       console.log(`[IAP] Purchasing via offering package: ${pkg.identifier}`);
       const result = await Purchases.purchasePackage({ aPackage: pkg });
-      return checkEntitlement(result);
+      return await finalizePurchase(result, productId, userId, hadEntitlementBefore);
     }
 
     // Fallback: package not attached to current offering. Fetch the
@@ -217,7 +303,7 @@ export async function purchaseProduct(productId, userId) {
     }
 
     const result = await Purchases.purchaseStoreProduct({ product: storeProduct });
-    return checkEntitlement(result);
+    return await finalizePurchase(result, productId, userId, hadEntitlementBefore);
   } catch (err) {
     // User cancelled — explicit handling so the UI doesn't show an error toast
     if (err.code === 1 || err.code === '1' || /cancel/i.test(err.message ?? '')) {
@@ -268,16 +354,197 @@ export async function purchaseProduct(productId, userId) {
 }
 
 /**
- * Check if purchase result grants pro entitlement.
+ * Finalize a purchase result.
+ *
+ * This is the post-purchase step. It does THREE things:
+ *   1. Verifies "Koda Labs Pro" is now active in customerInfo. If not,
+ *      something failed silently — return error.
+ *   2. Detects the "already owned" case (entitlement was active before
+ *      AND after the purchase call). Apple does this when a non-consumable
+ *      is already owned, or in sandbox when the tester already bought it.
+ *      Surfaces as `alreadyOwned: true`.
+ *   3. Calls our `sync-rc-purchase` Supabase Edge Function so the backend
+ *      `user_profiles.general_pass_expires` column reflects the entitlement.
+ *      Without this step the user keeps seeing "free" tier in the UI.
+ *
+ * Returns:
+ *   { success: true, tier, alreadyOwned, expiresAt } on success
+ *   { success: false, error } on failure
  */
-function checkEntitlement(result) {
-  const isPro = result.customerInfo?.entitlements?.active?.[ENTITLEMENT_ID] !== undefined;
-  if (isPro) {
-    return { success: true, tier: 'pro' };
+async function finalizePurchase(result, productId, userId, hadEntitlementBefore) {
+  const activeEnts = result?.customerInfo?.entitlements?.active ?? {};
+  const allEnts = result?.customerInfo?.entitlements?.all ?? {};
+
+  console.log('[IAP] finalizePurchase — active:', Object.keys(activeEnts));
+  console.log('[IAP] finalizePurchase — all:', Object.keys(allEnts));
+
+  // Build 41 (Apr 27): Family Sharing detection (log-only).
+  // Apple Family Sharing lets the buyer's family see the entitlement on
+  // their devices too. RC exposes this via `ownershipType === 'FAMILY_SHARED'`.
+  // For now we just log — future hardening can change policy (refuse?
+  // tag with pass_source='family_shared'?).
+  const koda = activeEnts[ENTITLEMENT_ID];
+  if (koda?.ownershipType === 'FAMILY_SHARED') {
+    console.warn(`[IAP] FAMILY_SHARED entitlement for user ${userId} — pass was purchased by another family member.`);
   }
-  // Purchase went through but entitlement not active — might need server sync
-  console.warn('[IAP] Purchase completed but entitlement not active yet');
-  return { success: true, tier: 'pending' };
+
+  const isPro = activeEnts[ENTITLEMENT_ID] !== undefined;
+  if (!isPro) {
+    const activeKeys = Object.keys(activeEnts);
+    const allKeys = Object.keys(allEnts);
+    console.warn('[IAP] ❌ No "' + ENTITLEMENT_ID + '" entitlement after purchase.');
+    console.warn('[IAP]    Active entitlements:', activeKeys.length ? activeKeys : '(none)');
+    console.warn('[IAP]    All entitlements:', allKeys.length ? allKeys : '(none)');
+    return {
+      success: false,
+      error:
+        activeKeys.length === 0 && allKeys.length === 0
+          ? 'Purchase did not complete. The Apple purchase dialog may have been dismissed, or your sandbox tester is not signed in. Please retry.'
+          : `Purchase did not grant the expected entitlement. Found: ${activeKeys.join(', ') || '(none active)'}. Expected: "${ENTITLEMENT_ID}". Contact support.`,
+    };
+  }
+
+  // Entitlement is active. Did Apple show a real dialog or skip it?
+  const alreadyOwned = hadEntitlementBefore;
+  if (alreadyOwned) {
+    console.log('[IAP] User already owned this — Apple skipped the payment dialog');
+  } else {
+    console.log('[IAP] ✅ Fresh purchase completed');
+  }
+
+  // Sync to backend so user_profiles reflects the entitlement.
+  const syncResult = await syncEntitlementToBackend(productId, userId);
+  if (!syncResult.success) {
+    console.error('[IAP] Backend sync failed:', syncResult.error);
+    // Don't fail the whole purchase — the entitlement IS valid in RC. Surface
+    // a softer error so the user knows to contact support if they don't see
+    // their upgrade.
+    return {
+      success: true,
+      tier: 'pro',
+      alreadyOwned,
+      backendSyncFailed: true,
+      warning: 'Purchase succeeded with Apple but our server did not record it. Please contact support with your Apple ID.',
+    };
+  }
+
+  return {
+    success: true,
+    tier: syncResult.tier || 'pro',
+    alreadyOwned,
+    expiresAt: syncResult.expiresAt,
+    rcVerified: syncResult.rcVerified,
+  };
+}
+
+/**
+ * Call the Supabase Edge Function that mirrors RC's entitlement state into
+ * user_profiles. Returns { success, tier, expiresAt, error }.
+ *
+ * Idempotent on the server side — calling twice for the same purchase is
+ * safe (server skips if already synced recently).
+ */
+async function syncEntitlementToBackend(productId, userId) {
+  try {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const rcAppUserId = await getRcAppUserId();
+
+    const { data, error } = await supabase.functions.invoke('sync-rc-purchase', {
+      body: {
+        userId,
+        productId,
+        rcAppUserId,
+      },
+    });
+
+    if (error) {
+      console.error('[IAP] sync-rc-purchase invoke error:', error);
+      return { success: false, error: error.message || 'Backend sync failed' };
+    }
+    if (data?.error) {
+      console.error('[IAP] sync-rc-purchase returned error:', data.error);
+      return { success: false, error: data.error };
+    }
+
+    console.log('[IAP] ✅ Backend sync complete:', data);
+    return {
+      success: true,
+      tier: data?.tier,
+      expiresAt: data?.expiresAt,
+      rcVerified: data?.rcVerified,
+    };
+  } catch (err) {
+    console.error('[IAP] syncEntitlementToBackend threw:', err);
+    return { success: false, error: err.message || 'Backend sync failed' };
+  }
+}
+
+async function getRcAppUserId() {
+  try {
+    const info = await Purchases.getCustomerInfo();
+    return info?.customerInfo?.originalAppUserId || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Boot-time entitlement sync.
+ *
+ * Call this once on app boot AFTER the user is logged in and RC is
+ * initialized. If the user has an active "Koda Labs Pro" entitlement in RC
+ * (e.g., from a prior session, a sandbox tester carryover, or a purchase
+ * made on another device that synced via RC's appUserID), but their backend
+ * `user_profiles.general_pass_expires` doesn't reflect it, this catches that
+ * up.
+ *
+ * Without this, users who already had a successful purchase before Build 38
+ * shipped would keep seeing "free" tier even though RC has them as paid.
+ *
+ * Idempotent — safe to call on every boot.
+ */
+export async function syncExistingEntitlement(userId) {
+  if (!isNativeApp() || !Purchases || !userId) return { synced: false, reason: 'no-op' };
+
+  try {
+    // Build 39 safety: ensure RC's identity matches the IA.ai user we're
+    // syncing for. If not, switch first. Without this, getCustomerInfo()
+    // can return entitlements from a previously-signed-in IA.ai user and
+    // we'd push them onto the wrong user_profiles row.
+    await setRcUser(userId);
+
+    const info = await Purchases.getCustomerInfo();
+
+    // Build 41 (Apr 27): RC's identity model has alias chains.
+    // `originalAppUserId` is the FIRST ID this RC entity was ever known as
+    // (often an anonymous `$RCAnonymousID:...`). The CURRENT identity is
+    // `userId` after `setRcUser` ran. Both legitimately point to the same
+    // RC entity. The previous version aborted on mismatch which broke
+    // legitimate alias chains. Log it for diagnostics, continue.
+    const rcAppUserId = info?.customerInfo?.originalAppUserId;
+    if (rcAppUserId && rcAppUserId !== userId) {
+      console.log(`[IAP] syncExistingEntitlement — RC alias chain detected (original=${rcAppUserId}, current=${userId}). Continuing.`);
+    }
+
+    const active = info?.customerInfo?.entitlements?.active?.[ENTITLEMENT_ID];
+    if (!active) {
+      console.log('[IAP] syncExistingEntitlement — no active entitlement, nothing to sync');
+      return { synced: false, reason: 'no-entitlement' };
+    }
+
+    // Pick a productId. RC's entitlement object exposes `productIdentifier`
+    // (yes, this one IS named productIdentifier even though store products
+    // use `identifier` — RC SDK is inconsistent here). Fall back to general
+    // 30-day if unknown.
+    const productId = active.productIdentifier || PRODUCTS.GENERAL_30DAY;
+    console.log('[IAP] syncExistingEntitlement — active entitlement found, product=', productId);
+
+    const result = await syncEntitlementToBackend(productId, userId);
+    return { synced: result.success, ...result };
+  } catch (err) {
+    console.warn('[IAP] syncExistingEntitlement threw:', err.message);
+    return { synced: false, error: err.message };
+  }
 }
 
 // Backwards-compatible wrapper used by NativeCheckout.jsx and GeneralPricing.jsx
@@ -313,6 +580,10 @@ export async function restorePurchases(userId) {
   if (!Purchases || !storeReady) {
     await initializePurchases(userId);
     if (!Purchases) return { restored: false, error: 'Store not initialized' };
+  } else if (userId) {
+    // Build 39 fix: even when store was already initialized, ensure RC's
+    // identity matches the IA.ai user before reading entitlements.
+    await setRcUser(userId);
   }
 
   try {
@@ -331,26 +602,25 @@ export async function restorePurchases(userId) {
 
 /**
  * Identify user in RevenueCat (call after login).
+ *
+ * Build 39: routed through setRcUser so the module-level currentRcUserId
+ * stays in sync. Older callers that imported this function keep working.
  */
 export async function identifyUser(userId) {
-  if (!isNativeApp() || !Purchases || !userId) return;
-  try {
-    await Purchases.logIn({ appUserID: userId });
-  } catch (err) {
-    console.error('[IAP] identifyUser error:', err);
-  }
+  return setRcUser(userId);
 }
 
 /**
  * Log out from RevenueCat (call on sign out).
+ *
+ * Build 39: routed through logOutRcUser so currentRcUserId gets cleared.
+ * Without this, a sign-out that called the legacy function would leave
+ * currentRcUserId set to the old user — the next sign-in's setRcUser
+ * guard `if (currentRcUserId === userId) return true` would short-circuit
+ * incorrectly, leaving RC pointing at an even older identity.
  */
 export async function logoutIAP() {
-  if (!isNativeApp() || !Purchases) return;
-  try {
-    await Purchases.logOut();
-  } catch (err) {
-    console.error('[IAP] logoutIAP error:', err);
-  }
+  return logOutRcUser();
 }
 
 /**
