@@ -1,8 +1,14 @@
 // create-checkout-session/index.ts
 // Creates Stripe Checkout sessions for:
 //   - 30-day passes (nursing or general): mode = 'payment' (one-time)
-//   - Annual All-Access: mode = 'subscription' (recurring yearly)
-//   - Legacy Pro subscription: mode = 'subscription' (backward compat)
+//   - Annual Pass: mode = 'payment' (one-time, $129/year — Apr 30, 2026 update)
+//   - Legacy Pro subscription: mode = 'subscription' (grandfathered Pro users only)
+//
+// History (Apr 30, 2026): Annual flipped from 'subscription' to 'payment' to
+// match the new $129 one-time-payment Stripe product. Existing recurring annual
+// subscriptions in Stripe are NOT affected (separate Stripe records). The
+// webhook's checkout.session.completed handler fulfills annual_all_access via
+// passType metadata regardless of mode, so no webhook changes needed.
 //
 // The passType metadata field tells the webhook which product was purchased:
 //   'nursing_30day', 'general_30day', 'annual_all_access', or 'legacy_pro'
@@ -22,8 +28,8 @@ const corsHeaders = {
 const PASS_TYPES: Record<string, 'payment' | 'subscription'> = {
   'nursing_30day': 'payment',
   'general_30day': 'payment',
-  'annual_all_access': 'subscription',
-  'legacy_pro': 'subscription',
+  'annual_all_access': 'payment', // Apr 30, 2026: flipped from 'subscription' — $129 one-time-payment product
+  'legacy_pro': 'subscription',   // grandfathered Pro users only — no new signups
 };
 
 serve(async (req: Request) => {
