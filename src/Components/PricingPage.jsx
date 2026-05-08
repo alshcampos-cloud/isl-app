@@ -54,7 +54,7 @@ export default function PricingPage({ onSelectTier, currentTier = 'free', user, 
         { text: '10 Practice Mode sessions/month', included: true },
         { text: '5 Answer Assistant sessions/month', included: true },
         { text: '5 Question Generations/month', included: true },
-        { text: '10 Live Prompter questions/month', included: true },
+        { text: '10 Practice Prompter sessions/month', included: true },
         { text: 'Question bank storage', included: true },
         { text: 'Speech recognition', included: true },
         { text: 'Session history & analytics', included: true },
@@ -77,7 +77,7 @@ export default function PricingPage({ onSelectTier, currentTier = 'free', user, 
         { text: '✨ UNLIMITED Practice Mode', included: true, highlight: true },
         { text: '✨ UNLIMITED Answer Assistant', included: true, highlight: true },
         { text: '✨ UNLIMITED Question Generator', included: true, highlight: true },
-        { text: '✨ UNLIMITED Live Prompter', included: true, highlight: true },
+        { text: '✨ UNLIMITED Practice Prompter', included: true, highlight: true },
         { text: '🩺 Full Nursing Interview Track', included: true, highlight: true },
         { text: 'Everything in Free, plus:', included: true, separator: true },
         { text: 'Unlimited question bank storage', included: true },
@@ -310,7 +310,7 @@ export default function PricingPage({ onSelectTier, currentTier = 'free', user, 
                   <td className="py-4 px-4 text-center font-bold text-indigo-600">Unlimited</td>
                 </tr>
                 <tr>
-                  <td className="py-4 px-4 text-gray-700">Live Prompter</td>
+                  <td className="py-4 px-4 text-gray-700">Practice Prompter</td>
                   <td className="py-4 px-4 text-center text-gray-600">10 questions</td>
                   <td className="py-4 px-4 text-center font-bold text-indigo-600">Unlimited</td>
                 </tr>

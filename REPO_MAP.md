@@ -26,7 +26,7 @@
 ### Main Features
 1. **AI Interviewer** - Realistic practice with adaptive follow-up questions
 2. **Practice Mode** - Quick scoring with AI feedback
-3. **Live Prompter** - Real-time bullet points during actual interviews
+3. **Practice Prompter** - Bullet-point rehearsal mode for private practice (not for live interviews — see /ethics)
 4. **Answer Assistant (AI Coach)** - STAR method coaching using MI principles
 5. **Question Generator** - AI-powered personalized question generation
 6. **Flashcard Mode** - Spaced repetition learning
@@ -117,7 +117,7 @@ index.html → src/main.jsx → BrowserRouter → App.jsx
 | View | Description |
 |------|-------------|
 | `'home'` | Dashboard with stats |
-| `'prompter'` | Live Prompter mode |
+| `'prompter'` | Practice Prompter mode |
 | `'ai-interviewer'` | AI Interviewer mode |
 | `'practice'` | Practice mode |
 | `'flashcard'` | Flashcard mode |

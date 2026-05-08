@@ -4,7 +4,7 @@ AI-powered interview preparation platform that helps you ace your next job inter
 
 ## Features
 
-- **Live Prompter** - Real-time AI suggestions during actual interviews
+- **Practice Prompter** - Bullet-point rehearsal mode used BEFORE interviews (not during — see [/ethics](https://www.interviewanswers.ai/ethics))
 - **AI Interviewer** - Practice with an AI that asks follow-up questions
 - **Practice Mode** - Record answers and get STAR-method feedback
 - **Template Library** - 44 curated interview questions across 6 categories
@@ -100,7 +100,7 @@ public/
 |---------|------|-----------------|
 | AI Interviewer | 5/day | Unlimited |
 | Answer Assistant | 3/day | Unlimited |
-| Live Prompter | 5 min/day | Unlimited |
+| Practice Prompter | 10 sessions/mo | Unlimited |
 | Practice Mode | Unlimited | Unlimited |
 
 ## Contributing

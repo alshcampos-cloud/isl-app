@@ -2,19 +2,19 @@
 
 ## Interview Practice Modes
 
-### 1. Live Prompter
+### 1. Practice Prompter
 
-Real-time AI assistance during actual interviews.
+Bullet-point rehearsal mode for interview prep. Used BEFORE interviews — never during. See [/ethics](https://www.interviewanswers.ai/ethics) for why we removed the live-interview variant.
 
 **How it works:**
 1. Press the microphone button to start listening
-2. The AI transcribes what you and the interviewer say
-3. Matching questions from your template library appear as prompts
-4. You see suggested talking points in real-time
+2. The AI transcribes your spoken answer
+3. Matching questions from your template library surface as you rehearse
+4. You see your prepared bullet points so you can train yourself to hit them naturally
 
-**Best for:** Live video/phone interviews when you need subtle hints
+**Best for:** Solo rehearsal in the days/hours before an interview, so you can deliver your answers without notes when it matters.
 
-**Legal Note:** You must obtain consent from the interviewer before recording. Many jurisdictions require all-party consent.
+**Not for:** Use during a live interview. Using AI assistance during a live interview violates our Terms of Service and most employer policies.
 
 ---
 
@@ -79,12 +79,12 @@ The template library contains 44 curated interview questions across 6 categories
 
 Each question includes:
 - **Question text**: The actual interview question
-- **Keywords**: Phrases that trigger Live Prompter matching
+- **Keywords**: Phrases that trigger Practice Prompter matching
 - **Category**: For filtering and organization
 
-### Live Prompter Matching
+### Practice Prompter Matching
 
-When using Live Prompter, the AI matches spoken phrases to your template questions using keyword matching:
+When using Practice Prompter, the AI matches spoken phrases to your template questions using keyword matching:
 
 ```
 Question: "Tell me about a time you led a team..."
@@ -103,7 +103,7 @@ If interviewer says "leadership experience", this question highlights as a match
 |---------|-------------|
 | AI Interviewer Sessions | 5 |
 | Answer Assistant Analyses | 3 |
-| Live Prompter | 5 minutes |
+| Practice Prompter | 10 sessions/month |
 | Practice Mode | Unlimited |
 | Question Library | Full access |
 
@@ -113,7 +113,7 @@ If interviewer says "leadership experience", this question highlights as a match
 |---------|-------|
 | AI Interviewer Sessions | Unlimited |
 | Answer Assistant Analyses | Unlimited |
-| Live Prompter | Unlimited |
+| Practice Prompter | Unlimited |
 | Practice Mode | Unlimited |
 | Priority Support | Yes |
 

@@ -103,8 +103,8 @@ After deployment, test in this order:
 - [ ] See "Welcome to ISL" or API setup screen
 - [ ] **If you see placeholder "REPLACE THIS FILE" → You forgot Step 1!**
 
-### **Test 2: Live Prompter (No API Needed)**
-- [ ] Click "Live Prompter"
+### **Test 2: Practice Prompter (No API Needed)**
+- [ ] Click "Practice Prompter"
 - [ ] Hold SPACEBAR or button
 - [ ] Say "Tell me about yourself"
 - [ ] Release button
@@ -141,7 +141,7 @@ After deployment, test in this order:
 - Make sure you pasted complete code
 - Check you didn't accidentally delete closing braces
 
-### **Problem: Live Prompter doesn't match questions**
+### **Problem: Practice Prompter doesn't match questions**
 **Fix:** Check browser console (F12)
 - Look for JavaScript errors
 - Make sure you pasted COMPLETE code (all modes)
@@ -225,7 +225,7 @@ isl-complete/
 You'll know it worked when:
 - ✅ Vercel shows "Deployment Ready"
 - ✅ Your URL loads the ISL app
-- ✅ Live Prompter matches questions
+- ✅ Practice Prompter matches questions
 - ✅ AI Interviewer speaks and gives feedback
 - ✅ Works on your phone
 - ✅ Can install as app
