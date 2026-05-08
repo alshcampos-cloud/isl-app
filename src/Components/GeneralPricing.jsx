@@ -336,7 +336,6 @@ export default function GeneralPricing({ userData, onClose }) {
             <ul className="space-y-2 mb-4 pl-1">
               {[
                 'Everything in the 30-Day Pass',
-                'Unlimited AI Coach',
                 'Year-round access',
                 'Priority support',
               ].map((item) => (

@@ -67,6 +67,8 @@ function InterviewContextHub({
   }, [role, company, interviewType, background, jobDescription, saveContext]);
 
   // Calculate days until interview
+  // Jacob #26 fix — was off-by-one (had `diffDays + 1`) and clamped at 0 so it
+  // showed "0 days left" forever after the interview passed instead of disappearing.
   const getDaysUntil = () => {
     if (!interviewDate) return null;
     const today = new Date();
@@ -74,7 +76,7 @@ function InterviewContextHub({
     const interview = new Date(interviewDate + 'T00:00:00');
     const diffTime = interview.getTime() - today.getTime();
     const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-    return Math.max(0, diffDays + 1);
+    return diffDays >= 0 ? diffDays : null;
   };
 
   const daysUntil = getDaysUntil();

@@ -22,7 +22,7 @@ const STEPS = [
   { id: 'stories',   label: 'Stories',    sublabel: 'Build STAR stories',  icon: BookOpen,  view: 'story-bank' },
   { id: 'jd',        label: 'Decode JD',  sublabel: 'Analyze a job post',  icon: FileText,  view: 'jd-decoder' },
   { id: 'portfolio',  label: 'Portfolio',   sublabel: 'Add your work',       icon: Briefcase, view: 'portfolio' },
-  { id: 'ready',     label: 'Ready',      sublabel: 'Interview ready!',    icon: Trophy,    view: 'command-center' },
+  { id: 'ready',     label: 'Ready',      sublabel: 'Interview ready!',    icon: Trophy,    view: null }, // Jacob #30: was 'command-center' — felt random; the Ready milestone is a celebration node, not a navigation target. onClick guard added below.
 ];
 
 export default function JourneyProgress({ practiceHistory = [], questions = [], getUserContext, onNavigate }) {
@@ -122,8 +122,8 @@ export default function JourneyProgress({ practiceHistory = [], questions = [], 
           return (
             <button
               key={step.id}
-              onClick={() => onNavigate?.(step.view)}
-              onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); onNavigate?.(step.view); } }}
+              onClick={() => step.view && onNavigate?.(step.view) /* Jacob #30: guard against null view (Ready node has no destination) */}
+              onTouchEnd={(e) => { if (isTap(e)) { e.preventDefault(); step.view && onNavigate?.(step.view); } }}
               className="flex flex-col items-center relative z-10 group"
               style={{ flex: 1, minWidth: 0 }}
             >

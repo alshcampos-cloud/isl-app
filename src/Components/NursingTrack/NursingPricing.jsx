@@ -297,7 +297,6 @@ export default function NursingPricing({ userData, onClose }) {
               {[
                 'Everything in Nursing Pass',
                 'General Interview Prep included',
-                'Unlimited AI Coach',
                 'Year-round access',
                 'Priority support',
               ].map((item) => (

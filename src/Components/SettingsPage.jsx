@@ -297,7 +297,16 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
           iconName: 'Mail',
           label: 'Contact Support',
           subtitle: 'support@interviewanswers.ai',
-          action: () => { window.location.href = 'mailto:support@interviewanswers.ai'; },
+          action: async () => {
+            // Jacob #23 fix — mailto: was opening browser then doing nothing on some platforms.
+            // Copy email to clipboard with fallback to mailto: if clipboard API isn't available.
+            try {
+              await navigator.clipboard.writeText('support@interviewanswers.ai');
+              alert('Email copied to clipboard:\n\nsupport@interviewanswers.ai\n\nPaste into your mail app to send.');
+            } catch {
+              window.location.href = 'mailto:support@interviewanswers.ai';
+            }
+          },
         },
         // Rate the App removed — will be re-enabled with real Apple App ID post-launch.
         // Previous placeholder ID ('id0000000000') would break for reviewers.

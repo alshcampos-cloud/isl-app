@@ -4623,7 +4623,7 @@ const startPracticeMode = async () => {
                       Start your first practice →
                     </button>
                     <button
-                      onClick={() => setCurrentView('command-center')}
+                      onClick={() => { setCurrentView('command-center'); setCommandCenterTab('bank'); /* Jacob #27: also pin sub-tab so user lands on Bank, not last-selected tab */ }}
                       className="bg-white text-slate-700 px-5 py-3 rounded-lg font-semibold hover:bg-slate-50 transition-all border border-slate-200"
                     >
                       Explore question bank
