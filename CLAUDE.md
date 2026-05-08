@@ -8,7 +8,7 @@
 
 ## What This App Is
 InterviewAnswers.AI is a live, deployed AI-powered interview preparation app:
-- **Live Prompter** — real-time coaching during practice
+- **Practice Prompter** — bullet-point rehearsal during private practice (not for live interviews — see /ethics)
 - **AI Mock Interviewer** — conversational interview simulation
 - **STAR Method Coaching** — Situation-Task-Action-Result framework
 - **Practice Mode** — self-paced interview prep
@@ -327,6 +327,14 @@ Before any code changes, read these files:
 For strategic decisions, also read:
 - docs/research/Master_Strategy_v2.docx
 - docs/PHASE2_AUDIT_REPORT.md
+
+---
+
+# PART 9: JACOB TEST REPORT — TRIAGE & RESPONSE
+
+When Jacob's external test report lands, do NOT start fixing. Read `docs/JACOB_REPORT_TRIAGE_FRAMEWORK.md` first and follow it step by step (tag a rollback point, classify by severity × blast radius, sequence LOW-blast first, one fix per branch, smoke-test gate between deploys).
+
+See `docs/DOCS_AND_REGRESSION_AUDIT_2026-05-08.md` for the doc inventory + regression infrastructure status.
 
 ---
 
