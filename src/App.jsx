@@ -8784,7 +8784,7 @@ const startPracticeMode = async () => {
       <div className="min-h-screen bg-gray-50">
         <div className="bg-white shadow-sm border-b">
           <div className="container mx-auto px-4 py-4">
-            <button onClick={() => setCurrentView('home')} className="text-gray-600 hover:text-gray-900">
+            <button onClick={() => setCurrentView('settings')} className="text-gray-600 hover:text-gray-900">
               ← Back
             </button>
           </div>
@@ -8933,7 +8933,7 @@ const startPracticeMode = async () => {
       <div className="min-h-screen bg-gray-50">
         <div className="bg-white shadow-sm border-b">
           <div className="container mx-auto px-4 py-4">
-            <button onClick={() => setCurrentView('home')} className="text-gray-600 hover:text-gray-900">
+            <button onClick={() => setCurrentView('settings')} className="text-gray-600 hover:text-gray-900">
               ← Back
             </button>
           </div>
