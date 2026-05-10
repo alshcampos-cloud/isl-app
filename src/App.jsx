@@ -5308,10 +5308,41 @@ const startPracticeMode = async () => {
                   <RotateCcw className="w-4 h-4" /> Swap
                 </button>
               )}
-              <button onClick={goToPreviousQuestion} className="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg font-semibold flex items-center gap-1">
+              {/* Jacob #7 fix (2026-05-10): in AI Interviewer view with an
+                  active interviewSequence, Prev/Next buttons used to walk
+                  the user's question bank instead of the AI's authoritative
+                  sequence. Branch on interviewSequence.length to pick the
+                  right walker. Plain Practice mode (no sequence) still
+                  uses the bank-cycle helpers, unchanged. */}
+              <button onClick={() => {
+                if (interviewSequence.length > 0) {
+                  const prevIdx = sequenceIndex - 1;
+                  if (prevIdx < 0) return;
+                  const prevSlot = interviewSequence[prevIdx];
+                  if (!prevSlot?.question) return;
+                  setSequenceIndex(prevIdx);
+                  setCurrentQuestion(prevSlot.question);
+                  setUserAnswer('');
+                  setSpokenAnswer('');
+                  setTranscript('');
+                  accumulatedTranscript.current = '';
+                  flushSync(() => { setFeedback(null); });
+                  setFollowUpQuestion(null);
+                  setConversationHistory([]);
+                  setExchangeCount(0);
+                } else {
+                  goToPreviousQuestion();
+                }
+              }} className="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg font-semibold flex items-center gap-1">
                 ← Prev
               </button>
-              <button onClick={goToNextQuestion} className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg font-semibold flex items-center gap-1">
+              <button onClick={() => {
+                if (interviewSequence.length > 0) {
+                  advanceToNextSlot();
+                } else {
+                  goToNextQuestion();
+                }
+              }} className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg font-semibold flex items-center gap-1">
                 Next →
               </button>
             </div>
