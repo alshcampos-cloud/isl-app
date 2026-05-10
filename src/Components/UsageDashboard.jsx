@@ -69,12 +69,14 @@ const UltimateCompetitiveDashboard = ({ user, supabase, userTier, onUpgrade }) =
       const livePrompterUsed = usageData?.live_prompter_questions || 0;
       console.log('📊 Usage Dashboard loaded:', { aiCoachUsed, livePrompterUsed, usageData });
 
-      // Get all practice history for advanced metrics
-      const { data: allSessions, count: totalCount } = await supabase
-        .from('practice_history')
-        .select('*', { count: 'exact' })
-        .eq('user_id', user.id)
-        .order('date', { ascending: false });
+      // Jacob #16 fix (2026-05-10): practice_history table never existed in production.
+      // Diagnosed via: SELECT to_regclass('public.practice_history') → null.
+      // Empty defaults preserve downstream calculation paths (calculateAdvancedMetrics
+      // and calculateStreak both already handle empty array via `|| []`).
+      // TODO: hook advanced metrics to a real source (practice_sessions or events)
+      // when product decides which table is canonical for session-level data.
+      const allSessions = [];
+      const totalCount = 0;
 
       // Get interview date
       const { data: userData } = await supabase

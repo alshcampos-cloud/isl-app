@@ -2922,15 +2922,12 @@ Respond in this exact JSON format:
         return;
       }
 
-      // BUG 5 FIX: Delete questions, practice_history, AND practice_sessions (scores/attempts)
+      // BUG 5 FIX: Delete questions AND practice_sessions (scores/attempts)
       // BUT do NOT delete usage_tracking (keeps usage counters intact)
+      // Jacob #16 fix (2026-05-10): removed practice_history — table never existed in production.
+      // Diagnosed via: SELECT to_regclass('public.practice_history') → null
       const deleteQuestionsPromise = supabase
         .from('questions')
-        .delete()
-        .eq('user_id', user.id);
-
-      const deletePracticeHistoryPromise = supabase
-        .from('practice_history')
         .delete()
         .eq('user_id', user.id);
 
@@ -2945,12 +2942,12 @@ Respond in this exact JSON format:
 
       let error;
       try {
-        // Delete all three tables in parallel with timeout
-        const [questionsResult, historyResult, sessionsResult] = await Promise.race([
-          Promise.all([deleteQuestionsPromise, deletePracticeHistoryPromise, deletePracticeSessionsPromise]),
+        // Delete both tables in parallel with timeout
+        const [questionsResult, sessionsResult] = await Promise.race([
+          Promise.all([deleteQuestionsPromise, deletePracticeSessionsPromise]),
           timeoutPromise
         ]);
-        error = questionsResult?.error || historyResult?.error || sessionsResult?.error;
+        error = questionsResult?.error || sessionsResult?.error;
       } catch (timeoutError) {
         console.error('Delete timeout:', timeoutError);
         // Still clear local state - user wanted to delete
@@ -2968,7 +2965,7 @@ Respond in this exact JSON format:
       localStorage.removeItem('isl_history');
       localStorage.removeItem('isl_questions');
 
-      console.log('✅ All questions, practice history, AND practice sessions deleted from Supabase');
+      console.log('✅ All questions AND practice sessions deleted from Supabase');
 
       // Show choice modal: Keep empty or load defaults
       setShowDeleteChoiceModal(true);
@@ -8676,8 +8673,8 @@ const startPracticeMode = async () => {
                         };
 
                         // Delete ALL user practice data from Supabase with individual timeouts
+                        // Jacob #16 fix (2026-05-10): removed practice_history — table never existed.
                         await deleteWithTimeout('practice_sessions');
-                        await deleteWithTimeout('practice_history');
                         await deleteWithTimeout('questions');
                         await deleteWithTimeout('question_banks');
                         await deleteWithTimeout('usage_tracking');
