@@ -8070,7 +8070,7 @@ const startPracticeMode = async () => {
                               return;
                             }
                           }
-                          
+
                           try {
                             const { data: { user } } = await supabase.auth.getUser();
                             if (user) {
@@ -8086,7 +8086,7 @@ const startPracticeMode = async () => {
                                 }])
                                 .select()
                                 .single();
-                              
+
                               if (!error && data) {
                                 setQuestions([...questions, data]);
                                 alert('Question added to bank!');
@@ -8097,6 +8097,22 @@ const startPracticeMode = async () => {
                             console.error('Save error:', error);
                             alert('Failed to save question');
                           }
+                        }}
+                        // Jacob #28 fix: per-session generation cap. After 5 generations
+                        // without saving, ask the user to spend a token to keep generating.
+                        // Returns true if allowed (token spent or unlimited tier), false
+                        // if blocked (no token + over cap). Implementation mirrors the
+                        // onQuestionGenerated guard above.
+                        onGenerateAttempt={async () => {
+                          if (!checkUsageLimitsSync('questionGen', 'Question Generator')) {
+                            console.log('🚫 Question Generator generation blocked - over limit');
+                            return false;
+                          }
+                          if (!usageStatsData?.questionGen?.unlimited) {
+                            const canUse = await checkAndIncrementUsage('questionGen', 'Question Generator');
+                            return canUse;
+                          }
+                          return true;
                         }}
                         existingQuestions={questions}
                       />
