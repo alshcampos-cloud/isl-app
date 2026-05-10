@@ -10,8 +10,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { Calendar, Building2, Briefcase, FileText, User, ChevronDown, ChevronUp, Sparkles, Play, Target, Edit2, Check, AlertCircle, BookOpen, Search } from 'lucide-react';
 import CompanyBrief from './Intelligence/CompanyBrief';
 
-// Same localStorage keys as QuestionAssistant.jsx
-const CONTEXT_KEY = 'isl_question_context';
+// Jacob #13 fix (2026-05-10): namespace this surface so it doesn't trample
+// QuestionAssistant's context. Hub owns isl_prep_context; QuestionAssistant
+// continues to own isl_question_context. LEGACY_KEY is read once on mount
+// for backward compat — existing users keep their setup. New writes always
+// use the namespaced key.
+const CONTEXT_KEY = 'isl_prep_context';
+const LEGACY_KEY = 'isl_question_context';
 const DATE_KEY = 'isl_interview_date';
 const GOAL_KEY = 'isl_daily_goal';
 
@@ -37,11 +42,15 @@ function InterviewContextHub({
   const [showDetails, setShowDetails] = useState(false);
 
   // Load from localStorage on mount
+  // Jacob #13: read namespaced key first; fall back to legacy shared key
+  // exactly once for backward compat. Existing users don't lose their setup.
   useEffect(() => {
     try {
       const saved = localStorage.getItem(CONTEXT_KEY);
-      if (saved) {
-        const data = JSON.parse(saved);
+      const legacy = !saved ? localStorage.getItem(LEGACY_KEY) : null;
+      const source = saved || legacy;
+      if (source) {
+        const data = JSON.parse(source);
         setRole(data.role || '');
         setCompany(data.comp || '');
         setInterviewType(data.type || '');
