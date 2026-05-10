@@ -154,6 +154,70 @@ serve(async (req: Request) => {
 
     console.log('📋 Checkout mode:', checkoutMode, '| One-time:', isOneTimePayment);
 
+    // Jacob #8 fix (2026-05-10): defense-in-depth price-type validator.
+    //
+    // Symptom this prevents (Jacob's verbatim report):
+    //   "Annual access pass failed... 'You specified `payment` mode but
+    //    passed a recurring price.'"
+    //
+    // Root cause: when Stripe Dashboard config drifts (recurring price ID
+    // wired into a 'payment'-mode flow, or vice versa), Stripe returns a
+    // generic config error. Without this validator, the user-facing error
+    // is the raw Stripe message — confusing and offers no recovery path.
+    //
+    // This validator retrieves the price object FROM Stripe and asserts
+    // its `type` matches what our PASS_TYPES table claims. On mismatch we
+    // return a clear "Configuration error" with a `price_mode_mismatch`
+    // code, log the specific mismatch for ops debugging, and prevent the
+    // checkout from being attempted (which would fail anyway, but with a
+    // worse message).
+    //
+    // Cost: one extra API call per checkout (~50-100ms latency).
+    // Benefit: any future env-var/Stripe-Dashboard drift is caught with a
+    // crystal-clear error instead of a confusing one. The Apr 30 hotfix
+    // history (committed in this very file's header) shows this exact
+    // pattern recurring; the validator is cheap insurance.
+    try {
+      const priceObj = await stripe.prices.retrieve(priceId);
+      const stripeType = priceObj.type; // 'one_time' or 'recurring'
+      const expected = checkoutMode === 'payment' ? 'one_time' : 'recurring';
+      if (stripeType !== expected) {
+        console.error(
+          `❌ Price type mismatch | priceId=${priceId} | passType=${passType} | ` +
+          `stripeType=${stripeType} | expected=${expected} | ` +
+          `checkoutMode=${checkoutMode}`
+        );
+        return new Response(
+          JSON.stringify({
+            error:
+              'Configuration error: this pricing tier is set up incorrectly. ' +
+              'Please contact support@interviewanswers.ai.',
+            code: 'price_mode_mismatch',
+            debug: {
+              priceId,
+              passType,
+              stripeType,
+              expected,
+              checkoutMode,
+            },
+          }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      console.log(
+        `✅ Price-type validation passed | priceId=${priceId} | type=${stripeType} | ` +
+        `mode=${checkoutMode}`
+      );
+    } catch (priceErr) {
+      // Don't block checkout on retrieve-failures (network blip, Stripe
+      // partial outage, etc.). Log and fall through — Stripe's own error
+      // on session.create will be the next gate.
+      console.warn(
+        `⚠️ Price-type validation skipped (retrieve failed) | priceId=${priceId} | ` +
+        `err=${(priceErr as Error)?.message}`
+      );
+    }
+
     // Build checkout session config
     const sessionConfig: any = {
       mode: checkoutMode,
