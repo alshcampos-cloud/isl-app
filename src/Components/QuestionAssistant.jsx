@@ -2,7 +2,15 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { fetchWithRetry } from '../utils/fetchWithRetry';
 
-export default function QuestionAssistant({ onQuestionGenerated, existingQuestions = [] }) {
+export default function QuestionAssistant({
+  onQuestionGenerated,
+  existingQuestions = [],
+  // Jacob #28 fix: parent passes onGenerateAttempt to gate generation by token
+  // budget once the per-session free cap is hit. Returns true if allowed,
+  // false if user is out of credits.
+  onGenerateAttempt,
+  freeGenerationsPerSession = 5,
+}) {
   const [targetRole, setTargetRole] = useState('');
   const [company, setCompany] = useState('');
   const [background, setBackground] = useState('');
@@ -13,6 +21,10 @@ export default function QuestionAssistant({ onQuestionGenerated, existingQuestio
   const [generatedQuestion, setGeneratedQuestion] = useState('');
   const [error, setError] = useState('');
   const [sessionGeneratedQuestions, setSessionGeneratedQuestions] = useState([]); // Track questions generated this session for variety
+  // Jacob #28: counts THIS session's generations. Resets on remount (e.g.,
+  // page reload). After freeGenerationsPerSession, the next attempt asks
+  // parent (via onGenerateAttempt) whether the user can spend a token.
+  const [generationCount, setGenerationCount] = useState(0);
 
   // Load saved context from localStorage
   useEffect(() => {
@@ -44,6 +56,22 @@ export default function QuestionAssistant({ onQuestionGenerated, existingQuestio
     if (!targetRole.trim()) {
       setError('Please enter your target role first');
       return;
+    }
+
+    // Jacob #28 fix: per-session cap — after `freeGenerationsPerSession`
+    // generations without saving, ask parent whether this attempt is allowed
+    // (parent checks token budget and consumes a token if user has one).
+    if (generationCount >= freeGenerationsPerSession) {
+      if (onGenerateAttempt) {
+        const allowed = await onGenerateAttempt();
+        if (!allowed) {
+          setError(
+            `You've generated ${generationCount} questions this session without saving any. ` +
+            `Save one to continue freely, or upgrade for unlimited generation.`
+          );
+          return;
+        }
+      }
     }
 
     setIsGenerating(true);
@@ -110,6 +138,10 @@ export default function QuestionAssistant({ onQuestionGenerated, existingQuestio
       setGeneratedQuestion(question);
       // Track this question to avoid generating similar ones when "Try Another" is clicked
       setSessionGeneratedQuestions(prev => [...prev, question]);
+      // Jacob #28 fix: increment session generation count. Saving (handleUseQuestion)
+      // implicitly resets pressure — parent persists, this component clears
+      // generatedQuestion, user starts fresh.
+      setGenerationCount(prev => prev + 1);
     } catch (err) {
       console.error('Generation error:', err);
       // FIXED: Better error messages for different failure types
@@ -126,33 +158,25 @@ export default function QuestionAssistant({ onQuestionGenerated, existingQuestio
   };
 
   const handleUseQuestion = async () => {
+    // Jacob #12 fix: parent owns persistence (App.jsx:8057 onQuestionGenerated
+    // does usage check + INSERT + setQuestions + alert). Removing this
+    // component's INSERT eliminates the "double-save" bug — there was a
+    // secondary INSERT here that wrote a second row for every "Use This
+    // Question" click.
+    //
+    // Awaiting the parent callback so the parent's full pipeline (limit
+    // check → token consume → INSERT → reload questions) completes before
+    // this component clears its own state.
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        alert('Please sign in to save questions');
-        return;
-      }
-      
-      const { error } = await supabase.from('questions').insert([{
-        user_id: user.id,
-        question: generatedQuestion,
-        category: 'Generated',
-        priority: 'Technical',
-        bullets: [],
-        narrative: '',
-        keywords: []
-      }]);
-      
-      if (error) throw error;
-      
-      // Call parent callback to reload questions
       if (onQuestionGenerated) {
-        onQuestionGenerated(generatedQuestion);
+        await onQuestionGenerated(generatedQuestion);
       }
-      
-      alert('✅ Question added to bank!');
       setCustomPrompt('');
       setGeneratedQuestion('');
+      // Note: generationCount intentionally NOT reset here. Plan keeps the
+      // session pressure stable; saving means user committed to one of the
+      // generated questions, but the per-session cap still tracks total
+      // generation activity for token-cost purposes.
     } catch (error) {
       console.error('Save error:', error);
       alert('Failed to save: ' + error.message);
