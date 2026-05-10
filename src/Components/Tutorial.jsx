@@ -5,16 +5,19 @@ export default function Tutorial({ user, isActive, onClose, onOpenTemplateLibrar
   const [currentStep, setCurrentStep] = useState(0);
   const [hasShownTutorial, setHasShownTutorial] = useState(false);
 
-  // Check if user has seen tutorial before
+  // Check if user has seen tutorial before — but trust parent's isActive
+  // for explicit replays (Settings → Replay Tutorial). The auto-show on
+  // first sign-up still works because App.jsx sets isActive=true based on
+  // its own localStorage check (App.jsx:1419-1421).
   useEffect(() => {
     const tutorialSeen = localStorage.getItem('isl_tutorial_seen');
-    if (tutorialSeen) {
+    if (tutorialSeen && !isActive) {
       setHasShownTutorial(true);
     }
-  }, []);
+  }, [isActive]);
 
-  // Don't show if user has already seen it
-  if (!isActive || hasShownTutorial) return null;
+  // Parent owns the policy — render only when isActive.
+  if (!isActive) return null;
 
   const steps = [
     {

@@ -8448,6 +8448,13 @@ const startPracticeMode = async () => {
         onBack={() => setCurrentView('home')}
         onNavigate={(view) => setCurrentView(view)}
         onOpenPricing={() => setShowPricingPage(true)}
+        onReplayTutorial={() => {
+          // Jacob #24 fix — clear the seen flag, route home, raise tutorial flag.
+          // Tutorial.jsx's relaxed guard honors isActive directly for replays.
+          localStorage.removeItem('isl_tutorial_seen');
+          setCurrentView('home');
+          setShowTutorial(true);
+        }}
       />
     );
   }
