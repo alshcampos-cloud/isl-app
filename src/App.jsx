@@ -3368,6 +3368,13 @@ const startPracticeMode = async () => {
     });
     setFollowUpQuestion(null);
     setConversationHistory([]);
+    // Jacob #15 fix (2026-05-10): reset per-question timer state so the
+    // confidence picker re-renders for each new question and re-arms the
+    // Timed toggle. Without these, after Q1 picks rating, confidenceRating
+    // stays non-null on Q2 → picker doesn't render → timer never re-arms.
+    setConfidenceRating(null);
+    setTimerActive(false);
+    setRecordingElapsed(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -3388,6 +3395,11 @@ const startPracticeMode = async () => {
     });
     setFollowUpQuestion(null);
     setConversationHistory([]);
+    // Jacob #15 fix (2026-05-10): same per-question timer state reset as
+    // goToNextQuestion. Symmetric path so Prev arrow also re-arms the timer.
+    setConfidenceRating(null);
+    setTimerActive(false);
+    setRecordingElapsed(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   
@@ -6103,7 +6115,19 @@ const startPracticeMode = async () => {
             <div className="flex items-center gap-2">
               {/* Phase 4J: Timed toggle */}
               <button
-                onClick={() => { setTimedMode(!timedMode); setTimerActive(false); }}
+                onClick={() => {
+                  // Jacob #15 fix (2026-05-10): if user toggles Timed ON
+                  // mid-question with rating already chosen and no feedback
+                  // showing, arm the timer immediately. Toggling OFF always
+                  // stops the timer (preserves prior behavior).
+                  const next = !timedMode;
+                  setTimedMode(next);
+                  if (next && confidenceRating !== null && !feedback) {
+                    setTimerActive(true);
+                  } else {
+                    setTimerActive(false);
+                  }
+                }}
                 className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all ${timedMode ? 'bg-teal-100 text-teal-700 border border-teal-300' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
               >
                 ⏱ {timedMode ? 'Timed' : 'Timer'}
