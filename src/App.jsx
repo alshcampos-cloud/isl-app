@@ -4873,7 +4873,7 @@ const startPracticeMode = async () => {
             </div>
             <h2 className="text-3xl font-bold mb-4">Customize to Continue</h2>
             <p className="text-gray-300 mb-6">
-              You've used your 7 free sessions! Customize at least 3 questions with 5+ keywords to unlock unlimited access.
+              You've used your first 7 sessions! Customize at least 3 questions with 5+ keywords to continue practicing. Upgrade to a Pass for unlimited access.
             </p>
             
             <div className="bg-gray-800 rounded-xl p-6 mb-6">
