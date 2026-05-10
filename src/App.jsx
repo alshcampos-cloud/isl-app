@@ -489,18 +489,30 @@ const ISL = () => {
         // TAB SWITCH FIX: Check session validity when returning to app
         console.log('👁️ App visible - checking session...');
 
-        // P0 NUCLEAR FIX: Auto-refresh on tab return to clear ALL stale state
-        // This fixes buttons not working after switching tabs/apps on desktop AND mobile
-        // Only refresh if user has been away for more than 2 seconds (avoid false triggers)
-        const timeAway = Date.now() - (window._lastHiddenTime || 0);
-        if (timeAway > 2000) {
-          console.log(`🔄 [Tab Return] Away for ${timeAway}ms - refreshing to clear stale state...`);
-          // Small delay to ensure visibility state is stable
-          setTimeout(() => {
-            window.location.reload();
-          }, 100);
-          return; // Don't execute rest of handler, page is reloading
-        }
+        // Jacob #9/#10/#19/#20/#21/#29 fix (2026-05-10): removed the
+        // P0 NUCLEAR FIX `window.location.reload()` block that fired any
+        // time the user had been away >2s. The reload was masking some
+        // original "stuck buttons after tab-switch" bug by nuking ALL
+        // state, but it ALSO destroyed:
+        //   - In-flight fetch callbacks (Practice/AI Interviewer
+        //     feedback never resolves; usage-charge for completed
+        //     practice never fires)                  → #20, #21
+        //   - State-based modal forms (Add/Edit Question) → #9, #10
+        //   - Live timers/counters not re-hydrated from DB
+        //     (Practice Prompter token count)               → #19
+        //   - Any state-based view                          → #29
+        //
+        // The targeted recovery mechanisms below now do the job the
+        // reload was over-doing:
+        //   - Stale isAnalyzing reset (next block): catches stuck UI
+        //     without nuking unrelated state
+        //   - Session refresh (further down): handles Supabase token
+        //     expiry without losing in-flight async work
+        //   - Mic auto-resume: handles Practice Prompter mic state
+        //     across tab transitions
+        //   - submitAttemptRef.current++ in stale-isAnalyzing block:
+        //     invalidates in-flight fetches via attemptId guard at
+        //     consumers (Practice + AI Interviewer result/finally)
 
         // P0 FIX: Reset STALE isAnalyzing state to unblock submit buttons
         // Uses ref to avoid stale closure (this effect has empty dep array)
