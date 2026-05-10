@@ -5,6 +5,7 @@ import {
   ChevronLeft, ChevronRight, User, CreditCard, Shield, FileText,
   Scale, Mail, Star, RotateCcw, Trash2, LogOut, Info, ExternalLink,
   AlertTriangle, Loader2, CheckCircle, RefreshCw, Tag, Download,
+  GraduationCap,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { isNativeApp } from '../utils/platform';
@@ -32,7 +33,7 @@ const TIER_BADGE_STYLES = {
   annual: 'bg-amber-50 text-amber-700',
 };
 
-export default function SettingsPage({ user, userData, supabase: supabaseProp, onBack, onNavigate, onOpenPricing }) {
+export default function SettingsPage({ user, userData, supabase: supabaseProp, onBack, onNavigate, onOpenPricing, onReplayTutorial }) {
   // Delete account state
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteInput, setDeleteInput] = useState('');
@@ -292,6 +293,13 @@ export default function SettingsPage({ user, userData, supabase: supabaseProp, o
           subtitle: 'Add to home screen for quick access',
           action: () => setShowInstallModal(true),
         }]),
+        {
+          icon: GraduationCap,
+          iconName: 'GraduationCap',
+          label: 'Replay Tutorial',
+          subtitle: 'Show the welcome tour again',
+          action: () => onReplayTutorial?.(),
+        },
         {
           icon: Mail,
           iconName: 'Mail',
