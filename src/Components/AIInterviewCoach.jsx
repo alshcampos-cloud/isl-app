@@ -11,7 +11,7 @@ import { isTap } from '../utils/tapGuard';
  *   - Citation extraction (STAR Method, Learn Center, Question Bank)
  *   - Markdown rendering (bold, italic, lists, links)
  *   - Rate limit handling with retry
- *   - Credit system integration (answer_assistant feature key)
+ *   - Credit system integration (interview_coach feature key — Jacob #2)
  *   - Chat persistence via localStorage (24h expiry)
  *
  * Battle Scars enforced:
@@ -21,7 +21,7 @@ import { isTap } from '../utils/tapGuard';
  *   #9  — Beta users bypass limits
  *   #16 — onClick + onTouchEnd for iOS Safari
  *
- * Credit feature: 'answer_assistant' (reuses existing key)
+ * Credit feature: 'interview_coach' (Jacob #2 — separated from answer_assistant)
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
@@ -286,10 +286,13 @@ export default function AIInterviewCoach({ user, userData, questions = [], pract
   // Credit check on mount
   useEffect(() => {
     if (userData && userData.usage) {
+      // Jacob #2 fix (2026-05-10): switch from shared 'answer_assistant'
+      // bucket to dedicated 'interview_coach' bucket so Bank STAR Coach
+      // usage doesn't compete with confidence-brief / portfolio-analysis.
       const check = canUseFeature(
         userData.usage,
         userTier,
-        'answer_assistant'
+        'interview_coach'
       );
       if (!check.allowed && !isBeta) {
         setCreditBlocked(true);
@@ -512,21 +515,22 @@ export default function AIInterviewCoach({ user, userData, questions = [], pract
       setMessageCount(prev => prev + 1);
 
       // CHARGE AFTER SUCCESS (Battle Scar #8) — only on first exchange
+      // Jacob #2 fix (2026-05-10): increments interview_coach not answer_assistant.
       if (messageCount === 0 && user?.id) {
         try {
-          await incrementUsage(supabase, user.id, 'answer_assistant');
+          await incrementUsage(supabase, user.id, 'interviewCoach');
         } catch (chargeErr) {
           console.warn('Usage increment failed (non-blocking):', chargeErr);
         }
       }
 
-      // Re-check credits after charging
+      // Re-check credits after charging — Jacob #2 fix: interview_coach bucket
       if (userData?.usage && !isBeta && !isUnlimited) {
-        const currentUsed = (userData.usage.answer_assistant || 0) + messageCount + 1;
+        const currentUsed = (userData.usage.interview_coach || 0) + messageCount + 1;
         const check = canUseFeature(
-          { answer_assistant: currentUsed },
+          { interview_coach: currentUsed },
           userTier,
-          'answer_assistant'
+          'interview_coach'
         );
         if (!check.allowed) {
           setCreditBlocked(true);
@@ -575,8 +579,9 @@ export default function AIInterviewCoach({ user, userData, questions = [], pract
   // RENDER: EMPTY STATE — No messages yet (show starters)
   // ============================================================
   if (messages.length === 0) {
+    // Jacob #2 fix (2026-05-10): empty-state credit check uses interview_coach bucket
     const creditCheck = userData?.usage
-      ? canUseFeature(userData.usage, userTier, 'answer_assistant')
+      ? canUseFeature(userData.usage, userTier, 'interview_coach')
       : null;
 
     return (

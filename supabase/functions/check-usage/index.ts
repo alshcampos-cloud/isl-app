@@ -17,6 +17,7 @@ const TIER_LIMITS: Record<string, Record<string, number>> = {
     ai_interviewer: 3,
     practice_mode: 10,
     answer_assistant: 5,
+    interview_coach: 5,           // Jacob #2 — Bank STAR Coach
     question_gen: 5,
     live_prompter_questions: 10,
   },
@@ -25,6 +26,7 @@ const TIER_LIMITS: Record<string, Record<string, number>> = {
     ai_interviewer: 3,
     practice_mode: 10,
     answer_assistant: 5,
+    interview_coach: 5,           // Jacob #2
     question_gen: 5,
     live_prompter_questions: 10,
   },
@@ -33,6 +35,7 @@ const TIER_LIMITS: Record<string, Record<string, number>> = {
     ai_interviewer: 999999,
     practice_mode: 999999,
     answer_assistant: 999999,
+    interview_coach: 999999,      // Jacob #2
     question_gen: 999999,
     live_prompter_questions: 999999,
   },
@@ -41,6 +44,7 @@ const TIER_LIMITS: Record<string, Record<string, number>> = {
     ai_interviewer: 999999,
     practice_mode: 999999,
     answer_assistant: 999999,
+    interview_coach: 999999,      // Jacob #2
     question_gen: 999999,
     live_prompter_questions: 999999,
   },
@@ -49,6 +53,7 @@ const TIER_LIMITS: Record<string, Record<string, number>> = {
     ai_interviewer: 999999,
     practice_mode: 999999,
     answer_assistant: 999999,
+    interview_coach: 999999,      // Jacob #2
     question_gen: 999999,
     live_prompter_questions: 999999,
   },
@@ -56,6 +61,7 @@ const TIER_LIMITS: Record<string, Record<string, number>> = {
     ai_interviewer: 999999,
     practice_mode: 999999,
     answer_assistant: 999999,
+    interview_coach: 999999,      // Jacob #2
     question_gen: 999999,
     live_prompter_questions: 999999,
   },

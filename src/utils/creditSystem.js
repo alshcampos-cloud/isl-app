@@ -31,6 +31,7 @@ export const TIER_LIMITS = {
     ai_interviewer: 3,           // 3 full AI practice sessions (high value)
     practice_mode: 10,            // 10 quick practices (daily use for 2 weeks)
     answer_assistant: 3,          // 3 STAR coaching sessions
+    interview_coach: 5,           // 5 Bank STAR Coach sessions (Jacob #2 — separated from answer_assistant)
     question_gen: 3,              // 3 AI question generations
     live_prompter_questions: 10,  // 10 real-time prompt questions
     live_prompter_unlimited: false,
@@ -45,6 +46,7 @@ export const TIER_LIMITS = {
     ai_interviewer: 1,
     practice_mode: 3,
     answer_assistant: 2,
+    interview_coach: 2,           // Half of free's 5 (Jacob #2)
     question_gen: 2,
     live_prompter_questions: 3,
     live_prompter_unlimited: false,
@@ -67,6 +69,7 @@ export const TIER_LIMITS = {
     ai_interviewer: 3,
     practice_mode: 10,
     answer_assistant: 3,
+    interview_coach: 5,           // Free-tier level (Jacob #2)
     question_gen: 3,
     live_prompter_questions: 10,
     live_prompter_unlimited: false,
@@ -89,6 +92,7 @@ export const TIER_LIMITS = {
     ai_interviewer: 999999,
     practice_mode: 999999,
     answer_assistant: 999999,
+    interview_coach: 999999,      // Unlimited paid (Jacob #2)
     question_gen: 999999,
     live_prompter_questions: 999999,
     live_prompter_unlimited: true,
@@ -111,6 +115,7 @@ export const TIER_LIMITS = {
     ai_interviewer: 999999,
     practice_mode: 999999,
     answer_assistant: 999999,
+    interview_coach: 999999,      // Unlimited (Jacob #2)
     question_gen: 999999,
     live_prompter_questions: 999999,
     live_prompter_unlimited: true,
@@ -132,6 +137,7 @@ export const TIER_LIMITS = {
     ai_interviewer: 999999,
     practice_mode: 999999,
     answer_assistant: 999999,
+    interview_coach: 999999,      // Unlimited (Jacob #2)
     question_gen: 999999,
     live_prompter_questions: 999999,
     live_prompter_unlimited: true,
@@ -155,6 +161,7 @@ export const TIER_LIMITS = {
     ai_interviewer: 999999,
     practice_mode: 999999,
     answer_assistant: 999999,
+    interview_coach: 999999,      // Unlimited (Jacob #2)
     question_gen: 999999,
     live_prompter_questions: 999999,
     live_prompter_unlimited: true,
@@ -272,6 +279,7 @@ export function initializeUsageTracking(userId, tier = 'free') {
     ai_interviewer: 0,
     practice_mode: 0,
     answer_assistant: 0,
+    interview_coach: 0,           // Jacob #2
     question_gen: 0,
     live_prompter_questions: 0,
     nursing_coach: 0,
@@ -338,6 +346,7 @@ function featureNameToDb(camelCaseName) {
     'aiInterviewer': 'ai_interviewer',
     'practiceMode': 'practice_mode',
     'answerAssistant': 'answer_assistant',
+    'interviewCoach': 'interview_coach',  // Jacob #2 — Bank STAR Coach
     'questionGen': 'question_gen',
     'livePrompterQuestions': 'live_prompter_questions',
 
@@ -447,6 +456,14 @@ export async function getUsageStats(supabase, userId, tier) {
         limit: limits.answer_assistant,
         remaining: Math.max(0, limits.answer_assistant - (usage.answer_assistant || 0)),
         unlimited: limits.answer_assistant >= 999999
+      },
+      // Jacob #2 (2026-05-10): Bank STAR Coach is now its own bucket.
+      // Tier limits default to free (5/mo) if a tier doesn't list one.
+      interviewCoach: {
+        used: usage.interview_coach || 0,
+        limit: limits.interview_coach || 0,
+        remaining: Math.max(0, (limits.interview_coach || 0) - (usage.interview_coach || 0)),
+        unlimited: (limits.interview_coach || 0) >= 999999
       },
       questionGen: {
         used: usage.question_gen || 0,
