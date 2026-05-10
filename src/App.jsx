@@ -8229,7 +8229,8 @@ const startPracticeMode = async () => {
                         
                         if (newQuestions.length === 0) {
                           alert('⚠️ All questions from this template are already in your Question Bank!');
-                          setShowTemplateLibrary(false);
+                          // Jacob #17: removed auto-close — keep catalog open so user
+                          // can add other groups in the same session. X still closes.
                           return;
                         }
                         
@@ -8256,8 +8257,11 @@ const startPracticeMode = async () => {
                         
                         // Reload questions
                         await loadQuestions();
-                        setShowTemplateLibrary(false);
-                        
+                        // Jacob #17: removed auto-close — TemplateLibrary updates
+                        // its own justAdded set so imported items show "in bank"
+                        // checkmarks immediately. Keeping catalog open lets user
+                        // add multiple groups in one session. X still closes.
+
                         // FIXED: Show accurate count with duplicate info
                         const skipped = importedQuestions.length - newQuestions.length;
                         if (skipped > 0) {
@@ -9198,7 +9202,8 @@ const startPracticeMode = async () => {
                   
                   if (newQuestions.length === 0) {
                     alert('⚠️ All questions from this template are already in your Question Bank!');
-                    setShowTemplateLibrary(false);
+                    // Jacob #17: removed auto-close — keep catalog open so user
+                    // can add other groups in the same session. X still closes.
                     return;
                   }
                   
@@ -9225,8 +9230,11 @@ const startPracticeMode = async () => {
                   
                   // Reload questions
                   await loadQuestions();
-                  setShowTemplateLibrary(false);
-                  
+                  // Jacob #17: removed auto-close — TemplateLibrary updates its own
+                  // justAdded set so imported items show "in bank" checkmarks
+                  // immediately. Keeping catalog open lets user add multiple groups
+                  // in one session. X still closes.
+
                   // FIXED: Show accurate count with duplicate info
                   const skipped = importedQuestions.length - newQuestions.length;
                   if (skipped > 0) {
