@@ -1,14 +1,20 @@
 // create-checkout-session/index.ts
 // Creates Stripe Checkout sessions for:
 //   - 30-day passes (nursing or general): mode = 'payment' (one-time)
-//   - Annual Pass: mode = 'payment' (one-time, $129/year — Apr 30, 2026 update)
+//   - Annual Pass: mode = 'payment' (one-time, $149/year — Apr 30 + May 10, 2026)
 //   - Legacy Pro subscription: mode = 'subscription' (grandfathered Pro users only)
 //
-// History (Apr 30, 2026): Annual flipped from 'subscription' to 'payment' to
-// match the new $129 one-time-payment Stripe product. Existing recurring annual
-// subscriptions in Stripe are NOT affected (separate Stripe records). The
-// webhook's checkout.session.completed handler fulfills annual_all_access via
-// passType metadata regardless of mode, so no webhook changes needed.
+// History:
+//   Apr 30, 2026: Annual flipped from 'subscription' to 'payment'. The first
+//     iteration referenced $129 in this comment block; owner picked $149 the
+//     same day after price-strategy review. Existing recurring annual
+//     subscriptions in Stripe are NOT affected (separate Stripe records).
+//   May 10, 2026 (Jacob #8a): reconciliation pass — comment says $149 to match
+//     creditSystem.js, index.html JSON-LD, and the actual Stripe price object
+//     (price_1TSAKHJtT6sejUOKYsUYDfMj, $149.00 USD, one-time).
+//
+// The webhook's checkout.session.completed handler fulfills annual_all_access
+// via passType metadata regardless of mode, so no webhook changes needed.
 //
 // The passType metadata field tells the webhook which product was purchased:
 //   'nursing_30day', 'general_30day', 'annual_all_access', or 'legacy_pro'

@@ -1,10 +1,16 @@
 // Credit System for ISL - PRODUCTION VERSION
 // Supports: Free tier, 30-day passes, annual, legacy pro, beta
 //
-// PRICING MODEL (P2):
-//   Specialty Pass:          $19.99 / 30-day pass
-//   General Interview Prep:  $14.99 / 30-day pass
-//   All-Access Annual:       $99.99 / year
+// PRICING MODEL (post-2026-04-30 reprice — Jacob #8a 2026-05-10):
+//   Specialty Pass:          $19.99 / 30-day pass (unchanged)
+//   General Interview Prep:  $39    / 30-day pass (was $14.99 pre-reprice)
+//   All-Access Annual:       $149   / year — one-off, no auto-renew (was $99.99 here, $149.99 in Stripe)
+//   Legacy Pro:              $29.99 / month subscription — grandfathered only, closed to new signups
+//
+// NOTE: the .price field below is documentation-only — no production
+// code path consumes it. Source of truth for actual charge amounts is:
+//   - Web: Stripe price IDs in Vercel env vars (VITE_STRIPE_*_PRICE_ID)
+//   - iOS: Apple App Store Connect IAP product prices
 //
 // Pass expiry stored in user_profiles columns.
 // Use resolveEffectiveTier() to determine active tier from profile data.
@@ -75,10 +81,10 @@ export const TIER_LIMITS = {
     nursing_answer_assistant: 999999,
   },
 
-  // ── 30-Day Pass: General ($14.99) ──────────────────────────
+  // ── 30-Day Pass: General ($39) ─────────────────────────────
   general_pass: {
     name: 'General Pass',
-    price: 14.99,
+    price: 39,
     // General features — UNLIMITED
     ai_interviewer: 999999,
     practice_mode: 999999,
@@ -97,10 +103,10 @@ export const TIER_LIMITS = {
     nursing_answer_assistant: 3,
   },
 
-  // ── Annual All-Access ($99.99/year) ────────────────────────
+  // ── Annual All-Access ($149/year, one-off) ────────────────────
   annual: {
     name: 'Annual All-Access',
-    price: 99.99,
+    price: 149,
     // General — UNLIMITED
     ai_interviewer: 999999,
     practice_mode: 999999,
