@@ -540,13 +540,26 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
                 </button>
                 <button
                   onClick={saveAnswer}
-                  disabled={!generatedBullets.length}
+                  disabled={!generatedAnswer || generatedAnswer.length < 10}
                   className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 rounded-xl font-bold text-lg hover:from-green-700 hover:to-emerald-700 flex items-center justify-center gap-2 transition disabled:opacity-50 shadow-lg"
                 >
                   <Save className="w-5 h-5" />
                   Save Answer
                 </button>
               </div>
+              {/* Jacob #11 frontend fix (2026-05-10): Save was gated on
+                  bullets, but generateBullets() silently no-ops on endpoint
+                  failure. User saw a polished narrative but a grayed-out
+                  Save button — looked like "won't save." Gate now reflects
+                  what saveAnswer actually requires (a non-empty narrative);
+                  bullets are optional and saveAnswer accepts an empty
+                  array. Surface a small notice so users know bullets are
+                  missing but they can still save. */}
+              {!generatedBullets.length && generatedAnswer && (
+                <p className="text-xs text-amber-600 mt-2 text-center">
+                  Bullets couldn't be auto-generated. You can still save the narrative.
+                </p>
+              )}
               <p className="text-xs text-center text-gray-600 mt-3">
                 ✅ Saves to all modes: Prompter, AI Interviewer, Practice, Flashcards, Question Bank
               </p>
