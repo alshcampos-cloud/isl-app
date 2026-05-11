@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { fetchWithRetry } from '../utils/fetchWithRetry';
+import { incrementUsage } from '../utils/creditSystem';
 
 export default function QuestionAssistant({ onQuestionGenerated, existingQuestions = [] }) {
   const [targetRole, setTargetRole] = useState('');
@@ -13,6 +14,7 @@ export default function QuestionAssistant({ onQuestionGenerated, existingQuestio
   const [generatedQuestion, setGeneratedQuestion] = useState('');
   const [error, setError] = useState('');
   const [sessionGeneratedQuestions, setSessionGeneratedQuestions] = useState([]); // Track questions generated this session for variety
+  const genAttemptsRef = useRef(0); // Counts successful generations; charges 1 credit per 3 (soft throttle)
 
   // Load saved context from localStorage
   useEffect(() => {
@@ -110,6 +112,15 @@ export default function QuestionAssistant({ onQuestionGenerated, existingQuestio
       setGeneratedQuestion(question);
       // Track this question to avoid generating similar ones when "Try Another" is clicked
       setSessionGeneratedQuestions(prev => [...prev, question]);
+
+      // Soft throttle: charge 1 credit per 3 successful generations (Battle Scar #8)
+      genAttemptsRef.current += 1;
+      if (genAttemptsRef.current % 3 === 0) {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) await incrementUsage(supabase, user.id, 'question_gen');
+        } catch (e) { console.warn('Usage tracking failed:', e); }
+      }
     } catch (err) {
       console.error('Generation error:', err);
       // FIXED: Better error messages for different failure types
