@@ -616,8 +616,19 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
                 {/* Answer Generation Buttons - Shows after some conversation */}
                 {conversation.length >= 2 && (
                   <div className="space-y-2">
-                    {/* Rush Answer - Available after 2 exchanges, hidden after 6 */}
-                    {conversation.length >= 2 && conversation.length < 6 && (
+                    {/* Jacob #18 fix (2026-05-10): user-agency option. Previously
+                        Polished was gated on conversation.length >= 6, forcing
+                        users with complete answers at 2-3 exchanges to either
+                        take Rush (a worse output) or keep talking when they
+                        had nothing more to say. Now BOTH buttons are visible
+                        from exchange 2 — user decides which output they want.
+                        Polished is recommended (primary green) at 4+ exchanges,
+                        secondary outline at 2-3. No AI judgment, no heuristic,
+                        zero added Anthropic cost. Replaces plan's Option A
+                        (Edge Function probe ~$0.0003/check) and Option B
+                        (client heuristic, ~70% accurate). */}
+                    {/* Rush Answer — quick version, always available 2-5 */}
+                    {conversation.length < 6 && (
                       <button
                         onClick={() => synthesizeAnswer(true)}
                         disabled={isLoading}
@@ -627,9 +638,23 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
                         ⚡ Rush Answer (Quick Version)
                       </button>
                     )}
-                    
-                    {/* Full Answer - Available after 6 exchanges */}
-                    {conversation.length >= 6 && (
+
+                    {/* Polished Answer — now available from exchange 2.
+                        Styled as secondary (border) at 2-3 exchanges (Rush is
+                        the suggested default for short conversations), primary
+                        (filled green) at 4+ exchanges (Polished is the suggested
+                        default once user has provided enough material). */}
+                    {conversation.length >= 2 && conversation.length < 4 && (
+                      <button
+                        onClick={() => synthesizeAnswer(false)}
+                        disabled={isLoading}
+                        className="w-full bg-white border-2 border-green-500 text-green-700 px-6 py-4 rounded-xl font-bold text-lg hover:bg-green-50 disabled:opacity-50 transition flex items-center justify-center gap-2"
+                      >
+                        <Sparkles className="w-6 h-6" />
+                        ✨ I'm ready — Create Polished Answer
+                      </button>
+                    )}
+                    {conversation.length >= 4 && (
                       <button
                         onClick={() => synthesizeAnswer(false)}
                         disabled={isLoading}
@@ -642,12 +667,18 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
                   </div>
                 )}
                 
+                {/* Jacob #18 fix (2026-05-10): copy updated to reflect that
+                    Polished is now available from exchange 2 (no more "X more
+                    exchanges" countdown). Suggests Rush for short answers,
+                    Polished once user has provided enough material. */}
                 <p className="text-xs text-center text-gray-500">
                   {conversation.length < 2
                     ? "Keep answering questions - the AI will help draw out details"
+                    : conversation.length < 4
+                    ? "🟡 Rush available • 🟢 Or skip ahead with 'I'm ready' for the polished answer"
                     : conversation.length < 6
-                    ? `🟡 Rush answer available now • 🟢 ${6 - conversation.length} more exchange${6 - conversation.length === 1 ? '' : 's'} for polished answer`
-                    : "🟢 Ready for polished answer! Or choose 'Rush' for a quicker version"}
+                    ? "🟢 Polished answer recommended • 🟡 Or use Rush for a quicker version"
+                    : "🟢 Ready for polished answer!"}
                 </p>
               </div>
             </>
