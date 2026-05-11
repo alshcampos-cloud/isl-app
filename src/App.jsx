@@ -540,6 +540,9 @@ const ISL = () => {
             const now = Math.floor(Date.now() / 1000);
             const expiresIn = expiresAt - now;
 
+            // DIAG: log token state every time focus returns
+            console.log(`🔍 [DIAG] TabFocus | tokenPrefix=${existingSession.access_token?.substring(0, 20)} | expiresIn=${expiresIn}s | willRefresh=${expiresIn < 300}`);
+
             if (expiresIn < 300) { // Less than 5 minutes left
               console.log('🔄 Session expiring soon, refreshing...');
               // Try to refresh, but don't block on failure
@@ -547,7 +550,7 @@ const ISL = () => {
                 if (error) {
                   console.log('Session refresh deferred - will retry on next API call');
                 } else {
-                  console.log('✅ Session refreshed successfully');
+                  console.log(`✅ Session refreshed | newTokenPrefix=${data?.session?.access_token?.substring(0, 20)}`);
                 }
               }).catch(() => {
                 // Silently ignore - Supabase will auto-refresh on next API call
@@ -556,7 +559,7 @@ const ISL = () => {
               console.log('✅ Session valid (expires in', Math.floor(expiresIn / 60), 'min)');
             }
           } else {
-            console.log('ℹ️ No active session');
+            console.log('🔍 [DIAG] TabFocus | NO active session found');
           }
         } catch (err) {
           // Don't log as error - just informational
@@ -1774,6 +1777,9 @@ Get a 30-Day Pass for just $14.99 — no subscription!`);
         return false;
       }
 
+      // DIAG: log which token check-usage is sending
+      console.log(`🔍 [DIAG] checkUsage | feature=${feature} | tokenPrefix=${session.access_token?.substring(0, 20)} | expiresIn=${Math.floor(session.expires_at - Date.now() / 1000)}s`);
+
       const response = await fetch(
         'https://tzrlpwtkrtvjpdhcaayu.supabase.co/functions/v1/check-usage',
         {
@@ -1787,6 +1793,8 @@ Get a 30-Day Pass for just $14.99 — no subscription!`);
       );
 
       if (!response.ok) {
+        // DIAG: capture full error body to identify 401 vs other failures
+        response.clone().text().then(body => console.error(`🔍 [DIAG] checkUsage FAILED | status=${response.status} | body=${body}`));
         console.error('check-usage HTTP error:', response.status);
         // Fallback to client-side check on HTTP error
         return checkUsageLimitsSync(feature === 'practice_mode' ? 'practiceMode' :
@@ -3446,6 +3454,8 @@ const startPracticeMode = async () => {
           throw new Error('Your session has expired. Please sign in again.');
         }
         console.log('🔐 Using session token for API call (expires:', new Date(session.expires_at * 1000).toLocaleTimeString(), ')');
+        // DIAG: log token used at submit time to compare against TabFocus token
+        console.log(`🔍 [DIAG] Practice submit | tokenPrefix=${session.access_token?.substring(0, 20)} | expiresIn=${Math.floor(session.expires_at - Date.now() / 1000)}s`);
 
         // P0 INSTRUMENTATION: Log before API call
         console.log(`🔵 [Practice] Attempting API call | attemptId=${attemptId}`);
@@ -3474,6 +3484,8 @@ const startPracticeMode = async () => {
         }, 3);
       })
       .then(response => {
+        // DIAG: log HTTP status from ai-feedback for every practice submit
+        console.log(`🔍 [DIAG] Practice ai-feedback response | status=${response.status}`);
         return response.json().then(data => ({ response, data }));
       })
       .then(({ response, data }) => {
@@ -3628,6 +3640,8 @@ const startPracticeMode = async () => {
         // P0 INSTRUMENTATION: Log before API call
         console.log(`🟣 [AI Interviewer] Attempting API call | attemptId=${attemptId}`);
         console.log('🔐 Using session token for AI Interviewer API call');
+        // DIAG: log token used at submit time to compare against TabFocus token
+        console.log(`🔍 [DIAG] AI Interviewer submit | tokenPrefix=${session.access_token?.substring(0, 20)} | expiresIn=${Math.floor(session.expires_at - Date.now() / 1000)}s`);
 
         // RELIABILITY FIX: Use retry wrapper (3 attempts)
         return fetchWithRetry(
@@ -3665,6 +3679,8 @@ const startPracticeMode = async () => {
         );
       })
       .then(response => {
+        // DIAG: log HTTP status from ai-feedback for every AI Interviewer submit
+        console.log(`🔍 [DIAG] AI Interviewer ai-feedback response | status=${response.status}`);
         return response.json().then(data => ({ response, data }));
       })
       .then(({ response, data }) => {
