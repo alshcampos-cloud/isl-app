@@ -356,10 +356,22 @@ When giving feedback, cite their specific projects and skills as evidence they c
       else if (nursingActive) effectiveTier = 'nursing_pass'
       else if (isLegacyPro) effectiveTier = 'pro'
 
-      // Free-tier and nursing-pass users get limited general features
+      // Free-tier and nursing-pass users get limited general features.
+      //
+      // Jacob #1+#6+#3+#4+#5 fix (2026-05-10, Q2=B owner approval):
+      // Lowered answer-assistant-*, confidence-brief, and portfolio-analysis
+      // from 5/10 to 3 to match creditSystem.js free-tier answer_assistant=3.
+      // Reasoning: the client gates on canUseFeature() which reads
+      // creditSystem.js limits (currently 3), so the server cap of 5 was
+      // unreachable in the normal flow. Lowering to 3 makes defense-in-depth
+      // consistent. portfolio-analysis was at 10 historically but shares the
+      // same `answer_assistant` column per modeToColumn:374 — moving it to 3
+      // too (separate column = Track C territory, deferred).
+      // Paid tiers (general_pass, annual, pro) are unaffected: they aren't
+      // keys in GENERAL_LIMITS so the `if (limits && …)` guard short-circuits.
       const GENERAL_LIMITS: Record<string, Record<string, number>> = {
-        free: { practice: 10, 'ai-interviewer': 3, 'answer-assistant-start': 5, 'answer-assistant-continue': 5, 'confidence-brief': 5, 'portfolio-analysis': 10 },
-        nursing_pass: { practice: 10, 'ai-interviewer': 3, 'answer-assistant-start': 5, 'answer-assistant-continue': 5, 'confidence-brief': 5, 'portfolio-analysis': 10 },
+        free: { practice: 10, 'ai-interviewer': 3, 'answer-assistant-start': 3, 'answer-assistant-continue': 3, 'confidence-brief': 3, 'portfolio-analysis': 3 },
+        nursing_pass: { practice: 10, 'ai-interviewer': 3, 'answer-assistant-start': 3, 'answer-assistant-continue': 3, 'confidence-brief': 3, 'portfolio-analysis': 3 },
       }
 
       const limits = GENERAL_LIMITS[effectiveTier]
