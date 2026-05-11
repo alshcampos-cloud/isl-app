@@ -126,6 +126,14 @@ function JDDecoder({ onBack, jobDescription = '', getUserContext, onSaveQuestion
       setResult(parsed);
       setCachedResult(text, parsed);
 
+      // Mark Decode JD journey node complete by writing JD text to shared context
+      try {
+        const existing = localStorage.getItem('isl_question_context');
+        const ctx = existing ? JSON.parse(existing) : {};
+        ctx.jd = text;
+        localStorage.setItem('isl_question_context', JSON.stringify(ctx));
+      } catch { /* quota exceeded — ignore */ }
+
       // CHARGE AFTER SUCCESS (Battle Scar #8)
       try {
         const { data: { user } } = await supabase.auth.getUser();
