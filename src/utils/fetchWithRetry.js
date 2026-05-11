@@ -40,9 +40,13 @@ export async function fetchWithRetry(url, options, maxAttempts = 3, timeoutMs = 
         return response;
       }
 
-      // Auth errors - don't retry
-      if (response.status === 401 || response.status === 403) {
-        console.log(`🚫 Auth error (${response.status}) - not retrying`);
+      // Auth errors - don't retry (Jacob #1+#6 fix 2026-05-10: also exempt
+      // 429 since our server-side cap returns a deterministic 429 with a
+      // friendly error body — retrying just wastes 2s+ and clobbers cache.
+      // Battle Scar #22 governs this shared utility — change scope limited
+      // strictly to the status-code list).
+      if (response.status === 401 || response.status === 403 || response.status === 429) {
+        console.log(`🚫 Non-retryable error (${response.status}) - not retrying`);
         return response;
       }
 
