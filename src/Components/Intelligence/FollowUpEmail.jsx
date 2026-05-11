@@ -64,7 +64,13 @@ Notes from interview: ${notes || 'General interview, discussed role responsibili
         }
       );
 
-      if (!response.ok) throw new Error('Generation failed');
+      // Jacob #3 fix (2026-05-10): surface server's friendly error
+      // instead of generic "Generation failed". Server returns
+      // { error: 'Monthly limit reached. ...' } on cap-hit.
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.error || 'Service temporarily unavailable. Please try again.');
+      }
       const data = await response.json();
       const aiText = data.content?.[0]?.text || data.response || '';
       // Try to parse JSON response with subject line

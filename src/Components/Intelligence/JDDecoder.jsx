@@ -101,7 +101,13 @@ function JDDecoder({ onBack, jobDescription = '', getUserContext, onSaveQuestion
         }
       );
 
-      if (!response.ok) throw new Error(`Analysis failed: ${response.status}`);
+      // Jacob #1+#6 fix (2026-05-10): surface server's friendly error
+      // instead of swallowing 429 as "Analysis failed: 429". Server returns
+      // { error: 'Monthly limit reached. ...' } on cap-hit.
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.error || 'Service temporarily unavailable. Please try again.');
+      }
 
       const data = await response.json();
       const aiText = data.content?.[0]?.text || data.response || '';

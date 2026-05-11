@@ -274,7 +274,14 @@ function Portfolio({ onBack, getUserContext, questions = [], onNavigate }) {
       },
       body: JSON.stringify({ mode: 'portfolio-analysis', systemPrompt, userMessage }),
     });
-    if (!response.ok) throw new Error(`AI request failed: ${response.status}`);
+    // Jacob #1+#6 cluster fix (2026-05-10): surface server's friendly
+    // error instead of "AI request failed: 429". Server returns
+    // { error: 'Monthly limit reached. ...' } on cap-hit (now lowered
+    // to 3/mo on free tier per Q2=B owner decision).
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      throw new Error(body?.error || 'Service temporarily unavailable. Please try again.');
+    }
     const data = await response.json();
     if (data.type === 'error' && data.error) {
       throw new Error(data.error.type === 'overloaded_error'

@@ -149,7 +149,13 @@ function StoryBank({ onBack, questions = [], getUserContext, onNavigate }) {
         }
       );
 
-      if (!response.ok) throw new Error('Matching failed');
+      // Jacob #5 fix (2026-05-10): surface server's friendly error
+      // instead of generic "Matching failed". Server returns
+      // { error: 'Monthly limit reached. ...' } on cap-hit.
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.error || 'Service temporarily unavailable. Please try again.');
+      }
       const data = await response.json();
       const aiText = data.content?.[0]?.text || '';
       const jsonMatch = aiText.match(/\{[\s\S]*\}/);
