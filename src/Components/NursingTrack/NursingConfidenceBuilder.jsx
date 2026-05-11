@@ -333,9 +333,15 @@ export default function NursingConfidenceBuilder({ specialty, onBack, userData, 
       );
 
       if (!response.ok) {
+        // Jacob #1+#6 cluster fix (2026-05-10): surface server's friendly
+        // error instead of "Brief generation failed: 429". Server returns
+        // { error: 'Monthly limit reached. ...' } on cap-hit. Try to
+        // parse as JSON first; fall back to text for unusual error formats.
         const errText = await response.text();
         console.error('Confidence brief error:', response.status, errText);
-        throw new Error(`Brief generation failed: ${response.status}`);
+        let serverError = null;
+        try { serverError = JSON.parse(errText)?.error; } catch { /* not JSON */ }
+        throw new Error(serverError || 'Service temporarily unavailable. Please try again.');
       }
 
       const data = await response.json();

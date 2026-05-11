@@ -164,7 +164,13 @@ Select the most relevant questions for this role. Return JSON only.`;
         }
       );
 
-      if (!response.ok) throw new Error(`Analysis failed: ${response.status}`);
+      // Jacob #6 fix (2026-05-10): surface server's friendly error
+      // instead of "Analysis failed: 429". Server returns
+      // { error: 'Monthly limit reached. ...' } on cap-hit.
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.error || 'Service temporarily unavailable. Please try again.');
+      }
 
       const data = await response.json();
       const aiText = data.content?.[0]?.text || data.response || '';

@@ -57,7 +57,13 @@ function CompanyBrief({ companyName, getUserContext }) {
           }),
         }
       );
-      if (!response.ok) throw new Error(`Failed: ${response.status}`);
+      // Jacob #1+#6 cluster fix (2026-05-10): surface server's friendly
+      // error instead of "Failed: 429". Server returns
+      // { error: 'Monthly limit reached. ...' } on cap-hit.
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.error || 'Service temporarily unavailable. Please try again.');
+      }
       const data = await response.json();
       const aiText = data.content?.[0]?.text || '';
       const jsonMatch = aiText.match(/\{[\s\S]*\}/);
