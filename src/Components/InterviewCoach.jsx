@@ -231,12 +231,11 @@ function InterviewCoach({
       // CHARGE AFTER SUCCESS (Battle Scar #8)
       if (messageCount === 0) {
         // Only count the first exchange as a "session"
-        try {
-          const authUser = getCurrentUser ? getCurrentUser() : (await supabase.auth.getUser()).data.user;
-          if (authUser) await incrementUsage(supabase, authUser.id, 'answer_assistant');
-        } catch (e) {
-          console.warn('Usage tracking failed:', e);
-        }
+        // Audit follow-up to PR #24 (2026-05-12): fire-and-forget so the
+        // increment doesn't deadlock the post-response state update flow
+        // after a tab switch. Matches JDDecoder/JobFocusManager pattern.
+        const authUser = getCurrentUser ? getCurrentUser() : null;
+        if (authUser) incrementUsage(supabase, authUser.id, 'answer_assistant').catch(e => console.warn('Usage tracking failed:', e));
       }
 
     } catch (err) {

@@ -706,6 +706,14 @@ const ISL = () => {
   // Avoids a network call (and potential stale-token failure) after tab switch.
   const getCurrentUser = useCallback(() => sessionRef.current?.user ?? null, []);
 
+  // Stable getToken accessor for IRSDisplay / StreakDisplay.
+  // Audit follow-up to PR #24 (2026-05-12): previously passed as an inline
+  // arrow `() => sessionRef.current?.access_token` — that creates a new
+  // function reference on every parent render, which invalidates child
+  // useCallback deps and refires their useEffect → IRS/Streak refetch storm
+  // (App.jsx has ~70 useState hooks → parent re-renders constantly).
+  const getToken = useCallback(() => sessionRef.current?.access_token, []);
+
   const loadQuestions = async () => {
     try {
       let data, sessions;
@@ -4793,7 +4801,7 @@ const startPracticeMode = async () => {
               FIXED 2026-04-09: was two full-width banners creating "panel soup" on desktop.
               Viewport auditor flagged this as the #1 layout fix. */}
           <div className={`${practiceHistory.length >= 2 ? 'grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-5' : ''} mb-4 sm:mb-6`}>
-            <IRSDisplay refreshTrigger={streakRefreshTrigger} userId={currentUser?.id} getToken={() => sessionRef.current?.access_token} />
+            <IRSDisplay refreshTrigger={streakRefreshTrigger} userId={currentUser?.id} getToken={getToken} />
             {practiceHistory.length >= 2 && (
               <ScoreTrendSparkline
                 practiceHistory={practiceHistory}
@@ -4887,7 +4895,7 @@ const startPracticeMode = async () => {
               </div>
             </div>
             {/* Streak Card — Phase 3 Unit 1 */}
-            <StreakDisplay refreshTrigger={streakRefreshTrigger} variant="light" userId={currentUser?.id} getToken={() => sessionRef.current?.access_token} />
+            <StreakDisplay refreshTrigger={streakRefreshTrigger} variant="light" userId={currentUser?.id} getToken={getToken} />
           </div>
 
           {/* Milestone Toast — renders nothing when no milestone */}
@@ -6500,7 +6508,17 @@ const startPracticeMode = async () => {
                   ].map(opt => (
                     <button
                       key={opt.val}
-                      onClick={() => { setConfidenceRating(opt.val); }}
+                      onClick={() => {
+                        setConfidenceRating(opt.val);
+                        // Audit follow-up to PR #22 (2026-05-12) — Option A:
+                        // Restore auto-arm when timer is NOT already running.
+                        // PR #22 removed auto-arm entirely to fix "accidental
+                        // restart" — but that left Q1 in Timed mode with no
+                        // way to arm the timer. Gating on !timerActive
+                        // preserves Jacob's intent (no restart of running
+                        // timer) AND fixes the Q1 happy path.
+                        if (timedMode && !timerActive && !feedback) setTimerActive(true);
+                      }}
                       className="flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg hover:bg-white hover:shadow-md transition-all border border-transparent hover:border-slate-200"
                     >
                       <span className="text-2xl">{opt.emoji}</span>
@@ -6508,7 +6526,11 @@ const startPracticeMode = async () => {
                     </button>
                   ))}
                   <button
-                    onClick={() => { setConfidenceRating(0); }}
+                    onClick={() => {
+                      setConfidenceRating(0);
+                      // Same gated auto-arm as the emoji buttons above.
+                      if (timedMode && !timerActive && !feedback) setTimerActive(true);
+                    }}
                     className="ml-2 text-xs text-slate-400 hover:text-slate-600 underline"
                   >
                     Skip
