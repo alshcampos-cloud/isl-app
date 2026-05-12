@@ -113,10 +113,9 @@ Respond with JSON: {"score": number, "feedback": "2-3 sentences of targeted coac
       setAiFeedback(parsed);
 
       // CHARGE AFTER SUCCESS (Battle Scar #8)
-      try {
-        const user = getCurrentUser ? getCurrentUser() : (await supabase.auth.getUser()).data.user;
-        if (user) await incrementUsage(supabase, user.id, 'answer_assistant');
-      } catch (e) { console.warn('Usage tracking failed:', e); }
+      // Audit follow-up to PR #24 (2026-05-12): fire-and-forget pattern.
+      const user = getCurrentUser ? getCurrentUser() : null;
+      if (user) incrementUsage(supabase, user.id, 'answer_assistant').catch(e => console.warn('Usage tracking failed:', e));
     } catch (err) {
       setError(err.message);
     } finally {

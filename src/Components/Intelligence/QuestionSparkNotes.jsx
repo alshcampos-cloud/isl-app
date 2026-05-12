@@ -112,10 +112,10 @@ function QuestionSparkNotes({ question, isOpen, onClose, getUserContext, getSess
       setCache(question.question, parsed);
 
       // CHARGE AFTER SUCCESS (Battle Scar #8)
-      try {
-        const user = getCurrentUser ? getCurrentUser() : (await supabase.auth.getUser()).data.user;
-        if (user) await incrementUsage(supabase, user.id, 'answer_assistant');
-      } catch (e) { console.warn('Usage tracking failed:', e); }
+      // Audit follow-up to PR #24 (2026-05-12): fire-and-forget to avoid
+      // tab-switch deadlock. Matches JDDecoder/JobFocusManager pattern.
+      const user = getCurrentUser ? getCurrentUser() : null;
+      if (user) incrementUsage(supabase, user.id, 'answer_assistant').catch(e => console.warn('Usage tracking failed:', e));
     } catch (err) {
       console.error('SparkNotes error:', err);
       setError(err.message || 'Failed to generate study guide');
