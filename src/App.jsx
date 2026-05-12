@@ -3451,7 +3451,9 @@ const startPracticeMode = async () => {
         isAnalyzingTimestampRef.current = Date.now();
         setIsAnalyzing(true);
         console.log(`🔵 [Practice] setIsAnalyzing(true) | attemptId=${attemptId} | timestamp=${isAnalyzingTimestampRef.current}`);
-        return supabase.auth.getSession();
+        // Use sessionRef instead of getSession() — getSession() deadlocks on the same
+        // Supabase internal lock as checkUsageServerSide above (see sessionRef comment).
+        return Promise.resolve({ data: { session: sessionRef.current }, error: null });
       })
       .then(({ data: { session }, error: sessionError }) => {
         // SESSION FIX: Check if session is valid before making API call
@@ -3641,7 +3643,8 @@ const startPracticeMode = async () => {
         isAnalyzingTimestampRef.current = Date.now();
         setIsAnalyzing(true);
         console.log(`🟣 [AI Interviewer] setIsAnalyzing(true) | attemptId=${attemptId} | timestamp=${isAnalyzingTimestampRef.current}`);
-        return supabase.auth.getSession();
+        // Use sessionRef instead of getSession() — same deadlock risk as checkUsageServerSide.
+        return Promise.resolve({ data: { session: sessionRef.current }, error: null });
       })
       .then(({ data: { session }, error: sessionError }) => {
         // SESSION FIX: Check if session is valid before making API call
