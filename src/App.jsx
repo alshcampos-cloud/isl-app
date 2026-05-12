@@ -1765,7 +1765,10 @@ Get a 30-Day Pass for just $14.99 — no subscription!`);
   // SERVER-SIDE USAGE ENFORCEMENT: Authoritative check that cannot be bypassed
   // This calls the check-usage Edge Function to validate entitlement + quota
   const checkUsageServerSide = async (feature, featureName) => {
+    // DIAG: confirm function is entered and currentUser state at call time
+    console.log(`🔍 [DIAG] checkUsage ENTRY | feature=${feature} | currentUser=${currentUser?.id ?? 'NULL'}`);
     if (!currentUser) {
+      console.error('🔍 [DIAG] checkUsage BLOCKED — currentUser is null (stale closure or signed out)');
       alert('Please sign in first');
       return false;
     }
@@ -3590,6 +3593,12 @@ const startPracticeMode = async () => {
         }
         console.error('Feedback error:', error);
         alert('Failed to get feedback: ' + error.message);
+      })
+      .catch(err => {
+        // DIAG: catch any unhandled rejection in the submit chain
+        if (err?.message !== 'USAGE_LIMIT_EXCEEDED') {
+          console.error(`🔍 [DIAG] Practice submit UNHANDLED REJECTION | ${err?.message}`, err);
+        }
       })
       .finally(() => {
         // P0 FIX: Only reset if this is still the current attempt (ignore late responses)
