@@ -11,7 +11,7 @@ import { supabase } from '../../lib/supabase';
 import { fetchWithRetry } from '../../utils/fetchWithRetry';
 import { incrementUsage } from '../../utils/creditSystem';
 
-function FollowUpEmail({ onBack, getUserContext }) {
+function FollowUpEmail({ onBack, getUserContext, getSessionToken, getCurrentUser }) {
   const [interviewerName, setInterviewerName] = useState('');
   const [notes, setNotes] = useState('');
   const [tone, setTone] = useState('professional');
@@ -34,7 +34,7 @@ function FollowUpEmail({ onBack, getUserContext }) {
     setError(null);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (getSessionToken ? getSessionToken() : supabase.auth.getSession());
       if (!session) throw new Error('Not authenticated');
 
       const response = await fetchWithRetry(
@@ -89,7 +89,7 @@ Notes from interview: ${notes || 'General interview, discussed role responsibili
 
       // CHARGE AFTER SUCCESS (Battle Scar #8)
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const user = getCurrentUser ? getCurrentUser() : (await supabase.auth.getUser()).data.user;
         if (user) await incrementUsage(supabase, user.id, 'answer_assistant');
       } catch (e) { console.warn('Usage tracking failed:', e); }
     } catch (err) {

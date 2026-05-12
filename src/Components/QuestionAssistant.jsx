@@ -10,6 +10,7 @@ export default function QuestionAssistant({
   // false if user is out of credits.
   onGenerateAttempt,
   freeGenerationsPerSession = 5,
+  getSessionToken,
 }) {
   const [targetRole, setTargetRole] = useState('');
   const [company, setCompany] = useState('');
@@ -78,7 +79,7 @@ export default function QuestionAssistant({
     setError('');
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (getSessionToken ? getSessionToken() : supabase.auth.getSession());
 
       // BUG 1/6 FIX: Handle null session after tab switch
       if (!session?.access_token) {

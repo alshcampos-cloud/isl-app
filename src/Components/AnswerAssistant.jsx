@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Lightbulb, X, MessageCircle, Sparkles, Save, Crown, RefreshCw, HelpCircle, Zap, AlertTriangle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
-const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onClose, userTier, existingNarrative, existingBullets, onUsageTracked }) => {
+const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onClose, userTier, existingNarrative, existingBullets, onUsageTracked, getSessionToken }) => {
   // Check if there's an existing answer
   const hasExistingAnswer = existingNarrative && existingNarrative.trim().length > 0;
   
@@ -70,9 +70,9 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
   const startAssistant = async () => {
     setIsLoading(true);
     setStage('probing');
-    
+
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (getSessionToken ? getSessionToken() : supabase.auth.getSession());
 
       // BUG 1/6 FIX: Handle null session after tab switch
       if (!session?.access_token) {
@@ -128,7 +128,7 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
     setIsLoading(true);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (getSessionToken ? getSessionToken() : supabase.auth.getSession());
 
       // BUG 1/6 FIX: Handle null session after tab switch
       if (!session?.access_token) {
@@ -191,7 +191,7 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
     setIsRushAnswer(isRush);
     
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (getSessionToken ? getSessionToken() : supabase.auth.getSession());
 
       // DEBUG: Log what we're sending to backend
       console.log('🔍 SYNTHESIZE REQUEST:', {
@@ -267,7 +267,7 @@ const AnswerAssistant = ({ question, questionId, userContext, onAnswerSaved, onC
 
   const generateBullets = async (answer) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (getSessionToken ? getSessionToken() : supabase.auth.getSession());
       
       const response = await fetch('https://tzrlpwtkrtvjpdhcaayu.supabase.co/functions/v1/ai-feedback', {
         method: 'POST',

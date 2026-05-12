@@ -23,8 +23,31 @@ const DEFAULT_STREAK = {
  * @param {string} userId — auth user ID
  * @returns {Promise<object>} streak data
  */
-export async function fetchStreak(supabase, userId) {
+export async function fetchStreak(supabase, userId, accessToken) {
   try {
+    // Raw fetch path: avoids supabase client getSession() which deadlocks
+    // after tab-switch while _recoverAndRefresh holds the auth lock.
+    if (accessToken) {
+      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+      const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/user_streaks?user_id=eq.${userId}&select=*&limit=1`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'apikey': SUPABASE_ANON_KEY,
+          },
+        }
+      );
+      if (!res.ok) {
+        console.warn('⚠️ Streak fetch error:', res.status);
+        return { ...DEFAULT_STREAK };
+      }
+      const rows = await res.json().catch(() => []);
+      const data = Array.isArray(rows) ? rows[0] : null;
+      return data || { ...DEFAULT_STREAK };
+    }
+
     const { data, error } = await supabase
       .from('user_streaks')
       .select('*')

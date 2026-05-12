@@ -41,7 +41,7 @@ const LEVEL_COLORS = {
 // Tip rotation interval (ms) — cycles through growth tips
 const TIP_ROTATION_MS = 8000;
 
-export default function IRSDisplay({ refreshTrigger }) {
+export default function IRSDisplay({ refreshTrigger, userId, getToken }) {
   const [irsData, setIrsData] = useState(null);
   const [showDetail, setShowDetail] = useState(false);
   const [animatedScore, setAnimatedScore] = useState(0);
@@ -50,14 +50,18 @@ export default function IRSDisplay({ refreshTrigger }) {
   const animationRef = useRef(null);
 
   const loadIRS = useCallback(async () => {
+    if (!userId) return;
     try {
-      const data = await fetchIRSData();
+      // Pass accessToken via getToken() — reads sessionRef synchronously,
+      // bypassing supabase client getSession() which deadlocks after tab-switch.
+      const accessToken = getToken?.();
+      const data = await fetchIRSData(userId, accessToken);
       if (!data) return;
       setIrsData(data);
     } catch (err) {
       console.warn('IRSDisplay load failed:', err);
     }
-  }, []);
+  }, [userId, getToken]);
 
   // Load on mount + whenever refreshTrigger changes (after session completion)
   useEffect(() => {

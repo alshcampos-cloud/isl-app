@@ -45,6 +45,8 @@ export default function PortfolioIntake({
   onCancel,
   editingProject,
   getUserContext,
+  getSessionToken,
+  getCurrentUser,
 }) {
   // Navigation state
   const [step, setStep] = useState(editingProject ? 1 : 0);
@@ -100,7 +102,7 @@ export default function PortfolioIntake({
   }, [getUserContext]);
 
   const callAI = async (systemPrompt, userMessage) => {
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await (getSessionToken ? getSessionToken() : supabase.auth.getSession());
     if (!session) throw new Error('Not authenticated');
     const response = await fetchWithRetry(`${SUPABASE_URL}/functions/v1/ai-feedback`, {
       method: 'POST',
@@ -128,7 +130,7 @@ export default function PortfolioIntake({
 
   const chargeCredit = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = getCurrentUser ? getCurrentUser() : (await supabase.auth.getUser()).data.user;
       if (user) await incrementUsage(supabase, user.id, 'answer_assistant');
     } catch (e) { console.warn('Usage tracking failed:', e); }
   };
@@ -250,10 +252,11 @@ export default function PortfolioIntake({
 
       const aiText = await callAI(systemPrompt, userMessage);
 
-      // Charge credit on first exchange only
+      // Charge credit on first exchange only — fire-and-forget to avoid
+      // tab-switch deadlock (Supabase auth lock blocks incrementUsage).
       if (!chatCreditCharged) {
-        await chargeCredit();
         setChatCreditCharged(true);
+        chargeCredit().catch(e => console.warn('Credit charge failed:', e));
       }
 
       setChatMessages(prev => [...prev, { role: 'assistant', text: aiText }]);

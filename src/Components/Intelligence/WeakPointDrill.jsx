@@ -13,7 +13,7 @@ import { incrementUsage } from '../../utils/creditSystem';
 
 const getScore = (s) => s.feedback?.overall ?? (s.feedback?.match_percentage != null ? s.feedback.match_percentage / 10 : null);
 
-function WeakPointDrill({ onBack, practiceHistory = [], questions = [], getUserContext, targetComponent = null }) {
+function WeakPointDrill({ onBack, practiceHistory = [], questions = [], getUserContext, targetComponent = null, getSessionToken, getCurrentUser }) {
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [userInput, setUserInput] = useState('');
   const [aiFeedback, setAiFeedback] = useState(null);
@@ -71,7 +71,7 @@ function WeakPointDrill({ onBack, practiceHistory = [], questions = [], getUserC
     setError(null);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (getSessionToken ? getSessionToken() : supabase.auth.getSession());
       if (!session) throw new Error('Not authenticated');
 
       const response = await fetchWithRetry(
@@ -114,7 +114,7 @@ Respond with JSON: {"score": number, "feedback": "2-3 sentences of targeted coac
 
       // CHARGE AFTER SUCCESS (Battle Scar #8)
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const user = getCurrentUser ? getCurrentUser() : (await supabase.auth.getUser()).data.user;
         if (user) await incrementUsage(supabase, user.id, 'answer_assistant');
       } catch (e) { console.warn('Usage tracking failed:', e); }
     } catch (err) {

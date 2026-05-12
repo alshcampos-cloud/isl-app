@@ -27,7 +27,7 @@ import SignUpPrompt from './SignUpPrompt'
  * Note: BreathingExercise.jsx is preserved (not deleted) — may be reused as a
  * settings/wellness feature later. This file just no longer routes into it.
  */
-export default function ArchetypeOnboarding() {
+export default function ArchetypeOnboarding({ getSessionToken, getCurrentUser }) {
   useDocumentHead({
     title: 'Get Started | InterviewAnswers.ai',
     description: 'Start your personalized interview preparation journey with AI coaching.',
@@ -139,7 +139,7 @@ export default function ArchetypeOnboarding() {
 
     // Store archetype in user profile
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = getCurrentUser ? getCurrentUser() : (await supabase.auth.getUser()).data.user
       if (user && !user.is_anonymous) {
         await supabase.from('user_profiles').upsert({
           user_id: user.id,
@@ -237,6 +237,7 @@ export default function ArchetypeOnboarding() {
             anonSessionReady={anonSessionReady}
             onComplete={handlePracticeComplete}
             fromNursing={fromNursing}
+            getSessionToken={getSessionToken}
           />
         )}
 

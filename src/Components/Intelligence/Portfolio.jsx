@@ -133,7 +133,7 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://tzrlpwtkrtvjp
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-function Portfolio({ onBack, getUserContext, questions = [], onNavigate }) {
+function Portfolio({ onBack, getUserContext, questions = [], onNavigate, getSessionToken, getCurrentUser }) {
   // Core state
   const [projects, setProjects] = useState(loadPortfolio);
   const [initialized, setInitialized] = useState(false);
@@ -188,7 +188,7 @@ function Portfolio({ onBack, getUserContext, questions = [], onNavigate }) {
     let cancelled = false;
     (async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const user = getCurrentUser ? getCurrentUser() : (await supabase.auth.getUser()).data.user;
         if (!user || cancelled) return;
 
         const { data: cloudProjects, fromSupabase } = await fetchPortfolioFromCloud(user.id);
@@ -259,7 +259,7 @@ function Portfolio({ onBack, getUserContext, questions = [], onNavigate }) {
   }, [getUserContext]);
 
   const getAuthSession = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await (getSessionToken ? getSessionToken() : supabase.auth.getSession());
     if (!session) throw new Error('Not authenticated');
     return session;
   };
@@ -288,18 +288,23 @@ function Portfolio({ onBack, getUserContext, questions = [], onNavigate }) {
         ? 'AI service is temporarily busy. Please try again.'
         : `AI error: ${data.error.message}`);
     }
-    return data.content?.[0]?.text || data.response || '';
+    const aiText = data.content?.[0]?.text || data.response || '';
+    return aiText;
   };
 
   const parseJSON = (text) => {
     const match = text.match(/\{[\s\S]*\}/);
     if (!match) throw new Error('Could not parse AI response. Please try again.');
-    return JSON.parse(match[0]);
+    try {
+      return JSON.parse(match[0]);
+    } catch {
+      throw new Error('Could not parse AI response. Please try again.');
+    }
   };
 
   const chargeCredit = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = getCurrentUser ? getCurrentUser() : (await supabase.auth.getUser()).data.user;
       if (user) await incrementUsage(supabase, user.id, 'answer_assistant');
     } catch (e) { console.warn('Usage tracking failed:', e); }
   };
@@ -316,12 +321,12 @@ function Portfolio({ onBack, getUserContext, questions = [], onNavigate }) {
   // Background cloud upsert — fire-and-forget, localStorage is source of truth
   const syncProjectToCloud = useCallback(async (project) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = getCurrentUser ? getCurrentUser() : (await supabase.auth.getUser()).data.user;
       if (user) await upsertPortfolioProject(user.id, project);
     } catch (err) {
       console.warn('⚠️ Portfolio cloud upsert failed:', err.message);
     }
-  }, []);
+  }, [getCurrentUser]);
 
   const handleSaveDraft = () => {
     if (!form.title.trim()) return;
@@ -359,7 +364,7 @@ function Portfolio({ onBack, getUserContext, questions = [], onNavigate }) {
     // Cloud delete in background
     (async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const user = getCurrentUser ? getCurrentUser() : (await supabase.auth.getUser()).data.user;
         if (user) await deleteFromCloud(user.id, id);
       } catch (err) {
         console.warn('⚠️ Portfolio cloud delete failed:', err.message);
@@ -813,6 +818,8 @@ function Portfolio({ onBack, getUserContext, questions = [], onNavigate }) {
         }}
         onCancel={() => { resetForm(); setView('list'); }}
         getUserContext={getUserContext}
+        getSessionToken={getSessionToken}
+        getCurrentUser={getCurrentUser}
       />
     );
   }
@@ -1360,6 +1367,8 @@ function Portfolio({ onBack, getUserContext, questions = [], onNavigate }) {
         questions={questions}
         onBack={() => setView('list')}
         getUserContext={getUserContext}
+        getSessionToken={getSessionToken}
+        getCurrentUser={getCurrentUser}
         onSaveQuestion={(qId, updates) => {
           // Update local questions state if parent provided a handler
           // The AnswerForge component handles Supabase + localStorage directly
