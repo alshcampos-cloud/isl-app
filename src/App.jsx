@@ -3428,7 +3428,10 @@ const startPracticeMode = async () => {
 
     // FIX: Use ref as primary source (always current), fall back to state
     const answer = (accumulatedTranscript.current || spokenAnswer || userAnswer || '').trim();
+    // DIAG: log every source so we can confirm which is empty after tab switch
+    console.log(`🔍 [DIAG] Practice answer sources | ref="${accumulatedTranscript.current}" | spokenAnswer="${spokenAnswer}" | userAnswer="${userAnswer}" | final="${answer}"`);
     if (!answer) {
+      console.error('🔍 [DIAG] Practice EMPTY ANSWER — early return (alert may be blocked)');
       alert('Please provide an answer');
       return;
     }
