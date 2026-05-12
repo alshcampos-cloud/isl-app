@@ -196,6 +196,8 @@ const ISL = () => {
 
   const recognitionRef = useRef(null);
   const synthRef = useRef(null);
+  const speakTimeoutRef = useRef(null);
+  const hdAudioRef = useRef(null); // { audio, blobUrl } — tracks active HD TTS element so it can be cancelled
   const accumulatedTranscript = useRef('');
   const currentInterimRef = useRef(''); // Track current interim separately
 
@@ -2723,10 +2725,17 @@ useEffect(() => {
               localStorage.setItem('isl_hd_voice_trials', String(used + 1));
             } catch {}
           }
+          // Cancel any currently-playing HD audio before starting new
+          if (hdAudioRef.current) {
+            hdAudioRef.current.audio.pause();
+            URL.revokeObjectURL(hdAudioRef.current.blobUrl);
+            hdAudioRef.current = null;
+          }
           const audio = new Audio(blobUrl);
+          hdAudioRef.current = { audio, blobUrl };
           setAiSpeaking(true); setAiSubtitle(text);
-          audio.onended = () => { setAiSpeaking(false); setAiSubtitle(''); URL.revokeObjectURL(blobUrl); };
-          audio.onerror = () => { setAiSpeaking(false); setAiSubtitle(''); };
+          audio.onended = () => { hdAudioRef.current = null; setAiSpeaking(false); setAiSubtitle(''); URL.revokeObjectURL(blobUrl); };
+          audio.onerror = () => { hdAudioRef.current = null; setAiSpeaking(false); setAiSubtitle(''); };
           await audio.play();
           return;
         }
@@ -2750,7 +2759,11 @@ useEffect(() => {
     synthRef.current.speak(utterance);
   };
 
-  const stopSpeaking = () => { if (synthRef.current) { synthRef.current.cancel(); setAiSpeaking(false); setAiSubtitle(''); } };
+  const stopSpeaking = () => {
+    if (hdAudioRef.current) { hdAudioRef.current.audio.pause(); URL.revokeObjectURL(hdAudioRef.current.blobUrl); hdAudioRef.current = null; }
+    if (synthRef.current) { synthRef.current.cancel(); }
+    setAiSpeaking(false); setAiSubtitle('');
+  };
 
   // API
   const saveApiKey = (key) => { console.log('Save API key, len:', key.length); localStorage.setItem('isl_api_key', key); setApiKey(key); setShowApiSetup(false); };
@@ -3237,7 +3250,8 @@ Respond in this exact JSON format:
     // Prevents charging users for failed API calls or abandoned sessions
 
     // Start interview
-    setTimeout(() => { speakText(firstSlot.question.question); }, 500);
+    if (speakTimeoutRef.current) clearTimeout(speakTimeoutRef.current);
+    speakTimeoutRef.current = setTimeout(() => { speakText(firstSlot.question.question); }, 500);
   };
 
   /**
@@ -3246,6 +3260,8 @@ Respond in this exact JSON format:
    */
   const handleSwapQuestion = () => {
     if (!interviewSequence || interviewSequence.length === 0) return;
+    stopSpeaking();
+    if (speakTimeoutRef.current) { clearTimeout(speakTimeoutRef.current); speakTimeoutRef.current = null; }
     let pool = getFilteredQuestions(questions, currentUser?.id);
     pool = pool.filter(q => !q.question_group || activeGroups.has(q.question_group));
     if (pool.length === 0) pool = getFilteredQuestions(questions, currentUser?.id);
@@ -3264,7 +3280,8 @@ Respond in this exact JSON format:
     setFollowUpQuestion(null);
     setExchangeCount(0);
     setFeedback(null);
-    setTimeout(() => { speakText(newQuestion.question); }, 300);
+    if (speakTimeoutRef.current) clearTimeout(speakTimeoutRef.current);
+    speakTimeoutRef.current = setTimeout(() => { speakText(newQuestion.question); }, 300);
   };
 
   /**
@@ -3273,6 +3290,8 @@ Respond in this exact JSON format:
    * AND there are still questions remaining in the sequence.
    */
   const advanceToNextSlot = () => {
+    stopSpeaking();
+    if (speakTimeoutRef.current) { clearTimeout(speakTimeoutRef.current); speakTimeoutRef.current = null; }
     const nextIndex = sequenceIndex + 1;
     if (nextIndex >= interviewSequence.length) {
       console.log('🏁 Interview sequence complete');
@@ -3294,7 +3313,8 @@ Respond in this exact JSON format:
     const transition = nextIndex === interviewSequence.length - 1
       ? "One last question. "
       : "Great. Next question. ";
-    setTimeout(() => { speakText(transition + nextSlot.question.question); }, 500);
+    if (speakTimeoutRef.current) clearTimeout(speakTimeoutRef.current);
+    speakTimeoutRef.current = setTimeout(() => { speakText(transition + nextSlot.question.question); }, 500);
     return true; // signal to caller: we advanced, don't show feedback
   };
 const startPracticeMode = async () => { 
@@ -3353,6 +3373,8 @@ const startPracticeMode = async () => {
   // Navigation functions for prev/next question
   const goToNextQuestion = () => {
     if (!currentQuestion || questions.length === 0) return;
+    if (speakTimeoutRef.current) { clearTimeout(speakTimeoutRef.current); speakTimeoutRef.current = null; }
+    stopSpeaking();
     const filtered = questions.filter(q => !q.question_group || activeGroups.has(q.question_group));
     const pool = filtered.length > 0 ? filtered : questions;
     const currentIdx = pool.findIndex(q => q.id === currentQuestion?.id);
@@ -3380,6 +3402,8 @@ const startPracticeMode = async () => {
 
   const goToPreviousQuestion = () => {
     if (!currentQuestion || questions.length === 0) return;
+    if (speakTimeoutRef.current) { clearTimeout(speakTimeoutRef.current); speakTimeoutRef.current = null; }
+    stopSpeaking();
     const filtered = questions.filter(q => !q.question_group || activeGroups.has(q.question_group));
     const pool = filtered.length > 0 ? filtered : questions;
     const currentIdx = pool.findIndex(q => q.id === currentQuestion?.id);
@@ -4610,7 +4634,7 @@ const startPracticeMode = async () => {
                           const interview = new Date(interviewDate + 'T00:00:00');
                           const diffTime = interview.getTime() - today.getTime();
                           const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-                          return Math.max(0, diffDays);
+                          return diffDays >= 0 ? diffDays : '—';
                         })()
                       : '—'
                     }
@@ -4682,7 +4706,8 @@ const startPracticeMode = async () => {
               if (!ctx.interviewDate) return null;
               const today = new Date(); today.setHours(0,0,0,0);
               const interview = new Date(ctx.interviewDate + 'T00:00:00');
-              return Math.max(0, Math.round((interview - today) / 86400000));
+              const diff = Math.round((interview - today) / 86400000);
+              return diff < 0 ? null : diff;
             })();
 
             let rec = null;
@@ -5320,6 +5345,8 @@ const startPracticeMode = async () => {
                   if (prevIdx < 0) return;
                   const prevSlot = interviewSequence[prevIdx];
                   if (!prevSlot?.question) return;
+                  stopSpeaking();
+                  if (speakTimeoutRef.current) { clearTimeout(speakTimeoutRef.current); speakTimeoutRef.current = null; }
                   setSequenceIndex(prevIdx);
                   setCurrentQuestion(prevSlot.question);
                   setUserAnswer('');
@@ -5330,6 +5357,7 @@ const startPracticeMode = async () => {
                   setFollowUpQuestion(null);
                   setConversationHistory([]);
                   setExchangeCount(0);
+                  speakTimeoutRef.current = setTimeout(() => { speakText(prevSlot.question.question); }, 300);
                 } else {
                   goToPreviousQuestion();
                 }
@@ -6166,7 +6194,7 @@ const startPracticeMode = async () => {
               <button onClick={goToPreviousQuestion} className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg font-semibold flex items-center gap-1">
                 ← Prev
               </button>
-              <button onClick={() => { goToNextQuestion(); setTimerActive(false); setConfidenceRating(null); }} className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-semibold flex items-center gap-1">
+              <button onClick={() => { goToNextQuestion(); setTimerActive(timedMode); setConfidenceRating(null); }} className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-semibold flex items-center gap-1">
                 Next →
               </button>
             </div>
@@ -6196,6 +6224,7 @@ const startPracticeMode = async () => {
             <div className="mb-4 flex items-center justify-between bg-white rounded-xl shadow-sm p-3 border border-slate-200">
               <TimerSelector selectedDuration={timerDuration} onSelect={setTimerDuration} />
               <TimerOverlay
+                key={currentQuestion?.id}
                 isActive={timerActive}
                 durationSeconds={timerDuration}
                 onTimeUp={() => setTimerActive(false)}
@@ -6228,7 +6257,7 @@ const startPracticeMode = async () => {
                   ].map(opt => (
                     <button
                       key={opt.val}
-                      onClick={() => { setConfidenceRating(opt.val); if (timedMode) setTimerActive(true); }}
+                      onClick={() => { setConfidenceRating(opt.val); }}
                       className="flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg hover:bg-white hover:shadow-md transition-all border border-transparent hover:border-slate-200"
                     >
                       <span className="text-2xl">{opt.emoji}</span>
@@ -6236,7 +6265,7 @@ const startPracticeMode = async () => {
                     </button>
                   ))}
                   <button
-                    onClick={() => { setConfidenceRating(0); if (timedMode) setTimerActive(true); }}
+                    onClick={() => { setConfidenceRating(0); }}
                     className="ml-2 text-xs text-slate-400 hover:text-slate-600 underline"
                   >
                     Skip
