@@ -198,6 +198,10 @@ const ISL = () => {
   const synthRef = useRef(null);
   const accumulatedTranscript = useRef('');
   const currentInterimRef = useRef(''); // Track current interim separately
+  // Stores the latest Supabase session from onAuthStateChange so submit handlers
+  // can read the token synchronously without calling getSession(), which deadlocks
+  // on Supabase's internal auth lock after every tab-focus _recoverAndRefresh cycle.
+  const sessionRef = useRef(null);
 
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
@@ -540,6 +544,9 @@ const ISL = () => {
             const now = Math.floor(Date.now() / 1000);
             const expiresIn = expiresAt - now;
 
+            // DIAG: log token state every time focus returns
+            console.log(`🔍 [DIAG] TabFocus | tokenPrefix=${existingSession.access_token?.substring(0, 20)} | expiresIn=${expiresIn}s | willRefresh=${expiresIn < 300}`);
+
             if (expiresIn < 300) { // Less than 5 minutes left
               console.log('🔄 Session expiring soon, refreshing...');
               // Try to refresh, but don't block on failure
@@ -547,7 +554,7 @@ const ISL = () => {
                 if (error) {
                   console.log('Session refresh deferred - will retry on next API call');
                 } else {
-                  console.log('✅ Session refreshed successfully');
+                  console.log(`✅ Session refreshed | newTokenPrefix=${data?.session?.access_token?.substring(0, 20)}`);
                 }
               }).catch(() => {
                 // Silently ignore - Supabase will auto-refresh on next API call
@@ -556,7 +563,7 @@ const ISL = () => {
               console.log('✅ Session valid (expires in', Math.floor(expiresIn / 60), 'min)');
             }
           } else {
-            console.log('ℹ️ No active session');
+            console.log('🔍 [DIAG] TabFocus | NO active session found');
           }
         } catch (err) {
           // Don't log as error - just informational
@@ -685,26 +692,50 @@ const ISL = () => {
     return { targetRole: '', targetCompany: '', background: '', interviewType: '', jobDescription: '', interviewDate: '', portfolioSummary: '' };
   };
 
+  // Drop-in replacement for supabase.auth.getSession() in child components.
+  // Reads sessionRef synchronously — avoids the Supabase internal auth lock
+  // that deadlocks getSession() after every tab-focus _recoverAndRefresh cycle.
+  const getSessionToken = useCallback(
+    () => Promise.resolve({ data: { session: sessionRef.current }, error: null }),
+    []
+  );
+
+  // Synchronous replacement for supabase.auth.getUser() in save handlers.
+  // Avoids a network call (and potential stale-token failure) after tab switch.
+  const getCurrentUser = useCallback(() => sessionRef.current?.user ?? null, []);
+
   const loadQuestions = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      let data, sessions;
+      const session = sessionRef.current;
 
-      const { data, error } = await supabase
-        .from('questions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
+      if (session?.access_token) {
+        // Raw fetch path: bypasses supabase client getSession() which deadlocks
+        // after tab-switch while _recoverAndRefresh holds the auth lock.
+        const headers = {
+          'Authorization': `Bearer ${session.access_token}`,
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+        };
+        const uid = session.user.id;
+        const [qRes, sRes] = await Promise.all([
+          fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/questions?user_id=eq.${uid}&select=*&order=created_at.desc`, { headers }),
+          fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/practice_sessions?user_id=eq.${uid}&select=question_id,ai_feedback`, { headers }),
+        ]);
+        if (!qRes.ok) throw new Error(`Questions fetch failed (${qRes.status})`);
+        data = await qRes.json().catch(() => []);
+        sessions = sRes.ok ? await sRes.json().catch(() => []) : [];
+      } else {
+        // Fallback: supabase client (initial load before sessionRef is seeded)
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const qResult = await supabase.from('questions').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
+        if (qResult.error) throw qResult.error;
+        data = qResult.data;
+        const sResult = await supabase.from('practice_sessions').select('question_id, ai_feedback').eq('user_id', user.id);
+        sessions = sResult.data;
+      }
 
       if (data && data.length > 0) {
-        // Get practice counts for all questions
-        const { data: sessions } = await supabase
-          .from('practice_sessions')
-          .select('question_id, ai_feedback')
-          .eq('user_id', user.id);
-
         // Calculate practiceCount and averageScore for each question
         const questionsWithStats = data.map(q => {
           const questionSessions = sessions?.filter(s => s.question_id === q.id) || [];
@@ -713,16 +744,16 @@ const ISL = () => {
           const scores = questionSessions
             .map(s => s.ai_feedback?.score ?? s.ai_feedback?.overall)
             .filter(score => score != null);
-          const averageScore = scores.length > 0 
-            ? scores.reduce((sum, score) => sum + score, 0) / scores.length 
+          const averageScore = scores.length > 0
+            ? scores.reduce((sum, score) => sum + score, 0) / scores.length
             : 0;
-          
+
           return {
             ...q,
             practiceCount,
             averageScore,
-            lastPracticed: questionSessions.length > 0 
-              ? questionSessions[questionSessions.length - 1].created_at 
+            lastPracticed: questionSessions.length > 0
+              ? questionSessions[questionSessions.length - 1].created_at
               : null
           };
         });
@@ -872,38 +903,49 @@ Consider upgrading to Pro for more sessions!`);
   // Handler for opening AI Coach from Template Library
   const handleOpenAICoachFromTemplate = async (templateQuestion) => {
     // First, save the template question to database
+    const session = sessionRef.current;
+    if (!session?.access_token) {
+      alert('Session expired. Please sign in again.');
+      return;
+    }
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        alert('Please sign in to use AI Coach');
-        return;
+      // Raw fetch — supabase client insert calls getSession() which deadlocks
+      // after tab-switch while _recoverAndRefresh holds the auth lock.
+      const payload = {
+        user_id: session.user.id,
+        question: templateQuestion.question,
+        category: templateQuestion.category || 'Template',
+        priority: templateQuestion.priority || 'Standard',
+        bullets: templateQuestion.bullets || [],
+        narrative: '',
+        keywords: [],
+      };
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/questions`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+            'Prefer': 'return=representation',
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.message || `Save failed (${res.status})`);
       }
+      const [savedQuestion] = await res.json();
 
-      // Save question to database first
-      const { data: savedQuestion, error } = await supabase
-        .from('questions')
-        .insert([{
-          user_id: user.id,
-          question: templateQuestion.question,
-          category: templateQuestion.category || 'Template',
-          priority: templateQuestion.priority || 'Standard',
-          bullets: templateQuestion.bullets || [],
-          narrative: '',
-          keywords: []
-        }])
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Now open AI Coach with the saved question
+      // Open AI Coach with the saved question
       setAnswerAssistantQuestion(savedQuestion);
       setShowAnswerAssistant(true);
-      setShowTemplateLibrary(false); // Close template library
-      
-      // Increment usage
+      setShowTemplateLibrary(false);
+
       incrementAIUsage();
-      
+      loadQuestions().catch(() => {});
       console.log('✅ Opened AI Coach for template question');
     } catch (error) {
       console.error('Error opening AI Coach:', error);
@@ -976,16 +1018,31 @@ Consider upgrading to Pro for more sessions!`);
 // Load practice history from Supabase (not just localStorage)
 const loadPracticeHistory = async () => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    
-    const { data: sessions, error: sessionsError } = await supabase
-      .from('practice_sessions')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
-
-    console.log('🔍 practice_sessions query:', { count: sessions?.length, error: sessionsError });
+    let sessions;
+    const _session = sessionRef.current;
+    if (_session?.access_token) {
+      const _headers = {
+        'Authorization': `Bearer ${_session.access_token}`,
+        'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+      };
+      const _res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/practice_sessions?user_id=eq.${_session.user.id}&select=*&order=created_at.desc`,
+        { headers: _headers }
+      );
+      sessions = _res.ok ? await _res.json().catch(() => []) : [];
+      console.log('🔍 practice_sessions query:', { count: sessions?.length });
+    } else {
+      // Fallback: supabase client (initial load before sessionRef is seeded)
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data, error: sessionsError } = await supabase
+        .from('practice_sessions')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      console.log('🔍 practice_sessions query:', { count: data?.length, error: sessionsError });
+      sessions = data;
+    }
 
     if (sessions && sessions.length > 0) {
       const history = sessions.map(s => ({
@@ -1175,6 +1232,7 @@ loadPracticeHistory();
     console.log('🔐 Auth initialization starting...');
     supabase.auth.getSession().then(async ({ data: { session }, error }) => {
       console.log('🔐 getSession result:', { hasSession: !!session, error: error?.message });
+      sessionRef.current = session ?? null; // Seed ref before any tab-switch can occur
       const user = session?.user ?? null;
       setCurrentUser(user);
 
@@ -1208,6 +1266,7 @@ loadPracticeHistory();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('🔐 Auth state change:', event, { hasSession: !!session });
+      sessionRef.current = session ?? null; // Keep ref live so submit handlers never need to call getSession()
       const user = session?.user ?? null;
       setCurrentUser(user);
 
@@ -1601,50 +1660,58 @@ recognition.onerror = (event) => {
     recognitionRef.current = recognition;
   };
   // Save practice session to database
-  const savePracticeSession = (questionData, userAnswer, aiFeedback = null) => {
-    // ULTIMATE FIX: Converted to promise chains for nested call compatibility
-    return supabase.auth.getUser()
-      .then(({ data: { user } }) => {
-        if (!user) return null;
+  const savePracticeSession = async (questionData, userAnswer, aiFeedback = null) => {
+    try {
+      const session = sessionRef.current;
+      if (!session?.access_token) return null;
+      const uid = session.user.id;
 
-        const wordCount = userAnswer.split(' ').filter(w => w.length > 0).length;
-        const fillerWords = ['um', 'uh', 'like', 'you know', 'so', 'actually'];
-        const fillerCount = fillerWords.reduce((count, word) => {
-          const regex = new RegExp(`\\b${word}\\b`, 'gi');
-          return count + (userAnswer.match(regex) || []).length;
-        }, 0);
+      const wordCount = userAnswer.split(' ').filter(w => w.length > 0).length;
+      const fillerWords = ['um', 'uh', 'like', 'you know', 'so', 'actually'];
+      const fillerCount = fillerWords.reduce((count, word) => {
+        const regex = new RegExp(`\\b${word}\\b`, 'gi');
+        return count + (userAnswer.match(regex) || []).length;
+      }, 0);
 
-        // PR 3 — mark row with schema version. v2 when the new 5-field shape is
-        // present (feedback.fix). Legacy 8-field rows persist as v1.
-        const _feedbackVersion = (aiFeedback && aiFeedback.fix) ? 2 : 1;
+      // PR 3 — mark row with schema version. v2 when the new 5-field shape is
+      // present (feedback.fix). Legacy 8-field rows persist as v1.
+      const _feedbackVersion = (aiFeedback && aiFeedback.fix) ? 2 : 1;
 
-        return supabase
-          .from('practice_sessions')
-          .insert({
-            user_id: user.id,
-            question_id: (questionData.id && questionData.id !== "0" && typeof questionData.id === 'string' && questionData.id.includes('-')) ? questionData.id : null,
-            question_bank_id: questionData.bank_id || null,
-            question_text: questionData.question,
-            user_answer: userAnswer,
-            mode: currentMode,
-            word_count: wordCount,
-            filler_word_count: fillerCount,
-            ai_feedback: aiFeedback,
-            feedback_version: _feedbackVersion,
-          })
-          .select()
-          .single();
-      })
-      .then(result => {
-        if (!result) return null;
-        if (result.error) throw result.error;
-        console.log('✅ Practice session saved:', result.data);
-        return result.data;
-      })
-      .catch(error => {
-        console.error('❌ Error saving practice session:', error);
-        return null;
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/practice_sessions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+          'Prefer': 'return=representation',
+        },
+        body: JSON.stringify({
+          user_id: uid,
+          question_id: (questionData.id && questionData.id !== "0" && typeof questionData.id === 'string' && questionData.id.includes('-')) ? questionData.id : null,
+          question_bank_id: questionData.bank_id || null,
+          question_text: questionData.question,
+          user_answer: userAnswer,
+          mode: currentMode,
+          word_count: wordCount,
+          filler_word_count: fillerCount,
+          ai_feedback: aiFeedback,
+          feedback_version: _feedbackVersion,
+        }),
       });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.message || `Insert failed (${res.status})`);
+      }
+
+      const rows = await res.json().catch(() => []);
+      const data = Array.isArray(rows) ? rows[0] : rows;
+      console.log('✅ Practice session saved:', data);
+      return data;
+    } catch (error) {
+      console.error('❌ Error saving practice session:', error);
+      return null;
+    }
   };
 
  // Check and increment usage
@@ -1656,20 +1723,78 @@ recognition.onerror = (event) => {
       return false;
     }
 
+    const accessToken = sessionRef.current?.access_token;
+    const uid = currentUser.id;
+    const currentPeriod = new Date().toISOString().slice(0, 7); // YYYY-MM
+
+    if (accessToken) {
+      // Raw fetch path — bypasses supabase client getSession() which deadlocks after tab-switch.
+      const headers = {
+        'Authorization': `Bearer ${accessToken}`,
+        'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+      };
+
+      // PHASE 2: Check beta status — mirrors isBetaUser() logic via raw fetch
+      try {
+        const [betaRes, profileRes] = await Promise.all([
+          fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/beta_testers?user_id=eq.${uid}&select=unlimited_access&limit=1`, { headers }),
+          fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/user_profiles?user_id=eq.${uid}&select=tier&limit=1`, { headers }),
+        ]);
+        const betaRows = betaRes.ok ? await betaRes.json().catch(() => []) : [];
+        const betaUser = Array.isArray(betaRows) ? betaRows[0] : null;
+        if (betaUser?.unlimited_access) {
+          console.log('🎖️ Beta user - unlimited access for', featureName);
+          return true;
+        }
+        const profileRows = profileRes.ok ? await profileRes.json().catch(() => []) : [];
+        const profile = Array.isArray(profileRows) ? profileRows[0] : null;
+        if (profile?.tier === 'beta') {
+          console.log('🎖️ Beta user - unlimited access for', featureName);
+          return true;
+        }
+      } catch (err) {
+        // Fail open — same behavior as isBetaUser on error
+        console.warn('Beta check failed (allowing access):', err.message);
+      }
+
+      // Get current usage for this month
+      const usageRes = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/usage_tracking?user_id=eq.${uid}&period=eq.${currentPeriod}&select=*&limit=1`,
+        { headers }
+      ).catch(() => null);
+      const usageRows = usageRes?.ok ? await usageRes.json().catch(() => []) : [];
+      const usage = Array.isArray(usageRows) ? usageRows[0] : null;
+
+      const check = canUseFeature(usage || {}, userTier, feature);
+      if (!check.allowed) {
+        alert(`You've used all ${check.limit} ${featureName} sessions this month!
+
+Upgrade to Pro for UNLIMITED:
+• Unlimited AI Interviewer
+• Unlimited Practice Mode
+• Unlimited Answer Assistant
+• Unlimited Question Generator
+• Unlimited Practice Prompter
+
+Get a 30-Day Pass for just $14.99 — no subscription!`);
+        setShowPricingPage(true);
+        return false;
+      }
+      return true;
+    }
+
+    // Fallback: no token yet — use synchronous state check
     // PHASE 2: Check if beta user first (server-side verified)
-    const isBeta = await isBetaUser(supabase, currentUser.id);
+    const isBeta = await isBetaUser(supabase, uid);
     if (isBeta) {
       console.log('🎖️ Beta user - unlimited access for', featureName);
       return true;
     }
 
-    // Get current usage for this month
-    const currentPeriod = new Date().toISOString().slice(0, 7); // YYYY-MM
-
     const { data: usage, error } = await supabase
       .from('usage_tracking')
       .select('*')
-      .eq('user_id', currentUser.id)
+      .eq('user_id', uid)
       .eq('period', currentPeriod)
       .single();
 
@@ -1681,7 +1806,6 @@ recognition.onerror = (event) => {
     const check = canUseFeature(usage || {}, userTier, feature);
 
     if (!check.allowed) {
-      // Show upgrade modal with specific message
       alert(`You've used all ${check.limit} ${featureName} sessions this month!
 
 Upgrade to Pro for UNLIMITED:
@@ -1762,17 +1886,26 @@ Get a 30-Day Pass for just $14.99 — no subscription!`);
   // SERVER-SIDE USAGE ENFORCEMENT: Authoritative check that cannot be bypassed
   // This calls the check-usage Edge Function to validate entitlement + quota
   const checkUsageServerSide = async (feature, featureName) => {
+    // DIAG: confirm function is entered and currentUser state at call time
+    console.log(`🔍 [DIAG] checkUsage ENTRY | feature=${feature} | currentUser=${currentUser?.id ?? 'NULL'}`);
     if (!currentUser) {
+      console.error('🔍 [DIAG] checkUsage BLOCKED — currentUser is null (stale closure or signed out)');
       alert('Please sign in first');
       return false;
     }
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      // Read session from ref instead of calling getSession() — getSession() deadlocks on
+      // Supabase's internal auth lock after every tab-focus _recoverAndRefresh cycle.
+      // sessionRef is kept live by onAuthStateChange (fired after lock is released).
+      const session = sessionRef.current;
       if (!session?.access_token) {
         alert('Session expired. Please sign in again.');
         return false;
       }
+
+      // DIAG: log which token check-usage is sending
+      console.log(`🔍 [DIAG] checkUsage | feature=${feature} | tokenPrefix=${session.access_token?.substring(0, 20)} | expiresIn=${Math.floor(session.expires_at - Date.now() / 1000)}s`);
 
       const response = await fetch(
         'https://tzrlpwtkrtvjpdhcaayu.supabase.co/functions/v1/check-usage',
@@ -1787,6 +1920,8 @@ Get a 30-Day Pass for just $14.99 — no subscription!`);
       );
 
       if (!response.ok) {
+        // DIAG: capture full error body to identify 401 vs other failures
+        response.clone().text().then(body => console.error(`🔍 [DIAG] checkUsage FAILED | status=${response.status} | body=${body}`));
         console.error('check-usage HTTP error:', response.status);
         // Fallback to client-side check on HTTP error
         return checkUsageLimitsSync(feature === 'practice_mode' ? 'practiceMode' :
@@ -1904,40 +2039,37 @@ Get a 30-Day Pass for just $14.99 — no subscription!`);
 
   const getCurrentUsage = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
-
+      const session = sessionRef.current;
+      if (!session?.access_token) return null;
+      const uid = session.user.id;
+      const headers = {
+        'Authorization': `Bearer ${session.access_token}`,
+        'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+      };
       const currentMonth = new Date().toISOString().slice(0, 7);
 
-      // Check beta_testers first (highest priority)
-      const { data: betaUser } = await supabase
-        .from('beta_testers')
-        .select('unlimited_access')
-        .eq('user_id', user.id)
-        .maybeSingle();
+      // Run all three queries in parallel — raw fetch bypasses supabase client
+      // getSession() which deadlocks after tab-switch.
+      const [betaRes, profileRes, usageRes] = await Promise.all([
+        fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/beta_testers?user_id=eq.${uid}&select=unlimited_access&limit=1`, { headers }),
+        fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/user_profiles?user_id=eq.${uid}&select=tier&limit=1`, { headers }),
+        fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/usage_tracking?user_id=eq.${uid}&period=eq.${currentMonth}&select=*&limit=1`, { headers }),
+      ]);
 
+      const betaRows = betaRes.ok ? await betaRes.json().catch(() => []) : [];
+      const betaUser = Array.isArray(betaRows) ? betaRows[0] : null;
       if (betaUser?.unlimited_access) {
         return { session_count: 0, tier: 'beta', month: currentMonth };
       }
 
-      // FIX: Get tier from user_profiles (authoritative source for subscription status)
-      const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('tier')
-        .eq('user_id', user.id)
-        .single();
-
+      const profileRows = profileRes.ok ? await profileRes.json().catch(() => []) : [];
+      const profile = Array.isArray(profileRows) ? profileRows[0] : null;
       const actualTier = profile?.tier || 'free';
       console.log('📋 getCurrentUsage: tier from user_profiles =', actualTier);
 
-      const { data: usage } = await supabase
-        .from('usage_tracking')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('period', currentMonth)
-        .maybeSingle();
+      const usageRows = usageRes.ok ? await usageRes.json().catch(() => []) : [];
+      const usage = Array.isArray(usageRows) ? usageRows[0] : null;
 
-      // Return usage data with correct tier from user_profiles
       return usage
         ? { ...usage, tier: actualTier }
         : { session_count: 0, tier: actualTier, month: currentMonth };
@@ -2848,60 +2980,97 @@ Respond in this exact JSON format:
 
   // QUESTION MANAGEMENT
   const addQuestion = async (question) => {
+  const session = sessionRef.current;
+  if (!session?.access_token) {
+    alert('Session expired. Please sign in again.');
+    return;
+  }
+
+  const payload = {
+    user_id: session.user.id,
+    question: question.question,
+    category: question.category,
+    priority: question.priority,
+    bullets: question.bullets || [],
+    narrative: question.narrative || '',
+    keywords: question.keywords || [],
+    question_group: question.group || question.question_group || null,
+    difficulty: question.difficulty || null,
+  };
+
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      alert('Please sign in to add questions');
-      return;
+    const response = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/questions`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+          'Prefer': 'return=minimal',
+        },
+        body: JSON.stringify(payload),
+      }
+    );
+
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      throw new Error(body?.message || `Insert failed (${response.status})`);
     }
 
-    const { data, error } = await supabase
-      .from('questions')
-      .insert([{
-        user_id: user.id,
-        question: question.question,
-        category: question.category,
-        priority: question.priority,
-        bullets: question.bullets || [],
-        narrative: question.narrative || '',
-        keywords: question.keywords || [],
-        question_group: question.group || question.question_group || null,
-        difficulty: question.difficulty || null
-      }])
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    // Reload questions to get practice stats
-    await loadQuestions();
-    console.log('✅ Question saved to Supabase');
+    loadQuestions().catch(() => {});
+    console.log('✅ Question saved');
   } catch (error) {
     console.error('❌ Error adding question:', error);
     alert('Failed to save question: ' + error.message);
   }
 };
   const updateQuestion = async (id, updatedQ) => {
+  // Use raw fetch + sessionRef token instead of supabase client — the Supabase
+  // client calls getSession() internally which deadlocks after a tab switch
+  // while _recoverAndRefresh holds the auth lock.
+  const session = sessionRef.current;
+  if (!session?.access_token) {
+    alert('Session expired. Please sign in again.');
+    return;
+  }
+
+  const payload = {
+    question: updatedQ.question,
+    category: updatedQ.category,
+    priority: updatedQ.priority,
+    bullets: updatedQ.bullets || [],
+    narrative: updatedQ.narrative || '',
+    keywords: updatedQ.keywords || [],
+    question_group: updatedQ.group || updatedQ.question_group || null,
+    difficulty: updatedQ.difficulty || null,
+  };
+
   try {
-    const { error } = await supabase
-      .from('questions')
-      .update({
-        question: updatedQ.question,
-        category: updatedQ.category,
-        priority: updatedQ.priority,
-        bullets: updatedQ.bullets || [],
-        narrative: updatedQ.narrative || '',
-        keywords: updatedQ.keywords || [],
-        question_group: updatedQ.group || updatedQ.question_group || null,
-        difficulty: updatedQ.difficulty || null
-      })
-      .eq('id', id);
+    const response = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/questions?id=eq.${id}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+          'Prefer': 'return=minimal',
+        },
+        body: JSON.stringify(payload),
+      }
+    );
 
-    if (error) throw error;
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      throw new Error(body?.message || `Update failed (${response.status})`);
+    }
 
-    // Reload questions to get updated stats
-    await loadQuestions();
-    console.log('✅ Question updated in Supabase');
+    // Optimistic update — avoids another Supabase client call that could deadlock
+    setQuestions(prev => prev.map(q => q.id === id ? { ...q, ...payload } : q));
+    // Background reload to pull any server-computed fields (fire-and-forget)
+    loadQuestions().catch(() => {});
+    console.log('✅ Question updated');
   } catch (error) {
     console.error('❌ Error updating question:', error);
     alert('Failed to update question: ' + error.message);
@@ -2909,17 +3078,32 @@ Respond in this exact JSON format:
 };
   const deleteQuestion = async (id) => {
   if (!confirm('Delete?')) return;
-  
+
+  const session = sessionRef.current;
+  if (!session?.access_token) {
+    alert('Session expired. Please sign in again.');
+    return;
+  }
+
   try {
-    const { error } = await supabase
-      .from('questions')
-      .delete()
-      .eq('id', id);
+    const response = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/questions?id=eq.${id}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+        },
+      }
+    );
 
-    if (error) throw error;
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      throw new Error(body?.message || `Delete failed (${response.status})`);
+    }
 
-    setQuestions(questions.filter(q => q.id !== id));
-    console.log('✅ Question deleted from Supabase');
+    setQuestions(prev => prev.filter(q => q.id !== id));
+    console.log('✅ Question deleted');
   } catch (error) {
     console.error('❌ Error deleting question:', error);
     alert('Failed to delete question: ' + error.message);
@@ -2928,52 +3112,56 @@ Respond in this exact JSON format:
 
   const deleteAllQuestions = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        alert('Please sign in to delete questions');
+      const session = sessionRef.current;
+      if (!session?.access_token) {
+        alert('Session expired. Please sign in again.');
         return;
       }
+      const uid = session.user.id;
+      const headers = {
+        'Authorization': `Bearer ${session.access_token}`,
+        'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+      };
 
       // BUG 5 FIX: Delete questions AND practice_sessions (scores/attempts)
       // BUT do NOT delete usage_tracking (keeps usage counters intact)
       // Jacob #16 fix (2026-05-10): removed practice_history — table never existed in production.
-      // Diagnosed via: SELECT to_regclass('public.practice_history') → null
-      const deleteQuestionsPromise = supabase
-        .from('questions')
-        .delete()
-        .eq('user_id', user.id);
-
-      const deletePracticeSessionsPromise = supabase
-        .from('practice_sessions')
-        .delete()
-        .eq('user_id', user.id);
-
+      // Raw fetch — supabase client .delete() calls getSession() internally which deadlocks after tab-switch.
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Delete timed out')), 10000)
       );
 
-      let error;
       try {
-        // Delete both tables in parallel with timeout
-        const [questionsResult, sessionsResult] = await Promise.race([
-          Promise.all([deleteQuestionsPromise, deletePracticeSessionsPromise]),
-          timeoutPromise
+        const [qRes, sRes] = await Promise.race([
+          Promise.all([
+            fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/questions?user_id=eq.${uid}`, { method: 'DELETE', headers }),
+            fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/practice_sessions?user_id=eq.${uid}`, { method: 'DELETE', headers }),
+          ]),
+          timeoutPromise,
         ]);
-        error = questionsResult?.error || sessionsResult?.error;
+        if (!qRes.ok) {
+          const body = await qRes.json().catch(() => null);
+          throw new Error(body?.message || `Questions delete failed (${qRes.status})`);
+        }
+        if (!sRes.ok) {
+          const body = await sRes.json().catch(() => null);
+          throw new Error(body?.message || `Sessions delete failed (${sRes.status})`);
+        }
       } catch (timeoutError) {
-        console.error('Delete timeout:', timeoutError);
-        // Still clear local state - user wanted to delete
-        error = null;
+        if (timeoutError.message === 'Delete timed out') {
+          console.error('Delete timeout:', timeoutError);
+          // Still clear local state - user wanted to delete
+        } else {
+          throw timeoutError;
+        }
       }
-
-      if (error) throw error;
 
       setQuestions([]);
       setPracticeHistory([]);
       setShowDeleteAllConfirm(false);
 
       // Clear localStorage caches so data doesn't reload from fallback
-      localStorage.removeItem(`isl_defaults_initialized_${user.id}`);
+      localStorage.removeItem(`isl_defaults_initialized_${uid}`);
       localStorage.removeItem('isl_history');
       localStorage.removeItem('isl_questions');
 
@@ -3060,15 +3248,17 @@ Respond in this exact JSON format:
         return;
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        alert('Please sign in to import questions');
+      const session = sessionRef.current;
+      if (!session?.access_token) {
+        alert('Session expired. Please sign in again.');
         return;
       }
+      const uid = session.user.id;
 
-      // Import to Supabase
+      // Import to Supabase via raw fetch — supabase client insert calls
+      // getSession() internally which deadlocks after tab-switch.
       const questionsToImport = parsed.map(q => ({
-        user_id: user.id,
+        user_id: uid,
         question: q.question,
         category: q.category,
         priority: q.priority,
@@ -3077,13 +3267,23 @@ Respond in this exact JSON format:
         keywords: q.keywords,
       }));
 
-      const { data, error } = await supabase
-        .from('questions')
-        .insert(questionsToImport)
-        .select();
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/questions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+          'Prefer': 'return=representation',
+        },
+        body: JSON.stringify(questionsToImport),
+      });
 
-      if (error) throw error;
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.message || `Import failed (${res.status})`);
+      }
 
+      const data = await res.json().catch(() => []);
       // Reload questions to get the imported ones with IDs
       await loadQuestions();
 
@@ -3420,7 +3620,10 @@ const startPracticeMode = async () => {
 
     // FIX: Use ref as primary source (always current), fall back to state
     const answer = (accumulatedTranscript.current || spokenAnswer || userAnswer || '').trim();
+    // DIAG: log every source so we can confirm which is empty after tab switch
+    console.log(`🔍 [DIAG] Practice answer sources | ref="${accumulatedTranscript.current}" | spokenAnswer="${spokenAnswer}" | userAnswer="${userAnswer}" | final="${answer}"`);
     if (!answer) {
+      console.error('🔍 [DIAG] Practice EMPTY ANSWER — early return (alert may be blocked)');
       alert('Please provide an answer');
       return;
     }
@@ -3437,7 +3640,9 @@ const startPracticeMode = async () => {
         isAnalyzingTimestampRef.current = Date.now();
         setIsAnalyzing(true);
         console.log(`🔵 [Practice] setIsAnalyzing(true) | attemptId=${attemptId} | timestamp=${isAnalyzingTimestampRef.current}`);
-        return supabase.auth.getSession();
+        // Use sessionRef instead of getSession() — getSession() deadlocks on the same
+        // Supabase internal lock as checkUsageServerSide above (see sessionRef comment).
+        return Promise.resolve({ data: { session: sessionRef.current }, error: null });
       })
       .then(({ data: { session }, error: sessionError }) => {
         // SESSION FIX: Check if session is valid before making API call
@@ -3446,6 +3651,8 @@ const startPracticeMode = async () => {
           throw new Error('Your session has expired. Please sign in again.');
         }
         console.log('🔐 Using session token for API call (expires:', new Date(session.expires_at * 1000).toLocaleTimeString(), ')');
+        // DIAG: log token used at submit time to compare against TabFocus token
+        console.log(`🔍 [DIAG] Practice submit | tokenPrefix=${session.access_token?.substring(0, 20)} | expiresIn=${Math.floor(session.expires_at - Date.now() / 1000)}s`);
 
         // P0 INSTRUMENTATION: Log before API call
         console.log(`🔵 [Practice] Attempting API call | attemptId=${attemptId}`);
@@ -3474,6 +3681,8 @@ const startPracticeMode = async () => {
         }, 3);
       })
       .then(response => {
+        // DIAG: log HTTP status from ai-feedback for every practice submit
+        console.log(`🔍 [DIAG] Practice ai-feedback response | status=${response.status}`);
         return response.json().then(data => ({ response, data }));
       })
       .then(({ response, data }) => {
@@ -3507,7 +3716,17 @@ const startPracticeMode = async () => {
             feedbackText = jsonMatch[0];
           }
 
-          feedbackJson = JSON.parse(feedbackText);
+          try {
+            feedbackJson = JSON.parse(feedbackText);
+          } catch (parseErr) {
+            // Haiku occasionally returns JS-style unquoted property names. Sanitize and retry.
+            // Only reached on parse failure — success path is unchanged.
+            console.warn('⚠️ [Practice] JSON parse failed, sanitizing:', parseErr.message);
+            const sanitized = feedbackText
+              .replace(/([{,]\s*)([a-zA-Z_$][a-zA-Z0-9_$]*)\s*:/g, '$1"$2":')
+              .replace(/,(\s*[}\]])/g, '$1');
+            feedbackJson = JSON.parse(sanitized);
+          }
         } else {
           feedbackJson = data;
         }
@@ -3576,6 +3795,12 @@ const startPracticeMode = async () => {
         console.error('Feedback error:', error);
         alert('Failed to get feedback: ' + error.message);
       })
+      .catch(err => {
+        // DIAG: catch any unhandled rejection in the submit chain
+        if (err?.message !== 'USAGE_LIMIT_EXCEEDED') {
+          console.error(`🔍 [DIAG] Practice submit UNHANDLED REJECTION | ${err?.message}`, err);
+        }
+      })
       .finally(() => {
         // P0 FIX: Only reset if this is still the current attempt (ignore late responses)
         if (attemptId !== submitAttemptRef.current) {
@@ -3617,7 +3842,8 @@ const startPracticeMode = async () => {
         isAnalyzingTimestampRef.current = Date.now();
         setIsAnalyzing(true);
         console.log(`🟣 [AI Interviewer] setIsAnalyzing(true) | attemptId=${attemptId} | timestamp=${isAnalyzingTimestampRef.current}`);
-        return supabase.auth.getSession();
+        // Use sessionRef instead of getSession() — same deadlock risk as checkUsageServerSide.
+        return Promise.resolve({ data: { session: sessionRef.current }, error: null });
       })
       .then(({ data: { session }, error: sessionError }) => {
         // SESSION FIX: Check if session is valid before making API call
@@ -3628,6 +3854,8 @@ const startPracticeMode = async () => {
         // P0 INSTRUMENTATION: Log before API call
         console.log(`🟣 [AI Interviewer] Attempting API call | attemptId=${attemptId}`);
         console.log('🔐 Using session token for AI Interviewer API call');
+        // DIAG: log token used at submit time to compare against TabFocus token
+        console.log(`🔍 [DIAG] AI Interviewer submit | tokenPrefix=${session.access_token?.substring(0, 20)} | expiresIn=${Math.floor(session.expires_at - Date.now() / 1000)}s`);
 
         // RELIABILITY FIX: Use retry wrapper (3 attempts)
         return fetchWithRetry(
@@ -3665,6 +3893,8 @@ const startPracticeMode = async () => {
         );
       })
       .then(response => {
+        // DIAG: log HTTP status from ai-feedback for every AI Interviewer submit
+        console.log(`🔍 [DIAG] AI Interviewer ai-feedback response | status=${response.status}`);
         return response.json().then(data => ({ response, data }));
       })
       .then(({ response, data }) => {
@@ -3691,7 +3921,16 @@ const startPracticeMode = async () => {
           const jsonMatch = feedbackText.match(/\{[\s\S]*\}/);
           if (jsonMatch) feedbackText = jsonMatch[0];
 
-          feedbackJson = JSON.parse(feedbackText);
+          try {
+            feedbackJson = JSON.parse(feedbackText);
+          } catch (parseErr) {
+            // Same Haiku unquoted-key issue as Practice Mode. Sanitize and retry.
+            console.warn('⚠️ [AI Interviewer] JSON parse failed, sanitizing:', parseErr.message);
+            const sanitized = feedbackText
+              .replace(/([{,]\s*)([a-zA-Z_$][a-zA-Z0-9_$]*)\s*:/g, '$1"$2":')
+              .replace(/,(\s*[}\]])/g, '$1');
+            feedbackJson = JSON.parse(sanitized);
+          }
         } else {
           feedbackJson = data;
         }
@@ -4255,6 +4494,8 @@ const startPracticeMode = async () => {
         isOpen={!!sparkNotesQuestion}
         onClose={() => setSparkNotesQuestion(null)}
         getUserContext={getUserContext}
+        getSessionToken={getSessionToken}
+        getCurrentUser={getCurrentUser}
       />
 
       {/* Phase 4G: Session Report */}
@@ -4528,7 +4769,7 @@ const startPracticeMode = async () => {
               FIXED 2026-04-09: was two full-width banners creating "panel soup" on desktop.
               Viewport auditor flagged this as the #1 layout fix. */}
           <div className={`${practiceHistory.length >= 2 ? 'grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-5' : ''} mb-4 sm:mb-6`}>
-            <IRSDisplay refreshTrigger={streakRefreshTrigger} />
+            <IRSDisplay refreshTrigger={streakRefreshTrigger} userId={currentUser?.id} getToken={() => sessionRef.current?.access_token} />
             {practiceHistory.length >= 2 && (
               <ScoreTrendSparkline
                 practiceHistory={practiceHistory}
@@ -4622,11 +4863,12 @@ const startPracticeMode = async () => {
               </div>
             </div>
             {/* Streak Card — Phase 3 Unit 1 */}
-            <StreakDisplay refreshTrigger={streakRefreshTrigger} variant="light" />
+            <StreakDisplay refreshTrigger={streakRefreshTrigger} variant="light" userId={currentUser?.id} getToken={() => sessionRef.current?.access_token} />
           </div>
 
           {/* Milestone Toast — renders nothing when no milestone */}
           <MilestoneToast milestone={streakMilestone} onDismiss={() => setStreakMilestone(null)} />
+
 
           {/* Quick Start Tip - Enhanced */}
           {questions.length === 0 && (
@@ -6079,6 +6321,7 @@ const startPracticeMode = async () => {
             existingNarrative={answerAssistantQuestion.narrative}
             existingBullets={answerAssistantQuestion.bullets}
             onAnswerSaved={handleAnswerSaved}
+            getSessionToken={getSessionToken}
             onClose={() => {
               setShowAnswerAssistant(false);
               setAnswerAssistantQuestion(null);
@@ -6835,6 +7078,7 @@ const startPracticeMode = async () => {
             existingNarrative={answerAssistantQuestion.narrative}
             existingBullets={answerAssistantQuestion.bullets}
             onAnswerSaved={handleAnswerSaved}
+            getSessionToken={getSessionToken}
             onClose={() => {
               setShowAnswerAssistant(false);
               setAnswerAssistantQuestion(null);
@@ -6928,19 +7172,25 @@ const startPracticeMode = async () => {
 
     const saveConfidenceRating = async (rating) => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+        const session = sessionRef.current;
+        if (!session?.access_token) return;
 
-        // Save to practice_sessions for this question
-        await supabase
-          .from('practice_sessions')
-          .insert([{
-            user_id: user.id,
+        await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/practice_sessions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+            'Prefer': 'return=minimal',
+          },
+          body: JSON.stringify({
+            user_id: session.user.id,
             question_id: currentQuestion.id,
             mode: 'flashcard',
             confidence_rating: rating,
-            score: rating * 2 // Convert 1-5 to 2-10 scale
-          }]);
+            score: rating * 2, // Convert 1-5 to 2-10 scale
+          }),
+        });
 
         // Reload questions to update stats
         await loadQuestions();
@@ -7146,12 +7396,16 @@ const startPracticeMode = async () => {
       onBack={() => setCurrentView('home')}
       jobDescription={getUserContext().jobDescription || ''}
       getUserContext={getUserContext}
+      getSessionToken={getSessionToken}
+      getCurrentUser={getCurrentUser}
       onSaveQuestions={async (newQs) => {
         try {
-          const { data: { user } } = await supabase.auth.getUser();
+          const user = getCurrentUser();
           if (!user) { alert('Please sign in to save questions'); return; }
+          const session = sessionRef.current;
+          if (!session?.access_token) { alert('Session expired. Please sign in again.'); return; }
           const rows = newQs.map(q => ({
-            user_id: user.id,
+            user_id: session.user.id,
             question: q.question,
             category: q.category || 'Behavioral',
             priority: q.priority || 'Standard',
@@ -7159,8 +7413,20 @@ const startPracticeMode = async () => {
             bullets: q.bullets || [],
             narrative: '',
           }));
-          const { error } = await supabase.from('questions').insert(rows);
-          if (error) throw error;
+          const saveRes = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/questions`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.access_token}`,
+              'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+              'Prefer': 'return=minimal',
+            },
+            body: JSON.stringify(rows),
+          });
+          if (!saveRes.ok) {
+            const body = await saveRes.json().catch(() => null);
+            throw new Error(body?.message || `Insert failed (${saveRes.status})`);
+          }
           await loadQuestions();
           console.log(`✅ ${rows.length} JD Decoder questions saved to Supabase`);
         } catch (err) {
@@ -7174,12 +7440,12 @@ const startPracticeMode = async () => {
 
   // Phase 4F: Story Bank
   if (currentView === 'story-bank') {
-    return <StoryBank onBack={() => setCurrentView('home')} questions={questions} getUserContext={getUserContext} onNavigate={(view) => view === 'practice' ? startPracticeMode() : setCurrentView(view)} />;
+    return <StoryBank onBack={() => setCurrentView('home')} questions={questions} getUserContext={getUserContext} getSessionToken={getSessionToken} getCurrentUser={getCurrentUser} onNavigate={(view) => view === 'practice' ? startPracticeMode() : setCurrentView(view)} />;
   }
 
   // Portfolio: Work History & Confidence Builder
   if (currentView === 'portfolio') {
-    return <Portfolio onBack={() => setCurrentView('home')} getUserContext={getUserContext} questions={questions} onNavigate={(view) => view === 'practice' ? startPracticeMode() : setCurrentView(view)} />;
+    return <Portfolio onBack={() => setCurrentView('home')} getUserContext={getUserContext} questions={questions} getSessionToken={getSessionToken} getCurrentUser={getCurrentUser} onNavigate={(view) => view === 'practice' ? startPracticeMode() : setCurrentView(view)} />;
   }
 
   // Phase 4K: Prep Radio
@@ -7201,7 +7467,7 @@ const startPracticeMode = async () => {
 
   // Phase 4L: Weak STAR Drill
   if (currentView === 'weak-drill') {
-    return <WeakPointDrill onBack={() => { setDrillTargetComponent(null); setCurrentView('home'); }} practiceHistory={practiceHistory} questions={questions} getUserContext={getUserContext} targetComponent={drillTargetComponent} />;
+    return <WeakPointDrill onBack={() => { setDrillTargetComponent(null); setCurrentView('home'); }} practiceHistory={practiceHistory} questions={questions} getUserContext={getUserContext} getSessionToken={getSessionToken} getCurrentUser={getCurrentUser} targetComponent={drillTargetComponent} />;
   }
 
   // Phase 4I: Interview Day Mode
@@ -7211,7 +7477,7 @@ const startPracticeMode = async () => {
 
   // Phase 4N: Follow-Up Email
   if (currentView === 'follow-up-email') {
-    return <FollowUpEmail onBack={() => setCurrentView('home')} getUserContext={getUserContext} />;
+    return <FollowUpEmail onBack={() => setCurrentView('home')} getUserContext={getUserContext} getSessionToken={getSessionToken} getCurrentUser={getCurrentUser} />;
   }
 
   if (currentView === 'interview-coach') {
@@ -7225,6 +7491,8 @@ const startPracticeMode = async () => {
           speakText={speakText}
           stopSpeaking={() => synthRef.current?.cancel()}
           aiSpeaking={aiSpeaking}
+          getSessionToken={getSessionToken}
+          getCurrentUser={getCurrentUser}
         />
       </div>
     );
@@ -7554,6 +7822,8 @@ const startPracticeMode = async () => {
               setInterviewDate={setInterviewDate}
               setCurrentView={setCurrentView}
               onGenerateQuestions={() => setCommandCenterTab('bank')}
+              getSessionToken={getSessionToken}
+              getCurrentUser={getCurrentUser}
             />
           )}
           
@@ -8127,25 +8397,33 @@ const startPracticeMode = async () => {
                           }
 
                           try {
-                            const { data: { user } } = await supabase.auth.getUser();
-                            if (user) {
-                              const { data, error } = await supabase
-                                .from('questions')
-                                .insert([{
-                                  user_id: user.id,
+                            const session = sessionRef.current;
+                            if (session?.access_token) {
+                              const saveRes = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/questions`, {
+                                method: 'POST',
+                                headers: {
+                                  'Content-Type': 'application/json',
+                                  'Authorization': `Bearer ${session.access_token}`,
+                                  'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+                                  'Prefer': 'return=representation',
+                                },
+                                body: JSON.stringify({
+                                  user_id: session.user.id,
                                   question: generatedQuestion,
                                   category: 'Generated',
                                   priority: 'Technical',
                                   bullets: [],
-                                  narrative: ''
-                                }])
-                                .select()
-                                .single();
-
-                              if (!error && data) {
-                                setQuestions([...questions, data]);
-                                alert('Question added to bank!');
-                                setAiGeneratorCollapsed(true); // Collapse after adding
+                                  narrative: '',
+                                }),
+                              });
+                              if (saveRes.ok) {
+                                const rows = await saveRes.json().catch(() => []);
+                                const data = Array.isArray(rows) ? rows[0] : rows;
+                                if (data) {
+                                  setQuestions([...questions, data]);
+                                  alert('Question added to bank!');
+                                  setAiGeneratorCollapsed(true); // Collapse after adding
+                                }
                               }
                             }
                           } catch (error) {
@@ -8170,6 +8448,7 @@ const startPracticeMode = async () => {
                           return true;
                         }}
                         existingQuestions={questions}
+                        getSessionToken={getSessionToken}
                       />
                     ) : (
                       <div className="text-center py-8">
@@ -8209,6 +8488,8 @@ const startPracticeMode = async () => {
                 questions={questions}
                 getUserContext={getUserContext}
                 userId={currentUser?.id}
+                getSessionToken={getSessionToken}
+                getCurrentUser={getCurrentUser}
                 onFavoritesUpdated={(data) => {
                   setCachedFavorites(data);
                   if (data) {
@@ -8286,32 +8567,33 @@ const startPracticeMode = async () => {
                     onImport={async (importedQuestions) => {
                       console.log('Importing questions:', importedQuestions);
                       try {
-                        const { data: { user } } = await supabase.auth.getUser();
-                        if (!user) {
-                          alert('Please sign in to import templates');
+                        const session = sessionRef.current;
+                        if (!session?.access_token) {
+                          alert('Session expired. Please sign in again.');
                           return;
                         }
-                        
+
                         // FIXED: Filter out duplicates (IA-001, IA-001b, IA-008)
                         const existingQuestionTexts = questions.map(q => q.question.toLowerCase().trim());
-                        const newQuestions = importedQuestions.filter(q => 
+                        const newQuestions = importedQuestions.filter(q =>
                           !existingQuestionTexts.includes(q.question.toLowerCase().trim())
                         );
-                        
+
                         if (newQuestions.length === 0) {
                           alert('⚠️ All questions from this template are already in your Question Bank!');
                           // Jacob #17: removed auto-close — keep catalog open so user
                           // can add other groups in the same session. X still closes.
                           return;
                         }
-                        
+
                         if (newQuestions.length < importedQuestions.length) {
                           console.log(`Skipped ${importedQuestions.length - newQuestions.length} duplicate(s)`);
                         }
-                        
-                        // Save to Supabase
+
+                        // Save to Supabase via raw fetch — supabase client insert
+                        // calls getSession() internally which deadlocks after tab-switch.
                         const questionsToImport = newQuestions.map(q => ({
-                          user_id: user.id,
+                          user_id: session.user.id,
                           question: q.question,
                           category: q.category || 'Template',
                           priority: q.priority || 'Standard',
@@ -8319,15 +8601,39 @@ const startPracticeMode = async () => {
                           narrative: q.narrative || '',
                           keywords: q.keywords || []
                         }));
-                        
-                        const { error } = await supabase
-                          .from('questions')
-                          .insert(questionsToImport);
-                        
-                        if (error) throw error;
-                        
-                        // Reload questions
-                        await loadQuestions();
+
+                        const importRes = await fetch(
+                          `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/questions`,
+                          {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                              'Authorization': `Bearer ${session.access_token}`,
+                              'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+                              'Prefer': 'return=minimal',
+                            },
+                            body: JSON.stringify(questionsToImport),
+                          }
+                        );
+                        if (!importRes.ok) {
+                          const body = await importRes.json().catch(() => null);
+                          throw new Error(body?.message || `Import failed (${importRes.status})`);
+                        }
+
+                        // Optimistic update — show imported questions in bank immediately.
+                        // loadQuestions() calls supabase.auth.getUser() which can deadlock
+                        // after tab-switch, so we update local state now and let the
+                        // background reload provide eventual consistency with real IDs.
+                        const now = new Date().toISOString();
+                        setQuestions(prev => [
+                          ...prev,
+                          ...questionsToImport.map((q, i) => ({
+                            ...q,
+                            id: `temp-import-${Date.now()}-${i}`,
+                            created_at: now,
+                          })),
+                        ]);
+                        loadQuestions().catch(() => {});
                         // Jacob #17: removed auto-close — TemplateLibrary updates
                         // its own justAdded set so imported items show "in bank"
                         // checkmarks immediately. Keeping catalog open lets user
@@ -8505,6 +8811,7 @@ const startPracticeMode = async () => {
           existingNarrative={answerAssistantQuestion.narrative}
           existingBullets={answerAssistantQuestion.bullets}
           onAnswerSaved={handleAnswerSaved}
+          getSessionToken={getSessionToken}
           onClose={() => {
             setShowAnswerAssistant(false);
             setAnswerAssistantQuestion(null);
@@ -8704,8 +9011,8 @@ const startPracticeMode = async () => {
                   'This cannot be undone.'
                 )) {
                   try {
-                    const { data: { user } } = await supabase.auth.getUser();
-                    if (!user) { alert('Please sign in first.'); return; }
+                    const user = sessionRef.current?.user;
+                    if (!user) { alert('Session expired. Please sign in again.'); return; }
                     const result = await resetAllProgress(user.id);
                     if (result.success) {
                       setPracticeHistory([]);
@@ -8739,20 +9046,31 @@ const startPracticeMode = async () => {
                 if (window.confirm('⚠️ DELETE ALL DATA?\n\nThis will PERMANENTLY delete:\n• All practice sessions\n• All questions\n• All progress\n• All usage history\n\nYour Pro subscription (if active) will NOT be canceled.\nManage your subscription in Settings or Stripe.\n\nThis CANNOT be undone.\n\nClick OK to continue.')) {
                   if (window.confirm('🛑 FINAL CONFIRMATION\n\nYou are about to delete all practice data.\n\nThis is PERMANENT.\n\nClick OK to DELETE ALL DATA NOW.')) {
                     try {
-                      const { data: { user } } = await supabase.auth.getUser();
-                      if (user) {
-                        // ✅ FIX: Add 10-second timeout per operation to prevent hanging (Focus-Loss Cascade Bug)
+                      const session = sessionRef.current;
+                      if (session?.access_token) {
+                        const uid = session.user.id;
+                        const _headers = {
+                          'Authorization': `Bearer ${session.access_token}`,
+                          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+                        };
+
+                        // Raw fetch DELETE — supabase client .delete() calls getSession()
+                        // internally which deadlocks after tab-switch. Individual timeouts
+                        // preserved from original (Focus-Loss Cascade Bug fix).
                         const deleteWithTimeout = async (table) => {
-                          const deletePromise = supabase.from(table).delete().eq('user_id', user.id);
+                          const deletePromise = fetch(
+                            `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/${table}?user_id=eq.${uid}`,
+                            { method: 'DELETE', headers: _headers }
+                          );
                           const timeoutPromise = new Promise((_, reject) =>
                             setTimeout(() => reject(new Error(`${table} delete timed out`)), 10000)
                           );
                           try {
-                            const result = await Promise.race([deletePromise, timeoutPromise]);
-                            if (result?.error) {
-                              console.error(`❌ ${table} delete error:`, result.error);
+                            const res = await Promise.race([deletePromise, timeoutPromise]);
+                            if (!res.ok) {
+                              console.error(`❌ ${table} delete error:`, res.status);
                             } else {
-                              console.log(`✅ Deleted from ${table}`, result?.status, result?.statusText);
+                              console.log(`✅ Deleted from ${table}`);
                             }
                           } catch (err) {
                             console.warn(`⚠️ ${table} delete failed/timeout:`, err.message);
@@ -8771,23 +9089,30 @@ const startPracticeMode = async () => {
                         // Deleting this row orphans the Stripe subscription: user keeps paying
                         // but the webhook can't find them to maintain Pro access.
                         // Instead, reset non-billing fields to defaults.
-                        const resetProfilePromise = supabase
-                          .from('user_profiles')
-                          .update({ display_name: null, updated_at: new Date().toISOString() })
-                          .eq('user_id', user.id);
-                        const resetTimeout = new Promise((_, reject) =>
-                          setTimeout(() => reject(new Error('user_profiles reset timed out')), 10000)
-                        );
                         try {
-                          await Promise.race([resetProfilePromise, resetTimeout]);
+                          await Promise.race([
+                            fetch(
+                              `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/user_profiles?user_id=eq.${uid}`,
+                              {
+                                method: 'PATCH',
+                                headers: { ..._headers, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+                                body: JSON.stringify({ display_name: null, updated_at: new Date().toISOString() }),
+                              }
+                            ),
+                            new Promise((_, reject) => setTimeout(() => reject(new Error('user_profiles reset timed out')), 10000)),
+                          ]);
                           console.log('✅ Reset user_profiles (Stripe subscription preserved)');
                         } catch (err) {
                           console.warn('⚠️ user_profiles reset failed/timeout:', err.message);
                         }
 
-                        // Attempt to delete the Supabase auth account
+                        // Attempt to delete the Supabase auth account via raw RPC
                         try {
-                          await supabase.rpc('delete_user');
+                          await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/rpc/delete_user`, {
+                            method: 'POST',
+                            headers: { ..._headers, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({}),
+                          });
                         } catch (e) {
                           console.log('Account deletion via RPC not available, signing out instead');
                         }
@@ -9259,32 +9584,33 @@ const startPracticeMode = async () => {
               onImport={async (importedQuestions) => {
                 console.log('Importing questions:', importedQuestions);
                 try {
-                  const { data: { user } } = await supabase.auth.getUser();
-                  if (!user) {
-                    alert('Please sign in to import templates');
+                  const session = sessionRef.current;
+                  if (!session?.access_token) {
+                    alert('Session expired. Please sign in again.');
                     return;
                   }
-                  
+
                   // FIXED: Filter out duplicates (IA-001, IA-001b, IA-008)
                   const existingQuestionTexts = questions.map(q => q.question.toLowerCase().trim());
-                  const newQuestions = importedQuestions.filter(q => 
+                  const newQuestions = importedQuestions.filter(q =>
                     !existingQuestionTexts.includes(q.question.toLowerCase().trim())
                   );
-                  
+
                   if (newQuestions.length === 0) {
                     alert('⚠️ All questions from this template are already in your Question Bank!');
                     // Jacob #17: removed auto-close — keep catalog open so user
                     // can add other groups in the same session. X still closes.
                     return;
                   }
-                  
+
                   if (newQuestions.length < importedQuestions.length) {
                     console.log(`Skipped ${importedQuestions.length - newQuestions.length} duplicate(s)`);
                   }
-                  
-                  // Save to Supabase
+
+                  // Save via raw fetch — supabase client insert calls getSession()
+                  // internally which deadlocks after tab-switch.
                   const questionsToImport = newQuestions.map(q => ({
-                    user_id: user.id,
+                    user_id: session.user.id,
                     question: q.question,
                     category: q.category || 'Template',
                     priority: q.priority || 'Standard',
@@ -9292,15 +9618,36 @@ const startPracticeMode = async () => {
                     narrative: q.narrative || '',
                     keywords: q.keywords || []
                   }));
-                  
-                  const { error } = await supabase
-                    .from('questions')
-                    .insert(questionsToImport);
-                  
-                  if (error) throw error;
-                  
-                  // Reload questions
-                  await loadQuestions();
+
+                  const importRes = await fetch(
+                    `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/questions`,
+                    {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session.access_token}`,
+                        'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+                        'Prefer': 'return=minimal',
+                      },
+                      body: JSON.stringify(questionsToImport),
+                    }
+                  );
+                  if (!importRes.ok) {
+                    const body = await importRes.json().catch(() => null);
+                    throw new Error(body?.message || `Import failed (${importRes.status})`);
+                  }
+
+                  // Optimistic update — show imported questions in bank immediately.
+                  const now = new Date().toISOString();
+                  setQuestions(prev => [
+                    ...prev,
+                    ...questionsToImport.map((q, i) => ({
+                      ...q,
+                      id: `temp-import-${Date.now()}-${i}`,
+                      created_at: now,
+                    })),
+                  ]);
+                  loadQuestions().catch(() => {});
                   // Jacob #17: removed auto-close — TemplateLibrary updates its own
                   // justAdded set so imported items show "in bank" checkmarks
                   // immediately. Keeping catalog open lets user add multiple groups
@@ -9381,6 +9728,7 @@ const startPracticeMode = async () => {
                   userContextData={getUserContext()}
                   onClose={() => setShowCoachPanel(false)}
                   isPanel={true}
+                  getSessionToken={getSessionToken}
                 />
               </div>
             </div>

@@ -19,7 +19,7 @@ const MILESTONES_CONFIG = [
   { days: 30, label: '1 month', icon: '🏆' },
 ];
 
-export default function StreakDisplay({ refreshTrigger, variant = 'dark' }) {
+export default function StreakDisplay({ refreshTrigger, variant = 'dark', userId, getToken }) {
   const [streak, setStreak] = useState(null);
   const [showPopover, setShowPopover] = useState(false);
   const [freezeLoading, setFreezeLoading] = useState(false);
@@ -29,17 +29,19 @@ export default function StreakDisplay({ refreshTrigger, variant = 'dark' }) {
   const touchStartY = useRef(null);
 
   const loadStreak = useCallback(async () => {
+    if (!userId) return;
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const data = await fetchStreak(supabase, user.id);
+      // Pass accessToken via getToken() — reads sessionRef synchronously,
+      // bypassing supabase client getSession() which deadlocks after tab-switch.
+      const accessToken = getToken?.();
+      const data = await fetchStreak(supabase, userId, accessToken);
       setStreak(data);
     } catch (err) {
       console.warn('StreakDisplay load failed:', err);
     }
-  }, []);
+  }, [userId, getToken]);
 
-  // Load on mount + whenever refreshTrigger changes (after session completion)
+  // Load on mount + whenever refreshTrigger or userId changes
   useEffect(() => {
     loadStreak();
   }, [loadStreak, refreshTrigger]);
@@ -80,12 +82,11 @@ export default function StreakDisplay({ refreshTrigger, variant = 'dark' }) {
   const gradientTo = isHotStreak ? 'to-red-500' : 'to-emerald-500';
 
   const handleFreezeActivate = async () => {
+    if (!userId) return;
     setFreezeLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      await activateFreeze(supabase, user.id);
-      await loadStreak(); // Refresh data
+      await activateFreeze(supabase, userId);
+      await loadStreak();
     } finally {
       setFreezeLoading(false);
     }

@@ -29,6 +29,8 @@ function InterviewContextHub({
   setInterviewDate,
   setCurrentView,
   onGenerateQuestions,
+  getSessionToken,
+  getCurrentUser,
 }) {
   // Interview context fields (synced with QuestionAssistant's localStorage)
   const [role, setRole] = useState('');
@@ -394,6 +396,8 @@ function InterviewContextHub({
         <CompanyBrief
           companyName={company}
           getUserContext={() => ({ targetRole: role, targetCompany: company, background, jobDescription, interviewType })}
+          getSessionToken={getSessionToken}
+          getCurrentUser={getCurrentUser}
         />
       )}
     </div>

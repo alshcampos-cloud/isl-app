@@ -42,6 +42,8 @@ function InterviewCoach({
   speakText,
   stopSpeaking,
   aiSpeaking,
+  getSessionToken,
+  getCurrentUser,
 }) {
   // Restore coach chat from localStorage (single read via lazy init)
   const [messages, setMessages] = useState(() => loadCoachMessages('general').messages);
@@ -164,7 +166,7 @@ function InterviewCoach({
 
     try {
       // Get auth token
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (getSessionToken ? getSessionToken() : supabase.auth.getSession());
       if (!session) throw new Error('Not authenticated');
 
       // Build system prompt with current context
@@ -230,7 +232,7 @@ function InterviewCoach({
       if (messageCount === 0) {
         // Only count the first exchange as a "session"
         try {
-          const { data: { user: authUser } } = await supabase.auth.getUser();
+          const authUser = getCurrentUser ? getCurrentUser() : (await supabase.auth.getUser()).data.user;
           if (authUser) await incrementUsage(supabase, authUser.id, 'answer_assistant');
         } catch (e) {
           console.warn('Usage tracking failed:', e);

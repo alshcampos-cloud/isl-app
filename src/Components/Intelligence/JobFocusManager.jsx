@@ -90,7 +90,7 @@ export function getFilteredQuestions(questions, userId) {
 // Component
 // ============================================================
 
-export default function JobFocusManager({ questions, getUserContext, userId, onFavoritesUpdated }) {
+export default function JobFocusManager({ questions, getUserContext, userId, onFavoritesUpdated, getSessionToken, getCurrentUser }) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState(null);
   const [result, setResult] = useState(() => loadFavorites(userId));
@@ -111,7 +111,7 @@ export default function JobFocusManager({ questions, getUserContext, userId, onF
     setError(null);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (getSessionToken ? getSessionToken() : supabase.auth.getSession());
       if (!session) throw new Error('Not authenticated');
 
       // Build the question list for the AI
@@ -179,7 +179,12 @@ Select the most relevant questions for this role. Return JSON only.`;
       const jsonMatch = aiText.match(/\{[\s\S]*\}/);
       if (!jsonMatch) throw new Error('Could not parse analysis results.');
 
-      const parsed = JSON.parse(jsonMatch[0]);
+      let parsed;
+      try {
+        parsed = JSON.parse(jsonMatch[0]);
+      } catch {
+        throw new Error('Invalid analysis format.');
+      }
       if (!parsed.selectedIndices || !Array.isArray(parsed.selectedIndices)) {
         throw new Error('Invalid analysis format.');
       }
@@ -204,10 +209,10 @@ Select the most relevant questions for this role. Return JSON only.`;
       if (onFavoritesUpdated) onFavoritesUpdated(favoritesData);
 
       // CHARGE AFTER SUCCESS (Battle Scar #8)
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) await incrementUsage(supabase, user.id, 'answer_assistant');
-      } catch (e) { console.warn('Usage tracking failed:', e); }
+      // Fire-and-forget: awaiting incrementUsage deadlocks after tab-switch
+      // because Supabase holds the auth lock during _recoverAndRefresh.
+      const user = getCurrentUser ? getCurrentUser() : null;
+      if (user) incrementUsage(supabase, user.id, 'answer_assistant').catch(e => console.warn('Usage tracking failed:', e));
 
       console.log(`✅ Job Focus: ${selectedIds.length}/${questions.length} questions selected`);
     } catch (err) {

@@ -16,7 +16,7 @@ function simpleHash(str) {
   return Math.abs(hash).toString(36);
 }
 
-function CompanyBrief({ companyName, getUserContext }) {
+function CompanyBrief({ companyName, getUserContext, getSessionToken, getCurrentUser }) {
   const [result, setResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -41,7 +41,7 @@ function CompanyBrief({ companyName, getUserContext }) {
     setError(null);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (getSessionToken ? getSessionToken() : supabase.auth.getSession());
       if (!session) throw new Error('Not authenticated');
 
       const ctx = getUserContext ? getUserContext() : {};
@@ -78,7 +78,7 @@ function CompanyBrief({ companyName, getUserContext }) {
 
       // CHARGE AFTER SUCCESS (Battle Scar #8)
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const user = getCurrentUser ? getCurrentUser() : (await supabase.auth.getUser()).data.user;
         if (user) await incrementUsage(supabase, user.id, 'answer_assistant');
       } catch (e) { console.warn('Usage tracking failed:', e); }
     } catch (err) {

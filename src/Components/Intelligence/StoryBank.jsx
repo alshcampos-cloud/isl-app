@@ -40,7 +40,7 @@ function saveStories(stories) {
   try { localStorage.setItem('isl_stories', JSON.stringify(stories)); } catch {}
 }
 
-function StoryBank({ onBack, questions = [], getUserContext, onNavigate }) {
+function StoryBank({ onBack, questions = [], getUserContext, onNavigate, getSessionToken, getCurrentUser }) {
   const [stories, setStories] = useState(loadStories);
   const [editingStory, setEditingStory] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -117,7 +117,7 @@ function StoryBank({ onBack, questions = [], getUserContext, onNavigate }) {
 
     setIsMatching(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (getSessionToken ? getSessionToken() : supabase.auth.getSession());
       if (!session) throw new Error('Not authenticated');
 
       const storySummaries = stories.map(s => ({
@@ -167,7 +167,7 @@ function StoryBank({ onBack, questions = [], getUserContext, onNavigate }) {
 
           // CHARGE AFTER SUCCESS (Battle Scar #8)
           try {
-            const { data: { user } } = await supabase.auth.getUser();
+            const user = getCurrentUser ? getCurrentUser() : (await supabase.auth.getUser()).data.user;
             if (user) await incrementUsage(supabase, user.id, 'answer_assistant');
           } catch (e) { console.warn('Usage tracking failed:', e); }
         } catch {

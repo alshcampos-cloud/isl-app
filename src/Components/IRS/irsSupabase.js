@@ -2,10 +2,9 @@
  * irsSupabase.js — Data fetching layer for IRS calculation
  * Phase 3, Unit 2: Interview Readiness Score
  *
- * Follows streakSupabase.js pattern:
- * - Self-contained (calls supabase.auth.getUser internally)
- * - Fire-and-forget safe: errors logged, never thrown
- * - Returns null on any error (component renders nothing)
+ * Uses raw REST API fetch to bypass the Supabase client's internal
+ * getSession() call, which deadlocks after tab-switch while
+ * _recoverAndRefresh holds the auth lock.
  *
  * Three parallel queries via Promise.all:
  *   1. user_streaks → current_streak
@@ -13,12 +12,17 @@
  *   3. questions → total count + narratives (for answer preparedness)
  */
 
-import { supabase } from '../../lib/supabase';
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 /**
  * Fetch all data needed to calculate IRS.
  * Returns structured data for irsCalculator functions, or null on error.
  *
+ * @param {string} userId — caller must supply; avoids supabase.auth.getUser()
+ *   which deadlocks after tab-switch while Supabase holds the auth lock.
+ * @param {string} accessToken — raw token from sessionRef; bypasses
+ *   supabase client getSession() which also deadlocks after tab-switch.
  * @returns {Promise<{
  *   currentStreak: number,
  *   scores: number[],
@@ -27,51 +31,30 @@ import { supabase } from '../../lib/supabase';
  *   narratives: (string|null)[]
  * } | null>}
  */
-export async function fetchIRSData() {
+export async function fetchIRSData(userId, accessToken) {
+  if (!userId || !accessToken) return null;
   try {
-    // 1. Get authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      // Not logged in — not an error, just no data
-      return null;
-    }
+    const headers = {
+      'Authorization': `Bearer ${accessToken}`,
+      'apikey': SUPABASE_ANON_KEY,
+    };
 
-    const userId = user.id;
-
-    // 2. Run three queries in parallel (Battle Scar #12: minimize latency)
-    const [streakResult, sessionsResult, questionsResult] = await Promise.all([
-      // Query 1: Current streak from user_streaks
-      supabase
-        .from('user_streaks')
-        .select('current_streak')
-        .eq('user_id', userId)
-        .maybeSingle(),
-
-      // Query 2: Practice sessions — need scores + question identifiers for dedup
-      supabase
-        .from('practice_sessions')
-        .select('question_id, question_text, ai_feedback')
-        .eq('user_id', userId),
-
-      // Query 3: Questions in user's bank — need narratives for answer preparedness
-      supabase
-        .from('questions')
-        .select('id, narrative')
-        .eq('user_id', userId),
+    // Run three queries in parallel (Battle Scar #12: minimize latency)
+    const [streakRes, sessionsRes, questionsRes] = await Promise.all([
+      fetch(`${SUPABASE_URL}/rest/v1/user_streaks?user_id=eq.${userId}&select=current_streak&limit=1`, { headers }),
+      fetch(`${SUPABASE_URL}/rest/v1/practice_sessions?user_id=eq.${userId}&select=question_id,question_text,ai_feedback`, { headers }),
+      fetch(`${SUPABASE_URL}/rest/v1/questions?user_id=eq.${userId}&select=id,narrative`, { headers }),
     ]);
 
-    // 3. Extract current streak (default 0)
-    const currentStreak = streakResult.data?.current_streak || 0;
-    if (streakResult.error) {
-      console.warn('⚠️ IRS: streak query error (non-blocking):', streakResult.error.message);
-    }
+    // Extract current streak (default 0)
+    const streakRows = streakRes.ok ? await streakRes.json().catch(() => []) : [];
+    if (!streakRes.ok) console.warn('⚠️ IRS: streak query error (non-blocking):', streakRes.status);
+    const currentStreak = (Array.isArray(streakRows) ? streakRows[0] : null)?.current_streak || 0;
 
-    // 4. Extract scores from ai_feedback JSON
+    // Extract scores from ai_feedback JSON
     //    Score is at ai_feedback.overall (0-10) or ai_feedback.match_percentage / 10
-    const sessions = sessionsResult.data || [];
-    if (sessionsResult.error) {
-      console.warn('⚠️ IRS: sessions query error (non-blocking):', sessionsResult.error.message);
-    }
+    const sessions = sessionsRes.ok ? await sessionsRes.json().catch(() => []) : [];
+    if (!sessionsRes.ok) console.warn('⚠️ IRS: sessions query error (non-blocking):', sessionsRes.status);
 
     const scores = sessions
       .map(s => {
@@ -83,7 +66,7 @@ export async function fetchIRSData() {
       })
       .filter(s => s !== null);
 
-    // 5. Deduplicate practiced questions
+    // Deduplicate practiced questions
     //    Use question_id first (UUID), fall back to question_text for older sessions
     const uniqueIds = new Set();
     const uniqueTexts = new Set();
@@ -98,11 +81,9 @@ export async function fetchIRSData() {
 
     const uniquePracticed = uniqueIds.size + uniqueTexts.size;
 
-    // 6. Questions: total count + narratives for answer preparedness
-    const questionsData = questionsResult.data || [];
-    if (questionsResult.error) {
-      console.warn('⚠️ IRS: questions query error (non-blocking):', questionsResult.error.message);
-    }
+    // Questions: total count + narratives for answer preparedness
+    const questionsData = questionsRes.ok ? await questionsRes.json().catch(() => []) : [];
+    if (!questionsRes.ok) console.warn('⚠️ IRS: questions query error (non-blocking):', questionsRes.status);
 
     const totalQuestions = questionsData.length;
     const narratives = questionsData.map(q => q.narrative);

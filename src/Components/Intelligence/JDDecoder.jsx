@@ -51,7 +51,7 @@ function simpleHash(str) {
   return Math.abs(hash).toString(36);
 }
 
-function JDDecoder({ onBack, jobDescription = '', getUserContext, onSaveQuestions, onNavigate }) {
+function JDDecoder({ onBack, jobDescription = '', getUserContext, onSaveQuestions, onNavigate, getSessionToken, getCurrentUser }) {
   const [jdInput, setJdInput] = useState(jobDescription);
   const [result, setResult] = useState(() => getCachedResult(jobDescription) || null);
   const [isLoading, setIsLoading] = useState(false);
@@ -79,7 +79,7 @@ function JDDecoder({ onBack, jobDescription = '', getUserContext, onSaveQuestion
     setError(null);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (getSessionToken ? getSessionToken() : supabase.auth.getSession());
       if (!session) throw new Error('Not authenticated');
 
       const systemPrompt = buildJDDecoderPrompt(context);
@@ -127,10 +127,10 @@ function JDDecoder({ onBack, jobDescription = '', getUserContext, onSaveQuestion
       setCachedResult(text, parsed);
 
       // CHARGE AFTER SUCCESS (Battle Scar #8)
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) await incrementUsage(supabase, user.id, 'answer_assistant');
-      } catch (e) { console.warn('Usage tracking failed:', e); }
+      // Fire-and-forget: awaiting incrementUsage deadlocks after tab-switch
+      // because Supabase holds the auth lock during _recoverAndRefresh.
+      const user = getCurrentUser ? getCurrentUser() : null;
+      if (user) incrementUsage(supabase, user.id, 'answer_assistant').catch(e => console.warn('Usage tracking failed:', e));
     } catch (err) {
       console.error('JD Decoder error:', err);
       setError(err.message || 'Analysis failed. Please try again.');

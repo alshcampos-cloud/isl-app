@@ -19,7 +19,7 @@ import { showNursingFeatures } from '../../utils/appTarget'
 // hardcoded here and sent in the POST body, visible in DevTools Network tab.
 // Now: only a mode identifier is sent; the Edge Function looks up the prompt server-side.
 
-export default function OnboardingPractice({ question, anonSessionReady, onComplete, fromNursing: fromNursingProp = false }) {
+export default function OnboardingPractice({ question, anonSessionReady, onComplete, fromNursing: fromNursingProp = false, getSessionToken }) {
   // Belt-and-suspenders — general builds always treat users as general-track
   const fromNursing = showNursingFeatures() && fromNursingProp
   const [userAnswer, setUserAnswer] = useState('')
@@ -37,7 +37,7 @@ export default function OnboardingPractice({ question, anonSessionReady, onCompl
     trackOnboardingEvent(3, 'submitted', { word_count: userAnswer.trim().split(/\s+/).filter(Boolean).length })
 
     try {
-      const { data: { session } } = await supabase.auth.getSession()
+      const { data: { session } } = await (getSessionToken ? getSessionToken() : supabase.auth.getSession())
       if (!session) throw new Error('No session available')
 
       const response = await fetchWithRetry(

@@ -257,7 +257,7 @@ const CITATION_COLORS = {
 // ============================================================
 // COMPONENT
 // ============================================================
-export default function AIInterviewCoach({ user, userData, questions = [], practiceHistory = [], userContextData = {}, onClose, isPanel = false }) {
+export default function AIInterviewCoach({ user, userData, questions = [], practiceHistory = [], userContextData = {}, onClose, isPanel = false, getSessionToken }) {
   // Chat state — restore from localStorage with 24h expiry
   const [messages, setMessages] = useState(() => loadCoachMessages('general').messages);
   const [currentInput, setCurrentInput] = useState('');
@@ -422,7 +422,7 @@ export default function AIInterviewCoach({ user, userData, questions = [], pract
       }
 
       // Get auth token
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (getSessionToken ? getSessionToken() : supabase.auth.getSession());
       if (!session) {
         throw new Error('Your session has expired. Please go back and sign in again.');
       }

@@ -62,7 +62,7 @@ function findRelevantProjects(question, projects) {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-function AnswerForge({ questions = [], onBack, getUserContext, onSaveQuestion }) {
+function AnswerForge({ questions = [], onBack, getUserContext, onSaveQuestion, getSessionToken, getCurrentUser }) {
   const [portfolio] = useState(loadPortfolio);
   const [selectedQ, setSelectedQ] = useState(null);
   const [isUpgrading, setIsUpgrading] = useState(false);
@@ -143,7 +143,7 @@ function AnswerForge({ questions = [], onBack, getUserContext, onSaveQuestion })
     setSaveSuccess(false);
 
     try {
-      const session = await supabase.auth.getSession();
+      const session = getSessionToken ? await getSessionToken() : await supabase.auth.getSession();
       const token = session?.data?.session?.access_token;
       if (!token) throw new Error('Not authenticated');
 
@@ -250,7 +250,7 @@ function AnswerForge({ questions = [], onBack, getUserContext, onSaveQuestion })
 
       // Charge AFTER success (Battle Scar #8)
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const user = getCurrentUser ? getCurrentUser() : (await supabase.auth.getUser()).data.user;
         if (user) await incrementUsage(supabase, user.id, 'answer_assistant');
       } catch (e) { console.warn('Usage tracking failed:', e); }
 
@@ -357,7 +357,7 @@ function AnswerForge({ questions = [], onBack, getUserContext, onSaveQuestion })
       setBulkProgress({ done: i, total: allQs.length, current: q.question.slice(0, 60) + '...' });
 
       try {
-        const session = await supabase.auth.getSession();
+        const session = getSessionToken ? await getSessionToken() : await supabase.auth.getSession();
         const token = session?.data?.session?.access_token;
         if (!token) throw new Error('Not authenticated');
 
