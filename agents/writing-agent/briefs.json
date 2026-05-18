@@ -1,0 +1,56 @@
+{
+  "config": {
+    "postsPerMonth": 4,
+    "minDaysBetweenPosts": 7,
+    "maxQueueDepth": 3,
+    "digestEmail": "lucas@interviewanswers.ai",
+    "reviewerEmail": "jacob.dev@interviewanswers.ai"
+  },
+  "briefs": [
+    {
+      "id": "Brief_001",
+      "keyword": "how to stop freezing in interviews",
+      "angle": "The psychology of why people freeze under pressure -- and a three-step rehearsal protocol to stop it",
+      "toneNotes": "Empathetic, research-backed, action-oriented. Lead with the Yerkes-Dodson curve.",
+      "status": "pending",
+      "source": "manual",
+      "createdAt": "2026-05-17"
+    },
+    {
+      "id": "Brief_002",
+      "keyword": "is using AI during an interview cheating",
+      "angle": "Honest answer: yes. Here is what the research says about skill-building vs. performance crutches.",
+      "toneNotes": "Confident, ethical positioning. Reference CBS News coverage and employer enforcement trends. Discuss 'real-time' assistance and 'undetectable' tools as the behaviors we explicitly oppose -- these terms must appear in critical, not promotional, context.",
+      "status": "pending",
+      "source": "manual",
+      "createdAt": "2026-05-17"
+    },
+    {
+      "id": "Brief_003",
+      "keyword": "how to answer interview questions without rambling",
+      "angle": "Rambling is a structure problem, not a confidence problem. The STAR method solves it.",
+      "toneNotes": "Practical, diagnostic. Readers self-identify as ramblers -- meet them where they are.",
+      "status": "pending",
+      "source": "manual",
+      "createdAt": "2026-05-17"
+    },
+    {
+      "id": "Brief_004",
+      "keyword": "interview anxiety tips",
+      "angle": "Anxiety is preparation in disguise. What cognitive science says about reappraising pre-performance stress.",
+      "toneNotes": "Reassuring but evidence-based. Cite Alison Wood Brooks (2014) on anxiety reappraisal.",
+      "status": "pending",
+      "source": "manual",
+      "createdAt": "2026-05-17"
+    },
+    {
+      "id": "Brief_005",
+      "keyword": "STAR method examples",
+      "angle": "Three complete STAR answers at different experience levels -- entry, mid, senior -- for the same question.",
+      "toneNotes": "Concrete and specific. Readers are looking for templates they can adapt immediately.",
+      "status": "pending",
+      "source": "manual",
+      "createdAt": "2026-05-17"
+    }
+  ]
+}

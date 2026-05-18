@@ -50,3 +50,6 @@ ios/
 
 # Ad creatives (separate workflow)
 ads/
+
+# Writing agent local outputs (reviewed locally, not committed)
+agents/writing-agent/output-*.txt
