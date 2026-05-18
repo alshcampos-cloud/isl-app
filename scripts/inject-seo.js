@@ -79,6 +79,12 @@ const ROUTES = {
     canonical: 'https://www.interviewanswers.ai/interview-prep-podcast',
     keywords: 'interview prep podcast, interview preparation audio, interview coaching podcast, AI interview podcast, personalized interview prep, daily interview coaching',
   },
+  '/blog': {
+    title: 'Interview Prep Blog — Research-Backed Tips | InterviewAnswers.ai',
+    description: 'Evidence-based interview preparation articles. Psychology research, STAR method guides, anxiety tips, and practice strategies from InterviewAnswers.ai.',
+    canonical: 'https://www.interviewanswers.ai/blog',
+    keywords: 'interview preparation, interview tips, STAR method, interview anxiety, behavioral interview, job interview advice',
+  },
   '/onboarding': {
     title: 'Get Started Free — InterviewAnswers.ai',
     description: 'Create your free account and start practicing interviews with AI coaching, STAR method feedback, and mock interviews. No credit card required.',

@@ -9811,6 +9811,8 @@ const InterviewCoachingLessonsPage = lazy(() => import('./Components/Landing/Int
 const InterviewPrepPodcastPage = lazy(() => import('./Components/Landing/InterviewPrepPodcastPage'));
 const NursingInterviewQuestionsPage = showNursingFeatures() ? lazy(() => import('./Components/Landing/NursingInterviewQuestionsPage')) : () => null;
 const EditorialPage = lazy(() => import('./Components/Landing/EditorialPage'));
+const BlogIndexPage = lazy(() => import('./Components/Landing/BlogIndexPage'));
+const BlogPostPage = lazy(() => import('./Components/Landing/BlogPostPage'));
 const AuthConfirm = lazy(() => import('./Components/AuthConfirm'));
 const OAuthCallback = lazy(() => import('./Components/OAuthCallback'));
 const AuthReset = lazy(() => import('./Components/AuthReset'));
@@ -9875,6 +9877,8 @@ function App() {
         <Route path="/interview-coaching-lessons" element={<InterviewCoachingLessonsPage />} />
         <Route path="/interview-prep-podcast" element={<InterviewPrepPodcastPage />} />
         <Route path="/about/editorial" element={<EditorialPage />} />
+        <Route path="/blog" element={<BlogIndexPage />} />
+        <Route path="/blog/:slug" element={<BlogPostPage />} />
         <Route path="/onboarding" element={<ArchetypeOnboarding />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
