@@ -1,0 +1,62 @@
+# IAI Writing Agent — automated draft generation
+#
+# STATUS: MANUAL ONLY — automated schedule is disabled.
+# Run manually via: Actions tab → "IAI Blog Writing Agent" → Run workflow.
+# Enable the schedule below once quality and consistency have been confirmed
+# through manual runs.
+#
+# Required GitHub Actions secrets (Settings → Secrets and variables → Actions):
+#   ANTHROPIC_API_KEY   — Claude API key
+#   BLOG_PUBLISH_URL    — https://www.interviewanswers.ai/api/blog-publish
+#   BLOG_AGENT_SECRET   — shared secret for the blog-publish endpoint
+#   RESEND_API_KEY      — Resend API key for draft notifications
+
+name: IAI Blog Writing Agent
+
+on:
+  workflow_dispatch:
+    inputs:
+      brief_id:
+        description: 'Brief ID to run (e.g. Brief_001). Leave blank for next pending brief.'
+        required: false
+        default: ''
+  # schedule:
+  #   - cron: '0 10 * * 1'  # Every Monday at 10:00 AM UTC (~4 posts/month)
+  #                          # Uncomment this block when ready to enable automated runs.
+
+permissions:
+  contents: write
+
+jobs:
+  write-draft:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run writing agent
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          BLOG_PUBLISH_URL:  ${{ secrets.BLOG_PUBLISH_URL }}
+          BLOG_AGENT_SECRET: ${{ secrets.BLOG_AGENT_SECRET }}
+          RESEND_API_KEY:    ${{ secrets.RESEND_API_KEY }}
+        run: |
+          BRIEF_ARG="${{ github.event.inputs.brief_id }}"
+          if [ -n "$BRIEF_ARG" ]; then
+            node agents/writing-agent/writing-agent.js "$BRIEF_ARG" --db
+          else
+            node agents/writing-agent/writing-agent.js --db
+          fi
+
+      - name: Commit brief status update
+        run: |
+          git config user.name  "IAI Writing Agent"
+          git config user.email "agent@interviewanswers.ai"
+          git add agents/writing-agent/briefs.json
+          git diff --staged --quiet || git commit -m "chore(blog): mark brief draft_ready after agent run"
+          git push
