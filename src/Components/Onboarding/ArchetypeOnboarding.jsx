@@ -72,6 +72,21 @@ export default function ArchetypeOnboarding({ getSessionToken, getCurrentUser })
     if (hasInitialized.current) return
     hasInitialized.current = true
 
+    // Fallback timeout — if supabase.auth.getSession() hangs (known
+    // deadlock-prone call; see src/utils/streakSupabase.js:28 + the
+    // identical pattern in src/Components/Landing/LandingPage.jsx:64-90),
+    // the await inside initAnonymousSession() never returns, the finally
+    // never runs, isInitializing stays true, and the "Setting up your
+    // experience..." spinner spins forever. try/catch/finally cannot
+    // recover a hang because a hang throws nothing. This 3s timer
+    // unblocks the spinner so onboarding proceeds even if auth init
+    // never resolves. P0 paid-funnel fix — 2026-05-23.
+    const fallbackTimer = setTimeout(() => {
+      console.warn('⚠️ ArchetypeOnboarding: session init timed out after 3s, showing onboarding anyway')
+      setAnonSessionReady(true)
+      setIsInitializing(false)
+    }, 3000)
+
     async function initAnonymousSession() {
       try {
         // Check if user already has a real session → redirect to app
@@ -94,11 +109,14 @@ export default function ArchetypeOnboarding({ getSessionToken, getCurrentUser })
         // Still allow onboarding to proceed — practice just won't have AI feedback
         setAnonSessionReady(true)
       } finally {
+        clearTimeout(fallbackTimer)
         setIsInitializing(false)
       }
     }
 
     initAnonymousSession()
+
+    return () => clearTimeout(fallbackTimer)
   }, [navigate])
 
   // When user selects timeline + field, compute archetype
