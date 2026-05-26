@@ -171,6 +171,9 @@ export default function ArchetypeOnboarding({ getSessionToken, getCurrentUser })
     }
 
     trackOnboardingEvent(6, 'signup_completed', { archetype })
+    if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+      window.gtag('event', 'conversion', { send_to: 'AW-17966963623/eihLCKPu9bMcEKe3qPdC' });
+    }
 
     // Navigate to appropriate post-onboarding route
     // Pass field so nursing users always land on /nursing regardless of archetype
