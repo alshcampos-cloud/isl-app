@@ -58,7 +58,7 @@ Saw you're [new grad / transitioning from ICU to OR / starting travel]. Congrats
 
 I built a tool specifically for nursing interview prep — 70 curated questions reviewed by practicing clinicians, with AI coaching on SBAR and STAR frameworks. Not another generic interview app.
 
-I'm giving free Annual access (normally $99.99) to 10 nurses this month in exchange for 20 minutes of honest feedback after you try it.
+I'm giving free Annual access (normally $149) to 10 nurses this month in exchange for 20 minutes of honest feedback after you try it.
 
 Interested? If yes, I'll send the access code.
 
