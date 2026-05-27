@@ -33,6 +33,14 @@ export default function AuthConfirm() {
     const type = searchParams.get('type');
     const code = searchParams.get('code');
 
+    // Nursing intent carried in the confirmation URL (?from=nursing). This is the
+    // device-independent signal — survives even when no session can be established
+    // here and localStorage is absent (email opened on a different device).
+    const fromNursing = searchParams.get('from') === 'nursing';
+    // When we fall back to /login (can't auto-establish a session), preserve nursing
+    // context so AuthPage routes to /nursing after sign-in instead of defaulting to /app.
+    const loginDest = fromNursing ? '/login?from=nursing' : '/login';
+
     const setStatusSafe = (newStatus, msg) => {
       if (statusRef.current === 'success' || statusRef.current === 'confirmed') return;
       statusRef.current = newStatus;
@@ -43,7 +51,8 @@ export default function AuthConfirm() {
     const redirectToApp = (user) => {
       const onboardingField = user?.user_metadata?.onboarding_field;
       const nursingLocal = localStorage.getItem('isl_onboarding_field');
-      const dest = (onboardingField === 'nursing' || nursingLocal === 'nursing') ? '/nursing' : '/app';
+      // URL param (fromNursing) is the most reliable signal — checked first.
+      const dest = (fromNursing || onboardingField === 'nursing' || nursingLocal === 'nursing') ? '/nursing' : '/app';
       setTimeout(() => navigate(dest, { replace: true }), 1500);
     };
 
@@ -100,7 +109,7 @@ export default function AuthConfirm() {
               if (user) {
                 redirectToApp(user);
               } else {
-                setTimeout(() => navigate('/login', { replace: true }), 2000);
+                setTimeout(() => navigate(loginDest, { replace: true }), 2000);
               }
               return;
             }
@@ -130,14 +139,14 @@ export default function AuthConfirm() {
           if (statusRef.current === 'verifying') {
             console.log('AuthConfirm: Timeout — showing confirmed, redirecting to login');
             setStatusSafe('confirmed');
-            setTimeout(() => navigate('/login', { replace: true }), 2500);
+            setTimeout(() => navigate(loginDest, { replace: true }), 2500);
           }
         }, 5000);
       } catch (err) {
         console.error('AuthConfirm exception:', err);
         // Even on exception, the email was likely confirmed server-side
         setStatusSafe('confirmed');
-        setTimeout(() => navigate('/login', { replace: true }), 2500);
+        setTimeout(() => navigate(loginDest, { replace: true }), 2500);
       }
     };
 

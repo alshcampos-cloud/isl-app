@@ -89,10 +89,12 @@ export default function ArchetypeOnboarding({ getSessionToken, getCurrentUser })
 
     async function initAnonymousSession() {
       try {
-        // Check if user already has a real session → redirect to app
+        // Check if user already has a real session → redirect to app.
+        // Respect nursing intent: a returning nursing user arriving via
+        // /onboarding?from=nursing should land on /nursing, not the general /app.
         const { data: { session } } = await supabase.auth.getSession()
         if (session && !session.user.is_anonymous) {
-          navigate('/app', { replace: true })
+          navigate(fromNursing ? '/nursing' : '/app', { replace: true })
           return
         }
 
@@ -117,7 +119,7 @@ export default function ArchetypeOnboarding({ getSessionToken, getCurrentUser })
     initAnonymousSession()
 
     return () => clearTimeout(fallbackTimer)
-  }, [navigate])
+  }, [navigate, fromNursing])
 
   // When user selects timeline + field, compute archetype
   const handleArchetypeDetection = useCallback(() => {
