@@ -10,6 +10,7 @@ import {
   ArrowRight, Stethoscope, Bot, Target, MessageSquare,
   CheckCircle, Shield, Clock, Sparkles, Heart, DollarSign
 } from 'lucide-react';
+import PracticeNetworkCanvas from '../Landing/PracticeNetworkCanvas';
 import useDocumentHead from '../../hooks/useDocumentHead';
 import { trackPricingView } from '../../utils/googleAdsTracking';
 
@@ -76,7 +77,17 @@ export default function NursingLandingPage() {
           <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-cyan-500/15 rounded-full blur-3xl" />
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
+        {/* Practice-network particle canvas — drifting teal nodes that connect on
+            proximity. Decorative (pointer-events:none, aria-hidden), static on
+            mobile + prefers-reduced-motion. Ported from the general hero. */}
+        <PracticeNetworkCanvas />
+
+        {/* Subtle grid pattern — sits between the canvas (z-1) and content (z-10). */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ zIndex: 2 }}>
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:60px_60px]" />
+        </div>
+
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left: Copy */}
             <div>
@@ -90,7 +101,7 @@ export default function NursingLandingPage() {
               </motion.div>
 
               <motion.h1
-                className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight"
+                className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
@@ -145,7 +156,7 @@ export default function NursingLandingPage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.3 }}
             >
-              <div className="relative">
+              <div className="relative hero-ambient-sway">
                 <div className="absolute -inset-4 bg-gradient-to-r from-sky-500/20 via-cyan-500/20 to-sky-400/20 rounded-3xl blur-xl" />
                 <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-2xl">
                   <div className="flex items-center gap-2 mb-4">
