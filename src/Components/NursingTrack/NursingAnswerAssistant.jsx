@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { fetchWithRetry } from '../../utils/fetchWithRetry';
+import { getActiveSessionToken } from '../../utils/localSessionGuard';
 import { upsertSavedAnswer } from './nursingSupabase';
 import { getFrameworkDetails } from './nursingQuestions';
 import { canUseFeature, incrementUsage } from '../../utils/creditSystem';
@@ -202,8 +203,12 @@ export default function NursingAnswerAssistant({
     setError(null);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error('Not authenticated. Please sign in again.');
+      // Deadlock-safe token fetch: localStorage fast-path with getSession
+      // fallback. Bypasses the GoTrue Web Lock that's been silently failing
+      // submit handlers in nursing dashboard features.
+      const tokenResult = await getActiveSessionToken(supabase);
+      if (!tokenResult?.access_token) throw new Error('Not authenticated. Please sign in again.');
+      const session = { access_token: tokenResult.access_token };
 
       const response = await fetchWithRetry(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-feedback`,
@@ -278,8 +283,9 @@ export default function NursingAnswerAssistant({
     setError(null);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error('Session expired. Please refresh.');
+      const tokenResult = await getActiveSessionToken(supabase);
+      if (!tokenResult?.access_token) throw new Error('Session expired. Please refresh.');
+      const session = { access_token: tokenResult.access_token };
 
       // Build conversation history for the Edge Function
       const conversationHistory = newConversation.map(m => ({
@@ -343,8 +349,9 @@ export default function NursingAnswerAssistant({
     setError(null);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error('Session expired.');
+      const tokenResult = await getActiveSessionToken(supabase);
+      if (!tokenResult?.access_token) throw new Error('Session expired.');
+      const session = { access_token: tokenResult.access_token };
 
       // Build the full conversation for synthesis
       const conversationHistory = conversation.map(m => ({
