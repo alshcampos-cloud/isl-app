@@ -37,7 +37,19 @@ export default function OnboardingPractice({ question, anonSessionReady, onCompl
     trackOnboardingEvent(3, 'submitted', { word_count: userAnswer.trim().split(/\s+/).filter(Boolean).length })
 
     try {
-      const { data: { session } } = await (getSessionToken ? getSessionToken() : supabase.auth.getSession())
+      // supabase.auth.getSession() is deadlock-prone and has no internal timeout
+      // (see streakSupabase.js:28, LandingPage.jsx:64-90, and the PR #29 onboarding
+      // mount fix). If it hangs here, the await never returns → isLoading stays true
+      // → "Getting feedback..." spins forever (the finally never runs, so the catch
+      // fallback below never fires either). Race it against a 5s timeout so a deadlock
+      // degrades to the graceful fallback instead of an eternal spinner. Reached here
+      // because getSessionToken is undefined at /onboarding (route renders
+      // ArchetypeOnboarding without props), forcing the deadlock-prone path.
+      const sessionResult = await Promise.race([
+        getSessionToken ? getSessionToken() : supabase.auth.getSession(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Session check timed out')), 5000)),
+      ])
+      const session = sessionResult?.data?.session
       if (!session) throw new Error('No session available')
 
       const response = await fetchWithRetry(
