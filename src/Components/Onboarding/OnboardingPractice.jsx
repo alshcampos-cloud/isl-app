@@ -61,7 +61,16 @@ export default function OnboardingPractice({ question, anonSessionReady, onCompl
             'Authorization': `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
-            mode: 'onboarding-general',
+            // Route nursing users to the 'onboarding-nursing' Edge Function
+            // prompt (ai-feedback/index.ts:132) which (a) tailors examples to
+            // clinical communication scenarios — SBAR handoffs, codes, patient
+            // safety — and (b) ENFORCES THE WALLED GARDEN: "Coach COMMUNICATION
+            // quality only — do NOT evaluate clinical accuracy." Before this
+            // fix, every nursing signup got the generic 'onboarding-general'
+            // prompt with NO clinical-content protection. The UI badges
+            // ("Reviewed by domain experts", domain-specific frameworks footer)
+            // were rendering nursing context, but the AI was unaware.
+            mode: fromNursing ? 'onboarding-nursing' : 'onboarding-general',
             userMessage: `Question: ${question.question}\n\nAnswer: ${userAnswer.trim()}`,
           }),
         }
