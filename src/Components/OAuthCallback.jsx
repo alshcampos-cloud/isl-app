@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { readLocalSession } from '../utils/localSessionGuard'
 import { consumeOAuthContext } from '../utils/googleOAuth'
 import { trackSignUp } from '../utils/googleAdsTracking'
 
@@ -42,6 +43,18 @@ export default function OAuthCallback() {
       try {
         const code = searchParams.get('code')
 
+        // Strategy 0: localStorage fast-path. Bypass the deadlock-prone
+        // getSession() — if Supabase has already persisted the post-OAuth
+        // session, it's in localStorage at sb-<ref>-auth-token. Reading it
+        // directly avoids the GoTrue Web Lock that's been silently failing
+        // OAuth completion for some users.
+        const stored = readLocalSession()
+        if (stored.isValid && stored.user && !stored.isAnonymous) {
+          console.log('[OAuthCallback] Session found via localStorage fast-path')
+          handleSessionFound(stored.user)
+          return
+        }
+
         // Strategy 1: Check for existing session (Supabase may have already processed the hash)
         const { data: { session } } = await supabase.auth.getSession()
 
@@ -69,6 +82,14 @@ export default function OAuthCallback() {
 
         // Strategy 3: Wait and retry (timing race with detectSessionInUrl)
         await new Promise(r => setTimeout(r, 2000))
+        // After the wait, also re-check localStorage — more reliable than
+        // another getSession() call which could re-enter the lock.
+        const reStored = readLocalSession()
+        if (reStored.isValid && reStored.user && !reStored.isAnonymous) {
+          console.log('[OAuthCallback] Session found via localStorage on retry')
+          handleSessionFound(reStored.user)
+          return
+        }
         const { data: { session: retrySession } } = await supabase.auth.getSession()
 
         if (retrySession?.user) {

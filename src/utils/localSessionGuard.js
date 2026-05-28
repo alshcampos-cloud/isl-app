@@ -88,3 +88,45 @@ export function hasValidLoggedInSession() {
   const { isValid, isAnonymous } = readLocalSession();
   return isValid && !isAnonymous;
 }
+
+/**
+ * Deadlock-safe access_token fetch for Edge Function calls.
+ *
+ * Pattern used in answer-assistant / coach / probing submit handlers:
+ *   1. Read localStorage synchronously. If a valid (non-expired) access_token
+ *      sits there, return it immediately. Supabase auto-refreshes tokens on
+ *      401 from the Edge Function, so a slightly-old-but-valid token is fine.
+ *   2. If localStorage is empty/corrupted, fall through to the SDK call —
+ *      raced against a 5s timeout so a deadlock can't hang the UI forever.
+ *   3. If both fail, return null. Caller decides how to surface the error.
+ *
+ * supabaseClient: pass the supabase client (we don't import it here to keep
+ *   this utility import-cycle-free).
+ *
+ * Returns: { access_token, user } | null
+ */
+export async function getActiveSessionToken(supabaseClient, { timeoutMs = 5000 } = {}) {
+  // FAST PATH (no lock, synchronous)
+  const stored = readLocalSession();
+  if (stored.isValid && stored.session?.access_token) {
+    return { access_token: stored.session.access_token, user: stored.user };
+  }
+
+  // Fallback to SDK — raced against timeout so a deadlocked getSession
+  // doesn't hang the submit forever.
+  try {
+    const result = await Promise.race([
+      supabaseClient.auth.getSession(),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Session check timed out')), timeoutMs)
+      ),
+    ]);
+    const session = result?.data?.session;
+    if (session?.access_token) {
+      return { access_token: session.access_token, user: session.user };
+    }
+  } catch (_) {
+    // Either the timeout or a thrown SDK error — fall through to null.
+  }
+  return null;
+}

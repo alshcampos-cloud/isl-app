@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { readLocalSession } from '../utils/localSessionGuard';
 
 /**
  * AuthConfirm — handles email confirmation redirects.
@@ -58,6 +59,18 @@ export default function AuthConfirm() {
 
     const handleConfirmation = async () => {
       try {
+        // Strategy 0: localStorage fast-path. If Supabase already persisted
+        // the session from the email-link URL hash before our useEffect
+        // ran (very common timing for desktop browsers), the JWT is sitting
+        // in localStorage. Bypass the deadlock-prone getSession() entirely.
+        const stored = readLocalSession();
+        if (stored.isValid && stored.user && !stored.isAnonymous) {
+          console.log('AuthConfirm: Session found via localStorage fast-path');
+          setStatusSafe('success');
+          redirectToApp(stored.user);
+          return;
+        }
+
         // Strategy 1: Check if Supabase client already established a session
         const { data: { session } } = await supabase.auth.getSession();
 
@@ -70,6 +83,16 @@ export default function AuthConfirm() {
 
         // Strategy 2: Wait 2 seconds and retry — detectSessionInUrl may still be processing
         await new Promise(r => setTimeout(r, 2000));
+        // After the wait, also re-check localStorage in case Supabase finally
+        // persisted the session during the 2s window (more reliable than a
+        // second getSession() call which could re-enter the lock).
+        const reStored = readLocalSession();
+        if (reStored.isValid && reStored.user && !reStored.isAnonymous) {
+          console.log('AuthConfirm: Session found via localStorage on retry');
+          setStatusSafe('success');
+          redirectToApp(reStored.user);
+          return;
+        }
         const { data: { session: retrySession } } = await supabase.auth.getSession();
 
         if (retrySession?.user) {
