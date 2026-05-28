@@ -110,10 +110,22 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
         setMessage('Check your email for the verification link!')
       } else {
         // Login
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password
-        })
+        // signInWithPassword() can deadlock on the Supabase GoTrue Web Lock —
+        // same root cause documented at streakSupabase.js:28, LandingPage.jsx:64-90,
+        // and ArchetypeOnboarding.jsx (PR #29/#37). When a prior getSession() never
+        // releases the lock, signInWithPassword silently never resolves → the
+        // "Log In" button shows its spinner forever and the user sees no error.
+        // Race it against a 15s timeout so the deadlock surfaces as a real error
+        // the existing catch block can render via setError().
+        const { data, error } = await Promise.race([
+          supabase.auth.signInWithPassword({ email, password }),
+          new Promise((_, reject) =>
+            setTimeout(
+              () => reject(new Error('Login timed out. Please refresh the page and try again.')),
+              15000
+            )
+          ),
+        ])
 
         if (error) throw error
 
