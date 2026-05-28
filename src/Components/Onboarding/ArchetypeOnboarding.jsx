@@ -254,12 +254,16 @@ export default function ArchetypeOnboarding({ getSessionToken, getCurrentUser })
         </button>
       </div>
 
-      {/* Sign-in link — signs out anonymous session before navigating */}
+      {/* Sign-in link — signs out anonymous session before navigating.
+          Preserve ?from=nursing so AuthPage's back arrow returns to /nurse
+          (not the general / landing). Without this, a nursing-funnel user
+          clicking "Sign in" lands on /login with no context, and the in-page
+          ← Back button routes them out of the nursing flow. */}
       <div className="fixed top-4 right-4 z-50">
         <button
           onClick={async () => {
             await supabase.auth.signOut()
-            navigate('/login', { replace: true })
+            navigate(fromNursing ? '/login?from=nursing' : '/login', { replace: true })
           }}
           className="text-sm text-slate-500 hover:text-teal-600 transition-colors"
         >

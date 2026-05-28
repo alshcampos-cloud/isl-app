@@ -205,7 +205,7 @@ export default function AuthConfirm() {
                 Try signing up again
               </button>
               <button
-                onClick={() => navigate('/login')}
+                onClick={() => navigate(searchParams.get('from') === 'nursing' ? '/login?from=nursing' : '/login')}
                 className="w-full py-3 bg-slate-100 text-slate-700 rounded-xl font-medium hover:bg-slate-200 transition-colors"
               >
                 Go to login
