@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { readLocalSession } from '../utils/localSessionGuard';
 import Auth from '../Auth';
 import useDocumentHead from '../hooks/useDocumentHead';
 
@@ -20,6 +21,19 @@ export default function AuthPage({ mode = 'login' }) {
   const redirectTo = from === 'nursing' ? '/nursing' : '/app';
 
   useEffect(() => {
+    // FAST PATH (synchronous, no Promise) — if localStorage already has a
+    // valid logged-in session, redirect immediately. Without this, when
+    // getSession() deadlocks on the GoTrue Web Lock a returning logged-in
+    // user clicking a "Log In" link gets stuck staring at the login form
+    // (the redirect-to-/nursing branch never fires because session came
+    // back null from the deadlock). The async getSession() below still
+    // runs to handle anonymous-session cleanup and URL-hash auth tokens.
+    const stored = readLocalSession();
+    if (stored.isValid && !stored.isAnonymous) {
+      navigate(redirectTo, { replace: true });
+      return;
+    }
+
     // Fallback timeout — if getSession() hangs, show auth form anyway
     const fallbackTimer = setTimeout(() => {
       console.warn('⚠️ AuthPage: getSession() timed out after 3s, showing auth form');
