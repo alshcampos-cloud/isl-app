@@ -49,6 +49,22 @@ export default function ArchetypeOnboarding({ getSessionToken, getCurrentUser })
   const [isInitializing, setIsInitializing] = useState(true)
   const hasInitialized = useRef(false)
 
+  // Captures the established anon session so OnboardingPractice (and other
+  // children) read the access_token WITHOUT calling the deadlock-prone
+  // supabase.auth.getSession() inside their submit handlers. Audit 2026-05-28
+  // identified the lack of this as the root cause of "fallback feedback every
+  // time" — the /onboarding route renders this component without
+  // getSessionToken/getCurrentUser props (App.jsx ~9876), so children fell back
+  // to bare getSession() which deadlocks under lock contention, the practice
+  // submit hit the 5s timeout-race in OnboardingPractice (PR #35), and the
+  // generic 3/10 fallback fired every time. With sessionRef populated post
+  // signInAnonymously() success, the token is read synchronously — no lock.
+  const sessionRef = useRef(null)
+  const getSessionTokenLocal = useCallback(
+    () => Promise.resolve({ data: { session: sessionRef.current }, error: null }),
+    []
+  )
+
   // Track screen views + time-on-screen when screen changes
   const screenTimerRef = useRef(null)
   useEffect(() => {
@@ -67,49 +83,62 @@ export default function ArchetypeOnboarding({ getSessionToken, getCurrentUser })
     }
   }, [screen])
 
-  // On mount: create anonymous session for Edge Function auth
+  // On mount: create anonymous session for Edge Function auth.
+  // KEY GUARANTEE (audit 2026-05-28): setAnonSessionReady(true) fires ONLY
+  // when a real session has been captured into sessionRef. The earlier P0
+  // fix (PR #29, 2026-05-23) ALSO set anonSessionReady=true on the 3s
+  // spinner-unblock fallback — that produced the "fallback feedback every
+  // time" symptom: the timer would fire before signInAnonymously() finished,
+  // anonSessionReady=true with no actual session, OnboardingPractice
+  // submitted with no JWT, ai-feedback returned 500, the user always saw
+  // the generic 3/10 fallback. Now the spinner unblocks at 8s regardless
+  // (UX), but anonSessionReady stays false until a session truly lands —
+  // the submit button stays gated, preventing the no-JWT submit.
   useEffect(() => {
     if (hasInitialized.current) return
     hasInitialized.current = true
 
-    // Fallback timeout — if supabase.auth.getSession() hangs (known
-    // deadlock-prone call; see src/utils/streakSupabase.js:28 + the
-    // identical pattern in src/Components/Landing/LandingPage.jsx:64-90),
-    // the await inside initAnonymousSession() never returns, the finally
-    // never runs, isInitializing stays true, and the "Setting up your
-    // experience..." spinner spins forever. try/catch/finally cannot
-    // recover a hang because a hang throws nothing. This 3s timer
-    // unblocks the spinner so onboarding proceeds even if auth init
-    // never resolves. P0 paid-funnel fix — 2026-05-23.
     const fallbackTimer = setTimeout(() => {
-      console.warn('⚠️ ArchetypeOnboarding: session init timed out after 3s, showing onboarding anyway')
-      setAnonSessionReady(true)
+      console.warn('⚠️ ArchetypeOnboarding: session init timed out after 8s — unblocking spinner; submit stays gated on real session')
       setIsInitializing(false)
-    }, 3000)
+    }, 8000)
 
     async function initAnonymousSession() {
       try {
-        // Check if user already has a real session → redirect to app.
+        // Check for an existing real (non-anonymous) session.
         // Respect nursing intent: a returning nursing user arriving via
         // /onboarding?from=nursing should land on /nursing, not the general /app.
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session && !session.user.is_anonymous) {
+        const { data: { session: existing } } = await supabase.auth.getSession()
+        if (existing && !existing.user.is_anonymous) {
           navigate(fromNursing ? '/nursing' : '/app', { replace: true })
           return
         }
 
-        // If no session or anonymous session, create anonymous
-        if (!session) {
-          const { error } = await supabase.auth.signInAnonymously()
+        let activeSession = existing
+        if (!existing) {
+          // signInAnonymously() returns the new session directly in data.session
+          // — use that to avoid a second getSession() call (which could
+          // re-enter the deadlock-prone lock).
+          const { data, error } = await supabase.auth.signInAnonymously()
           if (error) {
             console.error('Anonymous sign-in failed:', error.message)
+          } else {
+            activeSession = data.session
           }
         }
-        setAnonSessionReady(true)
+
+        if (activeSession) {
+          // Capture into sessionRef BEFORE marking ready, so any child that
+          // reads getSessionTokenLocal() immediately on render has the token.
+          sessionRef.current = activeSession
+          setAnonSessionReady(true)
+        }
+        // If no activeSession (signInAnonymously errored), we deliberately do
+        // NOT set anonSessionReady — the practice submit button stays disabled
+        // rather than submitting without a JWT and getting the generic fallback.
       } catch (err) {
         console.error('Onboarding init error:', err)
-        // Still allow onboarding to proceed — practice just won't have AI feedback
-        setAnonSessionReady(true)
+        // Same: do not set anonSessionReady on error.
       } finally {
         clearTimeout(fallbackTimer)
         setIsInitializing(false)
@@ -260,7 +289,7 @@ export default function ArchetypeOnboarding({ getSessionToken, getCurrentUser })
             anonSessionReady={anonSessionReady}
             onComplete={handlePracticeComplete}
             fromNursing={fromNursing}
-            getSessionToken={getSessionToken}
+            getSessionToken={getSessionToken || getSessionTokenLocal}
           />
         )}
 
