@@ -206,7 +206,7 @@ export default function NursingTrackApp() {
     if (!verifyingPurchase || !userData.user || userData.loading) return;
 
     // Pass type → price mapping for Google Ads conversion tracking
-    const passAmounts = { nursing_30day: 19.99, annual_all_access: 149.99 };
+    const passAmounts = { nursing_30day: 19.99, annual_all_access: 149 };
     const purchasedPass = searchParams.get('pass');
 
     // If tier is already set (webhook was fast), just clear the flag

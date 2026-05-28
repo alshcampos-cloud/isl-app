@@ -1,5 +1,5 @@
 // NursingPricing.jsx — In-app pricing modal for nursing track
-// Shows 30-day pass ($19.99) and Annual All-Access ($99.99/year)
+// Shows 30-day pass ($19.99) and Annual All-Access ($149/year)
 // Calls create-checkout-session Edge Function with passType parameter
 //
 // ⚠️ D.R.A.F.T. Protocol: NEW file. No existing code modified.
@@ -288,8 +288,8 @@ export default function NursingPricing({ userData, onClose }) {
                 <p className="text-slate-400 text-xs mt-1">Specialty + General interview prep — save over 30%</p>
               </div>
               <div className="text-right">
-                <p className="text-white font-bold text-2xl">$99<span className="text-base">.99</span></p>
-                <p className="text-slate-500 text-[10px]">/year (~$8.33/mo)</p>
+                <p className="text-white font-bold text-2xl">$149</p>
+                <p className="text-slate-500 text-[10px]">/year (~$12.42/mo)</p>
               </div>
             </div>
 
