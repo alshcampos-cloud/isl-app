@@ -120,12 +120,20 @@ export default function EmailVerificationGate({ user, onVerified, onResend, chil
   };
 
   const handleUseDifferentEmail = async () => {
+    // Detect nursing context before sign-out wipes the session. Two signals
+    // (user_metadata set at signup, localStorage flag set by /onboarding) —
+    // same belt-and-suspenders pattern as AuthConfirm.jsx:53. Without this,
+    // a nursing signup who hits this escape hatch was being routed to the
+    // general /signup, breaking the funnel (audit, 2026-05-28).
+    const fromNursing =
+      user?.user_metadata?.onboarding_field === 'nursing' ||
+      (typeof localStorage !== 'undefined' && localStorage.getItem('isl_onboarding_field') === 'nursing');
     try {
       await supabase.auth.signOut();
     } catch (_) {
       // Non-blocking — navigate regardless so the user isn't stuck
     }
-    navigate('/signup');
+    navigate(fromNursing ? '/onboarding?from=nursing' : '/signup');
   };
 
   return (
