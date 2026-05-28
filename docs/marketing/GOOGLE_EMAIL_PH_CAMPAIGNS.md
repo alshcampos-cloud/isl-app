@@ -49,7 +49,7 @@
 |----------|-----------|--------------------|--------------------|
 | Free Mock Interview | /mock-interview | Practice with AI interviewer | No signup required to start |
 | STAR Method Coach | /star-method-coaching | Master behavioral answers | Situation-Task-Action-Result |
-| See Pricing | /pricing | Free tier + 30-Day Pass $14.99 | One-time purchase, no auto-renewal |
+| See Pricing | /pricing | Free tier + 30-Day Pass $39 | One-time purchase, no auto-renewal |
 
 ### Campaign Settings
 - **Daily Budget:** $25/day
@@ -233,9 +233,9 @@
 - **Body Outline:**
   - Recap their activity (or nudge if they haven't been active)
   - What Pro unlocks: unlimited sessions, advanced feedback, all features
-  - Price anchor: "$14.99 for 30 days — less than one coffee a week"
+  - Price anchor: "$39 for 30 days — one-time, no subscription, no auto-renew"
   - Risk reversal: cancel anytime, no contracts
-- **CTA:** Get the 30-Day Pass — $14.99
+- **CTA:** Get the 30-Day Pass — $39
 
 ---
 
@@ -271,7 +271,7 @@
 - **Preview:** The ROI of interview prep is hard to ignore
 - **Body Outline:**
   - Frame the cost: average salary difference between getting vs. not getting an offer
-  - Compare $14.99 (30-Day Pass) to the cost of a rejected offer
+  - Compare $39 (30-Day Pass) to the cost of a rejected offer
   - Not pushy — just math
   - Mention cancel anytime
 - **CTA:** Start Pro — Cancel Anytime

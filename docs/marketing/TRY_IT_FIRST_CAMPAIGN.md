@@ -174,7 +174,7 @@ We'd be the ONLY one.
 >
 > So our landing page has a single interview question ("Tell me about a time you led a team through a difficult challenge"), a textarea, and a submit button. Click it. Real AI feedback in 10 seconds. 0-10 score, STAR-method breakdown. No email. No credit card. No trial.
 >
-> If the feedback is useful → we're free to start, unlimited-practice upgrade is $14.99 for 30 days (no autopay).
+> If the feedback is useful → we're free to start, unlimited-practice upgrade is $39 for 30 days (no autopay).
 > If it's not → close the tab. You've lost 10 seconds.
 >
 > We just rebranded from a "live prompter" feature (the cheat-copilot category) to a pure practice coach. Full story at /ethics.
