@@ -104,6 +104,24 @@ export default function NursingTrackApp() {
   useEffect(() => {
     let cancelled = false;
 
+    // Safety net: supabase.auth.getSession() below is deadlock-prone
+    // (streakSupabase.js:28, audit 2026-05-28). If it hangs, userData.loading
+    // stays true forever and the dashboard sits at "Loading your dashboard..."
+    // — and the post-Stripe-purchase return (/nursing?purchase=success) hits
+    // THIS exact path, so a hang here means a PAID user stuck at the loading
+    // screen. Force-clear loading after 8s if it's still true. Mirrors
+    // ProtectedRoute.jsx:182-191's pattern.
+    const safetyTimer = setTimeout(() => {
+      if (cancelled) return;
+      setUserData(prev => {
+        if (prev.loading) {
+          console.warn('⚠️ NursingTrackApp: session check timed out after 8s — clearing loading');
+          return { ...prev, loading: false };
+        }
+        return prev;
+      });
+    }, 8000);
+
     async function loadUserData() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -178,7 +196,7 @@ export default function NursingTrackApp() {
     }
 
     loadUserData();
-    return () => { cancelled = true; };
+    return () => { cancelled = true; clearTimeout(safetyTimer); };
   }, [termsJustAccepted]); // Re-run when terms are accepted (profile may have been created/updated)
 
   // ── Post-payment verification polling ────────────────────────
