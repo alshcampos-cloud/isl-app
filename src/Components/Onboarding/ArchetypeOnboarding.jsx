@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { getArchetype, getArchetypeConfig, getPostOnboardingRoute, TIMELINE_OPTIONS, FIELD_OPTIONS, NURSING_FIRST_QUESTION } from '../../utils/archetypeRouter'
 import { showNursingFeatures } from '../../utils/appTarget'
+import { readLocalSession } from '../../utils/localSessionGuard'
 import { trackOnboardingEvent, startScreenTimer } from '../../utils/onboardingTracker'
 import useDocumentHead from '../../hooks/useDocumentHead'
 // BreathingExercise no longer routed in onboarding (Sprint 2, Apr 2026).
@@ -105,9 +106,26 @@ export default function ArchetypeOnboarding({ getSessionToken, getCurrentUser })
 
     async function initAnonymousSession() {
       try {
-        // Check for an existing real (non-anonymous) session.
-        // Respect nursing intent: a returning nursing user arriving via
-        // /onboarding?from=nursing should land on /nursing, not the general /app.
+        // FAST PATH: read localStorage directly before calling getSession().
+        // The supabase SDK persists the session at sb-<ref>-auth-token. When
+        // the GoTrue Web Lock deadlocks (Battle Scar from PRs #29/#35/#37/#39),
+        // getSession() returns null even though the JWT is sitting right there
+        // in localStorage. Without this fast-path, a returning logged-in
+        // nursing user lands on /onboarding, the navigate-to-/nursing branch
+        // never fires (because getSession() came back null), and they're
+        // trapped on the practice screen with anonSessionReady=false → Get
+        // Feedback permanently disabled. Direct localStorage read is
+        // lock-free, synchronous, and reflects the canonical truth (since
+        // that's where supabase-js persists the session).
+        const stored = readLocalSession()
+        if (stored.isValid && !stored.isAnonymous) {
+          navigate(fromNursing ? '/nursing' : '/app', { replace: true })
+          return
+        }
+
+        // No stored logged-in session → fall through to the existing path:
+        // try getSession() (still useful for fresh tabs where the SDK is
+        // unblocked), then sign in anonymously if no session exists.
         const { data: { session: existing } } = await supabase.auth.getSession()
         if (existing && !existing.user.is_anonymous) {
           navigate(fromNursing ? '/nursing' : '/app', { replace: true })

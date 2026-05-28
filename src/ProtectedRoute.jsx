@@ -1,13 +1,28 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, Navigate } from 'react-router-dom'
 import { supabase } from './lib/supabase'
+import { readLocalSession } from './utils/localSessionGuard'
 import Auth from './Auth'
 import ResetPassword from './Components/ResetPassword' // ADDED: For password recovery flow
 import { Mail } from 'lucide-react' // ADDED: For email verification UI
 
 function ProtectedRoute({ children }) {
   const navigate = useNavigate()
-  const [user, setUser] = useState(null)
+  // FAST PATH (synchronous, no Promise) — read the persisted session straight
+  // from localStorage so the first render already knows the user. Without
+  // this, when getSession() deadlocks on the GoTrue Web Lock, ProtectedRoute
+  // sees user=null and renders <Navigate to="/login" />, kicking a logged-in
+  // user out of /nursing back to /login (which then re-renders to here in a
+  // loop). The deadlock has been band-aided four times (PRs #29/#35/#37/#39);
+  // this is the structural fix at the auth-detection boundary.
+  // The async getSession() in useEffect below still runs to (a) refresh
+  // email_confirmed_at via getUser(), (b) handle URL-hash auth tokens for
+  // OAuth/recovery flows, (c) be belt-and-suspenders on browsers where the
+  // fast path mis-detects. Initial user value is just a hot-start for render.
+  const [user, setUser] = useState(() => {
+    const stored = readLocalSession()
+    return stored.isValid && stored.user ? stored.user : null
+  })
   const [loading, setLoading] = useState(true)
   const [showResetPassword, setShowResetPassword] = useState(false) // ADDED: Track recovery modal
   const [isRecovery, setIsRecovery] = useState(false) // ADDED: Flag recovery flow
@@ -170,7 +185,20 @@ function ProtectedRoute({ children }) {
           setUser(session.user);
         }
       } else {
-        setUser(null);
+        // getSession() returned no session. Don't trust this if localStorage
+        // still has a valid logged-in session — that means getSession
+        // deadlocked on the GoTrue Web Lock (Battle Scar). Only wipe user
+        // state if localStorage agrees the user is signed out. Otherwise we
+        // would kick a logged-in user out of /nursing every time the SDK
+        // hiccups.
+        const stillStored = readLocalSession();
+        if (!stillStored.isValid || stillStored.isAnonymous) {
+          setUser(null);
+        } else {
+          console.warn('⚠️ ProtectedRoute: getSession() returned null but localStorage still has a valid session — keeping fast-path user (likely GoTrue deadlock)');
+          // Keep whatever user we already have from the synchronous fast-path
+          // at component-init time.
+        }
       }
 
       setLoading(false);
