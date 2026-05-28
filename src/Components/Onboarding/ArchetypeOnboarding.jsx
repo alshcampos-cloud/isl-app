@@ -240,17 +240,31 @@ export default function ArchetypeOnboarding({ getSessionToken, getCurrentUser })
         />
       </div>
 
-      {/* Logo — link back to landing page (signs out anonymous session) */}
+      {/* Logo — link back to landing page (signs out anonymous session).
+          When in the nursing funnel, brand as NurseAnswerPro and route back
+          to /nurse so the user stays inside the nursing flow they entered
+          from. Without this gate, a nursing user saw "InterviewAnswers.AI"
+          in the top-left and clicking it dumped them on the general / landing,
+          breaking the funnel illusion and orphaning their session intent. */}
       <div className="fixed top-3 left-4 z-50">
         <button
           onClick={async () => {
             await supabase.auth.signOut()
-            navigate('/', { replace: true })
+            navigate(fromNursing ? '/nurse' : '/', { replace: true })
           }}
           className="text-sm font-bold text-slate-700 hover:text-teal-600 transition-colors flex items-center gap-1.5"
         >
-          <span className="text-lg">🎯</span>
-          <span>InterviewAnswers<span className="text-teal-500">.AI</span></span>
+          {fromNursing ? (
+            <>
+              <span className="text-lg">🩺</span>
+              <span>NurseAnswerPro</span>
+            </>
+          ) : (
+            <>
+              <span className="text-lg">🎯</span>
+              <span>InterviewAnswers<span className="text-teal-500">.AI</span></span>
+            </>
+          )}
         </button>
       </div>
 
