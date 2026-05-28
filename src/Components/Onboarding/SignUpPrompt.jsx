@@ -114,7 +114,12 @@ export default function SignUpPrompt({ archetype, archetypeConfig, practiceScore
         email: email.trim(),
         password: password.trim(),
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/confirm`,
+          // Carry nursing intent in the confirmation URL itself so it survives
+          // the email round-trip even cross-device (localStorage won't be present
+          // if the user opens the email on a different device, and AuthConfirm
+          // often can't establish a session on the confirm page — detectSessionInUrl
+          // is false. The URL param is the only device-independent nursing signal).
+          emailRedirectTo: `${window.location.origin}/auth/confirm${fromNursing ? '?from=nursing' : ''}`,
           data: {
             full_name: fullName.trim() || undefined,
             archetype: archetype,

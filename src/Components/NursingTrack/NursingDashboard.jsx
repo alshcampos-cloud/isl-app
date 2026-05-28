@@ -142,7 +142,7 @@ export default function NursingDashboard({ specialty, onStartMode, onChangeSpeci
       icon: Bot,
       color: 'from-sky-600 to-cyan-500',
       badge: 'Most Popular',
-      detail: 'Full interview with STAR coaching and real-time feedback',
+      detail: 'Full interview with STAR coaching and instant feedback',
     },
     {
       id: 'practice',

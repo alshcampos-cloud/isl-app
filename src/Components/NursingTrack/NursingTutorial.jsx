@@ -125,7 +125,7 @@ export default function NursingTutorial({ onComplete }) {
               </div>
               <div>
                 <h4 className="text-white font-semibold text-sm">Mock Interview</h4>
-                <p className="text-slate-400 text-xs mt-0.5">Full AI-coached simulation — follow-up questions, real-time scoring, and detailed feedback on your delivery</p>
+                <p className="text-slate-400 text-xs mt-0.5">Full AI-coached simulation — follow-up questions, instant scoring, and detailed feedback on your delivery</p>
               </div>
             </div>
           </div>
