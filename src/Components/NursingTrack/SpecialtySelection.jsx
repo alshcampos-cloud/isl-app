@@ -36,8 +36,8 @@ export default function SpecialtySelection({ onSelectSpecialty, onBack }) {
             <span className="text-white font-medium text-sm">Nursing Interview Track</span>
           </div>
           <button
-            onClick={async () => { await supabase.auth.signOut(); window.location.href = '/login'; }}
-            onTouchEnd={async (e) => { e.preventDefault(); await supabase.auth.signOut(); window.location.href = '/login'; }}
+            onClick={async () => { await supabase.auth.signOut(); window.location.href = '/login?from=nursing'; }}
+            onTouchEnd={async (e) => { e.preventDefault(); await supabase.auth.signOut(); window.location.href = '/login?from=nursing'; }}
             className="flex items-center gap-1 text-slate-400 hover:text-red-400 text-xs transition-colors"
             title="Sign out"
           >

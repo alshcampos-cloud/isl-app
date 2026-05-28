@@ -256,8 +256,15 @@ function ProtectedRoute({ children }) {
   //
   // Use <Navigate> component — calling navigate() in render causes a
   // re-render loop (fixed: hardboiled redirect circle).
+  //
+  // Preserve nursing context: if the user was trying to reach /nursing*
+  // (e.g. stale session, opened a deep link, or got bounced from auth),
+  // route them to /login?from=nursing so AuthPage's redirectTo and back-arrow
+  // logic keeps them inside the nursing funnel instead of dropping them on
+  // the general / page after sign-in.
   if (!user) {
-    return <Navigate to="/login" replace />
+    const inNursingPath = window.location.pathname.startsWith('/nursing')
+    return <Navigate to={inNursingPath ? '/login?from=nursing' : '/login'} replace />
   }
 
   // FIX: Anonymous users (from onboarding) have no email and no email_confirmed_at.

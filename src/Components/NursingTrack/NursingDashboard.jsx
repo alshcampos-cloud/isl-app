@@ -89,10 +89,12 @@ function AccountMenu({ userData }) {
 
           <div className="border-t border-white/10 my-1" />
 
-          {/* Sign out — use /login to avoid redirect loop in nursing-only builds */}
+          {/* Sign out — use /login to avoid redirect loop in nursing-only builds.
+              Preserve ?from=nursing so the post-sign-in flow + back-arrow stay
+              inside the nursing funnel (Lucas, 2026-05-27). */}
           <button
-            onClick={async () => { await supabase.auth.signOut(); window.location.href = '/login'; }}
-            onTouchEnd={async (e) => { e.preventDefault(); await supabase.auth.signOut(); window.location.href = '/login'; }}
+            onClick={async () => { await supabase.auth.signOut(); window.location.href = '/login?from=nursing'; }}
+            onTouchEnd={async (e) => { e.preventDefault(); await supabase.auth.signOut(); window.location.href = '/login?from=nursing'; }}
             className="flex items-center gap-2 w-full px-3 py-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 text-xs transition-colors"
           >
             <LogOut className="w-3.5 h-3.5" /> Sign Out

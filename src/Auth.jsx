@@ -172,10 +172,14 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
             Why: founder reported the button click was a no-op. Anchors with
             href do a full browser navigation (or React Router picks it up
             via the <Link> children) — can't be stuck by stale React state
-            or synthetic event weirdness. Forces a clean page load back to /. */}
+            or synthetic event weirdness. Forces a clean page load.
+            Destination is funnel-aware: nursing users return to /nurse,
+            general users return to /. Without this gate (Lucas, 2026-05-27),
+            nursing users clicking ← Back on /login?from=nursing landed on the
+            general / page — the funnel-leak bug. */}
         {onBack && (
           <a
-            href="/"
+            href={fromNursing ? '/nurse' : '/'}
             className="text-sm text-warm-500 hover:text-teal-600 mb-4 inline-flex items-center gap-1 transition-colors cursor-pointer no-underline"
           >
             ← Back
