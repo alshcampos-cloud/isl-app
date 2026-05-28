@@ -61,14 +61,29 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
           return;
         }
 
-        // Sign up
+        // Sign up.
+        // emailRedirectTo: include ?from=nursing for nursing signups so the
+        // confirmation link in the user's email carries the funnel context.
+        // Without this, a nursing user opening their confirmation email on a
+        // different device (phone vs laptop) lands on /auth/confirm with no
+        // signal, and AuthConfirm has to fall back to user_metadata /
+        // localStorage — which fails if metadata sync lags or the link is
+        // opened on a fresh device with no localStorage (Backend Auditor,
+        // 2026-05-28). The URL param is the only device-independent signal.
+        const confirmRedirect = fromNursing
+          ? `${window.location.origin}/auth/confirm?from=nursing`
+          : `${window.location.origin}/auth/confirm`;
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/auth/confirm`,
+            emailRedirectTo: confirmRedirect,
             data: {
-              full_name: fullName
+              full_name: fullName,
+              // Persist nursing intent in user_metadata as a belt-and-suspenders
+              // fallback. AuthConfirm.jsx:55 reads this when the URL param is
+              // absent.
+              ...(fromNursing ? { onboarding_field: 'nursing' } : {}),
             }
           }
         })
