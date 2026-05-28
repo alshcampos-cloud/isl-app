@@ -10,11 +10,10 @@ import {
   ArrowLeft, Bot, Target, BookOpen, Award,
   ChevronRight, Stethoscope, MessageSquare, Clock,
   BarChart3, Star, Sparkles, Layers, Shield, DollarSign,
-  LogOut, Settings, ChevronDown, User, FileText, Lock
+  LogOut, ChevronDown, User, FileText, Lock
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { CLINICAL_FRAMEWORKS } from './nursingQuestions';
-import { showGeneralFeatures } from '../../utils/appTarget';
 import useNursingQuestions from './useNursingQuestions';
 import NursingLoadingSkeleton from './NursingLoadingSkeleton';
 import NursingIRSDisplay from './NursingIRSDisplay';
@@ -71,16 +70,6 @@ function AccountMenu({ userData }) {
             <p className="text-white text-xs font-medium truncate">{userData?.user?.email || ''}</p>
             <p className="text-slate-500 text-[10px] mt-0.5">{tierLabel} Plan</p>
           </div>
-
-          {/* Account Settings — goes to general app settings (only in builds that include general) */}
-          {showGeneralFeatures() && (
-          <a
-            href="/app?view=settings"
-            className="flex items-center gap-2 px-3 py-2 text-slate-300 hover:text-white hover:bg-white/10 text-xs transition-colors no-underline"
-          >
-            <Settings className="w-3.5 h-3.5" /> Account Settings
-          </a>
-          )}
 
           {/* Privacy Policy */}
           <a
