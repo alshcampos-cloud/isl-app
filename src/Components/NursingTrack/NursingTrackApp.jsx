@@ -356,6 +356,19 @@ export default function NursingTrackApp() {
   // State for showing the in-app pricing modal
   const [showPricing, setShowPricing] = useState(false);
 
+  // Auto-open the pricing/checkout modal when arriving with ?upgrade=true
+  // (from the /nurse "Get Nursing Pass" CTA → signup/login → here). Lets
+  // purchase-intent users land straight on checkout. Param is cleared after
+  // so a refresh doesn't re-trigger it.
+  useEffect(() => {
+    if (searchParams.get('upgrade') === 'true') {
+      setShowPricing(true);
+      searchParams.delete('upgrade');
+      setSearchParams(searchParams, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Detect if running inside iOS native app
   const isIOSNative = isIOS() && isNativeApp();
 

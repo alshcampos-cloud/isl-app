@@ -17,7 +17,12 @@ export default function AuthPage({ mode = 'login' }) {
   // Determine redirect destination based on ?from= query param
   // e.g. /signup?from=nursing → redirect to /nursing after auth
   const from = searchParams.get('from');
-  const redirectTo = from === 'nursing' ? '/nursing' : '/app';
+  // Preserve purchase intent (from the /nurse "Get Nursing Pass" CTA) through auth,
+  // so after login/signup we land on the dashboard with the checkout modal auto-opened.
+  const wantsUpgrade = searchParams.get('upgrade') === 'true';
+  const redirectTo = from === 'nursing'
+    ? (wantsUpgrade ? '/nursing?upgrade=true' : '/nursing')
+    : '/app';
 
   useEffect(() => {
     // Fallback timeout — if getSession() hangs, show auth form anyway
