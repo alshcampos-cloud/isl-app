@@ -1,5 +1,10 @@
 // NursingPricing.jsx — In-app pricing modal for nursing track
-// Shows 30-day pass ($19.99) and Annual All-Access ($99.99/year)
+// Shows 30-day pass ($19.99). Annual All-Access card hidden 2026-05-27 per
+// owner directive ("don't advertise it for 149") — Stripe Default is now
+// $149 and we're not running Annual through paid acquisition. The
+// `handleCheckout('annual_all_access')` path and isAnnual indicators are
+// preserved so existing Annual members still see "Included in Annual" on
+// the 30-Day card and can be re-enabled later by restoring the card markup.
 // Calls create-checkout-session Edge Function with passType parameter
 //
 // ⚠️ D.R.A.F.T. Protocol: NEW file. No existing code modified.
@@ -266,65 +271,13 @@ export default function NursingPricing({ userData, onClose }) {
             )}
           </div>
 
-          {/* Annual All-Access */}
-          <div className={`border rounded-xl p-5 relative overflow-hidden transition-all ${
-            isAnnual
-              ? 'border-amber-500/40 bg-amber-500/5'
-              : 'border-amber-500/20 hover:border-amber-500/40 bg-gradient-to-br from-amber-500/[0.03] to-orange-500/[0.03]'
-          }`}>
-            {/* Best value badge */}
-            {!isAnnual && (
-              <div className="absolute top-0 right-0 bg-amber-500 text-black text-[10px] font-bold px-3 py-1 rounded-bl-lg">
-                BEST VALUE
-              </div>
-            )}
-
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <div className="flex items-center gap-2">
-                  <Star className="w-4 h-4 text-amber-400" />
-                  <h3 className="text-white font-semibold">Annual All-Access</h3>
-                </div>
-                <p className="text-slate-400 text-xs mt-1">Specialty + General interview prep — save over 30%</p>
-              </div>
-              <div className="text-right">
-                <p className="text-white font-bold text-2xl">$99<span className="text-base">.99</span></p>
-                <p className="text-slate-500 text-[10px]">/year (~$8.33/mo)</p>
-              </div>
-            </div>
-
-            <ul className="space-y-1.5 mb-4">
-              {[
-                'Everything in Nursing Pass',
-                'General Interview Prep included',
-                'Year-round access',
-                'Priority support',
-              ].map((item) => (
-                <li key={item} className="flex items-center gap-2 text-slate-300 text-xs">
-                  <CheckCircle className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-
-            <button
-              onClick={() => handleCheckout('annual_all_access')}
-              disabled={!!isLoading || isAnnual}
-              className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                isAnnual
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-amber-500 to-orange-500 text-black shadow-lg shadow-amber-500/20 hover:-translate-y-0.5'
-              }`}
-            >
-              {isLoading === 'annual_all_access' ? (
-                <span className="flex items-center justify-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Processing...</span>
-              ) : isAnnual ? (
-                '✓ Active Annual Member'
-              ) : (
-                'Get Annual All-Access'
-              )}
-            </button>
-          </div>
+          {/* Annual All-Access card hidden 2026-05-27 per owner directive.
+              Stripe Default is $149 and we're not advertising Annual through
+              paid acquisition. The handleCheckout('annual_all_access') path
+              and isAnnual indicators on the 30-Day card are preserved so
+              existing Annual members still see "Included in Annual" /
+              "Active Annual Member". Restore the card markup here if Annual
+              is re-introduced. */}
 
           {/* Error display */}
           {error && (
