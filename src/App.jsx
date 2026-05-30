@@ -5327,7 +5327,7 @@ const startPracticeMode = async () => {
               <div className="w-32 h-32 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-8">
                 <Mic className="w-16 h-16 text-white" />
               </div>
-              <h2 className="text-4xl font-bold mb-4">Live Interview Prompter</h2>
+              <h2 className="text-4xl font-bold mb-4">Practice Prompter</h2>
               
               {!interviewSessionActive ? (
                 <>
