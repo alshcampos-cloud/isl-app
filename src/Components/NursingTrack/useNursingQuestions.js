@@ -39,8 +39,21 @@ export default function useNursingQuestions(specialtyId) {
       setLoading(true);
 
       try {
-        // Try Supabase first
-        const result = await fetchQuestionsFromSupabase(specialtyId);
+        // Try Supabase first — but race against a 5s timeout so a hung
+        // Supabase client (same deadlock pattern band-aided in PRs
+        // #29/#35/#37/#39/#43/#44 around getSession) can't leave the user
+        // staring at the loading skeleton forever. If the race rejects,
+        // the catch below falls through to the static questions file —
+        // user sees ED in <5s instead of infinity.
+        const result = await Promise.race([
+          fetchQuestionsFromSupabase(specialtyId),
+          new Promise((_, reject) =>
+            setTimeout(
+              () => reject(new Error('nursing_questions fetch timed out after 5s')),
+              5000
+            )
+          ),
+        ]);
 
         if (cancelled) return;
 
