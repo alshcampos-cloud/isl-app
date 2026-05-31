@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>USF Partnership — Consolidated Pricing Analysis | InterviewAnswers.AI</title>
+<style>
+  :root {
+    --teal: #0d9488;
+    --teal-dark: #0f766e;
+    --teal-light: #ccfbf1;
+    --teal-50: #f0fdfa;
+    --navy: #0f172a;
+    --navy-light: #1e293b;
+    --green: #16a34a;
+    --green-light: #dcfce7;
+    --amber: #d97706;
+    --amber-light: #fef3c7;
+    --blue: #2563eb;
+    --purple: #7c3aed;
+    --red: #dc2626;
+    --red-light: #fef2f2;
+    --gray-50: #f8fafc;
+    --gray-100: #f1f5f9;
+    --gray-200: #e2e8f0;
+    --gray-300: #cbd5e1;
+    --gray-400: #94a3b8;
+    --gray-500: #64748b;
+    --gray-700: #334155;
+    --gray-800: #1e293b;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    color: var(--gray-800);
+    background: #fff;
+    line-height: 1.6;
+    font-size: 14px;
+  }
+
+  .header {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--teal-dark) 100%);
+    color: white;
+    padding: 48px 60px 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -40%;
+    right: -15%;
+    width: 400px;
+    height: 400px;
+    border-radius: 50%;
+    background: rgba(13, 148, 136, 0.12);
+  }
+  .header .logo {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--teal-light);
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .header h1 {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    position: relative;
+    margin-bottom: 6px;
+  }
+  .header .subtitle {
+    font-size: 15px;
+    opacity: 0.75;
+    position: relative;
+    max-width: 650px;
+  }
+
+  .content {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 50px 60px;
+  }
+
+  .section-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 700;
+    color: var(--teal);
+    margin-bottom: 6px;
+  }
+
+  h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 6px;
+  }
+  h3 {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--navy);
+    margin: 32px 0 12px;
+  }
+  h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--navy);
+    margin: 20px 0 8px;
+  }
+
+  p { margin: 8px 0; color: var(--gray-700); }
+  p.muted { color: var(--gray-500); font-size: 13px; }
+
+  .divider {
+    height: 1px;
+    background: var(--gray-200);
+    margin: 40px 0;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    margin: 16px 0;
+  }
+  thead tr {
+    background: var(--navy);
+    color: white;
+  }
+  th {
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--gray-200);
+  }
+  tbody tr:nth-child(even) { background: var(--gray-50); }
+
+  .callout {
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin: 20px 0;
+    font-size: 13px;
+  }
+  .callout-red { background: var(--red-light); border-left: 4px solid var(--red); }
+  .callout-amber { background: var(--amber-light); border-left: 4px solid var(--amber); }
+  .callout-green { background: var(--green-light); border-left: 4px solid var(--green); }
+  .callout-teal { background: var(--teal-50); border-left: 4px solid var(--teal); }
+  .callout-navy {
+    background: var(--navy);
+    color: white;
+    border-left: 4px solid var(--teal);
+    border-radius: 12px;
+    padding: 24px 28px;
+  }
+  .callout-navy p { color: rgba(255,255,255,0.85); }
+  .callout strong { display: block; margin-bottom: 4px; }
+
+  .finding-card {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 12px;
+    padding: 18px 22px;
+    margin: 12px 0;
+    border-left: 4px solid var(--red);
+  }
+  .finding-card.corrected { border-left-color: var(--green); }
+  .finding-card.insight { border-left-color: var(--blue); }
+  .finding-card .tag {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-bottom: 6px;
+  }
+  .tag-error { background: var(--red-light); color: var(--red); }
+  .tag-corrected { background: var(--green-light); color: var(--green); }
+  .tag-insight { background: #dbeafe; color: var(--blue); }
+  .tag-assumption { background: var(--amber-light); color: var(--amber); }
+
+  .option-card {
+    background: white;
+    border: 2px solid var(--gray-200);
+    border-radius: 14px;
+    padding: 24px 28px;
+    margin: 16px 0;
+    position: relative;
+  }
+  .option-card.recommended {
+    border-color: var(--teal);
+    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.12);
+  }
+  .option-card .option-badge {
+    position: absolute;
+    top: -12px;
+    left: 24px;
+    background: var(--teal);
+    color: white;
+    padding: 3px 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .option-card h3 { margin-top: 6px; }
+  .option-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 12px 0;
+  }
+  .option-stat {
+    background: var(--gray-50);
+    border-radius: 8px;
+    padding: 12px 16px;
+    text-align: center;
+  }
+  .option-stat .stat-value {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--navy);
+  }
+  .option-stat .stat-label {
+    font-size: 11px;
+    color: var(--gray-500);
+    margin-top: 2px;
+  }
+
+  .methodology-step {
+    display: flex;
+    gap: 16px;
+    margin: 16px 0;
+    align-items: flex-start;
+  }
+  .step-num {
+    background: var(--teal);
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .step-content {
+    flex: 1;
+  }
+  .step-content strong {
+    display: block;
+    color: var(--navy);
+    margin-bottom: 2px;
+  }
+
+  .internal-tag {
+    display: inline-block;
+    background: var(--red-light);
+    color: var(--red);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+
+  .footer {
+    text-align: center;
+    padding: 30px 40px;
+    border-top: 1px solid var(--gray-200);
+    margin-top: 40px;
+  }
+  .footer p { font-size: 12px; color: var(--gray-400); }
+  .footer .brand { font-weight: 700; color: var(--teal-dark); font-size: 13px; margin-bottom: 4px; }
+
+  @media print {
+    body { font-size: 11px; }
+    .header { padding: 30px 40px 24px; }
+    .header h1 { font-size: 22px; }
+    .content { padding: 20px 30px 30px; }
+    .option-card { page-break-inside: avoid; }
+    table { page-break-inside: avoid; }
+  }
+
+  @media (max-width: 700px) {
+    .option-grid { grid-template-columns: 1fr; }
+    .header { padding: 30px 24px; }
+    .content { padding: 24px 20px 40px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<div class="header">
+  <div class="logo">InterviewAnswers.AI &times; NurseInterviewPro &mdash; Internal Analysis</div>
+  <h1>USF Partnership: Consolidated Pricing Analysis</h1>
+  <div class="subtitle">All findings, corrections, cost basis, audience analysis, and pricing options in one document. Supersedes all previous pricing docs.</div>
+  <div style="margin-top: 16px; font-size: 12px; opacity: 0.5; position: relative;">March 2026 &bull; For Alsh + Erin review only &bull; DO NOT send to USF</div>
+</div>
+
+<div class="content">
+
+<!-- ================================================================= -->
+<!-- PART 1: FINDINGS — ERRORS & CORRECTIONS                            -->
+<!-- ================================================================= -->
+<div class="section-label">Part 1</div>
+<h2>What We Found: Errors, Assumptions &amp; Corrections</h2>
+<p class="muted">Over the course of building four pricing documents, we identified several errors and false assumptions that skewed our numbers. All are now corrected.</p>
+
+<h3>Errors Identified</h3>
+
+<div class="finding-card">
+  <span class="tag tag-error">Error 1 &mdash; Critical</span>
+  <strong style="color: var(--navy); font-size: 15px;">The Double Discount Problem</strong>
+  <p style="margin: 6px 0;">Our semester pricing stacked <strong>two discounts</strong>: a volume discount on the monthly rate, PLUS treating that discounted 1-month price as the entire 4-month semester cost.</p>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0;">
+    <div style="background: var(--red-light); padding: 12px; border-radius: 8px;">
+      <strong style="color: var(--red); font-size: 11px; text-transform: uppercase;">Old (Wrong)</strong>
+      <p style="margin: 4px 0; font-size: 13px;">840 students &times; $9.52/student = <strong>$7,999/semester</strong></p>
+      <p style="margin: 2px 0; font-size: 11px; color: var(--gray-500);">$9.52 is the monthly rate. We charged 1 month for 4 months of access.</p>
+      <p style="margin: 2px 0; font-size: 11px; color: var(--gray-500);">Effective monthly cost to USF: <strong style="color: var(--red);">$2.38/student</strong>. That's 88% off.</p>
+    </div>
+    <div style="background: var(--green-light); padding: 12px; border-radius: 8px;">
+      <strong style="color: var(--green); font-size: 11px; text-transform: uppercase;">Corrected</strong>
+      <p style="margin: 4px 0; font-size: 13px;">840 &times; ($9.52/mo &times; 2.5 months) = <strong>$19,992/semester</strong></p>
+      <p style="margin: 2px 0; font-size: 11px; color: var(--gray-500);">Semester = discounted monthly rate &times; 2.5 active months.</p>
+      <p style="margin: 2px 0; font-size: 11px; color: var(--gray-500);">Effective monthly cost to USF: <strong style="color: var(--green);">$5.95/student</strong>. That's 70% off &mdash; fair.</p>
+    </div>
+  </div>
+</div>
+
+<div class="finding-card">
+  <span class="tag tag-error">Error 2</span>
+  <strong style="color: var(--navy);">Apples-to-Oranges Savings Claims</strong>
+  <p style="margin: 6px 0; font-size: 13px;">We claimed "85-93% off" by comparing a semester institutional price against the <em>monthly</em> retail price ($19.99). The correct comparison is semester vs. semester: institutional price vs. $79.96 (4 &times; $19.99). Even when corrected, the old discounts were 85-88% &mdash; far too generous.</p>
+</div>
+
+<div class="finding-card">
+  <span class="tag tag-error">Error 3</span>
+  <strong style="color: var(--navy);">Inconsistent Cohort Numbers</strong>
+  <p style="margin: 6px 0; font-size: 13px;">Some documents used 850 nursing students, others used 840. Actual total addressable: <strong>~840</strong> (250 BSN Seniors + 200 ME-MSN + 90 DNP + 250 BSN Juniors + 50 RN-to-MSN). Per-student math: $7,999 &divide; 840 = $9.52, not $9.41 as shown in some charts.</p>
+</div>
+
+<div class="finding-card">
+  <span class="tag tag-error">Error 4</span>
+  <strong style="color: var(--navy);">Two Models With Contradictory Prices</strong>
+  <p style="margin: 6px 0; font-size: 13px;">ERIN_Pricing_Review.md proposed flat licenses (<strong>$2,499/semester</strong> for ~500-800 nursing codes). USF_Pricing_Charts.html used per-student tiered pricing (<strong>$9.52/student</strong> &times; 840 = $7,999). These are fundamentally different: the flat model = $3.12-$5.00/student, the per-student model = $9.52/student. With the &times;2.5 correction, the gap widens further. <strong>We needed to pick one coherent approach.</strong></p>
+</div>
+
+<h3>Assumptions Corrected</h3>
+
+<div class="finding-card corrected">
+  <span class="tag tag-assumption">Assumption Corrected</span>
+  <strong style="color: var(--navy);">$16K Procurement Threshold Was Made Up</strong>
+  <p style="margin: 6px 0; font-size: 13px;">We asserted that anything above $16K "changes the conversation" for USF. This was entirely subjective with <strong>zero data basis</strong>. The only verified threshold: <strong>$5,000</strong> (under = Senior Director can approve directly). Above $5K, we don't know the process or difficulty. We should price for our business, not guess at their budget.</p>
+</div>
+
+<div class="finding-card corrected">
+  <span class="tag tag-assumption">Assumption Corrected</span>
+  <strong style="color: var(--navy);">No Stripe Fees on Institutional Deals</strong>
+  <p style="margin: 6px 0; font-size: 13px;">Previous models included Stripe fees ($0.47-$0.88/pass). Institutional deals are invoiced via purchase order/check &mdash; no per-transaction processing. This improves our margins on every institutional pass.</p>
+</div>
+
+<div class="finding-card corrected">
+  <span class="tag tag-insight">Key Insight</span>
+  <strong style="color: var(--navy);">Students Who Pivot Across Roles Drive Higher Usage</strong>
+  <p style="margin: 6px 0; font-size: 13px;">A nursing student might interview for ICU, get rejected, then try ED or med-surg months later. Or a student might explore general interview skills across different roles during a semester. This means <strong>semester students may use more than a typical 30-day retail consumer</strong>, not less. The &times;2.5 multiplier accounts for this without overcorrecting.</p>
+</div>
+
+<!-- ================================================================= -->
+<!-- PART 2: COST BASIS                                                  -->
+<!-- ================================================================= -->
+<div class="divider"></div>
+
+<div class="section-label">Part 2</div>
+<h2>What We Know: Hard Cost Basis <span class="internal-tag">Internal Only</span></h2>
+<p class="muted">All costs verified from COST_ANALYSIS.md (March 4, 2026), based on actual Anthropic API pricing and Edge Function code.</p>
+
+<h3>API Cost Per Feature</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Feature</th>
+      <th>Model</th>
+      <th style="text-align:right;">Cost/Call or Session</th>
+      <th>Source</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Practice Mode (+ self-efficacy)</td>
+      <td>Haiku 4.5</td>
+      <td style="text-align:right;">$0.0079</td>
+      <td>COST_ANALYSIS &sect;2</td>
+    </tr>
+    <tr>
+      <td>Nursing Practice (4-section feedback)</td>
+      <td>Haiku 4.5</td>
+      <td style="text-align:right;">$0.0088</td>
+      <td>COST_ANALYSIS &sect;3</td>
+    </tr>
+    <tr>
+      <td>SBAR Drill</td>
+      <td>Haiku 4.5</td>
+      <td style="text-align:right;">$0.0078</td>
+      <td>COST_ANALYSIS &sect;3</td>
+    </tr>
+    <tr>
+      <td>Offer Coach</td>
+      <td>Haiku 4.5</td>
+      <td style="text-align:right;">$0.0060</td>
+      <td>COST_ANALYSIS &sect;3</td>
+    </tr>
+    <tr>
+      <td><strong>Nursing Mock Interview (12 turns)</strong></td>
+      <td>Sonnet 4</td>
+      <td style="text-align:right; color: var(--red); font-weight:700;">$0.245</td>
+      <td>COST_ANALYSIS &sect;3</td>
+    </tr>
+    <tr>
+      <td><strong>AI Coach (8 turns)</strong></td>
+      <td>Sonnet 4</td>
+      <td style="text-align:right; color: var(--red); font-weight:700;">$0.179</td>
+      <td>COST_ANALYSIS &sect;3</td>
+    </tr>
+    <tr>
+      <td>Confidence Builder</td>
+      <td>Sonnet 4</td>
+      <td style="text-align:right;">$0.016</td>
+      <td>COST_ANALYSIS &sect;3</td>
+    </tr>
+    <tr>
+      <td>AI Interviewer General (3 turns)</td>
+      <td>Sonnet 4</td>
+      <td style="text-align:right;">$0.017</td>
+      <td>COST_ANALYSIS &sect;2</td>
+    </tr>
+  </tbody>
+</table>
+<p class="muted">Red = primary cost drivers. Multi-turn Sonnet 4 conversations are 10-30&times; more expensive per session than single-call Haiku features due to growing conversation history on every turn.</p>
+
+<h3>User Archetypes &amp; Weighted Cost</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Archetype</th>
+      <th style="text-align:center;">% of Users</th>
+      <th>Typical Sessions (30 days)</th>
+      <th style="text-align:right;">API Cost</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Dabbler</strong></td>
+      <td style="text-align:center;">40%</td>
+      <td>5 total (3 practice, 1 mock, 1 SBAR)</td>
+      <td style="text-align:right;">$0.29</td>
+    </tr>
+    <tr>
+      <td><strong>Prepper</strong></td>
+      <td style="text-align:center;">35%</td>
+      <td>15 total (6 practice, 3 mock, 3 SBAR, 2 coach, 1 confidence)</td>
+      <td style="text-align:right;">$1.20</td>
+    </tr>
+    <tr>
+      <td><strong>Committed</strong></td>
+      <td style="text-align:center;">20%</td>
+      <td>30 total (10 practice, 6 mock, 5 SBAR, 5 coach, 4 confidence)</td>
+      <td style="text-align:right;">$2.59</td>
+    </tr>
+    <tr>
+      <td><strong>Power User</strong></td>
+      <td style="text-align:center;">5%</td>
+      <td>50+ total (all features, every day)</td>
+      <td style="text-align:right; color: var(--red); font-weight:700;">$4.61</td>
+    </tr>
+    <tr style="background: var(--teal-50);">
+      <td colspan="3"><strong>Weighted Average (30-day pass)</strong></td>
+      <td style="text-align:right; font-weight:800; font-size:15px;">$1.24</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Cost Over Time: 30-Day vs. Semester vs. Annual</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Time Frame</th>
+      <th style="text-align:center;">Multiplier</th>
+      <th style="text-align:right;">Avg User Cost</th>
+      <th style="text-align:right;">Power User Ceiling</th>
+      <th>Rationale</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>30-Day Pass</strong></td>
+      <td style="text-align:center;">&times;1</td>
+      <td style="text-align:right;">$1.24</td>
+      <td style="text-align:right;">$4.61</td>
+      <td>Verified from COST_ANALYSIS.md</td>
+    </tr>
+    <tr>
+      <td><strong>Semester (4 months)</strong></td>
+      <td style="text-align:center;">&times;2.5</td>
+      <td style="text-align:right;">$3.10</td>
+      <td style="text-align:right; color: var(--amber); font-weight:600;">$11.53</td>
+      <td>Students use in bursts &mdash; ~2.5 of 4 months active</td>
+    </tr>
+    <tr>
+      <td>Semester (worst case)</td>
+      <td style="text-align:center;">&times;4</td>
+      <td style="text-align:right;">$4.96</td>
+      <td style="text-align:right; color: var(--red); font-weight:600;">$18.44</td>
+      <td>Student uses every month &mdash; unlikely but possible for role-pivoters</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout callout-amber">
+  <strong style="color: var(--amber);">Why &times;2.5, Not &times;1, &times;2, or &times;4?</strong>
+  <p style="margin:0; color: var(--gray-700);">
+    <strong>&times;1 (old model):</strong> Charges for 1 month, gives 4. Leaves 75% of access time unmonetized. Too generous.<br>
+    <strong>&times;2:</strong> Generous. Doesn't account for the nurse who fails one interview and preps again for another role.<br>
+    <strong>&times;2.5:</strong> Realistic. Students prep in bursts (2-3 weeks before each interview), with gaps for exams, clinicals, and jobs. Accounts for 1-2 prep cycles. Our recommended multiplier.<br>
+    <strong>&times;3:</strong> Conservative. Fair if we expect heavier usage. Slightly penalizes light users.<br>
+    <strong>&times;4:</strong> No time discount at all &mdash; full pay for full access. Too expensive for an institutional pitch.
+  </p>
+</div>
+
+<h3>Key Cost Fact: No Stripe Fees on Institutional Deals</h3>
+<p>Institutional contracts are invoiced via purchase order/check. No 2.9% + $0.30 per-transaction Stripe fee. This saves $0.47-$0.88 per pass compared to retail, and improves margins by 2-5 percentage points across every tier.</p>
+
+<!-- ================================================================= -->
+<!-- PART 3: USF AUDIENCE                                                -->
+<!-- ================================================================= -->
+<div class="divider"></div>
+
+<div class="section-label">Part 3</div>
+<h2>Who Is USF's Audience &mdash; And Who Benefits Most?</h2>
+<p class="muted">Not all students benefit equally. Pricing should reflect who Career Services would realistically cover.</p>
+
+<h3>Nursing Students by Interview Urgency</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Segment</th>
+      <th style="text-align:center;">~Size</th>
+      <th>Why They'd Use It</th>
+      <th style="text-align:center;">Urgency</th>
+      <th>Pass Type</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong style="color: var(--teal-dark);">BSN Seniors</strong></td>
+      <td style="text-align:center; font-weight:700;">250</td>
+      <td>Final year, actively interviewing for first nursing job</td>
+      <td style="text-align:center;"><strong style="color: var(--red);">HIGH</strong></td>
+      <td>30-day or Semester</td>
+    </tr>
+    <tr>
+      <td><strong style="color: var(--teal-dark);">ME-MSN</strong></td>
+      <td style="text-align:center; font-weight:700;">200</td>
+      <td>Pre-licensure graduates entering workforce</td>
+      <td style="text-align:center;"><strong style="color: var(--red);">HIGH</strong></td>
+      <td>Semester</td>
+    </tr>
+    <tr>
+      <td><strong style="color: var(--teal-dark);">DNP</strong></td>
+      <td style="text-align:center;">90</td>
+      <td>Advanced practice positions (NP, CRNA, CNS)</td>
+      <td style="text-align:center;"><strong style="color: var(--amber);">MEDIUM</strong></td>
+      <td>Semester</td>
+    </tr>
+    <tr>
+      <td><strong style="color: var(--teal-dark);">BSN Juniors</strong></td>
+      <td style="text-align:center;">250</td>
+      <td>Clinical rotations, building skills for post-grad</td>
+      <td style="text-align:center;"><strong style="color: var(--amber);">MEDIUM</strong></td>
+      <td>Semester</td>
+    </tr>
+    <tr>
+      <td><strong style="color: var(--teal-dark);">RN-to-MSN / 4+1</strong></td>
+      <td style="text-align:center;">50</td>
+      <td>Career advancement, already working nurses</td>
+      <td style="text-align:center; color: var(--gray-400);">LOWER</td>
+      <td>Semester</td>
+    </tr>
+    <tr style="background: var(--teal-50);">
+      <td colspan="2"><strong>Total Addressable Nursing</strong></td>
+      <td colspan="3"><strong>~840 students</strong> (Source: CA BRN + USF Quick Facts Fall 2024)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Natural Groupings for Pricing Tiers</h3>
+<div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin: 16px 0;">
+  <div style="background: var(--teal-50); border: 2px solid var(--teal); border-radius: 12px; padding: 16px; text-align: center;">
+    <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--teal-dark); font-weight: 700;">Tier 1: Graduating</div>
+    <div style="font-size: 28px; font-weight: 800; color: var(--navy); margin: 6px 0;">~450</div>
+    <div style="font-size: 12px; color: var(--gray-500);">BSN Seniors + ME-MSN<br>Actively interviewing</div>
+  </div>
+  <div style="background: var(--gray-50); border: 2px solid var(--gray-300); border-radius: 12px; padding: 16px; text-align: center;">
+    <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--gray-500); font-weight: 700;">Tier 2: + Advanced</div>
+    <div style="font-size: 28px; font-weight: 800; color: var(--navy); margin: 6px 0;">~540</div>
+    <div style="font-size: 12px; color: var(--gray-500);">+ DNP students<br>Adds advanced practice</div>
+  </div>
+  <div style="background: var(--gray-50); border: 2px solid var(--gray-300); border-radius: 12px; padding: 16px; text-align: center;">
+    <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--gray-500); font-weight: 700;">Tier 3: All Nursing</div>
+    <div style="font-size: 28px; font-weight: 800; color: var(--navy); margin: 6px 0;">~840</div>
+    <div style="font-size: 12px; color: var(--gray-500);">Full nursing program<br>Includes juniors + RN-MSN</div>
+  </div>
+</div>
+
+<h3>General Students (InterviewAnswers.AI)</h3>
+<p>Career Services serves all 8,913 USF students. The general product competes with <strong>Big Interview</strong>, which USF already pays for. General is an <strong>add-on, not the lead product</strong>.</p>
+<table>
+  <thead>
+    <tr>
+      <th>Segment</th>
+      <th style="text-align:center;">~Size</th>
+      <th>Interview Need</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>UG Seniors (all schools)</td>
+      <td style="text-align:center;">~1,330</td>
+      <td>Post-graduation job search</td>
+    </tr>
+    <tr>
+      <td>Business/Management grad</td>
+      <td style="text-align:center;">~368</td>
+      <td>MBA jobs, consulting</td>
+    </tr>
+    <tr>
+      <td>Education grad</td>
+      <td style="text-align:center;">~1,089</td>
+      <td>Teaching positions</td>
+    </tr>
+  </tbody>
+</table>
+<p class="muted">General product is less differentiated at USF (Big Interview overlap). Lower urgency. Better as a bundle add-on.</p>
+
+<!-- ================================================================= -->
+<!-- PART 4: VALUE PROPOSITION                                           -->
+<!-- ================================================================= -->
+<div class="divider"></div>
+
+<div class="section-label">Part 4</div>
+<h2>What Makes This Worth Buying</h2>
+
+<h3>Unique to Us &mdash; Nobody Else Has This</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Capability</th>
+      <th style="text-align:center;">Us</th>
+      <th style="text-align:center;">Big Interview</th>
+      <th style="text-align:center;">Huru.ai</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Nursing-specific clinically validated questions</td>
+      <td style="text-align:center; color: var(--green); font-weight:700;">70 questions &check;</td>
+      <td style="text-align:center; color: var(--red);">&times;</td>
+      <td style="text-align:center; color: var(--amber);">Some</td>
+    </tr>
+    <tr>
+      <td>Clinical framework alignment (NCSBN, SBAR, Nursing Process)</td>
+      <td style="text-align:center; color: var(--green); font-weight:700;">&check;</td>
+      <td style="text-align:center; color: var(--red);">&times;</td>
+      <td style="text-align:center; color: var(--red);">&times;</td>
+    </tr>
+    <tr>
+      <td>Live conversational AI mock interviewer</td>
+      <td style="text-align:center; color: var(--green); font-weight:700;">&check;</td>
+      <td style="text-align:center; color: var(--red);">Video only</td>
+      <td style="text-align:center; color: var(--green);">&check;</td>
+    </tr>
+    <tr>
+      <td>Real-time communication feedback</td>
+      <td style="text-align:center; color: var(--green); font-weight:700;">&check;</td>
+      <td style="text-align:center; color: var(--red);">&times;</td>
+      <td style="text-align:center; color: var(--amber);">Basic</td>
+    </tr>
+    <tr>
+      <td>Licensed nurse advisory board oversight</td>
+      <td style="text-align:center; color: var(--green); font-weight:700;">&check;</td>
+      <td style="text-align:center; color: var(--red);">&times;</td>
+      <td style="text-align:center; color: var(--red);">&times;</td>
+    </tr>
+    <tr>
+      <td>SBAR drill coaching</td>
+      <td style="text-align:center; color: var(--green); font-weight:700;">&check;</td>
+      <td style="text-align:center; color: var(--red);">&times;</td>
+      <td style="text-align:center; color: var(--red);">&times;</td>
+    </tr>
+    <tr>
+      <td style="font-weight:600;">Est. institutional price</td>
+      <td style="text-align:center; font-weight:700;">See options below</td>
+      <td style="text-align:center;">$3K-$15K/yr (est.)</td>
+      <td style="text-align:center;">No institutional pricing</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout callout-teal">
+  <strong>The positioning is NOT "replace Big Interview."</strong>
+  <p style="margin:0;">Big Interview handles general prep. We fill the nursing-specific gap. This is <strong>additive, not competitive</strong>. USF keeps Big Interview AND adds us. Removes "do we have to switch?" friction entirely.</p>
+</div>
+
+<h3>Value Anchoring</h3>
+<div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin: 16px 0;">
+  <div style="background: var(--gray-50); border-radius: 10px; padding: 14px; text-align: center;">
+    <div style="font-size: 22px; font-weight: 800; color: var(--navy);">$75-$150</div>
+    <div style="font-size: 11px; color: var(--gray-500); margin-top: 2px;">1 hour of career coaching</div>
+  </div>
+  <div style="background: var(--gray-50); border-radius: 10px; padding: 14px; text-align: center;">
+    <div style="font-size: 22px; font-weight: 800; color: var(--navy);">$300-$500</div>
+    <div style="font-size: 11px; color: var(--gray-500); margin-top: 2px;">NCLEX prep course</div>
+  </div>
+  <div style="background: var(--teal-50); border: 2px solid var(--teal); border-radius: 10px; padding: 14px; text-align: center;">
+    <div style="font-size: 22px; font-weight: 800; color: var(--teal-dark);">$23-$35</div>
+    <div style="font-size: 11px; color: var(--gray-500); margin-top: 2px;">Our semester per-student</div>
+  </div>
+</div>
+
+<!-- ================================================================= -->
+<!-- PART 5: PRICING METHODOLOGY                                         -->
+<!-- ================================================================= -->
+<div class="divider"></div>
+
+<div class="section-label">Part 5</div>
+<h2>Pricing Methodology <span class="internal-tag">Internal Only</span></h2>
+<p class="muted">How we arrive at our per-student semester prices. This is our internal math &mdash; never show to USF.</p>
+
+<div class="methodology-step">
+  <div class="step-num">1</div>
+  <div class="step-content">
+    <strong>Start with retail monthly price: $19.99/month (nursing)</strong>
+    <p style="font-size: 13px; color: var(--gray-500); margin: 2px 0;">This is the anchor. Everything is a discount from here.</p>
+  </div>
+</div>
+
+<div class="methodology-step">
+  <div class="step-num">2</div>
+  <div class="step-content">
+    <strong>Apply volume discount (more students = lower monthly rate)</strong>
+    <table style="margin-top: 8px; box-shadow: none;">
+      <thead>
+        <tr>
+          <th>Volume</th>
+          <th style="text-align:center;">Discount</th>
+          <th style="text-align:right;">Monthly Rate</th>
+          <th>Rationale</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>250 students</td>
+          <td style="text-align:center;">30%</td>
+          <td style="text-align:right; font-weight:700;">$13.99/mo</td>
+          <td>Entry-level institutional discount</td>
+        </tr>
+        <tr>
+          <td>450 students</td>
+          <td style="text-align:center;">40%</td>
+          <td style="text-align:right; font-weight:700;">$11.99/mo</td>
+          <td>Core graduating cohorts</td>
+        </tr>
+        <tr>
+          <td>540 students</td>
+          <td style="text-align:center;">44%</td>
+          <td style="text-align:right; font-weight:700;">$11.11/mo</td>
+          <td>+ advanced practice</td>
+        </tr>
+        <tr>
+          <td>840 students</td>
+          <td style="text-align:center;">52%</td>
+          <td style="text-align:right; font-weight:700;">$9.52/mo</td>
+          <td>Full nursing program</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="methodology-step">
+  <div class="step-num">3</div>
+  <div class="step-content">
+    <strong>For semester passes: multiply by 2.5 active months</strong>
+    <p style="font-size: 13px; color: var(--gray-500); margin: 2px 0;">Students access for 4 months but actively use ~2.5 months. Accounts for exam gaps, clinical rotations, and role-pivoting students.</p>
+  </div>
+</div>
+
+<div class="methodology-step">
+  <div class="step-num">4</div>
+  <div class="step-content">
+    <strong>Verify: per-student semester vs. retail semester</strong>
+    <p style="font-size: 13px; color: var(--gray-500); margin: 2px 0;">Retail semester = 4 &times; $19.99 = <strong>$79.96</strong>. Our institutional semester price should be 50-70% below this &mdash; a meaningful discount that's still economically sound.</p>
+  </div>
+</div>
+
+<div class="methodology-step">
+  <div class="step-num">5</div>
+  <div class="step-content">
+    <strong>Verify margins: institutional price minus our cost</strong>
+    <p style="font-size: 13px; color: var(--gray-500); margin: 2px 0;">No Stripe fees on institutional deals. Our cost is API only ($3.10/user/semester avg, $11.53 worst-case power user). Target: 85%+ margin at average usage.</p>
+  </div>
+</div>
+
+<!-- ================================================================= -->
+<!-- PART 6: PRICING OPTIONS                                             -->
+<!-- ================================================================= -->
+<div class="divider"></div>
+
+<div class="section-label">Part 6</div>
+<h2>Pricing Options to Present to USF</h2>
+<p class="muted">Four options, graduated by scope. All nursing-focused (our wedge product). General is an add-on discussed separately.</p>
+
+<!-- OPTION 0: PILOT -->
+<div class="option-card recommended">
+  <div class="option-badge">Start Here</div>
+  <h3 style="margin-top: 10px;">Option 0: Free Pilot</h3>
+  <p>30-day trial with one cohort. Zero risk for USF. Generates adoption data to prove value.</p>
+  <div class="option-grid">
+    <div class="option-stat">
+      <div class="stat-value">50-100</div>
+      <div class="stat-label">BSN Seniors</div>
+    </div>
+    <div class="option-stat">
+      <div class="stat-value">$0</div>
+      <div class="stat-label">Cost to USF</div>
+    </div>
+    <div class="option-stat">
+      <div class="stat-value">$62-$124</div>
+      <div class="stat-label">Our API cost</div>
+    </div>
+    <div class="option-stat">
+      <div class="stat-value">30 days</div>
+      <div class="stat-label">Duration</div>
+    </div>
+  </div>
+  <p style="font-size: 12px; color: var(--gray-500); margin-top: 10px;"><strong>Why lead with this:</strong> Removes all purchasing friction. Jessica can say yes without Alex's approval. We get real student data. Converts to paid deal with proven results.</p>
+</div>
+
+<!-- OPTION 1: BSN SENIORS ONLY (30-day) -->
+<div class="option-card">
+  <h3>Option 1: BSN Seniors Only &mdash; 30-Day Passes</h3>
+  <p>Tightest scope: students who need it most, right now. Under $5K procurement threshold.</p>
+  <div class="option-grid">
+    <div class="option-stat">
+      <div class="stat-value">~250</div>
+      <div class="stat-label">BSN Senior students</div>
+    </div>
+    <div class="option-stat">
+      <div class="stat-value">$13.99</div>
+      <div class="stat-label">Per student (30-day)</div>
+    </div>
+    <div class="option-stat">
+      <div class="stat-value" style="color: var(--teal);">$3,498</div>
+      <div class="stat-label">Total</div>
+    </div>
+    <div class="option-stat">
+      <div class="stat-value">30%</div>
+      <div class="stat-label">Off monthly retail</div>
+    </div>
+  </div>
+  <table style="margin-top: 12px; font-size: 12px;">
+    <tbody>
+      <tr>
+        <td style="font-weight:600;">Our API cost</td>
+        <td style="text-align:right;">250 &times; $1.24 = <strong>$310</strong></td>
+      </tr>
+      <tr>
+        <td style="font-weight:600;">Stripe fees</td>
+        <td style="text-align:right;">$0 (invoiced)</td>
+      </tr>
+      <tr style="background: var(--green-light);">
+        <td style="font-weight:700;">Net profit</td>
+        <td style="text-align:right; font-weight:800; color: var(--green);">$3,188 (91% margin)</td>
+      </tr>
+      <tr>
+        <td style="font-weight:600;">Under $5K threshold?</td>
+        <td style="text-align:right; color: var(--green); font-weight:700;">&check; YES &mdash; fast approval</td>
+      </tr>
+    </tbody>
+  </table>
+  <p style="font-size: 12px; color: var(--gray-500); margin-top: 10px;"><strong>Best for:</strong> Quick win. Under procurement threshold. Senior Director can approve without formal process. But 30-day window may be tight for students with competing demands.</p>
+</div>
+
+<!-- OPTION 2: GRADUATING COHORTS (Semester) -->
+<div class="option-card recommended">
+  <div class="option-badge">Recommended</div>
+  <h3 style="margin-top: 10px;">Option 2: Graduating Cohorts &mdash; Semester Passes</h3>
+  <p>All students entering the workforce this year. Semester access gives them time to prep around clinicals and exams.</p>
+  <div class="option-grid">
+    <div class="option-stat">
+      <div class="stat-value">~450</div>
+      <div class="stat-label">BSN Seniors + ME-MSN</div>
+    </div>
+    <div class="option-stat">
+      <div class="stat-value">$29.98</div>
+      <div class="stat-label">Per student / semester</div>
+    </div>
+    <div class="option-stat">
+      <div class="stat-value" style="color: var(--teal);">$13,491</div>
+      <div class="stat-label">Total</div>
+    </div>
+    <div class="option-stat">
+      <div class="stat-value">63%</div>
+      <div class="stat-label">Off retail semester ($79.96)</div>
+    </div>
+  </div>
+  <table style="margin-top: 12px; font-size: 12px;">
+    <tbody>
+      <tr>
+        <td style="font-weight:600;">Per student math</td>
+        <td style="text-align:right;">$11.99/mo &times; 2.5 months = $29.98/student</td>
+      </tr>
+      <tr>
+        <td style="font-weight:600;">Our API cost</td>
+        <td style="text-align:right;">450 &times; $3.10 = <strong>$1,395</strong></td>
+      </tr>
+      <tr>
+        <td style="font-weight:600;">Stripe fees</td>
+        <td style="text-align:right;">$0 (invoiced)</td>
+      </tr>
+      <tr style="background: var(--green-light);">
+        <td style="font-weight:700;">Net profit</td>
+        <td style="text-align:right; font-weight:800; color: var(--green);">$12,096 (90% margin)</td>
+      </tr>
+      <tr>
+        <td style="font-weight:600;">Under $5K threshold?</td>
+        <td style="text-align:right; color: var(--amber); font-weight:600;">No &mdash; requires procurement</td>
+      </tr>
+      <tr>
+        <td style="font-weight:600;">Equiv. monthly for USF</td>
+        <td style="text-align:right;">$7.50/student/month (vs. $19.99 retail)</td>
+      </tr>
+    </tbody>
+  </table>
+  <p style="font-size: 12px; color: var(--gray-500); margin-top: 10px;"><strong>Why recommended:</strong> Covers the highest-need students (BSN seniors + ME-MSN entering the workforce). Semester gives flexibility for students with clinical schedules. 63% discount is meaningful but sustainable. $13.5K is comparable to what USF pays for other career tools.</p>
+</div>
+
+<!-- OPTION 3: ALL NURSING (Semester) -->
+<div class="option-card">
+  <h3>Option 3: All Nursing Students &mdash; Semester Passes</h3>
+  <p>Full nursing program coverage. No student left out. Juniors build skills early. Best per-student economics.</p>
+  <div class="option-grid">
+    <div class="option-stat">
+      <div class="stat-value">~840</div>
+      <div class="stat-label">All nursing students</div>
+    </div>
+    <div class="option-stat">
+      <div class="stat-value">$23.80</div>
+      <div class="stat-label">Per student / semester</div>
+    </div>
+    <div class="option-stat">
+      <div class="stat-value" style="color: var(--teal);">$19,992</div>
+      <div class="stat-label">Total</div>
+    </div>
+    <div class="option-stat">
+      <div class="stat-value">70%</div>
+      <div class="stat-label">Off retail semester ($79.96)</div>
+    </div>
+  </div>
+  <table style="margin-top: 12px; font-size: 12px;">
+    <tbody>
+      <tr>
+        <td style="font-weight:600;">Per student math</td>
+        <td style="text-align:right;">$9.52/mo &times; 2.5 months = $23.80/student</td>
+      </tr>
+      <tr>
+        <td style="font-weight:600;">Our API cost</td>
+        <td style="text-align:right;">840 &times; $3.10 = <strong>$2,604</strong></td>
+      </tr>
+      <tr style="background: var(--green-light);">
+        <td style="font-weight:700;">Net profit</td>
+        <td style="text-align:right; font-weight:800; color: var(--green);">$17,388 (87% margin)</td>
+      </tr>
+      <tr>
+        <td style="font-weight:600;">Power user risk</td>
+        <td style="text-align:right;">At $11.53 worst-case/student, still $12.27 profit/student (52%)</td>
+      </tr>
+    </tbody>
+  </table>
+  <p style="font-size: 12px; color: var(--gray-500); margin-top: 10px;"><strong>Best for:</strong> Full partnership story. Best per-student value for USF. Juniors get early exposure. But $20K total requires a bigger budget commitment &mdash; may need VP approval.</p>
+</div>
+
+<!-- ================================================================= -->
+<!-- OPTIONS COMPARISON                                                  -->
+<!-- ================================================================= -->
+
+<h3>Side-by-Side Comparison</h3>
+<table>
+  <thead>
+    <tr>
+      <th></th>
+      <th style="text-align:center;">Option 1<br><span style="font-weight:400; text-transform:none; font-size:10px;">BSN Seniors</span></th>
+      <th style="text-align:center; background: var(--teal-dark);">Option 2 &star;<br><span style="font-weight:400; text-transform:none; font-size:10px;">Graduating</span></th>
+      <th style="text-align:center;">Option 3<br><span style="font-weight:400; text-transform:none; font-size:10px;">All Nursing</span></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="font-weight:600;">Students</td>
+      <td style="text-align:center;">~250</td>
+      <td style="text-align:center; font-weight:700;">~450</td>
+      <td style="text-align:center;">~840</td>
+    </tr>
+    <tr>
+      <td style="font-weight:600;">Pass type</td>
+      <td style="text-align:center;">30-day</td>
+      <td style="text-align:center;">Semester</td>
+      <td style="text-align:center;">Semester</td>
+    </tr>
+    <tr>
+      <td style="font-weight:600;">Per student</td>
+      <td style="text-align:center;">$13.99</td>
+      <td style="text-align:center; font-weight:700;">$29.98</td>
+      <td style="text-align:center;">$23.80</td>
+    </tr>
+    <tr>
+      <td style="font-weight:600;">Total</td>
+      <td style="text-align:center;">$3,498</td>
+      <td style="text-align:center; font-weight:700;">$13,491</td>
+      <td style="text-align:center;">$19,992</td>
+    </tr>
+    <tr>
+      <td style="font-weight:600;">Discount vs. retail</td>
+      <td style="text-align:center;">30% off monthly</td>
+      <td style="text-align:center;">63% off semester</td>
+      <td style="text-align:center;">70% off semester</td>
+    </tr>
+    <tr>
+      <td style="font-weight:600;">Our margin</td>
+      <td style="text-align:center; color: var(--green); font-weight:700;">91%</td>
+      <td style="text-align:center; color: var(--green); font-weight:700;">90%</td>
+      <td style="text-align:center; color: var(--green); font-weight:700;">87%</td>
+    </tr>
+    <tr>
+      <td style="font-weight:600;">Under $5K threshold?</td>
+      <td style="text-align:center; color: var(--green);">&check; Yes</td>
+      <td style="text-align:center; color: var(--amber);">&times; No</td>
+      <td style="text-align:center; color: var(--amber);">&times; No</td>
+    </tr>
+    <tr>
+      <td style="font-weight:600;">Best pitch to Jessica</td>
+      <td style="text-align:center; font-size:12px;">"Quick win for your seniors"</td>
+      <td style="text-align:center; font-size:12px; font-weight:600;">"Cover every nurse entering the workforce"</td>
+      <td style="text-align:center; font-size:12px;">"No nursing student left out"</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ================================================================= -->
+<!-- GENERAL ADD-ON                                                      -->
+<!-- ================================================================= -->
+<div class="divider"></div>
+
+<div class="section-label">Part 7</div>
+<h2>General Product: Add-On Pricing</h2>
+<p class="muted">InterviewAnswers.AI for non-nursing students. This is the upsell, not the lead product.</p>
+
+<div class="callout callout-amber">
+  <strong style="color: var(--amber);">Why General Is Secondary</strong>
+  <p style="margin: 0; color: var(--gray-700);">USF already pays for <strong>Big Interview</strong> (general interview prep). Our general product competes with it. Our nursing product has <strong>zero competition</strong> at USF. Lead with what's unique. Add general once the relationship is established.</p>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Tier</th>
+      <th style="text-align:center;">Students</th>
+      <th style="text-align:center;">Pass Type</th>
+      <th style="text-align:right;">Per Student</th>
+      <th style="text-align:right;">Total</th>
+      <th style="text-align:center;">Our Margin</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="font-weight:600;">Small (seniors in career services)</td>
+      <td style="text-align:center;">250</td>
+      <td style="text-align:center;">30-day</td>
+      <td style="text-align:right;">$10.99</td>
+      <td style="text-align:right; font-weight:700;">$2,748</td>
+      <td style="text-align:center; color: var(--green);">89%</td>
+    </tr>
+    <tr>
+      <td style="font-weight:600;">Medium (active job seekers)</td>
+      <td style="text-align:center;">500</td>
+      <td style="text-align:center;">30-day</td>
+      <td style="text-align:right;">$9.49</td>
+      <td style="text-align:right; font-weight:700;">$4,745</td>
+      <td style="text-align:center; color: var(--green);">87%</td>
+    </tr>
+    <tr>
+      <td style="font-weight:600;">Large (juniors + seniors)</td>
+      <td style="text-align:center;">1,000</td>
+      <td style="text-align:center;">Semester</td>
+      <td style="text-align:right;">$17.48</td>
+      <td style="text-align:right; font-weight:700;">$17,480</td>
+      <td style="text-align:center; color: var(--green);">82%</td>
+    </tr>
+  </tbody>
+</table>
+<p class="muted">General 30-day margins are higher (lower API cost per user). Semester general at scale gets expensive — $17.5K for 1,000 students. Better to start with 30-day general passes as a bundle add-on with nursing semester.</p>
+
+<h3>Bundle Suggestion</h3>
+<div class="callout callout-navy">
+  <strong style="color: var(--teal-light);">Nursing Semester + General 30-Day = Strongest Bundle</strong>
+  <p>If USF wants both products: <strong>Option 2 nursing ($13,491)</strong> + <strong>250 general 30-day ($2,748)</strong> = <strong>$16,239</strong>. Offer a bundle discount to $14,999. Our cost: $1,705. Margin: 89%.</p>
+  <p style="margin-top: 8px;">This gives USF: nursing-specific AI coaching for all graduating nurses (semester) + general interview prep for their most active career services users (30-day). Two products, one partnership.</p>
+</div>
+
+<!-- ================================================================= -->
+<!-- PART 8: WHAT TO SHOW / NOT SHOW                                     -->
+<!-- ================================================================= -->
+<div class="divider"></div>
+
+<div class="section-label">Part 8</div>
+<h2>What to Show USF vs. What to Hold Back <span class="internal-tag">Internal Only</span></h2>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0;">
+  <div style="background: var(--green-light); border-radius: 12px; padding: 18px 22px;">
+    <strong style="color: var(--green); font-size: 13px; display: block; margin-bottom: 8px;">SHOW to Jessica / Career Services</strong>
+    <ul style="margin: 0 0 0 16px; color: var(--gray-700); font-size: 13px; line-height: 1.7;">
+      <li>Individual retail price ($19.99/30 days)</li>
+      <li>"Institutional discounts up to 70% off retail"</li>
+      <li>Option tiers (students covered, per-student price, total)</li>
+      <li>70 clinically validated questions by licensed nurses</li>
+      <li>NCSBN, SBAR, Nursing Process framework alignment</li>
+      <li>Institution page, access codes, usage reporting</li>
+      <li>Free pilot offer</li>
+      <li>"Complementary to Big Interview &mdash; we fill the nursing gap"</li>
+    </ul>
+  </div>
+  <div style="background: var(--red-light); border-radius: 12px; padding: 18px 22px;">
+    <strong style="color: var(--red); font-size: 13px; display: block; margin-bottom: 8px;">NEVER Reveal</strong>
+    <ul style="margin: 0 0 0 16px; color: var(--gray-700); font-size: 13px; line-height: 1.7;">
+      <li>Our API costs ($1.24/user or $3.10/semester)</li>
+      <li>Our margins (87-91%)</li>
+      <li>That a pilot costs us $62-$124</li>
+      <li>User archetypes or usage patterns</li>
+      <li>The &times;2.5 multiplier methodology</li>
+      <li>That power users barely cost more than light users</li>
+      <li>General product margin is thinner than nursing</li>
+      <li>Any cost analysis documents</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ================================================================= -->
+<!-- PART 9: RECOMMENDED APPROACH                                        -->
+<!-- ================================================================= -->
+<div class="divider"></div>
+
+<div class="section-label">Part 9</div>
+<h2>Recommended Approach</h2>
+
+<h3>The Play: Pilot &rarr; Semester Deal &rarr; Expand</h3>
+
+<div style="display: flex; gap: 0; align-items: center; margin: 24px 0; flex-wrap: wrap; justify-content: center;">
+  <div style="background: var(--teal); color: white; border-radius: 10px; padding: 14px 18px; text-align: center; max-width: 160px;">
+    <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.7); font-weight: 700; margin-bottom: 4px;">Phase 1</div>
+    <div style="font-size: 12px; font-weight: 600;">Free Pilot<br>50-100 BSN Seniors<br>30 days</div>
+  </div>
+  <div style="font-size: 18px; color: var(--teal); padding: 0 8px; font-weight: 700;">&rarr;</div>
+  <div style="background: white; border: 2px solid var(--teal); border-radius: 10px; padding: 14px 18px; text-align: center; max-width: 160px;">
+    <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--teal); font-weight: 700; margin-bottom: 4px;">Phase 2</div>
+    <div style="font-size: 12px; font-weight: 600;">Semester Deal<br>450 Graduating<br>$13,491</div>
+  </div>
+  <div style="font-size: 18px; color: var(--teal); padding: 0 8px; font-weight: 700;">&rarr;</div>
+  <div style="background: white; border: 2px solid var(--gray-300); border-radius: 10px; padding: 14px 18px; text-align: center; max-width: 160px;">
+    <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--gray-500); font-weight: 700; margin-bottom: 4px;">Phase 3</div>
+    <div style="font-size: 12px; font-weight: 600;">Expand<br>+ General add-on<br>Bundle $14,999</div>
+  </div>
+</div>
+
+<h3>In the Email to Jessica</h3>
+<ol style="margin: 8px 0 8px 20px; color: var(--gray-700); font-size: 13px; line-height: 1.8;">
+  <li>Answer her question: "Individual price is $19.99/person for 30 days"</li>
+  <li>Pivot to institutional: "For universities, we offer semester institutional partnerships"</li>
+  <li>Mention both products (nursing-specific AND general)</li>
+  <li>Steer to a call: "Let's set up a 20-minute call to walk through what fits"</li>
+  <li>Offer the free pilot: "We'd love to start with a free 30-day trial with a small cohort"</li>
+</ol>
+<p style="font-size: 13px; color: var(--gray-700);"><strong>Do NOT put specific pricing in the email.</strong> Pricing happens on the call, where we can read the room and anchor appropriately.</p>
+
+<h3>On the Call</h3>
+<ol style="margin: 8px 0 8px 20px; color: var(--gray-700); font-size: 13px; line-height: 1.8;">
+  <li>Demo the product (nursing mock interview, SBAR coaching, practice mode)</li>
+  <li>Ask: "Which students are you most focused on covering?"</li>
+  <li>Present 2-3 options based on her answer (don't show all options &mdash; tailor)</li>
+  <li>Anchor at the appropriate option (if she says "graduating students" &rarr; Option 2 at $13,491)</li>
+  <li>Always offer the free pilot as a fallback: "Want to start with a small group first?"</li>
+  <li>If they ask about general: "We can bundle both &mdash; let me show you what that looks like"</li>
+</ol>
+
+<h3>Key Questions to Ask Jessica</h3>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0;">
+  <div style="background: white; border: 1px solid var(--gray-200); border-radius: 10px; padding: 14px 18px; border-left: 4px solid var(--teal);">
+    <strong style="color: var(--navy); font-size: 13px;">Who are you focused on?</strong>
+    <p style="font-size: 12px; color: var(--gray-500); margin: 4px 0 0;">Determines tier. "BSN seniors" = Option 1. "All graduating" = Option 2. "Whole program" = Option 3.</p>
+  </div>
+  <div style="background: white; border: 1px solid var(--gray-200); border-radius: 10px; padding: 14px 18px; border-left: 4px solid var(--teal);">
+    <strong style="color: var(--navy); font-size: 13px;">Semester or short-term?</strong>
+    <p style="font-size: 12px; color: var(--gray-500); margin: 4px 0 0;">Determines pass type. "Right before interviews" = 30-day. "Throughout the semester" = semester.</p>
+  </div>
+  <div style="background: white; border: 1px solid var(--gray-200); border-radius: 10px; padding: 14px 18px; border-left: 4px solid var(--teal);">
+    <strong style="color: var(--navy); font-size: 13px;">Just nursing, or other programs too?</strong>
+    <p style="font-size: 12px; color: var(--gray-500); margin: 4px 0 0;">Determines whether to introduce general product / bundle.</p>
+  </div>
+  <div style="background: white; border: 1px solid var(--gray-200); border-radius: 10px; padding: 14px 18px; border-left: 4px solid var(--teal);">
+    <strong style="color: var(--navy); font-size: 13px;">Would you want to pilot first?</strong>
+    <p style="font-size: 12px; color: var(--gray-500); margin: 4px 0 0;">Always offer. Removes risk, gets us in the door.</p>
+  </div>
+</div>
+
+<!-- ================================================================= -->
+<!-- PART 10: PROCUREMENT & TIMING                                       -->
+<!-- ================================================================= -->
+<div class="divider"></div>
+
+<div class="section-label">Part 10</div>
+<h2>Procurement Context &amp; Timing</h2>
+
+<table>
+  <tbody>
+    <tr>
+      <td style="font-weight:700; width: 40%;">USF direct purchase threshold</td>
+      <td><strong>$5,000</strong> &mdash; under this, Senior Director can approve</td>
+    </tr>
+    <tr>
+      <td style="font-weight:700;">Above $5K</td>
+      <td>PaAS (Purchasing &amp; Ancillary Services) involved. Process unknown &mdash; may add weeks to months.</td>
+    </tr>
+    <tr>
+      <td style="font-weight:700;">Option 1 ($3,498)</td>
+      <td style="color: var(--green); font-weight:600;">&check; Under threshold &mdash; Alex Hochman can approve</td>
+    </tr>
+    <tr>
+      <td style="font-weight:700;">Option 2 ($13,491)</td>
+      <td style="color: var(--amber); font-weight:600;">Above threshold &mdash; likely needs procurement, but comparable to Big Interview/Handshake budgets</td>
+    </tr>
+    <tr>
+      <td style="font-weight:700;">Option 3 ($19,992)</td>
+      <td style="color: var(--amber); font-weight:600;">Above threshold &mdash; needs VP/procurement approval</td>
+    </tr>
+    <tr>
+      <td style="font-weight:700;">Fiscal year</td>
+      <td>July 1 &ndash; June 30</td>
+    </tr>
+    <tr>
+      <td style="font-weight:700;">Why now is good</td>
+      <td>March = budget planning for FY27. End-of-year budget spend May-June. Jessica reached out to US (inbound).</td>
+    </tr>
+    <tr>
+      <td style="font-weight:700;">Decision-maker</td>
+      <td>Alex Hochman (Senior Director, Career Services)</td>
+    </tr>
+    <tr>
+      <td style="font-weight:700;">Our contact</td>
+      <td>Jessica Li (Career Counselor) &mdash; front-line, not budget holder</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout callout-teal">
+  <strong>Budget reality check</strong>
+  <p style="margin:0;">We don't know USF Career Services' actual budget. NACE median for career centers is ~$504K/year. Big Interview + Handshake alone likely run $11K-$30K/year. Our $3.5K-$20K range is within plausible career tech budget. <strong>Jessica's response will tell us their range</strong> &mdash; we don't need to guess.</p>
+</div>
+
+<!-- ================================================================= -->
+<!-- PART 11: SUMMARY                                                    -->
+<!-- ================================================================= -->
+<div class="divider"></div>
+
+<div class="section-label">Summary</div>
+<h2>Bottom Line</h2>
+
+<div style="background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%); border-radius: 14px; padding: 28px 32px; margin: 20px 0; color: white;">
+  <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+    <div style="text-align: center;">
+      <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.5);">Our Cost to Serve (Semester)</div>
+      <div style="font-size: 28px; font-weight: 800; color: var(--teal-light); margin: 4px 0;">$3.10</div>
+      <div style="font-size: 11px; color: rgba(255,255,255,0.5);">per student average</div>
+    </div>
+    <div style="text-align: center;">
+      <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.5);">Retail Semester Price</div>
+      <div style="font-size: 28px; font-weight: 800; color: white; margin: 4px 0;">$79.96</div>
+      <div style="font-size: 11px; color: rgba(255,255,255,0.5);">4 &times; $19.99/month</div>
+    </div>
+    <div style="text-align: center;">
+      <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.5);">Best Discount Range</div>
+      <div style="font-size: 28px; font-weight: 800; color: var(--teal-light); margin: 4px 0;">56&ndash;70%</div>
+      <div style="font-size: 11px; color: rgba(255,255,255,0.5);">off retail semester</div>
+    </div>
+  </div>
+
+  <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px;">
+    <p style="color: rgba(255,255,255,0.85); font-size: 14px; margin: 0 0 8px;"><strong style="color: white; display: inline;">Why 56-70% is the right discount range:</strong></p>
+    <ul style="margin: 0 0 0 16px; color: rgba(255,255,255,0.75); font-size: 13px; line-height: 1.8;">
+      <li>Our margins stay above 87% even at the deepest discount tier</li>
+      <li>Power user risk is contained (&times;2.5 multiplier protects against heavy semester usage)</li>
+      <li>Accounts for students who pivot across roles or interview multiple times</li>
+      <li>Meaningful enough for USF to see clear value vs. retail (&gt;50% off)</li>
+      <li>Not so deep that it cheapens the product (85-93% felt like giving it away)</li>
+      <li>Comparable to institutional discounts in higher-ed SaaS (typically 40-70%)</li>
+    </ul>
+  </div>
+</div>
+
+<h3>What Changed From Our Earlier Models</h3>
+<table>
+  <thead>
+    <tr>
+      <th></th>
+      <th style="text-align:center;">Before (Wrong)</th>
+      <th style="text-align:center; background: var(--teal-dark);">After (Corrected)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="font-weight:600;">Semester pricing model</td>
+      <td style="text-align:center;">Monthly rate = semester price (double discount)</td>
+      <td style="text-align:center; font-weight:600;">Monthly rate &times; 2.5 active months</td>
+    </tr>
+    <tr>
+      <td style="font-weight:600;">Savings comparison</td>
+      <td style="text-align:center;">vs. monthly retail (apples-to-oranges)</td>
+      <td style="text-align:center; font-weight:600;">vs. semester retail (apples-to-apples)</td>
+    </tr>
+    <tr>
+      <td style="font-weight:600;">Discount range</td>
+      <td style="text-align:center; color: var(--red);">85-93% (too generous)</td>
+      <td style="text-align:center; color: var(--green); font-weight:700;">56-70% (sustainable)</td>
+    </tr>
+    <tr>
+      <td style="font-weight:600;">All Nursing total</td>
+      <td style="text-align:center;">$7,999</td>
+      <td style="text-align:center; font-weight:700;">$19,992</td>
+    </tr>
+    <tr>
+      <td style="font-weight:600;">Flat vs. per-student</td>
+      <td style="text-align:center;">Mixed (two conflicting models)</td>
+      <td style="text-align:center; font-weight:600;">One coherent per-student model</td>
+    </tr>
+    <tr>
+      <td style="font-weight:600;">Budget assumptions</td>
+      <td style="text-align:center;">Subjective guesses ($16K threshold)</td>
+      <td style="text-align:center; font-weight:600;">Only known: $5K direct purchase. Let Jessica tell us the rest.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Documents This Supersedes</h3>
+<p class="muted">This document consolidates and replaces:</p>
+<ul style="margin: 8px 0 8px 20px; color: var(--gray-500); font-size: 13px; line-height: 1.7;">
+  <li><code>USF_Partnership_Analysis.md</code> &mdash; original analysis (annual licensing model, different pricing)</li>
+  <li><code>USF_Pricing_Model.md</code> &mdash; per-pass tiered model (Stripe fees included, pre-correction)</li>
+  <li><code>USF_Pricing_Model.html</code> &mdash; internal visual analysis (Version 3.0)</li>
+  <li><code>USF_Pricing_Charts.html</code> &mdash; external-facing charts (contained double-discount pricing)</li>
+  <li><code>ERIN_Pricing_Review.md</code> &mdash; Erin review format (flat licensing, different totals)</li>
+</ul>
+
+</div><!-- /content -->
+
+<div class="footer">
+  <p class="brand">InterviewAnswers.AI &times; NurseInterviewPro</p>
+  <p>Internal Analysis &bull; March 2026 &bull; For Alsh + Erin review only</p>
+</div>
+
+</body>
+</html>
