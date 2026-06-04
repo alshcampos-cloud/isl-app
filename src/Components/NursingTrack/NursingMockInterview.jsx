@@ -20,6 +20,7 @@ import { getFrameworkDetails, CLINICAL_FRAMEWORKS } from './nursingQuestions';
 import useNursingQuestions from './useNursingQuestions';
 import NursingLoadingSkeleton from './NursingLoadingSkeleton';
 import { fetchWithRetry } from '../../utils/fetchWithRetry';
+import { getActiveSessionToken } from '../../utils/localSessionGuard';
 import useSpeechRecognition from '../../hooks/useSpeechRecognition';
 import SpeechUnavailableWarning from '../SpeechUnavailableWarning';
 import { canUseFeature, incrementUsage } from '../../utils/creditSystem';
@@ -414,11 +415,17 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
       // Add current user message
       conversationHistory.push({ role: 'user', content: userMessage });
 
-      // Get auth token
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('Not authenticated');
+      // Get auth token using the deadlock-safe helper (PR #44 pattern).
+      // The inline supabase.auth.getSession() that lived here was the same
+      // GoTrue Web Lock deadlock band-aided in PRs #29/#35/#37/#39/#43/#44.
+      // When the lock hung, this await never resolved → "thinking" spinner
+      // froze forever. getActiveSessionToken reads localStorage first
+      // (lock-free) and falls back to a 5s-raced getSession only if needed.
+      const tokenResult = await getActiveSessionToken(supabase);
+      if (!tokenResult?.access_token) {
+        throw new Error('Not authenticated. Please sign in again.');
       }
+      const session = { access_token: tokenResult.access_token };
 
       // Call existing ai-feedback Edge Function with nursing context
       // Using fetchWithRetry — 3 attempts, backoff (Battle Scar #3 & #8)
