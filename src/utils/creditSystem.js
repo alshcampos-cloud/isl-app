@@ -354,6 +354,14 @@ function featureNameToDb(camelCaseName) {
     'nursingMock': 'nursing_mock',
     'nursingSbar': 'nursing_sbar',
     'nursingCoach': 'nursing_coach',
+    // 2026-05-31 hotfix: previously-missing nursing features. Without these
+    // mappings, canUseFeature looked up limit['nursingConfidence'] in
+    // TIER_LIMITS (which stores 'nursing_confidence' snake_case), got
+    // undefined, and returned { exceeded: true } — gating brand-new free
+    // users out of these features on their very first click.
+    'nursingConfidence': 'nursing_confidence',
+    'nursingOfferCoach': 'nursing_offer_coach',
+    'nursingAnswerAssistant': 'nursing_answer_assistant',
   };
   return mapping[camelCaseName] || camelCaseName;
 }
@@ -501,6 +509,28 @@ export async function getUsageStats(supabase, userId, tier) {
         limit: limits.nursing_coach || 0,
         remaining: Math.max(0, (limits.nursing_coach || 0) - (usage.nursing_coach || 0)),
         unlimited: (limits.nursing_coach || 0) >= 999999
+      },
+      // 2026-05-31 hotfix: these were missing from the returned object,
+      // so `userData.usage.nursingConfidence?.used` was undefined in the
+      // components and remaining-count displays showed nothing for free
+      // users on these three features.
+      nursingConfidence: {
+        used: usage.nursing_confidence || 0,
+        limit: limits.nursing_confidence || 0,
+        remaining: Math.max(0, (limits.nursing_confidence || 0) - (usage.nursing_confidence || 0)),
+        unlimited: (limits.nursing_confidence || 0) >= 999999
+      },
+      nursingOfferCoach: {
+        used: usage.nursing_offer_coach || 0,
+        limit: limits.nursing_offer_coach || 0,
+        remaining: Math.max(0, (limits.nursing_offer_coach || 0) - (usage.nursing_offer_coach || 0)),
+        unlimited: (limits.nursing_offer_coach || 0) >= 999999
+      },
+      nursingAnswerAssistant: {
+        used: usage.nursing_answer_assistant || 0,
+        limit: limits.nursing_answer_assistant || 0,
+        remaining: Math.max(0, (limits.nursing_answer_assistant || 0) - (usage.nursing_answer_assistant || 0)),
+        unlimited: (limits.nursing_answer_assistant || 0) >= 999999
       },
     };
   } catch (err) {
