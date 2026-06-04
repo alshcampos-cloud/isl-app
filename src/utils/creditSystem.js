@@ -282,10 +282,23 @@ export function initializeUsageTracking(userId, tier = 'free') {
     interview_coach: 0,           // Jacob #2
     question_gen: 0,
     live_prompter_questions: 0,
+    // 2026-05-31 hotfix: missing nursing fields. Without these explicit
+    // zeros, the INSERT into usage_tracking on a brand-new user's first
+    // feature use would write NULL into the other nursing columns. If
+    // the Postgres schema enforces NOT NULL DEFAULT 0, the insert is
+    // fine; if it enforces NOT NULL without default, the insert FAILS
+    // and the user can't be tracked at all. Belt-and-suspenders: set
+    // all configured nursing features to 0 explicitly.
+    nursing_practice: 0,
+    nursing_mock: 0,
+    nursing_sbar: 0,
     nursing_coach: 0,
+    nursing_confidence: 0,
+    nursing_offer_coach: 0,
+    nursing_answer_assistant: 0,
     last_reset: new Date().toISOString()
   };
-  
+
   return usage;
 }
 
