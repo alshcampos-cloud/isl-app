@@ -21,6 +21,7 @@ import {
   Clock, CheckCircle, Mic, MicOff
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { getActiveSessionToken } from '../../utils/localSessionGuard';
 import { fetchWithRetry } from '../../utils/fetchWithRetry';
 import { canUseFeature, incrementUsage } from '../../utils/creditSystem';
 import { updateStreakAfterSession } from '../../utils/streakSupabase';
@@ -321,11 +322,12 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
       // Add current user message
       conversationHistory.push({ role: 'user', content: userMessage });
 
-      // Get auth token
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      // Deadlock-safe fast-path (see PRs #29/#43/#44/#48).
+      const tokenResult = await getActiveSessionToken(supabase);
+      if (!tokenResult?.access_token) {
         throw new Error('Not authenticated');
       }
+      const session = { access_token: tokenResult.access_token };
 
       // Call AI via fetchWithRetry — 3 attempts, backoff (Battle Scar #3)
       const response = await fetchWithRetry(

@@ -25,6 +25,7 @@ import {
   RotateCcw, Zap, BarChart3
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { getActiveSessionToken } from '../../utils/localSessionGuard';
 import { fetchWithRetry } from '../../utils/fetchWithRetry';
 import { canUseFeature, incrementUsage } from '../../utils/creditSystem';
 import { createOfferCoachSession } from './nursingSessionStore';
@@ -328,8 +329,10 @@ export default function NursingOfferCoach({ specialty, onBack, userData, refresh
     setError(null);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('Not authenticated');
+      // Deadlock-safe fast-path (see PRs #29/#43/#44/#48).
+      const tokenResult = await getActiveSessionToken(supabase);
+      if (!tokenResult?.access_token) throw new Error('Not authenticated');
+      const session = { access_token: tokenResult.access_token };
 
       const response = await fetchWithRetry(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-feedback`,

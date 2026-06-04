@@ -9,6 +9,7 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
+import { readLocalSession } from '../../utils/localSessionGuard';
 import { isBetaUser, getUsageStats, resolveEffectiveTier, hasActiveNursingPass } from '../../utils/creditSystem';
 import { showGeneralFeatures } from '../../utils/appTarget';
 import FirstTimeConsent from '../FirstTimeConsent';
@@ -124,7 +125,28 @@ export default function NursingTrackApp() {
 
     async function loadUserData() {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        // Deadlock-safe: localStorage fast-path (see PRs #29/#43/#44/#48).
+        // If valid session is in localStorage we use it directly, sidestepping
+        // any GoTrue Web Lock hang. Fall back to a 5s-raced getSession only
+        // when localStorage is empty/expired.
+        const stored = readLocalSession();
+        let session = stored.isValid && stored.user ? stored.session : null;
+
+        if (!session) {
+          try {
+            const raced = await Promise.race([
+              supabase.auth.getSession(),
+              new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('getSession timed out after 5s')), 5000)
+              ),
+            ]);
+            session = raced?.data?.session || null;
+          } catch (_) {
+            // Timed out — treat as logged-out, the ProtectedRoute layer handles redirect.
+            session = null;
+          }
+        }
+
         if (!session?.user || cancelled) {
           setUserData(prev => ({ ...prev, loading: false }));
           return;

@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { upsertSavedAnswer } from './nursingSupabase';
 import { supabase } from '../../lib/supabase';
+import { getActiveSessionToken } from '../../utils/localSessionGuard';
 import { fetchWithRetry } from '../../utils/fetchWithRetry';
 
 export default function NursingSessionSummary({ specialty, sessionResults, onRetry, onBack, userData }) {
@@ -38,8 +39,10 @@ export default function NursingSessionSummary({ specialty, sessionResults, onRet
     const generateDebrief = async () => {
       setDebriefLoading(true);
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) throw new Error('Not authenticated');
+        // Deadlock-safe fast-path (see PRs #29/#43/#44/#48).
+        const tokenResult = await getActiveSessionToken(supabase);
+        if (!tokenResult?.access_token) throw new Error('Not authenticated');
+        const session = { access_token: tokenResult.access_token };
 
         // Pre-check: if session is too trivial, show static message (don't waste an API call)
         const avgScore = sessionResults.reduce((sum, r) => sum + (r.score || 0), 0) / sessionResults.length;
