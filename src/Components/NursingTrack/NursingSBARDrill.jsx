@@ -18,6 +18,7 @@ import {
   RotateCcw, Zap, BarChart3, Mic, MicOff, User, BookOpen
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { getActiveSessionToken } from '../../utils/localSessionGuard';
 import { getFrameworkDetails } from './nursingQuestions';
 import useNursingQuestions from './useNursingQuestions';
 import NursingLoadingSkeleton from './NursingLoadingSkeleton';
@@ -246,8 +247,10 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
     setError(null);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('Not authenticated');
+      // Deadlock-safe fast-path (see PRs #29/#43/#44/#48).
+      const tokenResult = await getActiveSessionToken(supabase);
+      if (!tokenResult?.access_token) throw new Error('Not authenticated');
+      const session = { access_token: tokenResult.access_token };
 
       const response = await fetchWithRetry(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-feedback`,
