@@ -341,6 +341,19 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
   const startSession = useCallback(() => {
     // Build a shuffled, category-balanced queue so every session feels different
     const queue = buildInterviewQueue(questions);
+
+    // DEFENSIVE: if the queue is empty (questions hadn't loaded yet, or phase
+    // filters produced nothing), refuse to start. Without this guard, the
+    // session started with queue=[], firstQuestion=undefined, and React 18
+    // committed setInterviewQuestions([])/setSessionStarted(true) BEFORE the
+    // line below threw on firstQuestion.question — locking the user into an
+    // empty session that renders "Interview complete — 0 of 0 scored".
+    // Belt-and-suspenders with the disabled state on the Start button below.
+    if (queue.length === 0) {
+      console.warn('[NursingMockInterview] Start blocked: questions array is empty (length=' + questions.length + ', loading=' + questionsLoading + ')');
+      return;
+    }
+
     setInterviewQuestions(queue);
 
     const firstQuestion = queue[0];
@@ -788,9 +801,14 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
             ) : (
               <button
                 onClick={startSession}
-                className="w-full font-semibold py-3 rounded-xl transition-all bg-gradient-to-r from-sky-600 to-cyan-500 text-white shadow-lg shadow-sky-500/30 hover:-translate-y-0.5"
+                disabled={questionsLoading || questions.length === 0}
+                className={`w-full font-semibold py-3 rounded-xl transition-all ${
+                  questionsLoading || questions.length === 0
+                    ? 'bg-slate-700 text-slate-400 cursor-wait'
+                    : 'bg-gradient-to-r from-sky-600 to-cyan-500 text-white shadow-lg shadow-sky-500/30 hover:-translate-y-0.5'
+                }`}
               >
-                Start Interview
+                {questionsLoading ? 'Loading questions…' : 'Start Interview'}
               </button>
             )}
 
