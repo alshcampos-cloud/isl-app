@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { ArrowRight, ArrowLeft, Stethoscope, CheckCircle, LogOut } from 'lucide-react';
 import { NURSING_SPECIALTIES } from './nursingQuestions';
 import { supabase } from '../../lib/supabase';
+import { signOutAndRedirect } from '../../utils/localSessionGuard';
 import { showGeneralFeatures } from '../../utils/appTarget';
 import { isTap } from '../../utils/tapGuard';
 
@@ -36,8 +37,8 @@ export default function SpecialtySelection({ onSelectSpecialty, onBack }) {
             <span className="text-white font-medium text-sm">Nursing Interview Track</span>
           </div>
           <button
-            onClick={async () => { await supabase.auth.signOut(); window.location.href = '/login?from=nursing'; }}
-            onTouchEnd={async (e) => { e.preventDefault(); await supabase.auth.signOut(); window.location.href = '/login?from=nursing'; }}
+            onClick={() => signOutAndRedirect(supabase, '/login?from=nursing')}
+            onTouchEnd={(e) => { e.preventDefault(); signOutAndRedirect(supabase, '/login?from=nursing'); }}
             className="flex items-center gap-1 text-slate-400 hover:text-red-400 text-xs transition-colors"
             title="Sign out"
           >
