@@ -70,9 +70,27 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
         // localStorage — which fails if metadata sync lags or the link is
         // opened on a fresh device with no localStorage (Backend Auditor,
         // 2026-05-28). The URL param is the only device-independent signal.
+        //
+        // 2026-06-04 hotfix: pass the bare Site URL as emailRedirectTo, NOT
+        // /auth/confirm directly. Supabase verify endpoint REJECTS the entire
+        // confirmation flow (including the email_confirmed_at write) if the
+        // requested redirect_to is not in the project's Redirect URLs
+        // allowlist. Erin's test signup proved this: she clicked the link
+        // and her email_confirmed_at stayed NULL because /auth/confirm was
+        // not allowlisted in the dashboard.
+        //
+        // The bare site URL is ALWAYS in the allowlist (it's the Site URL).
+        // So Supabase verify completes: email is confirmed AND user lands
+        // on / with the PKCE code in the query string. LandingPage now
+        // catches that code (?code=...&type=signup) and routes to
+        // /auth/confirm so AuthConfirm can complete the session exchange.
+        //
+        // The /nursing hint travels in the ?from query param appended to
+        // the bare URL — that combination IS allowed because the path is
+        // still the Site URL root.
         const confirmRedirect = fromNursing
-          ? `${window.location.origin}/auth/confirm?from=nursing`
-          : `${window.location.origin}/auth/confirm`;
+          ? `${window.location.origin}/?from=nursing`
+          : `${window.location.origin}/`;
         // signUp() can deadlock on the Supabase GoTrue Web Lock —
         // same root cause documented at PR #39 (signInWithPassword),
         // PR #43 (getSession), PR #52 (signOut), and others. When a
