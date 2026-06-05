@@ -43,21 +43,36 @@ export default function LandingPage() {
   });
 
   useEffect(() => {
-    // Handle auth tokens in URL hash — pass through to /app or /nursing where ProtectedRoute handles them
-    // This covers: email verification (type=signup), password recovery (type=recovery), magic links
-    if (window.location.hash.includes('access_token')) {
-      console.log('🔑 Auth token detected in URL hash, checking user context...');
-      // Parse the hash to detect nursing users and route them correctly
-      // After email confirmation, check user metadata for onboarding_field
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        const field = session?.user?.user_metadata?.onboarding_field;
-        const dest = field === 'nursing' ? '/nursing' : '/app';
-        console.log(`🔑 Routing to ${dest} (onboarding_field: ${field || 'not set'})`);
-        navigate(dest + window.location.hash, { replace: true });
-      }).catch(() => {
-        // Fallback: if getSession fails, default to /app (safe default)
-        navigate('/app' + window.location.hash, { replace: true });
-      });
+    // 2026-06-04: catch the Supabase email-confirmation redirect.
+    //
+    // The signup flow tells Supabase to use the bare Site URL as
+    // emailRedirectTo (the /auth/confirm path isn't in the dashboard's
+    // Redirect URLs allowlist and gets rejected — see Auth.jsx note).
+    // So after the user clicks the confirmation email, Supabase verifies
+    // the email server-side AND drops the user back here at "/" with
+    // either:
+    //   - PKCE flow:    `?code=<auth_code>&type=signup` in the query
+    //   - Implicit:     `#access_token=...&type=signup` in the hash
+    // Either signal means "this is an authenticated email-confirm landing
+    // — we need to finish establishing the session". Hand the URL to
+    // /auth/confirm, which has the full Strategy 0-5 session-exchange
+    // logic. Preserve any ?from=nursing too.
+    const search = window.location.search;
+    const hash = window.location.hash;
+    const isPkceConfirm = search.includes('code=') &&
+      (search.includes('type=signup') || hash.includes('type=signup'));
+    const isHashConfirm = hash.includes('access_token') ||
+      hash.includes('type=signup') || hash.includes('type=recovery');
+
+    if (isPkceConfirm || isHashConfirm) {
+      console.log('🔑 Email-confirm landing detected, routing to /auth/confirm');
+      // Preserve nursing context if it's in the search params
+      const fromNursing = new URLSearchParams(search).get('from') === 'nursing';
+      const params = fromNursing && !search.includes('from=')
+        ? `${search}${search ? '&' : '?'}from=nursing`
+        : search;
+      const target = `/auth/confirm${params}${hash}`;
+      navigate(target, { replace: true });
       return;
     }
 
