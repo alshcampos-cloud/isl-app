@@ -73,20 +73,38 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
         const confirmRedirect = fromNursing
           ? `${window.location.origin}/auth/confirm?from=nursing`
           : `${window.location.origin}/auth/confirm`;
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: confirmRedirect,
-            data: {
-              full_name: fullName,
-              // Persist nursing intent in user_metadata as a belt-and-suspenders
-              // fallback. AuthConfirm.jsx:55 reads this when the URL param is
-              // absent.
-              ...(fromNursing ? { onboarding_field: 'nursing' } : {}),
+        // signUp() can deadlock on the Supabase GoTrue Web Lock —
+        // same root cause documented at PR #39 (signInWithPassword),
+        // PR #43 (getSession), PR #52 (signOut), and others. When a
+        // prior auth call holds the lock, the await never resolves
+        // and the user sees the spinner forever. Race against a 20s
+        // timeout (longer than signIn because signUp also creates
+        // the user and triggers the confirmation email). On timeout
+        // the rejected promise lands in the existing catch block and
+        // the user sees "Sign up timed out..." instead of an eternal
+        // "Loading..." button.
+        const { data, error } = await Promise.race([
+          supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              emailRedirectTo: confirmRedirect,
+              data: {
+                full_name: fullName,
+                // Persist nursing intent in user_metadata as a belt-and-
+                // suspenders fallback. AuthConfirm.jsx:55 reads this when
+                // the URL param is absent.
+                ...(fromNursing ? { onboarding_field: 'nursing' } : {}),
+              }
             }
-          }
-        })
+          }),
+          new Promise((_, reject) =>
+            setTimeout(
+              () => reject(new Error('Sign up timed out. Please refresh the page and try again.')),
+              20000
+            )
+          ),
+        ])
 
         if (error) throw error
 
