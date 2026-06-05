@@ -110,37 +110,47 @@ function Auth({ onAuthSuccess, defaultMode = 'login', onBack = null, fromNursing
 
         trackSignUp() // Google Ads conversion
 
-        // Abuse tracking — non-blocking, must never break signup flow
-        try {
-          const fingerprint = await getDeviceFingerprint();
-          const emailH = await hashEmail(email);
-          const domain = email.split('@')[1]?.toLowerCase() || '';
-
-          // Check for abuse
-          const { data: abuseCheck } = await supabase.rpc('check_signup_abuse', {
-            p_fingerprint: fingerprint, p_email_hash: emailH
-          });
-
-          // Record signal
-          if (data?.user?.id) {
-            await supabase.rpc('record_signup_signal', {
-              p_fingerprint: fingerprint, p_email_hash: emailH,
-              p_email_domain: domain, p_user_id: data.user.id
-            });
-          }
-
-          // Flag abuse if detected
-          if (abuseCheck?.reduced_tier && data?.user?.id) {
-            await supabase.from('user_profiles')
-              .update({ abuse_reduced_tier: true })
-              .eq('user_id', data.user.id);
-          }
-        } catch (err) {
-          console.warn('[Abuse] Signal recording failed:', err.message);
-          // Non-blocking — don't break signup flow
-        }
-
+        // Surface success to the user FIRST so the spinner stops.
         setMessage('Check your email for the verification link!')
+
+        // Abuse tracking — TRULY non-blocking now. Originally this was a try/
+        // catch but each Supabase RPC await inside it could hang on the GoTrue
+        // Web Lock (same deadlock as PRs #39/#43/#48/#52/#53). When any of
+        // them hung, setMessage / setLoading(false) never ran → user stuck on
+        // "Loading..." even though signup had succeeded. Fix: fire the whole
+        // block as a background IIFE without awaiting. If it succeeds, abuse
+        // signals get logged. If it hangs, the user already saw success and
+        // we just lose one row of abuse telemetry — acceptable tradeoff.
+        ;(async () => {
+          try {
+            const fingerprint = await getDeviceFingerprint();
+            const emailH = await hashEmail(email);
+            const domain = email.split('@')[1]?.toLowerCase() || '';
+
+            // Check for abuse
+            const { data: abuseCheck } = await supabase.rpc('check_signup_abuse', {
+              p_fingerprint: fingerprint, p_email_hash: emailH
+            });
+
+            // Record signal
+            if (data?.user?.id) {
+              await supabase.rpc('record_signup_signal', {
+                p_fingerprint: fingerprint, p_email_hash: emailH,
+                p_email_domain: domain, p_user_id: data.user.id
+              });
+            }
+
+            // Flag abuse if detected
+            if (abuseCheck?.reduced_tier && data?.user?.id) {
+              await supabase.from('user_profiles')
+                .update({ abuse_reduced_tier: true })
+                .eq('user_id', data.user.id);
+            }
+          } catch (err) {
+            console.warn('[Abuse] Signal recording failed:', err.message);
+            // Non-blocking — we never touch loading state here.
+          }
+        })();
       } else {
         // Login
         // signInWithPassword() can deadlock on the Supabase GoTrue Web Lock —
