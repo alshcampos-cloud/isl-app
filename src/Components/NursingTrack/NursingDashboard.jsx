@@ -13,6 +13,7 @@ import {
   LogOut, ChevronDown, User, FileText, Lock
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { signOutAndRedirect } from '../../utils/localSessionGuard';
 import { CLINICAL_FRAMEWORKS } from './nursingQuestions';
 import useNursingQuestions from './useNursingQuestions';
 import NursingLoadingSkeleton from './NursingLoadingSkeleton';
@@ -93,8 +94,8 @@ function AccountMenu({ userData }) {
               Preserve ?from=nursing so the post-sign-in flow + back-arrow stay
               inside the nursing funnel (Lucas, 2026-05-27). */}
           <button
-            onClick={async () => { await supabase.auth.signOut(); window.location.href = '/login?from=nursing'; }}
-            onTouchEnd={async (e) => { e.preventDefault(); await supabase.auth.signOut(); window.location.href = '/login?from=nursing'; }}
+            onClick={() => signOutAndRedirect(supabase, '/login?from=nursing')}
+            onTouchEnd={(e) => { e.preventDefault(); signOutAndRedirect(supabase, '/login?from=nursing'); }}
             className="flex items-center gap-2 w-full px-3 py-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 text-xs transition-colors"
           >
             <LogOut className="w-3.5 h-3.5" /> Sign Out

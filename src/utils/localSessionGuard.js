@@ -80,6 +80,53 @@ export function readLocalSession() {
 }
 
 /**
+ * Deadlock-safe sign-out: clear the local session immediately + hard-redirect,
+ * then fire the server-side signOut() asynchronously without awaiting.
+ *
+ * Why: supabase.auth.signOut() acquires the same GoTrue Web Lock that hangs
+ * getSession() under the deadlock pattern band-aided in PRs #29/#35/#37/
+ * #39/#43/#44/#48/#49. If we await signOut() before redirecting, the user's
+ * click does nothing — the await never resolves, the redirect never runs.
+ *
+ * The fix is to flip the order:
+ *  1. Wipe sb-*-auth-token from localStorage so the localStorage fast-path
+ *     (PR #43) sees "logged out" on the next render
+ *  2. Hard-redirect immediately
+ *  3. Fire signOut() in the background as best-effort cleanup — if it
+ *     succeeds, server-side revocation happens; if it hangs, we already
+ *     navigated away so no UX impact
+ *
+ * supabaseClient: pass the supabase client (we don't import to keep this
+ *   utility import-cycle-free).
+ * redirectUrl: where to send the user, e.g. '/login?from=nursing'.
+ */
+export function signOutAndRedirect(supabaseClient, redirectUrl) {
+  // 1. Fire signOut without awaiting — best-effort server-side cleanup
+  try {
+    supabaseClient?.auth?.signOut?.().catch(() => {});
+  } catch (_) {
+    // ignore — never let signOut throw block the redirect
+  }
+
+  // 2. Wipe the persisted session from localStorage so PR #43's fast-path
+  //    sees "logged out" if the user comes back through any route
+  try {
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      Object.keys(localStorage)
+        .filter((k) => k.startsWith('sb-') && k.endsWith('-auth-token'))
+        .forEach((k) => localStorage.removeItem(k));
+    }
+  } catch (_) {
+    // ignore
+  }
+
+  // 3. Hard-redirect now — don't wait on anything
+  if (typeof window !== 'undefined') {
+    window.location.href = redirectUrl;
+  }
+}
+
+/**
  * Convenience: do we have a valid, non-anonymous session right now?
  * Use this at mount-effect entry points where we want to short-circuit
  * before calling getSession() (which can deadlock).
