@@ -43,7 +43,9 @@ function loadEnv() {
 
 const ENV = loadEnv();
 
-if (!ENV.ANTHROPIC_API_KEY) {
+const isDryRun = process.argv.includes('--dry-run');
+
+if (!ENV.ANTHROPIC_API_KEY && !isDryRun) {
   console.error('ERROR: ANTHROPIC_API_KEY not set');
   process.exit(1);
 }
@@ -795,9 +797,9 @@ function markBriefDone(briefId) {
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 async function main() {
-  const args    = process.argv.slice(2);
-  const dryRun  = args.includes('--dry-run');
-  const dbMode  = args.includes('--db');
+  const args   = process.argv.slice(2);
+  const dryRun = isDryRun;
+  const dbMode = args.includes('--db');
   const briefId = args.find(a => a.startsWith('Brief_')) ?? null;
 
   const { brief } = loadBrief(briefId);
