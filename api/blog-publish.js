@@ -17,13 +17,27 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   // Verify agent secret
-  const auth = req.headers['authorization'];
+  const auth     = req.headers['authorization'];
   const expected = `Bearer ${process.env.BLOG_AGENT_SECRET}`;
   if (!auth || auth !== expected) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const { title, slug, body, meta_description, keywords, source_brief } = req.body ?? {};
+  const {
+    title,
+    slug,
+    body,
+    meta_description,
+    keywords,
+    cluster,
+    primary_citation_id,
+    unique_element,
+    internal_links,
+    linkedin_variant,
+    image_prompt,
+    legal_review_required,
+    source_brief,
+  } = req.body ?? {};
 
   if (!title || !slug || !body) {
     return res.status(400).json({ error: 'title, slug, and body are required' });
@@ -37,6 +51,44 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Server misconfigured — missing Supabase credentials' });
   }
 
+  // Refuse to publish any article with a pending legal review
+  if (legal_review_required === true) {
+    // Save it, but status is ethics_first_article_pending_legal_review, not draft
+    const statusOverride = 'ethics_first_article_pending_legal_review';
+    console.warn(`[blog-publish] Legal review required — saving with status: ${statusOverride}`);
+
+    try {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/blog_posts`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SERVICE_KEY,
+          'Authorization': `Bearer ${SERVICE_KEY}`,
+          'Prefer': 'return=representation',
+        },
+        body: JSON.stringify(buildPostPayload({
+          title, slug, body, meta_description, keywords, cluster,
+          primary_citation_id, unique_element, internal_links, linkedin_variant,
+          image_prompt, legal_review_required: true, source_brief,
+          status: statusOverride,
+        })),
+      });
+
+      if (!response.ok) {
+        const err = await response.text();
+        throw new Error(`Supabase ${response.status}: ${err}`);
+      }
+
+      const [post] = await response.json();
+      console.log(`[blog-publish] Ethics draft saved (legal review pending): ${post.id} — ${post.slug}`);
+      return res.status(201).json({ id: post.id, slug: post.slug, status: statusOverride });
+
+    } catch (err) {
+      console.error('[blog-publish] Error:', err.message);
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
   try {
     const response = await fetch(`${SUPABASE_URL}/rest/v1/blog_posts`, {
       method: 'POST',
@@ -46,15 +98,12 @@ export default async function handler(req, res) {
         'Authorization': `Bearer ${SERVICE_KEY}`,
         'Prefer': 'return=representation',
       },
-      body: JSON.stringify({
-        title,
-        slug,
-        body,
-        meta_description: meta_description ?? null,
-        keywords: Array.isArray(keywords) ? keywords : (keywords ? [keywords] : []),
+      body: JSON.stringify(buildPostPayload({
+        title, slug, body, meta_description, keywords, cluster,
+        primary_citation_id, unique_element, internal_links, linkedin_variant,
+        image_prompt, legal_review_required: false, source_brief,
         status: 'draft',
-        source_brief: source_brief ?? null,
-      }),
+      })),
     });
 
     if (!response.ok) {
@@ -70,4 +119,28 @@ export default async function handler(req, res) {
     console.error('[blog-publish] Error:', err.message);
     return res.status(500).json({ error: err.message });
   }
+}
+
+function buildPostPayload({
+  title, slug, body, meta_description, keywords, cluster,
+  primary_citation_id, unique_element, internal_links, linkedin_variant,
+  image_prompt, legal_review_required, source_brief, status,
+}) {
+  return {
+    title,
+    slug,
+    body,
+    meta_description:     meta_description ?? null,
+    keywords:             Array.isArray(keywords) ? keywords : (keywords ? [keywords] : []),
+    cluster:              cluster ?? null,
+    primary_citation_id:  primary_citation_id ?? null,
+    unique_element:       unique_element ?? null,
+    internal_links:       Array.isArray(internal_links) ? internal_links : null,
+    linkedin_variant:     linkedin_variant ?? null,
+    image_prompt:         image_prompt ?? null,
+    legal_review_required: legal_review_required === true,
+    legal_review_approved_at: null,
+    status,
+    source_brief:         source_brief ?? null,
+  };
 }
