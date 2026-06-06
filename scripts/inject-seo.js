@@ -85,6 +85,13 @@ const ROUTES = {
     canonical: 'https://www.interviewanswers.ai/onboarding',
     keywords: 'interview preparation sign up, AI interview practice, free interview coaching',
   },
+  '/about/editorial': {
+    title: 'Editorial Standards | InterviewAnswers.ai',
+    description: 'How InterviewAnswers.ai produces blog content — citation standards, editorial review, and the people behind every article.',
+    canonical: 'https://www.interviewanswers.ai/about/editorial',
+    keywords: 'editorial standards, InterviewAnswers editorial team, content policy',
+    robots: 'index, follow',
+  },
   '/privacy': {
     title: 'Privacy Policy — InterviewAnswers.ai',
     description: 'Privacy policy for InterviewAnswers.ai. Learn how we protect your data and interview practice history.',
