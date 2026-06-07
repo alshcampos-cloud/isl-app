@@ -139,30 +139,66 @@ export default function NursingPricing({ userData, onClose }) {
 
       console.log('🛒 Starting nursing checkout:', passType);
 
-      const { data, error: fnError } = await supabase.functions.invoke('create-checkout-session', {
-        body: {
+      // 2026-06-04 (PR #58): direct fetch instead of supabase.functions.invoke.
+      //
+      // Why
+      // ---
+      // `supabase.functions.invoke()` does internal auth resolution (reads
+      // the session via the SDK to attach the Bearer token). When the SDK's
+      // session machinery is under contention from any other in-flight auth
+      // call, that internal step can hang indefinitely — the same Web Lock
+      // deadlock we band-aided in PRs #29/#43/#48/#49/#56 — and the user
+      // gets stuck at "Processing..." with no error ever surfacing.
+      //
+      // Fix: skip the SDK wrapper entirely. Pull the JWT from localStorage
+      // (lock-free synchronous read), call the Edge Function as a raw HTTP
+      // POST, and race the fetch against a 30s timeout so it cannot hang
+      // the UI forever. If anything goes wrong, the user gets a real error
+      // message instead of an infinite spinner.
+      const stored = readLocalSession();
+      const accessToken = stored.session?.access_token;
+      if (!accessToken) {
+        throw new Error('Session token missing. Please sign in again.');
+      }
+
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      if (!supabaseUrl || !supabaseAnonKey) {
+        throw new Error('Backend not configured. Please contact support.');
+      }
+
+      const fetchPromise = fetch(`${supabaseUrl}/functions/v1/create-checkout-session`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'apikey': supabaseAnonKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           priceId,
           userId: activeUser.id,
           email: activeUser.email,
           successUrl,
           cancelUrl,
           passType,
-        },
+        }),
       });
 
-      if (fnError) {
-        // Try to extract error message from response
-        let errorDetail = 'Failed to create checkout session';
-        if (fnError.context && typeof fnError.context.json === 'function') {
-          try {
-            const errorBody = await fnError.context.json();
-            errorDetail = errorBody.error || errorDetail;
-          } catch {
-            // fallback
-          }
-        }
-        errorDetail = data?.error || errorDetail || fnError.message;
-        throw new Error(errorDetail);
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Checkout took too long. Please try again.')), 30000)
+      );
+
+      const response = await Promise.race([fetchPromise, timeoutPromise]);
+
+      let data = null;
+      try {
+        data = await response.json();
+      } catch {
+        // body wasn't JSON — fall through with status-based error
+      }
+
+      if (!response.ok) {
+        throw new Error(data?.error || `Checkout failed (HTTP ${response.status}). Please try again.`);
       }
 
       if (data?.error) {
