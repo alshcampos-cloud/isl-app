@@ -14,6 +14,7 @@ import { X, Shield, Zap, Clock, Star, CheckCircle, Loader2, ExternalLink } from 
 import { supabase } from '../../lib/supabase';
 import { isIOS, isNativeApp } from '../../utils/platform';
 import { purchaseProduct, restorePurchases, initializePurchases, PRODUCTS } from '../../utils/nativePurchases';
+import { readLocalSession } from '../../utils/localSessionGuard';
 
 export default function NursingPricing({ userData, onClose }) {
   const [isLoading, setIsLoading] = useState(null); // 'nursing_30day' | 'annual_all_access' | null
@@ -24,7 +25,37 @@ export default function NursingPricing({ userData, onClose }) {
 
   // Detect if running inside iOS native app
   const isIOSNative = isIOS() && isNativeApp();
-  const userId = userData?.user?.id;
+
+  // 2026-06-04: localStorage fallback for the auth check.
+  //
+  // Why this exists
+  // ---------------
+  // We previously gated purchase on `userData?.user?.id` only — the parent
+  // (NursingTrackApp.jsx) is supposed to populate this via getSession().
+  // But if the parent's auth check races, deadlocks, or the modal mounts
+  // before the parent's userData has settled, the user clicks Buy and sees
+  // "You must be logged in to purchase." while genuinely logged in.
+  //
+  // Fix: if the prop is incomplete, fall back to reading the session
+  // straight from localStorage (lock-free synchronous read — same pattern
+  // shipped in PRs #29/#43/#48/#49). The localStorage session IS the
+  // authoritative store; the SDK is just a wrapper that can hang.
+  //
+  // Effect: as long as the user has a valid Supabase session in
+  // localStorage, the purchase flow proceeds — regardless of parent-prop
+  // timing.
+  const resolveActiveUser = () => {
+    if (userData?.user?.id) {
+      return { id: userData.user.id, email: userData.user.email };
+    }
+    const stored = readLocalSession();
+    if (stored.isValid && stored.user?.id && !stored.isAnonymous) {
+      return { id: stored.user.id, email: stored.user.email };
+    }
+    return null;
+  };
+
+  const userId = userData?.user?.id || readLocalSession().user?.id;
 
   // Initialize RC purchases when modal mounts on iOS native
   useEffect(() => {
@@ -39,7 +70,8 @@ export default function NursingPricing({ userData, onClose }) {
   // for digital content) and (b) made nursing 30-day SKU unpurchasable through
   // native StoreKit even though it's defined in App Store Connect.
   const handleIOSPurchase = async (passType) => {
-    if (!userId) {
+    const activeUser = resolveActiveUser();
+    if (!activeUser) {
       setError('You must be logged in to purchase.');
       return;
     }
@@ -52,7 +84,7 @@ export default function NursingPricing({ userData, onClose }) {
       if (!productId) {
         throw new Error('This purchase is not available on this build.');
       }
-      const result = await purchaseProduct(productId, userId);
+      const result = await purchaseProduct(productId, activeUser.id);
       if (result.error === 'cancelled') {
         setIsLoading(null);
         return;
@@ -80,7 +112,8 @@ export default function NursingPricing({ userData, onClose }) {
       return;
     }
 
-    if (!userData?.user?.id) {
+    const activeUser = resolveActiveUser();
+    if (!activeUser) {
       setError('You must be logged in to purchase.');
       return;
     }
@@ -109,8 +142,8 @@ export default function NursingPricing({ userData, onClose }) {
       const { data, error: fnError } = await supabase.functions.invoke('create-checkout-session', {
         body: {
           priceId,
-          userId: userData.user.id,
-          email: userData.user.email,
+          userId: activeUser.id,
+          email: activeUser.email,
           successUrl,
           cancelUrl,
           passType,
