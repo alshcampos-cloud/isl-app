@@ -9,7 +9,7 @@ import { NURSING_SPECIALTIES } from './nursingQuestions';
 import { supabase } from '../../lib/supabase';
 import { signOutAndRedirect } from '../../utils/localSessionGuard';
 import { showGeneralFeatures } from '../../utils/appTarget';
-import { isTap } from '../../utils/tapGuard';
+import { tapHandlers } from '../../utils/tapGuard';
 
 export default function SpecialtySelection({ onSelectSpecialty, onBack }) {
   const [selected, setSelected] = useState(null);
@@ -48,19 +48,19 @@ export default function SpecialtySelection({ onSelectSpecialty, onBack }) {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 pb-4">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-4 pb-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="text-center mb-10"
+          className="text-center mb-5 sm:mb-6"
         >
           <div className="inline-flex items-center gap-2 bg-sky-600/20 border border-sky-400/30 rounded-full px-4 py-2 mb-4">
             <Stethoscope className="w-4 h-4 text-sky-300" />
             <span className="text-sm text-sky-200 font-medium">Nursing Interview Track</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3">
-            What specialty are you interviewing for?
+            Pick your specialty to start interview practice — you can change anytime
           </h1>
           <p className="text-sky-300 text-lg max-w-2xl mx-auto">
             We'll tailor your practice questions, scenarios, and coaching to your target unit.
@@ -70,7 +70,7 @@ export default function SpecialtySelection({ onSelectSpecialty, onBack }) {
 
       {/* Specialty Grid */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-32">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {NURSING_SPECIALTIES.map((specialty, index) => {
             const isSelected = selected?.id === specialty.id;
             const isHovered = hoveredId === specialty.id;
@@ -82,13 +82,14 @@ export default function SpecialtySelection({ onSelectSpecialty, onBack }) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: index * 0.05 }}
                 onClick={() => setSelected(specialty)}
+                {...tapHandlers(() => setSelected(specialty))}
                 onMouseEnter={() => setHoveredId(specialty.id)}
                 onMouseLeave={() => setHoveredId(null)}
                 className={`
                   relative text-left p-5 rounded-xl border-2 transition-all duration-200
                   ${isSelected
                     ? 'border-sky-500 bg-sky-500/20 shadow-lg shadow-sky-500/20'
-                    : 'border-white/10 bg-white/5 hover:border-white/25 hover:bg-white/10'
+                    : 'border-white/30 bg-white/10 hover:border-white/40 hover:bg-white/15'
                   }
                 `}
               >
@@ -108,13 +109,14 @@ export default function SpecialtySelection({ onSelectSpecialty, onBack }) {
                   {specialty.icon}
                 </div>
 
-                {/* Name */}
+                {/* Name — use shortName on mobile to prevent multi-line wrap at 375px */}
                 <h3 className="text-white font-semibold text-lg mb-1">
-                  {specialty.name}
+                  <span className="sm:hidden">{specialty.shortName || specialty.name}</span>
+                  <span className="hidden sm:inline">{specialty.name}</span>
                 </h3>
 
                 {/* Description */}
-                <p className="text-slate-400 text-sm leading-relaxed">
+                <p className="text-slate-300 text-sm leading-relaxed">
                   {specialty.description}
                 </p>
 
