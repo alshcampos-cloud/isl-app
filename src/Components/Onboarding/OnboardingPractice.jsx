@@ -192,6 +192,24 @@ export default function OnboardingPractice({ question, anonSessionReady, onCompl
               )}
             </button>
           </div>
+
+          {/* Skip path — added 2026-06-11 to fix onboarding TRAP (Issue #1).
+              Users with no time/desire to type now have an explicit exit. Calls
+              onComplete(null, '') — IRSBaseline.jsx:67 fallback `practiceScore || 6`
+              handles null score gracefully. No Edge Function call → zero credit
+              burned. Battle Scar #16: onClick handles iOS Safari via synthetic click. */}
+          <div className="flex justify-center mt-4">
+            <button
+              onClick={() => {
+                trackOnboardingEvent(3, 'skipped')
+                onComplete(null, '')
+              }}
+              disabled={isLoading}
+              className="text-sm text-slate-400 hover:text-slate-600 underline-offset-4 hover:underline transition-colors py-2 px-4 disabled:opacity-50"
+            >
+              Skip for now →
+            </button>
+          </div>
         </div>
       )}
 
