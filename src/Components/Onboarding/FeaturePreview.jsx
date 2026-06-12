@@ -152,16 +152,23 @@ export default function FeaturePreview({ fromNursing: fromNursingProp = false, p
           ))}
         </div>
 
-        {/* CTA */}
+        {/* CTA — 2026-06-12 (Aesthetic Wave 1 PR #1): swapped from multi-color
+            gradient (teal→emerald / sky→blue) to single-tone navy-900. Per
+            ONBOARDING_DESIGN_CRITIQUE_2026-06-12.md, multi-color gradient CTAs
+            are the #1 visual tell of AI-generated UI. Single-tone navy matches
+            Signal / DuckDuckGo / Patagonia confidence aesthetic. Brand tokens
+            (navy-900, warm-50, rounded-card, font-heading, shadow-card) all
+            already defined in tailwind.config.js and used by 6 landing-page
+            components. fromNursing conditional dropped because both branches
+            were off-brand — one tone fits both tracks. onClick callback wiring
+            preserved byte-identical. Copy reordered to lead with benefit
+            ("Keep your progress" before "create a free account") per DuckDuckGo
+            value-first pattern. */}
         <button
           onClick={onContinue}
-          className={`mt-8 w-full py-4 rounded-xl font-bold text-lg text-white shadow-lg transition-all hover:-translate-y-0.5 ${
-            fromNursing
-              ? 'bg-gradient-to-r from-sky-500 to-blue-600 shadow-sky-500/25'
-              : 'bg-gradient-to-r from-teal-500 to-emerald-500 shadow-teal-500/25'
-          }`}
+          className="mt-8 w-full py-4 rounded-card font-heading font-semibold text-base text-warm-50 bg-navy-900 hover:bg-navy-800 shadow-card hover:shadow-card-hover transition-all"
         >
-          Create free account — keep your progress →
+          Keep your progress — create a free account
         </button>
 
         <p className="text-center text-xs text-gray-400 mt-3">
