@@ -19,6 +19,7 @@ import useNursingQuestions from './useNursingQuestions';
 import NursingLoadingSkeleton from './NursingLoadingSkeleton';
 import NursingIRSDisplay from './NursingIRSDisplay';
 import StreakDisplay from '../Streaks/StreakDisplay';
+import OnboardingCallout from './OnboardingCallout';
 import {
   countByMode, averageScore, averageSBARScores, averageByFramework,
   uniqueQuestionsPracticed, scoreTrend,
@@ -198,6 +199,30 @@ export default function NursingDashboard({ specialty, onStartMode, onChangeSpeci
     sbar: userData?.usage?.nursingSbar,
   };
 
+  // 2026-06-11 (Layer 1 Issue #6C): show onboarding callout to fresh nursing
+  // users (0 practice + 0 mock) who haven't dismissed it. Truthy-presence
+  // gate (`.nursingPractice && .nursingMock` BEFORE checking `.used`) handles
+  // the rare case where getUsageStats returns null due to a Supabase error
+  // (creditSystem.js:551 error path) — a returning user whose usage fetch
+  // failed will NOT see the banner spuriously. Pairs with the Layer 1 Issue #1
+  // Skip button on OnboardingPractice — users who skipped land here with zero
+  // sessions and benefit from the explicit nudge.
+  const [calloutDismissedThisSession, setCalloutDismissedThisSession] = useState(false);
+  const wasCalloutDismissed = (() => {
+    try {
+      return !!localStorage.getItem('nursing_dashboard_callout_seen');
+    } catch (_e) {
+      return false;
+    }
+  })();
+  const showOnboardingCallout =
+    !calloutDismissedThisSession &&
+    !wasCalloutDismissed &&
+    userData?.usage?.nursingPractice &&
+    userData?.usage?.nursingMock &&
+    userData.usage.nursingPractice.used === 0 &&
+    userData.usage.nursingMock.used === 0;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-sky-950 to-slate-900">
       {/* Top Nav */}
@@ -366,6 +391,17 @@ export default function NursingDashboard({ specialty, onStartMode, onChangeSpeci
               </p>
             </div>
           </div>
+        )}
+
+        {/* Onboarding callout — fresh nursing users only (Issue #6C) */}
+        {showOnboardingCallout && (
+          <OnboardingCallout
+            onDismiss={() => setCalloutDismissedThisSession(true)}
+            onStart={() => {
+              setCalloutDismissedThisSession(true);
+              onStartMode('mock');
+            }}
+          />
         )}
 
         {/* Practice Modes */}
