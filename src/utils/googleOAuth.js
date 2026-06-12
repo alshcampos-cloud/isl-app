@@ -48,10 +48,15 @@ export async function startGoogleOAuth({ fromNursing = false, archetype = null }
 
     // Step 5: Start OAuth redirect to Google
     const onboardingField = fromNursing ? 'nursing' : 'general'
+    // 2026-06-12: pass fromNursing through the redirect URL itself so the
+    // OAuthCallback can read it from `searchParams` as the most durable
+    // signal — survives every localStorage quirk, signOut clear, browser
+    // private mode, and Vercel preview auth gate. URL > localStorage.
+    const callbackUrl = `${window.location.origin}/auth/callback${fromNursing ? '?from=nursing' : ''}`
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: callbackUrl,
         queryParams: {
           prompt: 'select_account', // Always show account picker
         },

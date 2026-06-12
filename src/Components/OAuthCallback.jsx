@@ -148,11 +148,20 @@ export default function OAuthCallback() {
       const metaField = user.user_metadata?.onboarding_field
       const localField = localStorage.getItem('isl_onboarding_field')
 
-      // Determine destination
-      const isNursing = context?.fromNursing || metaField === 'nursing' || localField === 'nursing'
+      // 2026-06-12: URL is the highest-priority signal. The redirect URL
+      // from Google now includes `?from=nursing` (set in googleOAuth.js:54)
+      // so the nursing intent survives EVERY localStorage quirk, signOut
+      // clear, browser private mode, and Vercel preview auth gate. This
+      // also correctly handles the case where a user originally signed up
+      // as 'general' but is now following a nursing URL — their current
+      // intent (URL) wins over stale stored metadata.
+      const urlField = searchParams.get('from')
+
+      // Determine destination — URL > localStorage context > metadata > legacy field
+      const isNursing = urlField === 'nursing' || context?.fromNursing || metaField === 'nursing' || localField === 'nursing'
       const destination = isNursing ? '/nursing' : '/app'
 
-      console.log('[OAuthCallback] Routing to:', destination, { context, metaField, localField })
+      console.log('[OAuthCallback] Routing to:', destination, { urlField, context, metaField, localField })
 
       // Short delay for UX (show success state briefly)
       setTimeout(() => {
