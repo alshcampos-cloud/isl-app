@@ -192,6 +192,28 @@ export default function OnboardingPractice({ question, anonSessionReady, onCompl
               )}
             </button>
           </div>
+
+          {/* Skip path — added 2026-06-11 to fix onboarding TRAP (Issue #1).
+              Users with no time/desire to type now have an explicit exit. Calls
+              onComplete(null, '') — IRSBaseline.jsx detects null and shows the
+              "Ready when you are" baseline screen (Option B) instead of a
+              misleading 6/10. No Edge Function call → zero credit burned.
+              Battle Scar #16: onClick handles iOS Safari via synthetic click.
+              Tier 2 visibility (2026-06-11): always-underlined, slate-500,
+              font-medium, longer explanatory copy — discoverable without
+              cannibalizing the primary Submit CTA. */}
+          <div className="flex justify-center mt-4">
+            <button
+              onClick={() => {
+                trackOnboardingEvent(3, 'skipped')
+                onComplete(null, '')
+              }}
+              disabled={isLoading}
+              className="text-sm font-medium text-slate-500 hover:text-slate-700 underline underline-offset-4 transition-colors py-2 px-4 disabled:opacity-50"
+            >
+              Not ready to type? Skip and explore →
+            </button>
+          </div>
         </div>
       )}
 
