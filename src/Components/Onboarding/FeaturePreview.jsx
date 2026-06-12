@@ -17,23 +17,63 @@ export default function FeaturePreview({ fromNursing: fromNursingProp = false, p
 
   // Two features only: the highest-leverage hooks for the value prop.
   // (Full free-tier list is shown on SignUpPrompt to avoid duplication.)
-  const features = [
-    {
-      icon: '🎙️',
-      title: 'AI Mock Interviews',
-      subtitle: 'Practice with a realistic AI interviewer',
-      description: 'Get asked real interview questions, respond by typing or voice, and receive instant STAR-method feedback on your answer.',
-      free: '3 sessions/month',
-    },
-    {
-      icon: '📋',
-      title: 'Practice Prompter',
-      subtitle: 'Rehearse out loud with your own bullet points',
-      description: 'Read a question out loud, answer out loud, and see your prepared bullet points appear during rehearsal — train yourself to hit your key points naturally.',
-      free: '5 sessions/month',
-      highlight: true,
-    },
-  ]
+  //
+  // 2026-06-11 (Day 2c — extension of Issue #2): branch on fromNursing so
+  // nursing-track signups see features that ACTUALLY exist in their track.
+  // Practice Prompter does NOT exist in nursing — same trust-violation
+  // pattern as Issue #2 (SignUpPrompt fix in PR #62) but on the earlier
+  // teaser screen between IRSBaseline and SignUpPrompt. Before this fix,
+  // every nursing signup saw "Practice Prompter — 5 sessions/month" on
+  // this screen, then landed in /nursing dashboard with no such feature.
+  //
+  // SOURCE OF TRUTH — numbers pinned to creditSystem.js TIER_LIMITS.free:
+  //   Nursing: nursing_mock=2, nursing_sbar=3.
+  //   General: ai_interviewer=3 ("AI Mock Interviews — 3 sessions/month"),
+  //   live_prompter_questions=10 (Practice Prompter "5 sessions/month" is
+  //   a product-team curated teaser display, NOT a strict cap mirror —
+  //   preserving existing general-path string byte-identical to avoid
+  //   any non-fix copy drift).
+  //
+  // HIGHLIGHTED feature gets the special science callout at line 105:
+  //   "Mimicking a real interview increases recall by 3x vs. just reading
+  //   notes." General path keeps Practice Prompter highlighted (preserved
+  //   byte-identical). Nursing path highlights Mock Interview — matches
+  //   the Issue #6C dashboard banner's "Start with mock interview" CTA.
+  const features = fromNursing
+    ? [
+        {
+          icon: '🩺',
+          title: 'Nursing Mock Interviews',
+          subtitle: 'Practice with a hiring-manager AI',
+          description: 'Get asked specialty-specific nursing questions, respond by typing or voice, and receive instant STAR-method feedback grounded in real clinical communication scenarios.',
+          free: '2 sessions/month',
+          highlight: true,
+        },
+        {
+          icon: '📋',
+          title: 'SBAR Drills',
+          subtitle: 'Practice structured clinical handoffs',
+          description: 'Walk through Situation, Background, Assessment, Recommendation drills with per-component scoring — the framework hiring managers expect from clinical interviews.',
+          free: '3 sessions/month',
+        },
+      ]
+    : [
+        {
+          icon: '🎙️',
+          title: 'AI Mock Interviews',
+          subtitle: 'Practice with a realistic AI interviewer',
+          description: 'Get asked real interview questions, respond by typing or voice, and receive instant STAR-method feedback on your answer.',
+          free: '3 sessions/month',
+        },
+        {
+          icon: '📋',
+          title: 'Practice Prompter',
+          subtitle: 'Rehearse out loud with your own bullet points',
+          description: 'Read a question out loud, answer out loud, and see your prepared bullet points appear during rehearsal — train yourself to hit your key points naturally.',
+          free: '5 sessions/month',
+          highlight: true,
+        },
+      ]
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-slate-50 to-gray-100">
