@@ -260,46 +260,111 @@ export default function SignUpPrompt({ archetype, archetypeConfig, practiceScore
         </p>
       </div>
 
-      {/* What you get with a free account — actual free tier features */}
+      {/* What you get with a free account — actual free tier features.
+          2026-06-11 (Issue #2): branch on fromNursing so nursing-track signups
+          see features that ACTUALLY exist in nursing instead of general-track
+          features. Critically the prior list advertised "10 Practice Prompter
+          questions" which does NOT exist in nursing — Cheryl + Lorena (and
+          any nursing signup via /nurse) saw promised features that aren't
+          there → trust violation on the very last screen before signup.
+
+          SOURCE OF TRUTH — numbers pinned to creditSystem.js TIER_LIMITS.free:
+          - General: ai_interviewer=3, practice_mode=10, answer_assistant=3,
+            question_gen=3, live_prompter_questions=10.
+          - Nursing: nursing_practice=3, nursing_mock=2, nursing_sbar=3,
+            nursing_coach=2, nursing_confidence=3, nursing_offer_coach=2,
+            nursing_answer_assistant=3.
+          Server-side caps enforced in supabase/functions/ai-feedback/index.ts
+          (PR #16) — keep this list in sync with both source-of-truth files. */}
       <div className="bg-teal-50 border border-teal-200 rounded-xl p-4 mb-6">
         <p className="text-sm text-teal-700 font-medium mb-2">Your free account includes each month:</p>
-        <ul className="text-sm text-teal-600 space-y-1.5">
-          <li className="flex items-start gap-2">
-            <span className="mt-0.5">🎙️</span>
-            <span>3 AI Mock Interviewer sessions</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="mt-0.5">📝</span>
-            <span>10 Practice Mode sessions</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="mt-0.5">💡</span>
-            <span>3 Answer Assistant sessions</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="mt-0.5">❓</span>
-            <span>3 AI-generated custom questions</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="mt-0.5">📋</span>
-            <span>10 Practice Prompter questions</span>
-          </li>
-        </ul>
+        {fromNursing ? (
+          <ul className="text-sm text-teal-600 space-y-1.5">
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5">🩺</span>
+              <span>2 Nursing Mock Interview sessions</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5">📝</span>
+              <span>3 Nursing Practice sessions</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5">📋</span>
+              <span>3 SBAR drills</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5">🎯</span>
+              <span>2 AI Coach sessions</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5">💪</span>
+              <span>3 Confidence Builder briefs</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5">💰</span>
+              <span>2 Offer Negotiation Coach sessions</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5">💡</span>
+              <span>3 Answer Assistant sessions</span>
+            </li>
+          </ul>
+        ) : (
+          <ul className="text-sm text-teal-600 space-y-1.5">
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5">🎙️</span>
+              <span>3 AI Mock Interviewer sessions</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5">📝</span>
+              <span>10 Practice Mode sessions</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5">💡</span>
+              <span>3 Answer Assistant sessions</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5">❓</span>
+              <span>3 AI-generated custom questions</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5">📋</span>
+              <span>10 Practice Prompter questions</span>
+            </li>
+          </ul>
+        )}
         <p className="text-sm text-teal-700 font-medium mt-4 mb-2">Always included:</p>
-        <ul className="text-sm text-teal-600 space-y-1.5">
-          <li className="flex items-start gap-2">
-            <span className="mt-0.5">📊</span>
-            <span>STAR method coaching with detailed scoring</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="mt-0.5">📚</span>
-            <span>50+ interview flashcards (unlimited)</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="mt-0.5">📈</span>
-            <span>Interview Readiness Score tracking</span>
-          </li>
-        </ul>
+        {fromNursing ? (
+          <ul className="text-sm text-teal-600 space-y-1.5">
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5">📊</span>
+              <span>STAR method coaching with detailed scoring</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5">📚</span>
+              <span>70+ specialty-specific nursing questions</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5">📈</span>
+              <span>Interview Readiness Score tracking</span>
+            </li>
+          </ul>
+        ) : (
+          <ul className="text-sm text-teal-600 space-y-1.5">
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5">📊</span>
+              <span>STAR method coaching with detailed scoring</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5">📚</span>
+              <span>50+ interview flashcards (unlimited)</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-0.5">📈</span>
+              <span>Interview Readiness Score tracking</span>
+            </li>
+          </ul>
+        )}
       </div>
 
       {/*
