@@ -76,6 +76,39 @@ export default function LandingPage() {
       return;
     }
 
+    // 2026-06-12: catch OAuth code that landed on Site URL (root /) instead
+    // of /auth/callback. This happens when Supabase's Redirect URLs allowlist
+    // doesn't include /auth/callback — Supabase strips the redirectTo and
+    // falls back to Site URL. Recovery: forward to /auth/callback ourselves
+    // and recover nursing context from localStorage (which startGoogleOAuth
+    // saved before the redirect).
+    //
+    // CONDITIONS — must have `?code=...` but NOT `type=signup` (email-confirm
+    // is handled by the block above) and NOT `type=recovery` (password reset).
+    // The remaining `?code=...` URLs are OAuth-only.
+    const isOAuthCode = search.includes('code=') &&
+      !search.includes('type=signup') &&
+      !hash.includes('type=');
+
+    if (isOAuthCode) {
+      console.log('🔑 OAuth code on landing detected (Supabase Site URL fallback), routing to /auth/callback');
+      // Recover nursing intent from localStorage — set by startGoogleOAuth
+      // before the redirect to Google. URL params were stripped by Supabase.
+      let target = `/auth/callback${search}`;
+      try {
+        const ctx = JSON.parse(localStorage.getItem('isl_oauth_context') || 'null');
+        const localField = localStorage.getItem('isl_onboarding_field');
+        if (ctx?.fromNursing || localField === 'nursing') {
+          target = `/auth/callback${search}${search ? '&' : '?'}from=nursing`;
+        }
+      } catch (_e) {
+        // ignore — fall through with bare URL, OAuthCallback will use its
+        // 3-signal fallback (metadata + legacy localStorage field)
+      }
+      navigate(target, { replace: true });
+      return;
+    }
+
     // Fallback timeout — if getSession() hangs or fails silently, show landing page anyway
     const fallbackTimer = setTimeout(() => {
       console.warn('⚠️ LandingPage: getSession() timed out after 3s, showing landing page');
