@@ -178,6 +178,44 @@ export default function IRSBaseline({ practiceScore, onContinue }) {
     onContinue()
   }
 
+  // 2026-06-11 (Issue #1 Option B): users who SKIPPED the practice question
+  // (passed practiceScore=null from OnboardingPractice's Skip button) get a
+  // distinct "ready when you are" screen instead of the score ring with a
+  // misleading 6/10 default. Preserves the existing Screen A byte-identically
+  // for real submitters (whose practiceScore is a number, not null).
+  //
+  // NOTE: the OnboardingPractice error fallback at line 110 sets score=3 (not
+  // null), so error-recovery users STILL see the existing ring — they get a
+  // best-effort score, not the skip-path screen.
+  //
+  // Tracks 'baseline_skipped_continued' so skip-funnel conversion is
+  // measurable separately from submit-funnel conversion.
+  if (view === 'A' && practiceScore === null) {
+    return (
+      <div className="flex-1 flex flex-col justify-center items-center text-center px-6">
+        <p className="text-sm text-teal-600 font-medium tracking-wide uppercase mb-2">
+          Welcome
+        </p>
+        <h2 className="text-2xl font-bold text-slate-800 mb-2">
+          Ready when you are
+        </h2>
+        <p className="text-slate-500 text-sm mb-8 max-w-xs">
+          Take a practice question anytime to see your interview readiness score and personalize your training plan.
+        </p>
+
+        <button
+          onClick={() => {
+            trackOnboardingEvent(4, 'baseline_skipped_continued')
+            onContinue()
+          }}
+          className="w-full max-w-xs py-3 px-6 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl transition-colors shadow-lg shadow-teal-600/20"
+        >
+          Continue to your dashboard →
+        </button>
+      </div>
+    )
+  }
+
   // ===== SCREEN A — Your score =====
   if (view === 'A') {
     return (
