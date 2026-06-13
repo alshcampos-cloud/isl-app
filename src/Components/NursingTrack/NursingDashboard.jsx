@@ -110,6 +110,19 @@ function AccountMenu({ userData }) {
 export default function NursingDashboard({ specialty, onStartMode, onChangeSpecialty, onBack, userData, sessionHistory = [], streakRefreshTrigger, onShowPricing }) {
   const { questions, categories, loading } = useNursingQuestions(specialty.id);
 
+  // 2026-06-12 (P0 hotfix): React Rules of Hooks — useState MUST be called
+  // before the `if (loading) return ...` early return below. Otherwise the
+  // hook count differs between renders (loading=true skips this useState,
+  // loading=false calls it) → React error #310 ("Rendered more hooks than
+  // during the previous render") crashes the entire dashboard.
+  //
+  // This useState was originally added in PR #63 (Issue #6C onboarding
+  // callout) AFTER the early return — the bug was latent until users hit
+  // the loading→ready transition with the callout-eligibility conditions
+  // met. Moving the useState here preserves the callout feature while
+  // restoring the hooks contract.
+  const [calloutDismissedThisSession, setCalloutDismissedThisSession] = useState(false);
+
   if (loading) return <NursingLoadingSkeleton title={`${specialty.name} Track`} onBack={onBack} />;
 
   // ── Compute real progress from sessionHistory ──
@@ -207,7 +220,10 @@ export default function NursingDashboard({ specialty, onStartMode, onChangeSpeci
   // failed will NOT see the banner spuriously. Pairs with the Layer 1 Issue #1
   // Skip button on OnboardingPractice — users who skipped land here with zero
   // sessions and benefit from the explicit nudge.
-  const [calloutDismissedThisSession, setCalloutDismissedThisSession] = useState(false);
+  //
+  // 2026-06-12 (P0 hotfix): calloutDismissedThisSession useState was moved
+  // ABOVE the `if (loading) return ...` early return to fix React error #310
+  // (hook count violation). Only the computed values remain here.
   const wasCalloutDismissed = (() => {
     try {
       return !!localStorage.getItem('nursing_dashboard_callout_seen');
