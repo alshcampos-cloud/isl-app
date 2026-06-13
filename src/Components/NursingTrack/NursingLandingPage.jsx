@@ -520,7 +520,7 @@ export default function NursingLandingPage() {
                   </li>
                 ))}
               </ul>
-              <Link to="/onboarding?from=nursing" className="block w-full text-center bg-sky-700 hover:bg-sky-800 text-white font-medium py-3 rounded-xl transition-colors shadow-lg shadow-sky-500/20">
+              <Link to="/signup?from=nursing&upgrade=true" className="block w-full text-center bg-sky-700 hover:bg-sky-800 text-white font-medium py-3 rounded-xl transition-colors shadow-lg shadow-sky-500/20">
                 Get Nursing Pass
               </Link>
             </div>
