@@ -377,13 +377,13 @@ export default function NursingDashboard({ specialty, onStartMode, onChangeSpeci
                 );
               })}
             </div>
-            <div className="flex items-center justify-between mt-3">
-              <p className="text-slate-600 text-[10px]">AI Coach, Confidence Builder, Offer Negotiation require a pass</p>
+            <div className="mt-4 space-y-3">
+              <p className="text-slate-300 text-xs">AI Coach, Confidence Builder, Offer Negotiation require a pass</p>
               <button
                 onClick={onShowPricing}
-                className="text-[10px] text-sky-400 hover:text-sky-300 font-medium transition-colors"
+                className="w-full py-3 px-4 bg-sky-600 hover:bg-sky-500 text-white font-semibold text-sm rounded-lg shadow-lg shadow-sky-500/20 transition-all"
               >
-                Get Nursing Pass →
+                Unlock everything — Get Nursing Pass →
               </button>
             </div>
           </div>
