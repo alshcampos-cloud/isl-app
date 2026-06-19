@@ -15,7 +15,9 @@
     "cap:sync": "VITE_APP_TARGET=general vite build && npx cap sync",
     "cap:ios": "VITE_APP_TARGET=general vite build && npx cap sync ios && npx cap open ios",
     "cap:ios-nursing": "VITE_APP_TARGET=nursing vite build && npx cap sync ios && npx cap open ios",
-    "cap:android": "VITE_APP_TARGET=general vite build && npx cap sync android && npx cap open android"
+    "cap:android": "VITE_APP_TARGET=general vite build && npx cap sync android && npx cap open android",
+    "blog:write": "node agents/writing-agent/writing-agent.js",
+    "blog:write:db": "node agents/writing-agent/writing-agent.js --db"
   },
   "dependencies": {
     "@capacitor/android": "^8.0.2",
