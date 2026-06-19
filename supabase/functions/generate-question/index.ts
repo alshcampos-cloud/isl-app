@@ -90,7 +90,7 @@ Return ONLY the question text - no quotes, no preamble, no explanation.`;
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 200,
         temperature: 0.9,
         messages: [{ role: 'user', content: contextPrompt }]

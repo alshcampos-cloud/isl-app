@@ -1018,7 +1018,7 @@ async function runContentBurst(
   let modelResponse;
   try {
     modelResponse = await callAnthropic({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: 2000,
       temperature: 0.8,
       system: SYSTEM_PROMPT,
