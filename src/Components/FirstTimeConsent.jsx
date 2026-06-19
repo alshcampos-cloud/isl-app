@@ -131,35 +131,9 @@ export default function FirstTimeConsent({ user, onAccepted, onAlreadyAccepted }
         </div>
 
         <div className="relative mb-6">
-        <div className="bg-slate-50 rounded-lg p-4 max-h-64 overflow-y-auto text-sm text-slate-700" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 4%, black 92%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 4%, black 92%, transparent 100%)' }}>
+        <div className="bg-slate-50 rounded-lg p-4 max-h-80 overflow-y-auto text-sm text-slate-700">
           {activeTab === 'summary' && (
             <div>
-              {/* PROMINENT AI DATA DISCLOSURE — Apple Guideline 5.1.1(i) & 5.1.2(i) */}
-              <div className="bg-slate-50 border border-slate-200 border-l-4 border-l-navy-600 rounded-lg p-3 mb-3">
-                <h4 className="font-semibold text-navy-700 text-sm mb-1">Third-Party AI Data Disclosure</h4>
-                <p className="text-slate-700 text-xs mb-1">
-                  Your practice responses are sent to <strong>Anthropic's Claude AI</strong> (a third-party service) to generate personalized coaching feedback.
-                </p>
-                <ul className="text-slate-600 text-xs space-y-0.5 ml-2">
-                  <li>• Audio is transcribed on your device — only text is sent to Anthropic</li>
-                  <li>• No personal identifiers (email, name, password) are shared</li>
-                  <li>• Anthropic does not use your data to train AI models</li>
-                  <li>• See <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener noreferrer" className="underline text-teal-600">Anthropic's Privacy Policy</a> for details</li>
-                </ul>
-              </div>
-
-              <label className="flex items-start gap-3 mt-3 p-3 bg-slate-50 rounded-lg border border-slate-200 cursor-pointer transition hover:border-slate-300">
-                <input
-                  type="checkbox"
-                  checked={aiConsentChecked}
-                  onChange={(e) => setAiConsentChecked(e.target.checked)}
-                  className="mt-0.5 w-5 h-5 rounded focus:ring-teal-500 accent-teal-600"
-                />
-                <span className="text-sm text-slate-700 leading-relaxed">
-                  I understand and consent to my practice responses being sent to Anthropic's Claude AI service for coaching feedback. No audio, email, or payment data is shared.
-                </span>
-              </label>
-
               {/* MEDICAL DISCLAIMER — Apple Guideline 1.4.1 (nursing app only) */}
               {getAppTarget() === 'nursing' && (
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
@@ -289,6 +263,36 @@ export default function FirstTimeConsent({ user, onAccepted, onAlreadyAccepted }
           )}
         </div>
         </div>
+
+        {/* PROMINENT AI DATA DISCLOSURE + CONSENT — Apple Guideline 5.1.1(i) & 5.1.2(i)
+            Moved OUT of the scrollable tab content so the checkbox that gates
+            Accept & Continue is always visible. Previous placement inside the
+            fade-masked scroll area caused users to miss the checkbox entirely
+            and abandon at this screen — the conversion-killer of the funnel. */}
+        <div className="bg-slate-50 border border-slate-200 border-l-4 border-l-navy-600 rounded-lg p-3 mb-3">
+          <h4 className="font-semibold text-navy-700 text-sm mb-1">Third-Party AI Data Disclosure</h4>
+          <p className="text-slate-700 text-xs mb-1">
+            Your practice responses are sent to <strong>Anthropic's Claude AI</strong> (a third-party service) to generate personalized coaching feedback.
+          </p>
+          <ul className="text-slate-600 text-xs space-y-0.5 ml-2">
+            <li>• Audio is transcribed on your device — only text is sent to Anthropic</li>
+            <li>• No personal identifiers (email, name, password) are shared</li>
+            <li>• Anthropic does not use your data to train AI models</li>
+            <li>• See <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener noreferrer" className="underline text-teal-600">Anthropic's Privacy Policy</a> for details</li>
+          </ul>
+        </div>
+
+        <label className="flex items-start gap-3 mb-4 p-3 bg-white rounded-lg border-2 border-teal-300 cursor-pointer transition hover:border-teal-400">
+          <input
+            type="checkbox"
+            checked={aiConsentChecked}
+            onChange={(e) => setAiConsentChecked(e.target.checked)}
+            className="mt-0.5 w-5 h-5 rounded focus:ring-teal-500 accent-teal-600"
+          />
+          <span className="text-sm text-slate-700 leading-relaxed">
+            I understand and consent to my practice responses being sent to Anthropic's Claude AI service for coaching feedback. No audio, email, or payment data is shared.
+          </span>
+        </label>
 
         <div className="flex gap-3">
           <button
