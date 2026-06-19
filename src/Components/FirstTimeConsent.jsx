@@ -282,14 +282,15 @@ export default function FirstTimeConsent({ user, onAccepted, onAlreadyAccepted }
           </ul>
         </div>
 
-        <label className="flex items-start gap-3 mb-4 p-3 bg-white rounded-lg border-2 border-teal-300 cursor-pointer transition hover:border-teal-400">
+        <label className={`flex items-start gap-3 mb-4 p-4 rounded-lg border-2 cursor-pointer transition shadow-sm ${aiConsentChecked ? 'bg-teal-50 border-teal-500 hover:bg-teal-100' : 'bg-amber-50 border-amber-400 hover:bg-amber-100 ring-2 ring-amber-200 ring-offset-1 animate-[modalIn_0.6s_ease-out]'}`}>
           <input
             type="checkbox"
             checked={aiConsentChecked}
             onChange={(e) => setAiConsentChecked(e.target.checked)}
-            className="mt-0.5 w-5 h-5 rounded focus:ring-teal-500 accent-teal-600"
+            className="mt-0.5 w-6 h-6 rounded focus:ring-teal-500 accent-teal-600 flex-shrink-0"
           />
-          <span className="text-sm text-slate-700 leading-relaxed">
+          <span className="text-sm text-slate-800 leading-relaxed font-medium">
+            <span className="inline-block bg-amber-200 text-amber-900 text-[10px] font-bold px-1.5 py-0.5 rounded mr-2 uppercase tracking-wide align-middle">Required</span>
             I understand and consent to my practice responses being sent to Anthropic's Claude AI service for coaching feedback. No audio, email, or payment data is shared.
           </span>
         </label>
@@ -306,7 +307,7 @@ export default function FirstTimeConsent({ user, onAccepted, onAlreadyAccepted }
             disabled={!aiConsentChecked}
             className={`flex-1 px-4 py-3 rounded-md font-medium transition-all ${aiConsentChecked ? 'bg-teal-600 text-white shadow-sm hover:bg-teal-700 active:scale-[0.98]' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}
           >
-            Accept & Continue
+            {aiConsentChecked ? 'Accept & Continue' : 'Check the box above ↑'}
           </button>
         </div>
 
