@@ -169,6 +169,7 @@ const TOKEN_COSTS: Record<string, { input: number; output: number }> = {
   'claude-3-5-haiku-20241022': { input: 0.000001, output: 0.000005 },
   'claude-haiku-4-5-20251001': { input: 0.000001, output: 0.000005 },
   'claude-sonnet-4-20250514':  { input: 0.000003, output: 0.000015 },
+  'claude-sonnet-4-6':         { input: 0.000003, output: 0.000015 },
 }
 
 /**
@@ -412,7 +413,7 @@ When giving feedback, cite their specific projects and skills as evidence they c
     //   Sonnet 4  → confidence-brief (nursing tone matters), nursing-coach handled separately below
     const haikuLegacy = 'claude-3-5-haiku-20241022';
     const haiku45 = 'claude-haiku-4-5-20251001';
-    const sonnet4 = 'claude-sonnet-4-20250514';
+    const sonnet4 = 'claude-sonnet-4-6';
 
     let model: string;
     if (mode === 'generate-bullets') {
@@ -966,7 +967,7 @@ Format citations as [Source: Learn Center] or [Source: Question Bank]
       // Haiku 4.5 benchmarks match Sonnet 4 on single-call scoring tasks at ~1/3 cost.
       const multiTurnFeatures = ['nursingMock', 'nursingCoach'];
       const nursingModel = multiTurnFeatures.includes(nursingFeature)
-        ? 'claude-sonnet-4-20250514'
+        ? 'claude-sonnet-4-6'
         : 'claude-haiku-4-5-20251001';
 
       // Call Anthropic with system prompt as system parameter (not in messages)
