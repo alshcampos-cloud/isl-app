@@ -102,7 +102,7 @@ export default function ManifestoSection() {
         {/* Signature — small sans, muted, em-dash prefix */}
         <p className="mt-10 text-sm text-slate-500 leading-relaxed">
           — Alsh Campos, founder · Built with my co-founder, a
-          clinical nurse working in infection prevention · April 2026
+          practicing clinical RN · April 2026
         </p>
       </div>
     </section>
