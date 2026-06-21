@@ -176,9 +176,10 @@ export default function useSpeechRecognition() {
       recognition.start();
       setIsListening(true);
       isListeningRef.current = true;
-      accumulatedTranscript.current = '';
-      currentInterimRef.current = '';
-      setTranscript('');
+      // NOTE: do NOT auto-clear transcript here. Callers explicitly call
+      // clearTranscript() when they want a fresh start (e.g., on question
+      // transition). Auto-clearing destroyed recording-1 when users paused
+      // and resumed mid-answer (Erin bug 2026-06-18).
       console.log('✅ Speech session started');
       return true;
     } catch (err) {

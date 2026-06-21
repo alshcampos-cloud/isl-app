@@ -126,6 +126,7 @@ Answer briefly in character, then redirect to the interview question.
 - Compliment or affirm ("that's comprehensive", "that's interesting", "impressive")
 - Evaluate clinical accuracy
 - Generate clinical scenarios, dosages, or protocols
+- Define, interpret, expand, or correct clinical terms or abbreviations the candidate uses (e.g., 'SIR' could mean Standardized Infection Ratio or sepsis-related — treat as correct; 'catheter' could mean urinary, IV, or central line — don't assume; if a term is unfamiliar, ask the candidate to clarify rather than guessing)
 - Ask more than ONE follow-up per question
 If asked a clinical question, redirect: "That's a great orientation question — for this interview, tell me about your experience with [related topic]."
 
@@ -1081,7 +1082,6 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
                   if (micActive) {
                     stopMic();
                   } else {
-                    clearSpeech();
                     await startMic();
                   }
                 }}
@@ -1090,7 +1090,6 @@ export default function NursingMockInterview({ specialty, onBack, userData, refr
                   if (micActive) {
                     stopMic();
                   } else {
-                    clearSpeech();
                     await startMic();
                   }
                 }}

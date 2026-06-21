@@ -83,6 +83,7 @@ CRITICAL: End with EXACTLY these score tags (each on its own line):
 [R-SCORE: X/10]
 
 WALLED GARDEN: NEVER evaluate clinical accuracy. Coach communication structure ONLY.
+CLINICAL TERMINOLOGY: Do NOT define, interpret, expand, or correct clinical terms or abbreviations the nurse uses. Examples: 'SIR' could mean Standardized Infection Ratio, sepsis-related, or any specialty-specific term — treat it as correct as written. 'Catheter' might mean urinary, IV, central line, or other — don't assume. If a term is genuinely unfamiliar, ask the nurse to clarify ('Could you explain what you mean by [term]?') rather than guessing. Quote the term back exactly as the nurse used it.
 TONE: Constructive, encouraging, never patronizing.`;
 };
 
@@ -346,6 +347,7 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
     if (nextIdx < questions.length) {
       setQuestionIndex(nextIdx);
       setUserAnswer('');
+      clearSpeech();  // Erin bug fix 2026-06-18: explicit boundary on question change (hook no longer auto-clears in startSession)
       setFeedback(null);
       setValidationFlags(null);
       setError(null);
@@ -353,7 +355,7 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
     } else {
       setDrillComplete(true);
     }
-  }, [questionIndex, questions.length]);
+  }, [questionIndex, questions.length, clearSpeech]);
 
   // Handle Enter
   const handleKeyDown = (e) => {
@@ -454,7 +456,7 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
 
           {/* Actions */}
           <div className="flex flex-col sm:flex-row gap-3">
-            <button onClick={() => { setDrillResults([]); setDrillComplete(false); setQuestionIndex(0); setUserAnswer(''); setFeedback(null); setValidationFlags(null); setExpandedSections({}); }}
+            <button onClick={() => { setDrillResults([]); setDrillComplete(false); setQuestionIndex(0); setUserAnswer(''); clearSpeech(); setFeedback(null); setValidationFlags(null); setExpandedSections({}); }}
               className="flex-1 bg-gradient-to-r from-sky-600 to-cyan-500 text-white font-semibold py-3 rounded-xl shadow-lg shadow-sky-500/30 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2">
               <RotateCcw className="w-4 h-4" /> Drill Again
             </button>
@@ -578,11 +580,11 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
                   {hasReliableSpeech && (
                     <button
                       onClick={async () => {
-                        if (micActive) { stopMic(); } else { clearSpeech(); await startMic(); }
+                        if (micActive) { stopMic(); } else { await startMic(); }
                       }}
                       onTouchEnd={async (e) => {
                         e.preventDefault();
-                        if (micActive) { stopMic(); } else { clearSpeech(); await startMic(); }
+                        if (micActive) { stopMic(); } else { await startMic(); }
                       }}
                       className={`p-3 rounded-xl transition-all flex-shrink-0 mt-0.5 ${
                         micActive
@@ -785,8 +787,8 @@ export default function NursingSBARDrill({ specialty, onBack, userData, refreshU
                 {/* ── Action Buttons ── */}
                 <div className="flex gap-3">
                   <button
-                    onClick={() => { setUserAnswer(''); setFeedback(null); setValidationFlags(null); setExpandedSections({}); }}
-                    onTouchEnd={(e) => { e.preventDefault(); setUserAnswer(''); setFeedback(null); setValidationFlags(null); setExpandedSections({}); }}
+                    onClick={() => { setUserAnswer(''); clearSpeech(); setFeedback(null); setValidationFlags(null); setExpandedSections({}); }}
+                    onTouchEnd={(e) => { e.preventDefault(); setUserAnswer(''); clearSpeech(); setFeedback(null); setValidationFlags(null); setExpandedSections({}); }}
                     className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-sm hover:bg-white/20 transition-all"
                   >
                     <RotateCcw className="w-4 h-4" /> Retry
