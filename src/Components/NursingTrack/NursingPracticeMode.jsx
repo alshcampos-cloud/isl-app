@@ -119,7 +119,9 @@ At the very end, include the score on a new line in EXACTLY this format:
 [SCORE: X/5]
 The score line should be the LAST line of your response.
 
-Rules: Coach communication ONLY. Never generate clinical content. Never patronizing. Match praise to actual answer quality.`;
+Rules: Coach communication ONLY. Never generate clinical content. Never patronizing. Match praise to actual answer quality.
+
+CLINICAL TERMINOLOGY RULE: Do NOT define, interpret, expand, or correct clinical terms or abbreviations the nurse uses. Examples: 'SIR' could mean Standardized Infection Ratio, sepsis-related, or any specialty-specific term — treat it as correct as written. 'Catheter' might mean urinary, IV, central line, or other — don't assume. If a term is genuinely unfamiliar, ask the nurse to clarify ('Could you explain what you mean by [term]?') rather than guessing. Treat all clinical terminology as correct.`;
 };
 
 // Map score to tier label + color palette for Clinical Coaching Report
@@ -347,12 +349,13 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
     const nextIdx = (questionIndex + 1) % questions.length;
     setQuestionIndex(nextIdx);
     setUserAnswer('');
+    clearSpeech();  // Erin bug fix 2026-06-18: explicit boundary on question change
     setFeedback(null);
     setValidationFlags(null);
     setError(null);
     setSavedAsBest(false);
     setExpandedSections({});
-  }, [questionIndex, questions.length]);
+  }, [questionIndex, questions.length, clearSpeech]);
 
   // Shuffle to random question
   const shuffleQuestion = useCallback(() => {
@@ -362,12 +365,13 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
     } while (nextIdx === questionIndex && questions.length > 1);
     setQuestionIndex(nextIdx);
     setUserAnswer('');
+    clearSpeech();  // Erin bug fix 2026-06-18: explicit boundary on question change
     setFeedback(null);
     setValidationFlags(null);
     setError(null);
     setSavedAsBest(false);
     setExpandedSections({});
-  }, [questionIndex, questions.length]);
+  }, [questionIndex, questions.length, clearSpeech]);
 
   // Handle Enter
   const handleKeyDown = (e) => {
@@ -503,11 +507,11 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
                       {hasReliableSpeech && (
                         <button
                           onClick={async () => {
-                            if (micActive) { stopMic(); } else { clearSpeech(); await startMic(); }
+                            if (micActive) { stopMic(); } else { await startMic(); }
                           }}
                           onTouchEnd={async (e) => {
                             e.preventDefault();
-                            if (micActive) { stopMic(); } else { clearSpeech(); await startMic(); }
+                            if (micActive) { stopMic(); } else { await startMic(); }
                           }}
                           className={`p-3 rounded-xl transition-all flex-shrink-0 mt-0.5 ${
                             micActive
@@ -861,8 +865,8 @@ export default function NursingPracticeMode({ specialty, onBack, userData, refre
                     {/* Actions */}
                     <div className="flex gap-3">
                       <button
-                        onClick={() => { setUserAnswer(''); setFeedback(null); setValidationFlags(null); setSavedAsBest(false); setExpandedSections({}); }}
-                        onTouchEnd={(e) => { e.preventDefault(); setUserAnswer(''); setFeedback(null); setValidationFlags(null); setSavedAsBest(false); setExpandedSections({}); }}
+                        onClick={() => { setUserAnswer(''); clearSpeech(); setFeedback(null); setValidationFlags(null); setSavedAsBest(false); setExpandedSections({}); }}
+                        onTouchEnd={(e) => { e.preventDefault(); setUserAnswer(''); clearSpeech(); setFeedback(null); setValidationFlags(null); setSavedAsBest(false); setExpandedSections({}); }}
                         className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-sm hover:bg-white/20 transition-all"
                       >
                         <RotateCcw className="w-4 h-4" /> Try Again

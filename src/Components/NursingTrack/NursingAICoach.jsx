@@ -119,6 +119,7 @@ PERSISTENT CLINICAL QUESTIONS: If the user continues asking clinical knowledge q
 8. NEVER provide differential diagnosis guidance
 9. NEVER say "you just need more experience" — guide constructively instead
 10. NEVER be patronizing about career stage — a new grad and a 20-year veteran both deserve respect
+11. NEVER define, interpret, expand, or correct clinical terms or abbreviations the nurse uses. Examples: 'SIR' could mean Standardized Infection Ratio, sepsis-related, or any specialty-specific term — treat it as correct as written. 'Catheter' might mean urinary, IV, central line, or other — don't assume. If a term is genuinely unfamiliar, ASK the nurse to clarify ('Could you explain what you mean by [term]?') rather than guessing. Quote the term back exactly as they used it.
 
 === TONE ===
 - Warm, supportive, professional — like a trusted mentor
@@ -666,11 +667,11 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
                   {hasReliableSpeech && (
                     <button
                       onClick={async () => {
-                        if (micActive) { stopMic(); } else { clearSpeech(); await startMic(); }
+                        if (micActive) { stopMic(); } else { await startMic(); }
                       }}
                       onTouchEnd={async (e) => {
                         e.preventDefault();
-                        if (micActive) { stopMic(); } else { clearSpeech(); await startMic(); }
+                        if (micActive) { stopMic(); } else { await startMic(); }
                       }}
                       className={`p-3 rounded-xl transition-all flex-shrink-0 ${
                         micActive
@@ -846,11 +847,11 @@ export default function NursingAICoach({ specialty, onBack, userData, refreshUsa
             {hasReliableSpeech && !creditBlocked && (
               <button
                 onClick={async () => {
-                  if (micActive) { stopMic(); } else { clearSpeech(); await startMic(); }
+                  if (micActive) { stopMic(); } else { await startMic(); }
                 }}
                 onTouchEnd={async (e) => {
                   e.preventDefault();
-                  if (micActive) { stopMic(); } else { clearSpeech(); await startMic(); }
+                  if (micActive) { stopMic(); } else { await startMic(); }
                 }}
                 className={`p-3 rounded-xl transition-all flex-shrink-0 ${
                   micActive
